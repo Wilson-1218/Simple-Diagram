@@ -1,7 +1,7 @@
 {
   "name": "09-semicircle-acb-shaded",
   "formatVersion": 1,
-  "version": "13.5.1",
+  "version": "13.5.3",
   "counts": {
     "points": 4,
     "segments": 3,
@@ -11,12 +11,12 @@
     "sectors": 1,
     "fills": 1,
     "fillKinds": {
-      "sector": 1
+      "polygon": 1
     },
     "rightAngles": 0,
     "angleArcs": 0,
     "coordPlots": 0,
-    "lengthLabels": 2,
+    "lengthLabels": 0,
     "parallelMarks": 0,
     "equalMarks": 0
   },

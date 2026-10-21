@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "version": "13.5.1",
+  "version": "13.5.3",
   "app": "simple-diagram",
   "points": [
     {
@@ -46,7 +46,7 @@
   ],
   "labels": [
     {
-      "id": "lab_0004",
+      "id": "lab_0002",
       "pointId": "A",
       "text": "A",
       "ox": -14,
@@ -54,7 +54,7 @@
       "size": 16
     },
     {
-      "id": "lab_0005",
+      "id": "lab_0003",
       "pointId": "B",
       "text": "B",
       "ox": 14,
@@ -62,7 +62,7 @@
       "size": 16
     },
     {
-      "id": "lab_0006",
+      "id": "lab_0004",
       "pointId": "O",
       "text": "O",
       "ox": 0,
@@ -70,7 +70,7 @@
       "size": 16
     },
     {
-      "id": "lab_0007",
+      "id": "lab_0005",
       "pointId": "C",
       "text": "C",
       "ox": 0,
@@ -83,20 +83,7 @@
   "midTicks": [],
   "parallelMarks": [],
   "equalMarks": [],
-  "lengthLabels": [
-    {
-      "id": "ll_0002",
-      "segmentId": "AB",
-      "text": "12",
-      "side": 1
-    },
-    {
-      "id": "ll_0003",
-      "segmentId": "AC",
-      "text": "6",
-      "side": 1
-    }
-  ],
+  "lengthLabels": [],
   "circles": [
     {
       "id": "c1",
@@ -119,13 +106,28 @@
   "fills": [
     {
       "id": "fill_0001",
-      "kind": "sector",
-      "centerId": "O",
-      "startId": "A",
-      "endId": "B",
+      "kind": "pathFill",
+      "edges": [
+        {
+          "type": "line",
+          "a": "A",
+          "b": "C"
+        },
+        {
+          "type": "arc",
+          "centerId": "O",
+          "from": "C",
+          "to": "B",
+          "circleId": "c1"
+        },
+        {
+          "type": "line",
+          "a": "B",
+          "b": "A"
+        }
+      ],
       "color": "#666666",
-      "opacity": 0.16,
-      "circleId": "c1"
+      "opacity": 0.18
     }
   ],
   "coordPlots": [],

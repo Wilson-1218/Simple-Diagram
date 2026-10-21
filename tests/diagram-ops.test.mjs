@@ -4,6 +4,7 @@ import {
   applyOps,
   emptyDiagram,
   validateDiagram,
+  documentToSvg,
   OP_NAMES,
 } from "../src/diagram/index.mjs";
 
@@ -286,4 +287,36 @@ test("insertTemplate rightTri / frustum / circleGeom / genTri", async () => {
   assert.equal(doc.rightAngles.length, 1);
   assert.ok(MACRO_NAMES.includes("drawFrustum"));
   assert.ok(MACRO_NAMES.includes("drawCube"));
+});
+
+test("addFill polyArc and pathFill", () => {
+  const doc = applyOps(null, [
+    { op: "addPoint", id: "O", x: 0, y: 100 },
+    { op: "addPoint", id: "A", x: 0, y: 0 },
+    { op: "addPoint", id: "B", x: 100, y: 100 },
+    { op: "addPoint", id: "C", x: 100, y: 0 },
+    { op: "addPoint", id: "P", x: 50, y: 100 - 50 * Math.sqrt(3) },
+    { op: "addCircle", id: "cO", centerId: "O", throughId: "A" },
+    {
+      op: "addFill",
+      kind: "polyArc",
+      pointIds: ["A", "C", "B"],
+      centerId: "O",
+      startId: "B",
+      endId: "A",
+    },
+    {
+      op: "addFill",
+      kind: "pathFill",
+      edges: [
+        { type: "line", a: "A", b: "C" },
+        { type: "arc", centerId: "O", from: "C", to: "A" },
+      ],
+    },
+  ]);
+  assert.equal(validateDiagram(doc).ok, true);
+  assert.equal(doc.fills[0].kind, "polyArc");
+  assert.equal(doc.fills[1].kind, "pathFill");
+  const svg = documentToSvg(doc, { scale: 1 });
+  assert.ok(svg.includes("<path"));
 });

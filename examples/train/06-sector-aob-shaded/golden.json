@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "version": "13.5.1",
+  "version": "13.5.3",
   "app": "simple-diagram",
   "points": [
     {
@@ -45,23 +45,23 @@
       "pointId": "O",
       "text": "O",
       "ox": 0,
-      "oy": 18,
+      "oy": 20,
       "size": 16
     },
     {
       "id": "lab_0005",
       "pointId": "A",
       "text": "A",
-      "ox": -16,
-      "oy": -8,
+      "ox": -18,
+      "oy": -6,
       "size": 16
     },
     {
       "id": "lab_0006",
       "pointId": "B",
       "text": "B",
-      "ox": 16,
-      "oy": -8,
+      "ox": 18,
+      "oy": -6,
       "size": 16
     }
   ],
@@ -72,7 +72,7 @@
       "vertex": "O",
       "arm1": "A",
       "arm2": "B",
-      "size": 28,
+      "size": 36,
       "group": 0,
       "text": "140°",
       "reflex": false
@@ -85,7 +85,7 @@
     {
       "id": "ll_0003",
       "segmentId": "OA",
-      "text": "9",
+      "text": "9 cm",
       "side": 1
     }
   ],

@@ -385,9 +385,48 @@ const HANDLERS = {
     const id = resolveId(op, nextId, "fill");
     if (doc.fills.some((f) => f.id === id)) throw new Error(`addFill: duplicate id ${id}`);
     const kind =
-      op.kind === "sector" || op.kind === "segment" ? op.kind : "polygon";
+      op.kind === "sector" ||
+      op.kind === "segment" ||
+      op.kind === "polyArc" ||
+      op.kind === "pathFill"
+        ? op.kind
+        : "polygon";
     const color = normalizeFillColor(op.color, "#666666");
     const opacity = clampOpacity(op.opacity, 0.2);
+    if (kind === "pathFill") {
+      // edges: [{type:"line",a,b} | {type:"arc",centerId,from,to, circleId?}, ...]
+      if (!Array.isArray(op.edges) || op.edges.length < 2) {
+        throw new Error("addFill(pathFill): edges must be an array of ≥2 edges");
+      }
+      const edges = [];
+      for (const e of op.edges) {
+        if (!e || typeof e !== "object") throw new Error("addFill(pathFill): bad edge");
+        if (e.type === "line") {
+          requirePoint(doc, e.a, "addFill(pathFill line)");
+          requirePoint(doc, e.b, "addFill(pathFill line)");
+          edges.push({ type: "line", a: String(e.a), b: String(e.b) });
+        } else if (e.type === "arc") {
+          requirePoint(doc, e.centerId, "addFill(pathFill arc)");
+          requirePoint(doc, e.from, "addFill(pathFill arc)");
+          requirePoint(doc, e.to, "addFill(pathFill arc)");
+          const edge = {
+            type: "arc",
+            centerId: String(e.centerId),
+            from: String(e.from),
+            to: String(e.to),
+          };
+          if (e.circleId) {
+            requireCircle(doc, e.circleId, "addFill(pathFill arc)");
+            edge.circleId = String(e.circleId);
+          }
+          edges.push(edge);
+        } else {
+          throw new Error('addFill(pathFill): edge.type must be "line" or "arc"');
+        }
+      }
+      doc.fills.push({ id, kind: "pathFill", edges, color, opacity });
+      return doc;
+    }
     if (kind === "polygon") {
       const raw = op.pointIds != null ? op.pointIds : op.points;
       if (!Array.isArray(raw) || raw.length < 3) {
@@ -399,6 +438,35 @@ const HANDLERS = {
         throw new Error("addFill: need at least 3 distinct point ids");
       }
       doc.fills.push({ id, kind: "polygon", pointIds, color, opacity });
+      return doc;
+    }
+    if (kind === "polyArc") {
+      // Straight polyline through pointIds, closed by circular arc startId→endId about centerId.
+      // Exam pattern e.g. E–D–C + arc CE (centre B).
+      const raw = op.pointIds != null ? op.pointIds : op.points;
+      if (!Array.isArray(raw) || raw.length < 2) {
+        throw new Error("addFill(polyArc): pointIds must be an array of ≥2 point ids");
+      }
+      const pointIds = raw.map((x) => String(x));
+      for (const pid of pointIds) requirePoint(doc, pid, "addFill(polyArc)");
+      requirePoint(doc, op.centerId, "addFill(polyArc)");
+      requirePoint(doc, op.startId, "addFill(polyArc)");
+      requirePoint(doc, op.endId, "addFill(polyArc)");
+      const f = {
+        id,
+        kind: "polyArc",
+        pointIds,
+        centerId: op.centerId,
+        startId: op.startId,
+        endId: op.endId,
+        color,
+        opacity,
+      };
+      if (op.circleId) {
+        requireCircle(doc, op.circleId, "addFill(polyArc)");
+        f.circleId = op.circleId;
+      }
+      doc.fills.push(f);
       return doc;
     }
     if (kind === "sector") {

@@ -64,33 +64,33 @@
     "arm1": "A",
     "arm2": "B",
     "text": "140°",
-    "size": 28
+    "size": 36
   },
   {
     "op": "addLengthLabel",
     "segmentId": "OA",
-    "text": "9"
+    "text": "9 cm"
   },
   {
     "op": "addLabel",
     "pointId": "O",
     "text": "O",
     "ox": 0,
-    "oy": 18
+    "oy": 20
   },
   {
     "op": "addLabel",
     "pointId": "A",
     "text": "A",
-    "ox": -16,
-    "oy": -8
+    "ox": -18,
+    "oy": -6
   },
   {
     "op": "addLabel",
     "pointId": "B",
     "text": "B",
-    "ox": 16,
-    "oy": -8
+    "ox": 18,
+    "oy": -6
   },
   {
     "op": "setMeta",

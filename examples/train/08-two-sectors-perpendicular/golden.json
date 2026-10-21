@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "version": "13.5.1",
+  "version": "13.5.3",
   "app": "simple-diagram",
   "points": [
     {
@@ -22,6 +22,11 @@
       "id": "B",
       "x": 280,
       "y": 280
+    },
+    {
+      "id": "P",
+      "x": 190,
+      "y": 124.11542731880104
     }
   ],
   "segments": [
@@ -52,7 +57,7 @@
   ],
   "labels": [
     {
-      "id": "lab_0005",
+      "id": "lab_0004",
       "pointId": "O",
       "text": "O",
       "ox": -14,
@@ -60,7 +65,7 @@
       "size": 16
     },
     {
-      "id": "lab_0006",
+      "id": "lab_0005",
       "pointId": "A",
       "text": "A",
       "ox": -14,
@@ -68,7 +73,7 @@
       "size": 16
     },
     {
-      "id": "lab_0007",
+      "id": "lab_0006",
       "pointId": "C",
       "text": "C",
       "ox": 14,
@@ -76,7 +81,7 @@
       "size": 16
     },
     {
-      "id": "lab_0008",
+      "id": "lab_0007",
       "pointId": "B",
       "text": "B",
       "ox": 14,
@@ -86,14 +91,14 @@
   ],
   "rightAngles": [
     {
-      "id": "ra_0003",
+      "id": "ra_0002",
       "vertex": "O",
       "arm1": "A",
       "arm2": "B",
       "size": 10
     },
     {
-      "id": "ra_0004",
+      "id": "ra_0003",
       "vertex": "B",
       "arm1": "C",
       "arm2": "O",
@@ -141,23 +146,30 @@
   "fills": [
     {
       "id": "fill_0001",
-      "kind": "segment",
-      "startId": "A",
-      "endId": "B",
+      "kind": "pathFill",
+      "edges": [
+        {
+          "type": "line",
+          "a": "A",
+          "b": "C"
+        },
+        {
+          "type": "arc",
+          "centerId": "B",
+          "from": "C",
+          "to": "P",
+          "circleId": "cB"
+        },
+        {
+          "type": "arc",
+          "centerId": "O",
+          "from": "P",
+          "to": "A",
+          "circleId": "cO"
+        }
+      ],
       "color": "#666666",
-      "opacity": 0.18,
-      "circleId": "cO",
-      "centerId": "O"
-    },
-    {
-      "id": "fill_0002",
-      "kind": "segment",
-      "startId": "C",
-      "endId": "O",
-      "color": "#666666",
-      "opacity": 0.18,
-      "circleId": "cB",
-      "centerId": "B"
+      "opacity": 0.22
     }
   ],
   "coordPlots": [],

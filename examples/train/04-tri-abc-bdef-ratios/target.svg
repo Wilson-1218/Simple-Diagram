@@ -9,6 +9,8 @@
 <line x1="262.00" y1="166.00" x2="492.00" y2="276.00" stroke="#111" stroke-width="2.40" stroke-linecap="round" />
 <line x1="52.00" y1="496.00" x2="492.00" y2="276.00" stroke="#111" stroke-width="2.40" stroke-linecap="round" />
 <line x1="492.00" y1="276.00" x2="277.00" y2="496.00" stroke="#111" stroke-width="2.40" stroke-linecap="round" />
+<line x1="420.09" y1="160.12" x2="403.91" y2="171.88" stroke="#111" stroke-width="2.10" />
+<line x1="580.09" y1="380.12" x2="563.91" y2="391.88" stroke="#111" stroke-width="2.10" />
 <text x="332.00" y="24.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linejoin="round">A</text>
 <text x="332.00" y="24.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="#111">A</text>
 <text x="24.00" y="524.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linejoin="round">B</text>

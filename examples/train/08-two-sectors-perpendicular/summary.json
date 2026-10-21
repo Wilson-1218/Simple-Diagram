@@ -1,17 +1,17 @@
 {
   "name": "08-two-sectors-perpendicular",
   "formatVersion": 1,
-  "version": "13.5.1",
+  "version": "13.5.3",
   "counts": {
-    "points": 4,
+    "points": 5,
     "segments": 4,
     "labels": 4,
     "circles": 2,
     "ellipses": 0,
     "sectors": 2,
-    "fills": 2,
+    "fills": 1,
     "fillKinds": {
-      "segment": 2
+      "polygon": 1
     },
     "rightAngles": 2,
     "angleArcs": 0,
@@ -24,7 +24,8 @@
     "O",
     "A",
     "C",
-    "B"
+    "B",
+    "P"
   ],
   "segmentIds": [
     "OA",

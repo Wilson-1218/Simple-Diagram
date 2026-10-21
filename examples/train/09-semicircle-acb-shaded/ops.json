@@ -57,22 +57,27 @@
   },
   {
     "op": "addFill",
-    "kind": "sector",
-    "circleId": "c1",
-    "centerId": "O",
-    "startId": "A",
-    "endId": "B",
-    "opacity": 0.16
-  },
-  {
-    "op": "addLengthLabel",
-    "segmentId": "AB",
-    "text": "12"
-  },
-  {
-    "op": "addLengthLabel",
-    "segmentId": "AC",
-    "text": "6"
+    "kind": "pathFill",
+    "opacity": 0.18,
+    "edges": [
+      {
+        "type": "line",
+        "a": "A",
+        "b": "C"
+      },
+      {
+        "type": "arc",
+        "centerId": "O",
+        "from": "C",
+        "to": "B",
+        "circleId": "c1"
+      },
+      {
+        "type": "line",
+        "a": "B",
+        "b": "A"
+      }
+    ]
   },
   {
     "op": "addLabel",

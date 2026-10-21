@@ -63,8 +63,8 @@ export const OP_CATALOG = {
   addEllipse: { args: "centerId, rxId, ryId, style?, backDashed?" },
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },
   addFill: {
-    args: "kind?, pointIds? | centerId+startId+endId | circleId+startId+endId, color?, opacity?",
-    note: "kind polygon|sector|segment",
+    args: "kind?, pointIds? | centerId+startId+endId | polyArc | pathFill edges[{line|arc}], color?, opacity?",
+    note: "kind polygon|sector|segment|polyArc|pathFill",
   },
   addShape: {
     args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?",

@@ -44,4 +44,8 @@ npm test
 
 `tests/diagram-train.test.mjs` validates every case: ops apply cleanly, `validateDiagram` ok, SVG non-empty.
 
+## Fidelity
+
+Goldens must **visually match** exam figures (not simplified intent sketches). Checklist + lessons: [`docs/train-pack-fidelity-lessons.md`](../../docs/train-pack-fidelity-lessons.md). Keep cropped original refs under the Agent Store pack for regression.
+
 No human practice UI — AI / ops layer only.

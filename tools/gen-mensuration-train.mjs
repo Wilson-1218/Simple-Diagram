@@ -158,22 +158,9 @@ const CASES = [
         x: (7 * G.x - 3 * H.x) / 4,
         y: (7 * G.y - 3 * H.y) / 4,
       };
-      // CDEF collinear — place D,E on CF between C and F
-      const D = {
-        x: C2.x + 0.35 * (F.x - C2.x),
-        y: C2.y + 0.35 * (F.y - C2.y),
-      };
-      const E = {
-        x: C2.x + 0.55 * (F.x - C2.x),
-        y: C2.y + 0.55 * (F.y - C2.y),
-      };
-      // Also need A-E-G? Looking at figure: AEG may be a line. Check if E on AG.
-      // Force E = intersection of CF with AG for cleaner figure matching "AEG"
+      // CDEF collinear on CF: D = BH∩CF, E = AG∩CF (exam figure placement)
       const E2 = lineIntersect(C2, F, A, G);
-      const D2 = {
-        x: C2.x + 0.4 * (E2.x - C2.x),
-        y: C2.y + 0.4 * (E2.y - C2.y),
-      };
+      const D2 = lineIntersect(C2, F, B, H);
       return [
         { op: "addPoint", id: "A", ...A },
         { op: "addPoint", id: "B", ...B },
@@ -195,7 +182,8 @@ const CASES = [
         { op: "addLabel", pointId: "A", text: "A", ox: -14, oy: 12 },
         { op: "addLabel", pointId: "B", text: "B", ox: -14, oy: -8 },
         { op: "addLabel", pointId: "C", text: "C", ox: 0, oy: -16 },
-        { op: "addLabel", pointId: "D", text: "D", ox: 12, oy: -8 },
+        // Just right of D at BH∩CF — avoid negative oy that floats above the crossing
+        { op: "addLabel", pointId: "D", text: "D", ox: 14, oy: 2 },
         { op: "addLabel", pointId: "E", text: "E", ox: -14, oy: 4 },
         { op: "addLabel", pointId: "F", text: "F", ox: 0, oy: 16 },
         { op: "addLabel", pointId: "G", text: "G", ox: 14, oy: 12 },
@@ -346,11 +334,11 @@ const CASES = [
           endId: "B",
           opacity: 0.22,
         },
-        { op: "addAngleArc", vertex: "O", arm1: "A", arm2: "B", text: "140°", size: 28 },
-        { op: "addLengthLabel", segmentId: "OA", text: "9" },
-        { op: "addLabel", pointId: "O", text: "O", ox: 0, oy: 18 },
-        { op: "addLabel", pointId: "A", text: "A", ox: -16, oy: -8 },
-        { op: "addLabel", pointId: "B", text: "B", ox: 16, oy: -8 },
+        { op: "addAngleArc", vertex: "O", arm1: "A", arm2: "B", text: "140°", size: 36 },
+        { op: "addLengthLabel", segmentId: "OA", text: "9 cm" },
+        { op: "addLabel", pointId: "O", text: "O", ox: 0, oy: 20 },
+        { op: "addLabel", pointId: "A", text: "A", ox: -18, oy: -6 },
+        { op: "addLabel", pointId: "B", text: "B", ox: 18, oy: -6 },
         { op: "setMeta", name: "06-sector-aob-shaded", hideExportPoints: true },
       ];
     })(),
@@ -392,24 +380,26 @@ const CASES = [
         { op: "addCircle", id: "cB", centerId: "B", throughId: "A" },
         { op: "addSector", id: "arcAC", centerId: "B", startId: "A", endId: "C", mode: "arc" },
         {
+          // Shaded corner: polyline E→D→C closed by arc C→E (centre B)
           op: "addFill",
-          kind: "segment",
-          circleId: "cB",
+          kind: "polyArc",
+          pointIds: ["E", "D", "C"],
           centerId: "B",
-          startId: "E",
-          endId: "C",
-          opacity: 0.2,
+          startId: "C",
+          endId: "E",
+          circleId: "cB",
+          opacity: 0.22,
         },
         { op: "addRightAngle", vertex: "A", arm1: "B", arm2: "D" },
         { op: "addRightAngle", vertex: "B", arm1: "A", arm2: "C" },
         { op: "addRightAngle", vertex: "C", arm1: "B", arm2: "D" },
         { op: "addRightAngle", vertex: "D", arm1: "A", arm2: "C" },
-        { op: "addLengthLabel", segmentId: "CD", text: "8" },
+        { op: "addLengthLabel", segmentId: "CD", text: "8 cm" },
         { op: "addLabel", pointId: "A", text: "A", ox: -14, oy: -10 },
         { op: "addLabel", pointId: "B", text: "B", ox: -14, oy: 14 },
         { op: "addLabel", pointId: "C", text: "C", ox: 14, oy: 14 },
         { op: "addLabel", pointId: "D", text: "D", ox: 14, oy: -10 },
-        { op: "addLabel", pointId: "E", text: "E", ox: 12, oy: -12 },
+        { op: "addLabel", pointId: "E", text: "E", ox: -14, oy: -10 },
         { op: "setMeta", name: "07-square-sector-centre-b", hideExportPoints: true },
       ];
     })(),
@@ -423,20 +413,26 @@ const CASES = [
     page: 5,
     title: "Identical sectors OAB & BOC, right angles",
     promptZh:
-      "畫正方形 OACB（O 左下、B 右下、C 右上、A 左上）。以 O 為圓心畫四分圓弧 AB；以 B 為圓心畫四分圓弧 CO。在 O、B 加直角記號；將靠近頂邊的兩塊「扇外」區域淺填。",
+      "畫正方形 OACB（O 左下、B 右下、C 右上、A 左上）。以 O 為圓心畫四分圓弧 AB；以 B 為圓心畫四分圓弧 CO。在 O、B 加直角記號。陰影＝正方形內、兩四分圓之外、靠頂邊 AC 的區域（頂邊＋兩段上弧）。",
     promptEn:
-      "Draw square OACB (O bottom-left, B bottom-right, C top-right, A top-left). Quarter-arc AB centred at O; quarter-arc CO centred at B. Right-angle marks at O and B; shade the two outer corner regions near the top.",
+      "Draw square OACB (O bottom-left, B bottom-right, C top-right, A top-left). Quarter-arc AB at O; quarter-arc CO at B; right angles at O and B. Shade the region inside the square but outside both quarter-disks (top edge AC + the two upper arcs).",
     ops: (() => {
       const s = 180;
       const O = { x: 100, y: 280 };
       const B = { x: O.x + s, y: O.y };
       const A = { x: O.x, y: O.y - s };
       const C = { x: O.x + s, y: O.y - s };
+      // Intersection of arcs (centres O,B radius s) — upper intersection
+      const P = {
+        x: O.x + s / 2,
+        y: O.y - (s * Math.sqrt(3)) / 2,
+      };
       return [
         { op: "addPoint", id: "O", ...O },
         { op: "addPoint", id: "A", ...A },
         { op: "addPoint", id: "C", ...C },
         { op: "addPoint", id: "B", ...B },
+        { op: "addPoint", id: "P", ...P },
         { op: "addSegment", id: "OA", a: "O", b: "A" },
         { op: "addSegment", id: "AC", a: "A", b: "C" },
         { op: "addSegment", id: "CB", a: "C", b: "B" },
@@ -446,22 +442,15 @@ const CASES = [
         { op: "addSector", id: "arcAB", centerId: "O", startId: "A", endId: "B", mode: "arc" },
         { op: "addSector", id: "arcCO", centerId: "B", startId: "C", endId: "O", mode: "arc" },
         {
+          // Top region outside both quarter-disks: A→C along top, arc C→P (ctr B), arc P→A (ctr O)
           op: "addFill",
-          kind: "segment",
-          circleId: "cO",
-          centerId: "O",
-          startId: "A",
-          endId: "B",
-          opacity: 0.18,
-        },
-        {
-          op: "addFill",
-          kind: "segment",
-          circleId: "cB",
-          centerId: "B",
-          startId: "C",
-          endId: "O",
-          opacity: 0.18,
+          kind: "pathFill",
+          opacity: 0.22,
+          edges: [
+            { type: "line", a: "A", b: "C" },
+            { type: "arc", centerId: "B", from: "C", to: "P", circleId: "cB" },
+            { type: "arc", centerId: "O", from: "P", to: "A", circleId: "cO" },
+          ],
         },
         { op: "addRightAngle", vertex: "O", arm1: "A", arm2: "B" },
         { op: "addRightAngle", vertex: "B", arm1: "C", arm2: "O" },
@@ -482,16 +471,15 @@ const CASES = [
     page: 6,
     title: "Semicircle ACB diameter 12, AC=6",
     promptZh:
-      "畫半圓 ACB，直徑 AB = 12（中點 O），C 在弧上且 AC = 6。連 AC、OC。將半圓區域淺填（或依考題陰影意圖）。標 A、B、C、O。",
+      "畫半圓 ACB（僅半圓，非整圓），直徑 AB（中點 O），C 在上弧上。連 AC、OC。陰影＝由 AC、弧 CB、直徑 BA 圍成的區域（弦 AC 上方的小弓形不填）。圖上可不標長度數字。",
     promptEn:
-      "Draw semicircle ACB with diameter AB = 12 (midpoint O); C on the arc with AC = 6. Join AC and OC. Shade the semicircle region. Label A, B, C, O.",
+      "Draw semicircle ACB only (not a full circle), diameter AB with midpoint O, C on the upper arc. Join AC and OC. Shade the region bounded by AC + arc CB + diameter BA (leave the small segment above chord AC unshaded). No length numerals required on the figure.",
     ops: (() => {
       const O = { x: 220, y: 260 };
       const r = 120; // 12 cm → 120 px
       const A = { x: O.x - r, y: O.y };
       const B = { x: O.x + r, y: O.y };
-      // AC=6 → half radius; C on upper semicircle: angle from OA
-      // Place C so AC=r/2. Chord length 2 r sin(θ/2)=r/2 → sin(θ/2)=1/4 → θ/2=arcsin(0.25)
+      // AC=6 → half radius; C on upper semicircle
       const theta = 2 * Math.asin(0.25);
       const C = {
         x: O.x + r * Math.cos(Math.PI - theta),
@@ -509,15 +497,14 @@ const CASES = [
         { op: "addSector", id: "semi", centerId: "O", startId: "A", endId: "B", mode: "arc" },
         {
           op: "addFill",
-          kind: "sector",
-          circleId: "c1",
-          centerId: "O",
-          startId: "A",
-          endId: "B",
-          opacity: 0.16,
+          kind: "pathFill",
+          opacity: 0.18,
+          edges: [
+            { type: "line", a: "A", b: "C" },
+            { type: "arc", centerId: "O", from: "C", to: "B", circleId: "c1" },
+            { type: "line", a: "B", b: "A" },
+          ],
         },
-        { op: "addLengthLabel", segmentId: "AB", text: "12" },
-        { op: "addLengthLabel", segmentId: "AC", text: "6" },
         { op: "addLabel", pointId: "A", text: "A", ox: -14, oy: 14 },
         { op: "addLabel", pointId: "B", text: "B", ox: 14, oy: 14 },
         { op: "addLabel", pointId: "O", text: "O", ox: 0, oy: 16 },
