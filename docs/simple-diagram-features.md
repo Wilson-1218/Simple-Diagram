@@ -50,4 +50,4 @@
 1. 開啟 `index.html` 或 `simple-diagram-standalone.html`（標題應見 **Simple Diagram · v13.4.2**）。
 2. 左側選工具；頂部 overlay「匯出 ▾」預覽或存檔。
 3. Chrome／Edge 存檔可選資料夾；匯出不受深色畫布影響。
-4. AI／自動化：見 [`diagram-format.md`](diagram-format.md) 與 README「AI / Automation」（JSON＋ops，不模擬 UI）。
+4. AI／自動化：見 [`diagram-format.md`](diagram-format.md)、[`agent-draw-playbook.md`](agent-draw-playbook.md) 與 README「AI / Automation」（JSON＋ops，不模擬 UI；v13.4.2 起含扇／弓形填色與圖形／圓件／對齊 ops）。
