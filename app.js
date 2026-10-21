@@ -330,9 +330,9 @@
       hint_perpendicular: "點選既有點後向下拖曳定長（點線；放開完成）",
       hint_parallel: "點線段：左鍵＝單箭 · 右鍵＝雙箭（工具列「單／雙」或 G 可預設）",
       hint_equal: "點線段：左鍵＝單劃 · 右鍵＝雙劃（工具列「單／雙」或 G 可預設）",
-      hint_fill: "依序點既有頂點 ≥3；Enter／雙擊／再點起點關閉 · 頂欄選透明度",
+      hint_fill: "依序點頂點，再點起點完成",
       fill_need_point: "請點選既有頂點",
-      fill_need_more: "再點頂點（≥3）後 Enter／雙擊／起點關閉",
+      fill_need_more: "依序點頂點（≥3），再點起點完成",
       fill_closed: "已填色",
       tip_fill_g10: "灰影 10%",
       tip_fill_g20: "灰影 20%",
@@ -404,7 +404,7 @@
       tip_mark_double: "雙箭／雙劃（G）",
       tip_mark_flip: "記號翻面（選取平行／等長記號後）",
       tip_tool_length: "線段長度標註（例：6）",
-      tip_tool_fill: "填色：依序點頂點圍封閉區（考試陰影）",
+      tip_tool_fill: "填色：依序點頂點，再點起點完成",
       tip_preview_crop: "關閉後拖曳框選匯出範圍",
       tip_preview_clear_crop: "改回自動裁切整圖",
       tip_preview_png: "儲存 PNG（Chrome／Edge 可選資料夾與檔名）",
@@ -497,9 +497,9 @@
       hint_perpendicular: "Pick a point, drag down for length (dotted)",
       hint_parallel: "Click segment: LMB single · RMB double chevron",
       hint_equal: "Click segment: LMB single · RMB double tick",
-      hint_fill: "Click existing vertices ≥3; Enter / double-click / first point to close",
+      hint_fill: "Click vertices in order, then click the start point to finish",
       fill_need_point: "Click an existing vertex",
-      fill_need_more: "Add vertices (≥3), then Enter / double-click / first point",
+      fill_need_more: "Click vertices in order (≥3), then click the start point",
       fill_closed: "Fill added",
       tip_fill_g10: "Gray shade 10%",
       tip_fill_g20: "Gray shade 20%",
@@ -571,7 +571,7 @@
       tip_mark_double: "Double chevron/tick (G)",
       tip_mark_flip: "Flip mark (select parallel/equal mark first)",
       tip_tool_length: "Segment length label (e.g. 6)",
-      tip_tool_fill: "Fill: click vertices in order to shade a closed region",
+      tip_tool_fill: "Fill: click vertices in order, then click the start point to finish",
       tip_preview_crop: "Close, then drag a crop box",
       tip_preview_clear_crop: "Back to auto crop of whole figure",
       tip_preview_png: "Save PNG (Chrome/Edge: pick folder & name)",
@@ -1308,10 +1308,36 @@
     document.querySelectorAll("[data-fill-key]").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.fillKey === activeFillKey);
     });
-    const bar = document.getElementById("fillPresetBar");
-    if (bar) {
-      const selFill = selection.some((s) => s.type === "fill");
-      bar.classList.toggle("is-dim", tool !== "fill" && !selFill);
+    syncContextualFloats();
+  }
+
+  const STROKE_TOOLS = new Set([
+    "line",
+    "horizontal",
+    "perpendicular",
+    "circle",
+    "ellipse",
+    "sector",
+  ]);
+  const STROKE_SEL_TYPES = new Set(["segment", "circle", "ellipse", "sector"]);
+  const SIZE_TOOLS = new Set(["label", "rightAngle", "angleArc", "reflex"]);
+  const SIZE_SEL_TYPES = new Set(["label", "rightAngle", "angleArc"]);
+
+  /** Show/hide line-style + fill floats beside the left rail. */
+  function syncContextualFloats() {
+    const styleFloat = document.getElementById("styleFloat");
+    const fillFloat = document.getElementById("fillFloat");
+    if (styleFloat) {
+      const strokeSel = selection.some((s) => STROKE_SEL_TYPES.has(s.type));
+      const sizeSel = selection.some((s) => SIZE_SEL_TYPES.has(s.type));
+      const showStyle =
+        STROKE_TOOLS.has(tool) ||
+        SIZE_TOOLS.has(tool) ||
+        (tool === "select" && (strokeSel || sizeSel));
+      styleFloat.hidden = !showStyle;
+    }
+    if (fillFloat) {
+      fillFloat.hidden = tool !== "fill";
     }
   }
 
@@ -1426,8 +1452,16 @@
   }
 
   function handleFillClick(world) {
-    // MVP: only existing vertices (exam solids already have corners)
-    const sn = nearestPointHit(world.x, world.y);
+    // Prefer start vertex when closing so nearby last-point doesn't steal the hit
+    let sn = null;
+    if (draft && draft.kind === "fill" && draft.pointIds && draft.pointIds.length >= 3) {
+      const start = pointById(draft.pointIds[0]);
+      if (start) {
+        const thresh = (HIT_POINT * 1.35) / view.scale;
+        if (dist(start, world) <= thresh) sn = start;
+      }
+    }
+    if (!sn) sn = nearestPointHit(world.x, world.y);
     if (!sn || !sn.id) {
       statusHint.textContent = t("fill_need_point");
       return;
@@ -1439,19 +1473,22 @@
       draw();
       return;
     }
-    // Close by clicking first point again
+    // Primary close: re-click first selected point (≥3 vertices)
     if (draft.pointIds.length >= 3 && pid === draft.pointIds[0]) {
       commitFillDraft();
       return;
     }
     if (pid === draft.pointIds[draft.pointIds.length - 1]) return;
-    // Avoid immediate revisit of non-first points mid-chain (allow if closing)
+    if (draft.pointIds.includes(pid) && pid !== draft.pointIds[0]) {
+      // Mid-chain revisit of a non-start vertex: ignore (keep order simple)
+      statusHint.textContent =
+        draft.pointIds.length >= 3 ? t("hint_fill") : t("fill_need_more");
+      return;
+    }
     draft.pointIds.push(pid);
     draft.cursor = { x: world.x, y: world.y };
     statusHint.textContent =
-      draft.pointIds.length >= 3
-        ? t("hint_fill")
-        : t("fill_need_more");
+      draft.pointIds.length >= 3 ? t("hint_fill") : t("fill_need_more");
     draw();
   }
 
@@ -1598,6 +1635,7 @@
     syncMarkGroupUI();
     syncSectorModeUI();
     syncFillPresetUI();
+    syncContextualFloats();
     updateStatus();
     draw();
   }
@@ -7773,7 +7811,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: 13.3,
+      version: "13.3.1",
       app: "simple-diagram",
       points,
       segments,

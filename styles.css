@@ -92,6 +92,8 @@ html,
 body {
   margin: 0;
   height: 100%;
+  max-height: 100%;
+  overflow: hidden;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-ui);
@@ -102,25 +104,66 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 100vh;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+  position: relative;
 }
 
-/* ——— Top bar (templates / props / view) ——— */
-.top-bar.toolbar {
+/* ——— Overlay chrome (no reserved layout height) ——— */
+.chrome-overlay.toolbar {
   --tb: 1.2;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 40;
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: calc(4px * var(--tb)) calc(6px * var(--tb));
-  padding: calc(4px * var(--tb)) calc(8px * var(--tb));
-  background: var(--bar);
-  border-bottom: 1px solid var(--bar-border);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(6px * var(--tb));
+  padding: calc(6px * var(--tb)) calc(8px * var(--tb));
+  pointer-events: none;
   user-select: none;
   isolation: isolate;
-  flex-shrink: 0;
   font-size: calc(12px * var(--tb));
+}
+
+.chrome-overlay .chrome-cluster,
+.chrome-overlay .tool-group,
+.chrome-overlay .menu-wrap,
+.chrome-overlay button,
+.chrome-overlay select,
+.chrome-overlay label {
+  pointer-events: auto;
+}
+
+.chrome-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(4px * var(--tb));
+  max-width: 100%;
+}
+
+.chrome-brand {
+  background: rgba(247, 245, 240, 0.92);
+  border: 1px solid var(--bar-border);
+  border-radius: var(--radius);
+  padding: calc(3px * var(--tb)) calc(6px * var(--tb));
+  backdrop-filter: blur(4px);
+}
+
+.chrome-actions {
+  background: rgba(247, 245, 240, 0.92);
+  border: 1px solid var(--bar-border);
+  border-radius: var(--radius);
+  padding: calc(3px * var(--tb)) calc(5px * var(--tb));
+  backdrop-filter: blur(4px);
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .brand {
@@ -165,7 +208,7 @@ body {
 
 .tool-group {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: calc(3px * var(--tb));
   padding: calc(1px * var(--tb)) calc(5px * var(--tb));
@@ -175,14 +218,17 @@ body {
 
 .tool-group:last-child {
   border-right: none;
-  flex: 1;
-  min-width: 0;
 }
 
-.group-title {
-  font-size: calc(10px * var(--tb));
+.chrome-actions .tool-group:last-child {
+  border-right: none;
+}
+
+.group-title,
+.float-title {
+  font-size: calc(10px * var(--tb, 1.2));
   color: var(--muted);
-  margin-right: calc(2px * var(--tb));
+  margin-right: calc(2px * var(--tb, 1.2));
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
@@ -223,9 +269,11 @@ button:disabled {
 /* ——— Left tool rail ——— */
 .body-row {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
   --tb: 1.2;
+  background: var(--bg);
 }
 
 .tool-rail {
@@ -364,7 +412,9 @@ button:disabled {
 
 .toolbar #labelSizeSelect,
 .toolbar #rightAngleSizeSelect,
-.toolbar #gridModeSelect {
+.toolbar #gridModeSelect,
+.float-panel #labelSizeSelect,
+.float-panel #rightAngleSizeSelect {
   font-size: calc(12px * var(--tb));
   padding: calc(4px * var(--tb)) calc(6px * var(--tb));
   min-height: calc(28px * var(--tb));
@@ -409,6 +459,11 @@ button:disabled {
 
 .menu-panel-wide {
   min-width: 160px;
+}
+
+.chrome-actions .menu-panel {
+  left: auto;
+  right: 0;
 }
 
 .menu-panel[hidden] {
@@ -499,16 +554,68 @@ button:disabled {
   opacity: 0.55;
 }
 
-/* Fill shade swatches (top props bar) */
-.fill-swatch-bar {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(3px * var(--tb, 1));
-  margin-left: calc(4px * var(--tb, 1));
-  padding: calc(2px * var(--tb, 1)) calc(4px * var(--tb, 1));
+/* Contextual floats beside left rail (over canvas) */
+.float-stack {
+  position: absolute;
+  top: calc(56px * var(--tb, 1.2));
+  left: calc(8px * var(--tb, 1.2));
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(8px * var(--tb, 1.2));
+  pointer-events: none;
+}
+
+.float-panel {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(4px * var(--tb, 1.2));
+  padding: calc(6px * var(--tb, 1.2));
+  background: rgba(247, 245, 240, 0.96);
   border: 1px solid var(--bar-border);
   border-radius: var(--radius);
-  background: var(--paper);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(4px);
+  max-width: calc(120px * var(--tb, 1.2));
+}
+
+.float-panel[hidden] {
+  display: none !important;
+}
+
+.float-panel .float-title {
+  writing-mode: horizontal-tb;
+  text-align: center;
+  margin: 0 0 2px;
+}
+
+.float-panel .style-btn {
+  min-width: 0;
+  padding: calc(4px * var(--tb, 1.2)) calc(6px * var(--tb, 1.2));
+}
+
+.float-panel select {
+  width: 100%;
+  font-size: calc(11px * var(--tb, 1.2));
+  padding: calc(3px * var(--tb, 1.2)) calc(4px * var(--tb, 1.2));
+}
+
+/* Fill shade swatches — clipped so checkerboard cannot bleed */
+.fill-swatch-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(4px * var(--tb, 1));
+  margin: 0;
+  padding: calc(2px * var(--tb, 1));
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  overflow: hidden;
+  contain: paint;
 }
 
 .fill-swatch-bar.is-dim {
@@ -516,17 +623,29 @@ button:disabled {
 }
 
 .fill-swatch {
-  width: calc(18px * var(--tb, 1));
-  height: calc(18px * var(--tb, 1));
-  min-width: calc(18px * var(--tb, 1));
-  min-height: calc(18px * var(--tb, 1));
+  width: calc(22px * var(--tb, 1));
+  height: calc(22px * var(--tb, 1));
+  min-width: calc(22px * var(--tb, 1));
+  min-height: calc(22px * var(--tb, 1));
   padding: 0;
   border: 1px solid #9a9a9a;
   border-radius: 3px;
-  background:
+  /* Solid base + clipped checker via layered backgrounds (no page bleed) */
+  background-color: #fff;
+  background-image:
     linear-gradient(var(--swatch, rgba(102, 102, 102, 0.2)), var(--swatch, rgba(102, 102, 102, 0.2))),
-    repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 0 0 / 8px 8px;
+    linear-gradient(45deg, #ddd 25%, transparent 25%),
+    linear-gradient(-45deg, #ddd 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ddd 75%),
+    linear-gradient(-45deg, transparent 75%, #ddd 75%);
+  background-size: 100% 100%, 8px 8px, 8px 8px, 8px 8px, 8px 8px;
+  background-position: 0 0, 0 0, 0 4px, 4px -4px, -4px 0;
+  background-repeat: no-repeat, repeat, repeat, repeat, repeat;
+  background-clip: padding-box;
+  overflow: hidden;
+  contain: strict;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .fill-swatch:hover {
@@ -539,12 +658,19 @@ button:disabled {
   border-color: var(--accent);
 }
 
+body.dark-canvas .float-panel,
+body.dark-canvas .chrome-brand,
+body.dark-canvas .chrome-actions {
+  background: rgba(42, 48, 56, 0.94);
+}
+
 body.dark-canvas .fill-swatch-bar {
-  background: #323842;
+  background: transparent;
 }
 
 body.dark-canvas .fill-swatch {
   border-color: #6a7280;
+  background-color: #323842;
 }
 
 .tool-rail .rail-mini-btn {
@@ -644,7 +770,7 @@ body.dark-canvas .fill-swatch {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: var(--bg);
+  background: var(--paper);
 }
 
 #canvas {
@@ -702,9 +828,20 @@ dialog {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
-/* Author `display` on dialog (e.g. .coord-dialog) must not override UA hide-when-closed. */
+/* Author `display` on dialog (e.g. .coord-dialog) must not override UA hide-when-closed.
+   Also hide from a11y/hit-testing so closed dialogs never paint a bleed strip. */
 dialog:not([open]) {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
 }
 
 dialog[open] {

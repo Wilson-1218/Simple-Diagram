@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.3" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.3.1" />
   <title>Simple Diagram · Wilson</title>
-<style>
+  <style>
 :root {
   --bg: #e8e6e1;
   --paper: #ffffff;
@@ -100,6 +100,8 @@ html,
 body {
   margin: 0;
   height: 100%;
+  max-height: 100%;
+  overflow: hidden;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-ui);
@@ -110,25 +112,66 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 100vh;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+  position: relative;
 }
 
-/* ——— Top bar (templates / props / view) ——— */
-.top-bar.toolbar {
+/* ——— Overlay chrome (no reserved layout height) ——— */
+.chrome-overlay.toolbar {
   --tb: 1.2;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 40;
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: calc(4px * var(--tb)) calc(6px * var(--tb));
-  padding: calc(4px * var(--tb)) calc(8px * var(--tb));
-  background: var(--bar);
-  border-bottom: 1px solid var(--bar-border);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(6px * var(--tb));
+  padding: calc(6px * var(--tb)) calc(8px * var(--tb));
+  pointer-events: none;
   user-select: none;
   isolation: isolate;
-  flex-shrink: 0;
   font-size: calc(12px * var(--tb));
+}
+
+.chrome-overlay .chrome-cluster,
+.chrome-overlay .tool-group,
+.chrome-overlay .menu-wrap,
+.chrome-overlay button,
+.chrome-overlay select,
+.chrome-overlay label {
+  pointer-events: auto;
+}
+
+.chrome-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(4px * var(--tb));
+  max-width: 100%;
+}
+
+.chrome-brand {
+  background: rgba(247, 245, 240, 0.92);
+  border: 1px solid var(--bar-border);
+  border-radius: var(--radius);
+  padding: calc(3px * var(--tb)) calc(6px * var(--tb));
+  backdrop-filter: blur(4px);
+}
+
+.chrome-actions {
+  background: rgba(247, 245, 240, 0.92);
+  border: 1px solid var(--bar-border);
+  border-radius: var(--radius);
+  padding: calc(3px * var(--tb)) calc(5px * var(--tb));
+  backdrop-filter: blur(4px);
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .brand {
@@ -173,7 +216,7 @@ body {
 
 .tool-group {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: calc(3px * var(--tb));
   padding: calc(1px * var(--tb)) calc(5px * var(--tb));
@@ -183,14 +226,17 @@ body {
 
 .tool-group:last-child {
   border-right: none;
-  flex: 1;
-  min-width: 0;
 }
 
-.group-title {
-  font-size: calc(10px * var(--tb));
+.chrome-actions .tool-group:last-child {
+  border-right: none;
+}
+
+.group-title,
+.float-title {
+  font-size: calc(10px * var(--tb, 1.2));
   color: var(--muted);
-  margin-right: calc(2px * var(--tb));
+  margin-right: calc(2px * var(--tb, 1.2));
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
@@ -231,9 +277,11 @@ button:disabled {
 /* ——— Left tool rail ——— */
 .body-row {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
   --tb: 1.2;
+  background: var(--bg);
 }
 
 .tool-rail {
@@ -372,7 +420,9 @@ button:disabled {
 
 .toolbar #labelSizeSelect,
 .toolbar #rightAngleSizeSelect,
-.toolbar #gridModeSelect {
+.toolbar #gridModeSelect,
+.float-panel #labelSizeSelect,
+.float-panel #rightAngleSizeSelect {
   font-size: calc(12px * var(--tb));
   padding: calc(4px * var(--tb)) calc(6px * var(--tb));
   min-height: calc(28px * var(--tb));
@@ -417,6 +467,11 @@ button:disabled {
 
 .menu-panel-wide {
   min-width: 160px;
+}
+
+.chrome-actions .menu-panel {
+  left: auto;
+  right: 0;
 }
 
 .menu-panel[hidden] {
@@ -507,16 +562,68 @@ button:disabled {
   opacity: 0.55;
 }
 
-/* Fill shade swatches (top props bar) */
-.fill-swatch-bar {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(3px * var(--tb, 1));
-  margin-left: calc(4px * var(--tb, 1));
-  padding: calc(2px * var(--tb, 1)) calc(4px * var(--tb, 1));
+/* Contextual floats beside left rail (over canvas) */
+.float-stack {
+  position: absolute;
+  top: calc(56px * var(--tb, 1.2));
+  left: calc(8px * var(--tb, 1.2));
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(8px * var(--tb, 1.2));
+  pointer-events: none;
+}
+
+.float-panel {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(4px * var(--tb, 1.2));
+  padding: calc(6px * var(--tb, 1.2));
+  background: rgba(247, 245, 240, 0.96);
   border: 1px solid var(--bar-border);
   border-radius: var(--radius);
-  background: var(--paper);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(4px);
+  max-width: calc(120px * var(--tb, 1.2));
+}
+
+.float-panel[hidden] {
+  display: none !important;
+}
+
+.float-panel .float-title {
+  writing-mode: horizontal-tb;
+  text-align: center;
+  margin: 0 0 2px;
+}
+
+.float-panel .style-btn {
+  min-width: 0;
+  padding: calc(4px * var(--tb, 1.2)) calc(6px * var(--tb, 1.2));
+}
+
+.float-panel select {
+  width: 100%;
+  font-size: calc(11px * var(--tb, 1.2));
+  padding: calc(3px * var(--tb, 1.2)) calc(4px * var(--tb, 1.2));
+}
+
+/* Fill shade swatches — clipped so checkerboard cannot bleed */
+.fill-swatch-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(4px * var(--tb, 1));
+  margin: 0;
+  padding: calc(2px * var(--tb, 1));
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  overflow: hidden;
+  contain: paint;
 }
 
 .fill-swatch-bar.is-dim {
@@ -524,17 +631,29 @@ button:disabled {
 }
 
 .fill-swatch {
-  width: calc(18px * var(--tb, 1));
-  height: calc(18px * var(--tb, 1));
-  min-width: calc(18px * var(--tb, 1));
-  min-height: calc(18px * var(--tb, 1));
+  width: calc(22px * var(--tb, 1));
+  height: calc(22px * var(--tb, 1));
+  min-width: calc(22px * var(--tb, 1));
+  min-height: calc(22px * var(--tb, 1));
   padding: 0;
   border: 1px solid #9a9a9a;
   border-radius: 3px;
-  background:
+  /* Solid base + clipped checker via layered backgrounds (no page bleed) */
+  background-color: #fff;
+  background-image:
     linear-gradient(var(--swatch, rgba(102, 102, 102, 0.2)), var(--swatch, rgba(102, 102, 102, 0.2))),
-    repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 0 0 / 8px 8px;
+    linear-gradient(45deg, #ddd 25%, transparent 25%),
+    linear-gradient(-45deg, #ddd 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ddd 75%),
+    linear-gradient(-45deg, transparent 75%, #ddd 75%);
+  background-size: 100% 100%, 8px 8px, 8px 8px, 8px 8px, 8px 8px;
+  background-position: 0 0, 0 0, 0 4px, 4px -4px, -4px 0;
+  background-repeat: no-repeat, repeat, repeat, repeat, repeat;
+  background-clip: padding-box;
+  overflow: hidden;
+  contain: strict;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .fill-swatch:hover {
@@ -547,12 +666,19 @@ button:disabled {
   border-color: var(--accent);
 }
 
+body.dark-canvas .float-panel,
+body.dark-canvas .chrome-brand,
+body.dark-canvas .chrome-actions {
+  background: rgba(42, 48, 56, 0.94);
+}
+
 body.dark-canvas .fill-swatch-bar {
-  background: #323842;
+  background: transparent;
 }
 
 body.dark-canvas .fill-swatch {
   border-color: #6a7280;
+  background-color: #323842;
 }
 
 .tool-rail .rail-mini-btn {
@@ -652,7 +778,7 @@ body.dark-canvas .fill-swatch {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: var(--bg);
+  background: var(--paper);
 }
 
 #canvas {
@@ -710,9 +836,20 @@ dialog {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
-/* Author `display` on dialog (e.g. .coord-dialog) must not override UA hide-when-closed. */
+/* Author `display` on dialog (e.g. .coord-dialog) must not override UA hide-when-closed.
+   Also hide from a11y/hit-testing so closed dialogs never paint a bleed strip. */
 dialog:not([open]) {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
 }
 
 dialog[open] {
@@ -1277,7 +1414,7 @@ body.dark-canvas .coord-curve-row {
   }
 }
 
-</style>
+  </style>
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -1287,116 +1424,6 @@ body.dark-canvas .coord-curve-row {
 </head>
 <body>
   <div id="app">
-    <header class="top-bar toolbar" role="toolbar" aria-label="屬性與檔案" data-i18n-aria="aria_toolbar_props">
-      <div class="brand">
-        <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
-        <div class="brand-text">
-          <span class="brand-name">Simple Diagram</span>
-          <span class="brand-sub">v13.3</span>
-        </div>
-      </div>
-      <div class="tool-group" data-group="lang">
-        <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
-        <button type="button" id="btnLangEn" class="lang-btn" data-lang="en" title="English UI" data-i18n-title="tip_lang_en">EN</button>
-      </div>
-
-      <div class="tool-group" data-group="templates">
-        <span class="group-title" data-i18n="group_templates">模板</span>
-        <div class="menu-wrap">
-          <button type="button" id="btnTemplateMenu" class="menu-btn" title="常用平面／立體模板" data-i18n-title="tip_templates" aria-haspopup="true" aria-expanded="false">模板 ▾</button>
-          <div class="menu-panel menu-panel-wide" id="templateMenu" hidden>
-            <div class="menu-section-title">平面</div>
-            <button type="button" data-tpl="rightTri">直角三角形</button>
-            <button type="button" data-tpl="isoTri">等腰三角形</button>
-            <button type="button" data-tpl="parallelogram">平行四邊形</button>
-            <button type="button" data-tpl="trapezoid">梯形</button>
-            <button type="button" data-tpl="pentagon">正五邊形</button>
-            <button type="button" data-tpl="circleCenter">圓＋圓心</button>
-            <div class="menu-section-title">立體</div>
-            <button type="button" data-tpl="tetra">四面體</button>
-            <button type="button" data-tpl="pyramid">正方錐</button>
-            <button type="button" data-tpl="altBase">高到底</button>
-            <button type="button" data-tpl="triPrism">三棱柱</button>
-            <button type="button" data-tpl="cuboid">長方體</button>
-            <button type="button" data-tpl="cylinder">圓柱</button>
-            <button type="button" data-tpl="cone">圓錐</button>
-            <div class="menu-section-title">自訂</div>
-            <div id="customTplList" class="custom-tpl-list"></div>
-            <p class="menu-empty" id="customTplEmpty">尚無自訂模板</p>
-          </div>
-        </div>
-        <button type="button" id="btnSaveTemplate" title="將目前選取存為自訂模板" data-i18n-title="tip_save_tpl">存為模板</button>
-      </div>
-
-      <div class="tool-group" data-group="props">
-        <span class="group-title" data-i18n="group_props">屬性</span>
-        <button type="button" class="style-btn active" data-style="solid" title="實線" data-i18n-title="tip_style_solid">━━</button>
-        <button type="button" class="style-btn" data-style="dashed" title="虛線（隱藏邊）" data-i18n-title="tip_style_dashed">┈┈</button>
-        <button type="button" class="style-btn" data-style="dotted" title="點線（構造）" data-i18n-title="tip_style_dotted">····</button>
-        <button type="button" class="style-btn" data-style="dashdot" title="點劃線" data-i18n-title="tip_style_dashdot">─·─</button>
-        <span class="fill-swatch-bar is-dim" id="fillPresetBar" title="填色陰影透明度" data-i18n-title="tip_fill_bar">
-          <button type="button" class="fill-swatch" data-fill-key="g10" title="灰影 10%" data-i18n-title="tip_fill_g10" style="--swatch:rgba(102,102,102,0.10)" aria-label="10%"></button>
-          <button type="button" class="fill-swatch active" data-fill-key="g20" title="灰影 20%" data-i18n-title="tip_fill_g20" style="--swatch:rgba(102,102,102,0.20)" aria-label="20%"></button>
-          <button type="button" class="fill-swatch" data-fill-key="g35" title="灰影 35%" data-i18n-title="tip_fill_g35" style="--swatch:rgba(102,102,102,0.35)" aria-label="35%"></button>
-          <button type="button" class="fill-swatch" data-fill-key="g50" title="灰影 50%" data-i18n-title="tip_fill_g50" style="--swatch:rgba(102,102,102,0.50)" aria-label="50%"></button>
-          <button type="button" class="fill-swatch" data-fill-key="bg22" title="藍灰影 22%" data-i18n-title="tip_fill_bg" style="--swatch:rgba(107,135,153,0.22)" aria-label="blue-gray"></button>
-        </span>
-        <select id="labelSizeSelect" title="標籤字級" data-i18n-title="tip_label_size" data-i18n-aria="aria_label_size" aria-label="標籤字級"></select>
-        <select id="rightAngleSizeSelect" title="直角／角弧大小" data-i18n-title="tip_mark_size" data-i18n-aria="aria_mark_size" aria-label="記號大小">
-          <option value="7">小</option>
-          <option value="10" selected>中</option>
-          <option value="14">大</option>
-          <option value="18">特大</option>
-        </select>
-      </div>
-
-      <div class="tool-group" data-group="view">
-        <span class="group-title" data-i18n="group_view">檢視／匯出</span>
-        <label class="check-opt" title="開啟網格顯示與格點吸附（預設開啟）" data-i18n-title="tip_grid">
-          <input type="checkbox" id="chkGridSnap" checked /> <span data-i18n="chk_grid">網格</span>
-        </label>
-        <select id="gridModeSelect" title="網格樣式" data-i18n-title="tip_grid_mode" data-i18n-aria="aria_grid_mode" aria-label="網格樣式">
-          <option value="square" data-i18n="grid_square">方格</option>
-          <option value="triangle" selected data-i18n="grid_triangle">三角格</option>
-        </select>
-        <label class="check-opt" title="深色畫布（僅編輯；匯出仍為白底黑線）" data-i18n-title="tip_dark">
-          <input type="checkbox" id="chkDarkCanvas" /> <span data-i18n="chk_dark">深色畫布</span>
-        </label>
-        <div class="menu-wrap">
-          <button type="button" id="btnRecentMenu" class="menu-btn" title="最近開啟的專案" data-i18n-title="tip_recent" aria-haspopup="true" aria-expanded="false">最近 ▾</button>
-          <div class="menu-panel menu-panel-wide" id="recentMenu" hidden>
-            <div class="menu-section-title">最近開啟</div>
-            <div id="recentList" class="custom-tpl-list"></div>
-            <p class="menu-empty" id="recentEmpty">尚無記錄</p>
-            <div class="menu-section-title">備份</div>
-            <button type="button" id="btnRestoreBackup">還原自動備份</button>
-          </div>
-        </div>
-        <button type="button" id="btnCopy" title="複製選取 (Ctrl+D)" data-i18n-title="tip_copy">複製</button>
-        <button type="button" id="btnUndo" title="復原 (Ctrl+Z)" data-i18n-title="tip_undo">↩</button>
-        <button type="button" id="btnRedo" title="重做 (Ctrl+Y)" data-i18n-title="tip_redo">↪</button>
-        <button type="button" id="btnDelete" title="刪除 (Delete)" data-i18n-title="tip_delete">刪除</button>
-        <button type="button" id="btnClearAll" title="清除整個圖形" data-i18n-title="tip_clear">清除</button>
-        <button type="button" id="btnSave" title="儲存 JSON" data-i18n-title="tip_save">儲存</button>
-        <button type="button" id="btnLoad" title="開啟 JSON" data-i18n-title="tip_load">開啟</button>
-        <div class="menu-wrap">
-          <button type="button" id="btnExportMenu" class="menu-btn" title="匯出選項" data-i18n-title="tip_export_menu" aria-haspopup="true" aria-expanded="false" data-i18n="btn_export_menu">匯出 ▾</button>
-          <div class="menu-panel" id="exportMenu" hidden>
-            <button type="button" id="btnExportCrop" title="自選範圍匯出：拖曳框選裁切範圍" data-i18n-title="tip_export_crop" data-tool="exportCrop" data-i18n="btn_export_crop">框選匯出</button>
-            <button type="button" id="btnClearExportCrop" title="清除自選匯出範圍" data-i18n-title="tip_clear_crop" hidden data-i18n="btn_clear_crop">清除裁切</button>
-            <button type="button" id="btnExportPreview" title="預覽匯出效果（若有裁切則只預覽該區）" data-i18n-title="tip_preview" data-i18n="btn_preview">預覽匯出</button>
-            <button type="button" id="btnExportPng" title="匯出 PNG（Chrome／Edge 可選資料夾與檔名）" data-i18n-title="tip_export_png">PNG</button>
-            <button type="button" id="btnExportSvg" title="匯出 SVG（Chrome／Edge 可選資料夾與檔名）" data-i18n-title="tip_export_svg">SVG</button>
-            <label class="check-opt menu-check" title="匯出 PNG／SVG 時隱藏頂點圓點（預設開啟）" data-i18n-title="tip_hide_pts">
-              <input type="checkbox" id="chkHideExportPoints" checked /> <span data-i18n="chk_hide_pts">匯出隱藏點</span>
-            </label>
-          </div>
-        </div>
-        <button type="button" id="btnShortcuts" title="快捷鍵一覽 (?)" data-i18n-title="tip_shortcuts">?</button>
-        <input type="file" id="fileInput" accept="application/json,.json" hidden />
-      </div>
-    </header>
-
     <div class="body-row">
       <aside class="tool-rail" role="toolbar" aria-label="繪圖工具" data-i18n-aria="aria_toolbar_tools">
         <div class="rail-section" data-group="draw">
@@ -1422,7 +1449,7 @@ body.dark-canvas .coord-curve-row {
           <button type="button" class="tool" data-tool="sector" title="扇形／弧段：圓心 → 起點 → 終點；工具列切換弧／扇形 (A)" data-i18n-title="tip_tool_sector">
             <span class="icon">◔</span><span class="label" data-i18n="tool_sector">扇弧</span>
           </button>
-          <button type="button" class="tool" data-tool="fill" title="填色：依序點頂點圍封閉區（考試陰影）" data-i18n-title="tip_tool_fill">
+          <button type="button" class="tool" data-tool="fill" title="填色：依序點頂點，再點起點完成" data-i18n-title="tip_tool_fill">
             <span class="icon">▣</span><span class="label" data-i18n="tool_fill">填色</span>
           </button>
           <button type="button" class="tool" data-tool="label" title="標籤：左鍵自訂／右鍵直接套預設" data-i18n-title="tip_tool_label">
@@ -1486,6 +1513,131 @@ body.dark-canvas .coord-curve-row {
 
       <main class="workspace">
         <canvas id="canvas" tabindex="0" aria-label="繪圖畫布" data-i18n-aria="aria_canvas"></canvas>
+
+        <!-- Overlay chrome: does not reserve layout height -->
+        <header class="chrome-overlay toolbar" role="toolbar" aria-label="屬性與檔案" data-i18n-aria="aria_toolbar_props">
+          <div class="chrome-cluster chrome-brand">
+            <div class="brand">
+              <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
+              <div class="brand-text">
+                <span class="brand-name">Simple Diagram</span>
+                <span class="brand-sub">v13.3.1</span>
+              </div>
+            </div>
+            <div class="tool-group" data-group="lang">
+              <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
+              <button type="button" id="btnLangEn" class="lang-btn" data-lang="en" title="English UI" data-i18n-title="tip_lang_en">EN</button>
+            </div>
+          </div>
+
+          <div class="chrome-cluster chrome-actions">
+            <div class="tool-group" data-group="templates">
+              <div class="menu-wrap">
+                <button type="button" id="btnTemplateMenu" class="menu-btn" title="常用平面／立體模板" data-i18n-title="tip_templates" aria-haspopup="true" aria-expanded="false">模板 ▾</button>
+                <div class="menu-panel menu-panel-wide" id="templateMenu" hidden>
+                  <div class="menu-section-title">平面</div>
+                  <button type="button" data-tpl="rightTri">直角三角形</button>
+                  <button type="button" data-tpl="isoTri">等腰三角形</button>
+                  <button type="button" data-tpl="parallelogram">平行四邊形</button>
+                  <button type="button" data-tpl="trapezoid">梯形</button>
+                  <button type="button" data-tpl="pentagon">正五邊形</button>
+                  <button type="button" data-tpl="circleCenter">圓＋圓心</button>
+                  <div class="menu-section-title">立體</div>
+                  <button type="button" data-tpl="tetra">四面體</button>
+                  <button type="button" data-tpl="pyramid">正方錐</button>
+                  <button type="button" data-tpl="altBase">高到底</button>
+                  <button type="button" data-tpl="triPrism">三棱柱</button>
+                  <button type="button" data-tpl="cuboid">長方體</button>
+                  <button type="button" data-tpl="cylinder">圓柱</button>
+                  <button type="button" data-tpl="cone">圓錐</button>
+                  <div class="menu-section-title">自訂</div>
+                  <div id="customTplList" class="custom-tpl-list"></div>
+                  <p class="menu-empty" id="customTplEmpty">尚無自訂模板</p>
+                </div>
+              </div>
+              <button type="button" id="btnSaveTemplate" title="將目前選取存為自訂模板" data-i18n-title="tip_save_tpl">存為模板</button>
+            </div>
+
+            <div class="tool-group" data-group="view">
+              <label class="check-opt" title="開啟網格顯示與格點吸附（預設開啟）" data-i18n-title="tip_grid">
+                <input type="checkbox" id="chkGridSnap" checked /> <span data-i18n="chk_grid">網格</span>
+              </label>
+              <select id="gridModeSelect" title="網格樣式" data-i18n-title="tip_grid_mode" data-i18n-aria="aria_grid_mode" aria-label="網格樣式">
+                <option value="square" data-i18n="grid_square">方格</option>
+                <option value="triangle" selected data-i18n="grid_triangle">三角格</option>
+              </select>
+              <label class="check-opt" title="深色畫布（僅編輯；匯出仍為白底黑線）" data-i18n-title="tip_dark">
+                <input type="checkbox" id="chkDarkCanvas" /> <span data-i18n="chk_dark">深色畫布</span>
+              </label>
+              <div class="menu-wrap">
+                <button type="button" id="btnRecentMenu" class="menu-btn" title="最近開啟的專案" data-i18n-title="tip_recent" aria-haspopup="true" aria-expanded="false">最近 ▾</button>
+                <div class="menu-panel menu-panel-wide" id="recentMenu" hidden>
+                  <div class="menu-section-title">最近開啟</div>
+                  <div id="recentList" class="custom-tpl-list"></div>
+                  <p class="menu-empty" id="recentEmpty">尚無記錄</p>
+                  <div class="menu-section-title">備份</div>
+                  <button type="button" id="btnRestoreBackup">還原自動備份</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="tool-group" data-group="edit">
+              <button type="button" id="btnCopy" title="複製選取 (Ctrl+D)" data-i18n-title="tip_copy">複製</button>
+              <button type="button" id="btnUndo" title="復原 (Ctrl+Z)" data-i18n-title="tip_undo">↩</button>
+              <button type="button" id="btnRedo" title="重做 (Ctrl+Y)" data-i18n-title="tip_redo">↪</button>
+              <button type="button" id="btnDelete" title="刪除 (Delete)" data-i18n-title="tip_delete">刪除</button>
+              <button type="button" id="btnClearAll" title="清除整個圖形" data-i18n-title="tip_clear">清除</button>
+            </div>
+
+            <div class="tool-group" data-group="file">
+              <button type="button" id="btnSave" title="儲存 JSON" data-i18n-title="tip_save">儲存</button>
+              <button type="button" id="btnLoad" title="開啟 JSON" data-i18n-title="tip_load">開啟</button>
+              <div class="menu-wrap">
+                <button type="button" id="btnExportMenu" class="menu-btn" title="匯出選項" data-i18n-title="tip_export_menu" aria-haspopup="true" aria-expanded="false" data-i18n="btn_export_menu">匯出 ▾</button>
+                <div class="menu-panel" id="exportMenu" hidden>
+                  <button type="button" id="btnExportCrop" title="自選範圍匯出：拖曳框選裁切範圍" data-i18n-title="tip_export_crop" data-tool="exportCrop" data-i18n="btn_export_crop">框選匯出</button>
+                  <button type="button" id="btnClearExportCrop" title="清除自選匯出範圍" data-i18n-title="tip_clear_crop" hidden data-i18n="btn_clear_crop">清除裁切</button>
+                  <button type="button" id="btnExportPreview" title="預覽匯出效果（若有裁切則只預覽該區）" data-i18n-title="tip_preview" data-i18n="btn_preview">預覽匯出</button>
+                  <button type="button" id="btnExportPng" title="匯出 PNG（Chrome／Edge 可選資料夾與檔名）" data-i18n-title="tip_export_png">PNG</button>
+                  <button type="button" id="btnExportSvg" title="匯出 SVG（Chrome／Edge 可選資料夾與檔名）" data-i18n-title="tip_export_svg">SVG</button>
+                  <label class="check-opt menu-check" title="匯出 PNG／SVG 時隱藏頂點圓點（預設開啟）" data-i18n-title="tip_hide_pts">
+                    <input type="checkbox" id="chkHideExportPoints" checked /> <span data-i18n="chk_hide_pts">匯出隱藏點</span>
+                  </label>
+                </div>
+              </div>
+              <button type="button" id="btnShortcuts" title="快捷鍵一覽 (?)" data-i18n-title="tip_shortcuts">?</button>
+              <input type="file" id="fileInput" accept="application/json,.json" hidden />
+            </div>
+          </div>
+        </header>
+
+        <!-- Contextual floats beside left rail -->
+        <div class="float-stack" id="floatStack">
+          <div class="float-panel float-style" id="styleFloat" hidden>
+            <span class="float-title" data-i18n="group_props">屬性</span>
+            <button type="button" class="style-btn active" data-style="solid" title="實線" data-i18n-title="tip_style_solid">━━</button>
+            <button type="button" class="style-btn" data-style="dashed" title="虛線（隱藏邊）" data-i18n-title="tip_style_dashed">┈┈</button>
+            <button type="button" class="style-btn" data-style="dotted" title="點線（構造）" data-i18n-title="tip_style_dotted">····</button>
+            <button type="button" class="style-btn" data-style="dashdot" title="點劃線" data-i18n-title="tip_style_dashdot">─·─</button>
+            <select id="labelSizeSelect" title="標籤字級" data-i18n-title="tip_label_size" data-i18n-aria="aria_label_size" aria-label="標籤字級"></select>
+            <select id="rightAngleSizeSelect" title="直角／角弧大小" data-i18n-title="tip_mark_size" data-i18n-aria="aria_mark_size" aria-label="記號大小">
+              <option value="7">小</option>
+              <option value="10" selected>中</option>
+              <option value="14">大</option>
+              <option value="18">特大</option>
+            </select>
+          </div>
+          <div class="float-panel float-fill" id="fillFloat" hidden>
+            <span class="fill-swatch-bar" id="fillPresetBar" title="填色陰影透明度" data-i18n-title="tip_fill_bar">
+              <button type="button" class="fill-swatch" data-fill-key="g10" title="灰影 10%" data-i18n-title="tip_fill_g10" style="--swatch:rgba(102,102,102,0.10)" aria-label="10%"></button>
+              <button type="button" class="fill-swatch active" data-fill-key="g20" title="灰影 20%" data-i18n-title="tip_fill_g20" style="--swatch:rgba(102,102,102,0.20)" aria-label="20%"></button>
+              <button type="button" class="fill-swatch" data-fill-key="g35" title="灰影 35%" data-i18n-title="tip_fill_g35" style="--swatch:rgba(102,102,102,0.35)" aria-label="35%"></button>
+              <button type="button" class="fill-swatch" data-fill-key="g50" title="灰影 50%" data-i18n-title="tip_fill_g50" style="--swatch:rgba(102,102,102,0.50)" aria-label="50%"></button>
+              <button type="button" class="fill-swatch" data-fill-key="bg22" title="藍灰影 22%" data-i18n-title="tip_fill_bg" style="--swatch:rgba(107,135,153,0.22)" aria-label="blue-gray"></button>
+            </span>
+          </div>
+        </div>
+
         <div id="status" class="status" role="status">
           <span id="statusTool">工具：選取</span>
           <span id="statusSnap">吸附：—</span>
@@ -1686,7 +1838,7 @@ body.dark-canvas .coord-curve-row {
     </form>
   </dialog>
 
-<script>
+  <script>
 /**
  * Simple Diagram editor (vanilla canvas)
  * Wilson Li — hand-drawn 3D exam geometry sketches
@@ -2019,9 +2171,9 @@ body.dark-canvas .coord-curve-row {
       hint_perpendicular: "點選既有點後向下拖曳定長（點線；放開完成）",
       hint_parallel: "點線段：左鍵＝單箭 · 右鍵＝雙箭（工具列「單／雙」或 G 可預設）",
       hint_equal: "點線段：左鍵＝單劃 · 右鍵＝雙劃（工具列「單／雙」或 G 可預設）",
-      hint_fill: "依序點既有頂點 ≥3；Enter／雙擊／再點起點關閉 · 頂欄選透明度",
+      hint_fill: "依序點頂點，再點起點完成",
       fill_need_point: "請點選既有頂點",
-      fill_need_more: "再點頂點（≥3）後 Enter／雙擊／起點關閉",
+      fill_need_more: "依序點頂點（≥3），再點起點完成",
       fill_closed: "已填色",
       tip_fill_g10: "灰影 10%",
       tip_fill_g20: "灰影 20%",
@@ -2093,7 +2245,7 @@ body.dark-canvas .coord-curve-row {
       tip_mark_double: "雙箭／雙劃（G）",
       tip_mark_flip: "記號翻面（選取平行／等長記號後）",
       tip_tool_length: "線段長度標註（例：6）",
-      tip_tool_fill: "填色：依序點頂點圍封閉區（考試陰影）",
+      tip_tool_fill: "填色：依序點頂點，再點起點完成",
       tip_preview_crop: "關閉後拖曳框選匯出範圍",
       tip_preview_clear_crop: "改回自動裁切整圖",
       tip_preview_png: "儲存 PNG（Chrome／Edge 可選資料夾與檔名）",
@@ -2186,9 +2338,9 @@ body.dark-canvas .coord-curve-row {
       hint_perpendicular: "Pick a point, drag down for length (dotted)",
       hint_parallel: "Click segment: LMB single · RMB double chevron",
       hint_equal: "Click segment: LMB single · RMB double tick",
-      hint_fill: "Click existing vertices ≥3; Enter / double-click / first point to close",
+      hint_fill: "Click vertices in order, then click the start point to finish",
       fill_need_point: "Click an existing vertex",
-      fill_need_more: "Add vertices (≥3), then Enter / double-click / first point",
+      fill_need_more: "Click vertices in order (≥3), then click the start point",
       fill_closed: "Fill added",
       tip_fill_g10: "Gray shade 10%",
       tip_fill_g20: "Gray shade 20%",
@@ -2260,7 +2412,7 @@ body.dark-canvas .coord-curve-row {
       tip_mark_double: "Double chevron/tick (G)",
       tip_mark_flip: "Flip mark (select parallel/equal mark first)",
       tip_tool_length: "Segment length label (e.g. 6)",
-      tip_tool_fill: "Fill: click vertices in order to shade a closed region",
+      tip_tool_fill: "Fill: click vertices in order, then click the start point to finish",
       tip_preview_crop: "Close, then drag a crop box",
       tip_preview_clear_crop: "Back to auto crop of whole figure",
       tip_preview_png: "Save PNG (Chrome/Edge: pick folder & name)",
@@ -2997,10 +3149,36 @@ body.dark-canvas .coord-curve-row {
     document.querySelectorAll("[data-fill-key]").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.fillKey === activeFillKey);
     });
-    const bar = document.getElementById("fillPresetBar");
-    if (bar) {
-      const selFill = selection.some((s) => s.type === "fill");
-      bar.classList.toggle("is-dim", tool !== "fill" && !selFill);
+    syncContextualFloats();
+  }
+
+  const STROKE_TOOLS = new Set([
+    "line",
+    "horizontal",
+    "perpendicular",
+    "circle",
+    "ellipse",
+    "sector",
+  ]);
+  const STROKE_SEL_TYPES = new Set(["segment", "circle", "ellipse", "sector"]);
+  const SIZE_TOOLS = new Set(["label", "rightAngle", "angleArc", "reflex"]);
+  const SIZE_SEL_TYPES = new Set(["label", "rightAngle", "angleArc"]);
+
+  /** Show/hide line-style + fill floats beside the left rail. */
+  function syncContextualFloats() {
+    const styleFloat = document.getElementById("styleFloat");
+    const fillFloat = document.getElementById("fillFloat");
+    if (styleFloat) {
+      const strokeSel = selection.some((s) => STROKE_SEL_TYPES.has(s.type));
+      const sizeSel = selection.some((s) => SIZE_SEL_TYPES.has(s.type));
+      const showStyle =
+        STROKE_TOOLS.has(tool) ||
+        SIZE_TOOLS.has(tool) ||
+        (tool === "select" && (strokeSel || sizeSel));
+      styleFloat.hidden = !showStyle;
+    }
+    if (fillFloat) {
+      fillFloat.hidden = tool !== "fill";
     }
   }
 
@@ -3115,8 +3293,16 @@ body.dark-canvas .coord-curve-row {
   }
 
   function handleFillClick(world) {
-    // MVP: only existing vertices (exam solids already have corners)
-    const sn = nearestPointHit(world.x, world.y);
+    // Prefer start vertex when closing so nearby last-point doesn't steal the hit
+    let sn = null;
+    if (draft && draft.kind === "fill" && draft.pointIds && draft.pointIds.length >= 3) {
+      const start = pointById(draft.pointIds[0]);
+      if (start) {
+        const thresh = (HIT_POINT * 1.35) / view.scale;
+        if (dist(start, world) <= thresh) sn = start;
+      }
+    }
+    if (!sn) sn = nearestPointHit(world.x, world.y);
     if (!sn || !sn.id) {
       statusHint.textContent = t("fill_need_point");
       return;
@@ -3128,19 +3314,22 @@ body.dark-canvas .coord-curve-row {
       draw();
       return;
     }
-    // Close by clicking first point again
+    // Primary close: re-click first selected point (≥3 vertices)
     if (draft.pointIds.length >= 3 && pid === draft.pointIds[0]) {
       commitFillDraft();
       return;
     }
     if (pid === draft.pointIds[draft.pointIds.length - 1]) return;
-    // Avoid immediate revisit of non-first points mid-chain (allow if closing)
+    if (draft.pointIds.includes(pid) && pid !== draft.pointIds[0]) {
+      // Mid-chain revisit of a non-start vertex: ignore (keep order simple)
+      statusHint.textContent =
+        draft.pointIds.length >= 3 ? t("hint_fill") : t("fill_need_more");
+      return;
+    }
     draft.pointIds.push(pid);
     draft.cursor = { x: world.x, y: world.y };
     statusHint.textContent =
-      draft.pointIds.length >= 3
-        ? t("hint_fill")
-        : t("fill_need_more");
+      draft.pointIds.length >= 3 ? t("hint_fill") : t("fill_need_more");
     draw();
   }
 
@@ -3287,6 +3476,7 @@ body.dark-canvas .coord-curve-row {
     syncMarkGroupUI();
     syncSectorModeUI();
     syncFillPresetUI();
+    syncContextualFloats();
     updateStatus();
     draw();
   }
@@ -9462,7 +9652,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: 13.3,
+      version: "13.3.1",
       app: "simple-diagram",
       points,
       segments,
@@ -11534,6 +11724,6 @@ ${body}</svg>`;
   };
 })();
 
-</script>
+  </script>
 </body>
 </html>
