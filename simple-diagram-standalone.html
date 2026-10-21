@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.2" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.2.1" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -644,6 +644,16 @@ dialog {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
+/* Author `display` on dialog (e.g. .coord-dialog) must not override UA hide-when-closed. */
+dialog:not([open]) {
+  display: none !important;
+}
+
+dialog[open] {
+  /* Keep modal centered in the viewport (not stuck in page flow). */
+  margin: auto;
+}
+
 dialog::backdrop {
   background: rgba(40, 38, 34, 0.35);
 }
@@ -825,8 +835,12 @@ body.dark-canvas .shortcut-row .sk-key {
   padding: 16px 18px 12px;
   overflow-x: hidden;
   overflow-y: auto;
-  display: flex;
   flex-direction: column;
+}
+
+/* Only apply flex layout when open — never force display on a closed <dialog>. */
+.coord-dialog[open] {
+  display: flex;
 }
 
 .coord-form {
@@ -1207,7 +1221,7 @@ body.dark-canvas .coord-curve-row {
     <header class="top-bar toolbar" role="toolbar" aria-label="屬性與檔案" data-i18n-aria="aria_toolbar_props">
       <div class="brand">
         <span class="brand-name">Simple Diagram</span>
-        <span class="brand-sub">v13.2</span>
+        <span class="brand-sub">v13.2.1</span>
       </div>
       <div class="tool-group" data-group="lang">
         <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
@@ -9027,7 +9041,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: 13.2,
+      version: 13.21,
       app: "simple-diagram",
       points,
       segments,
