@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.3.2" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.3.3" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -1452,7 +1452,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.3.2</span>
+            <span class="brand-sub">v13.3.3</span>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -1502,6 +1502,9 @@ body.dark-canvas .coord-curve-row {
           </button>
           <button type="button" class="tool" data-tool="perpendicular" title="垂線：點選一點後向下拖曳定長" data-i18n-title="tip_tool_perpendicular">
             <span class="icon">↓</span><span class="label" data-i18n="tool_perpendicular">垂線</span>
+          </button>
+          <button type="button" class="tool" data-tool="tangent" title="圓的切線：點圓周上（或近圓周）後拖曳定長" data-i18n-title="tip_tool_tangent">
+            <span class="icon">⊤</span><span class="label" data-i18n="tool_tangent">切線</span>
           </button>
           <button type="button" class="tool" data-tool="coord" title="座標軸：點選原點位置；可加曲線" data-i18n-title="tip_tool_coord">
             <span class="icon">⊥</span><span class="label" data-i18n="tool_coord">座標</span>
@@ -1929,6 +1932,7 @@ body.dark-canvas .coord-curve-row {
   // ——— Constants ———
   const PERP_MIN_PX = 12;
   const HORIZ_MIN_PX = 12;
+  const TANGENT_MIN_PX = 24;
   const GRID_SIZE = 20;
   const SNAP_PX = 14;
   const POINT_R = 3.2;
@@ -1970,6 +1974,7 @@ body.dark-canvas .coord-curve-row {
     equal: "等長記號",
     length: "長度標註",
     perpendicular: "垂線",
+    tangent: "切線",
     reflex: "優角",
     coord: "座標圖",
   };
@@ -2128,6 +2133,7 @@ body.dark-canvas .coord-curve-row {
       tool_exportCrop: "框選", tool_label: "標籤", tool_intersect: "交點",
       tool_rightAngle: "直角", tool_angleArc: "角弧", tool_midTick: "中點", tool_ratio: "比例",
       tool_parallel: "平行", tool_equal: "等長", tool_length: "長度", tool_perpendicular: "垂線",
+      tool_tangent: "切線",
       tool_reflex: "優角", tool_coord: "座標", tool_fill: "填色",
       group_templates: "模板", group_props: "屬性", group_view: "檢視／匯出",
       rail_draw: "繪", rail_construct: "構", rail_marks: "記",
@@ -2260,6 +2266,10 @@ body.dark-canvas .coord-curve-row {
       tip_tool_ratio: "比例分點 (R)",
       tip_tool_horizontal: "水平線：點選一點後左右拖曳定長 (H)",
       tip_tool_perpendicular: "垂線：點選一點後向下拖曳定長",
+      tip_tool_tangent: "圓的切線：點圓周上（或近圓周）後拖曳定長；可再拖端點調整",
+      hint_tangent: "點圓周上（或近圓周），拖曳設定切線長度",
+      tangent_need_circle: "請點選圓或圓周上的點",
+      tangent_too_short: "拖曳太短，已取消",
       tip_tool_coord: "座標軸：點選原點位置；可加曲線",
       tip_tool_rightAngle: "直角記號",
       tip_tool_angleArc: "角弧：非直角的弧線記號",
@@ -2295,6 +2305,7 @@ body.dark-canvas .coord-curve-row {
       tool_exportCrop: "Crop", tool_label: "Label", tool_intersect: "Xsect",
       tool_rightAngle: "Right", tool_angleArc: "Angle", tool_midTick: "Mid", tool_ratio: "Ratio",
       tool_parallel: "Par", tool_equal: "Equal", tool_length: "Len", tool_perpendicular: "Perp",
+      tool_tangent: "Tan",
       tool_reflex: "Reflex", tool_coord: "Axes", tool_fill: "Fill",
       group_templates: "Templates", group_props: "Props", group_view: "View / Export",
       rail_draw: "Draw", rail_construct: "Build", rail_marks: "Mark",
@@ -2427,6 +2438,10 @@ body.dark-canvas .coord-curve-row {
       tip_tool_ratio: "Ratio point (R)",
       tip_tool_horizontal: "Horizontal: pick a point, drag left/right for length (H)",
       tip_tool_perpendicular: "Perpendicular: pick a point, drag down for length",
+      tip_tool_tangent: "Circle tangent: click on (or near) the circle, then drag for length; drag ends to adjust",
+      hint_tangent: "Click on the circle (or near it), drag to set tangent length",
+      tangent_need_circle: "Click a circle or a point on a circle",
+      tangent_too_short: "Drag too short — cancelled",
       tip_tool_coord: "Axes: click origin; optional curves",
       tip_tool_rightAngle: "Right-angle mark",
       tip_tool_angleArc: "Angle arc mark (non-right angle)",
@@ -3178,6 +3193,7 @@ body.dark-canvas .coord-curve-row {
     "line",
     "horizontal",
     "perpendicular",
+    "tangent",
     "circle",
     "ellipse",
     "sector",
@@ -3488,6 +3504,7 @@ body.dark-canvas .coord-curve-row {
       ratio: t("hint_ratio"),
       length: t("hint_length"),
       perpendicular: t("hint_perpendicular"),
+      tangent: t("hint_tangent"),
       fill: t("hint_fill"),
     };
     statusHint.textContent = hints[tool] || "";
@@ -3984,6 +4001,48 @@ body.dark-canvas .coord-curve-row {
       }
     }
     return best;
+  }
+
+  function circleGeomBasic(cir) {
+    if (!cir) return null;
+    const c = pointById(cir.centerId);
+    const thr = pointById(cir.throughId);
+    if (!c || !thr) return null;
+    const r = dist(c, thr);
+    if (r < 1e-9) return null;
+    return { c, r };
+  }
+
+  function pointLiesOnCircle(cir, p, eps) {
+    const g = circleGeomBasic(cir);
+    if (!g || !p) return false;
+    const tol = eps != null ? eps : 3 / view.scale;
+    return Math.abs(dist(g.c, p) - g.r) <= tol;
+  }
+
+  function projectOntoCircle(cir, wx, wy) {
+    const g = circleGeomBasic(cir);
+    if (!g) return null;
+    const dx = wx - g.c.x;
+    const dy = wy - g.c.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-9) return { x: g.c.x + g.r, y: g.c.y };
+    return { x: g.c.x + (dx / len) * g.r, y: g.c.y + (dy / len) * g.r };
+  }
+
+  /** Unit tangent (±) at point p on circle (perpendicular to radius). */
+  function tangentUnitAt(cir, p) {
+    const g = circleGeomBasic(cir);
+    if (!g || !p) return null;
+    const ux = (p.x - g.c.x) / g.r;
+    const uy = (p.y - g.c.y) / g.r;
+    return { tx: -uy, ty: ux };
+  }
+
+  function circlesThroughPoint(p) {
+    if (!p) return [];
+    const eps = 3 / view.scale;
+    return circles.filter((cir) => pointLiesOnCircle(cir, p, eps));
   }
 
   function nearestEllipseHit(wx, wy) {
@@ -7504,6 +7563,37 @@ body.dark-canvas .coord-curve-row {
         ctx.fill();
       }
     }
+    if (draft.kind === "tangent" && draft.touch) {
+      const p = draft.pointId ? pointById(draft.pointId) : draft.touch;
+      const cir = circles.find((c) => c.id === draft.circleId);
+      const tan = p && cir ? tangentUnitAt(cir, p) : null;
+      const half = Math.abs(Number(draft.halfLen) || 0);
+      if (p && tan) {
+        const a = { x: p.x - half * tan.tx, y: p.y - half * tan.ty };
+        const b = { x: p.x + half * tan.tx, y: p.y + half * tan.ty };
+        const s0 = worldToScreen(a.x, a.y);
+        const s1 = worldToScreen(b.x, b.y);
+        const sp = worldToScreen(p.x, p.y);
+        ctx.beginPath();
+        ctx.moveTo(s0.x, s0.y);
+        ctx.lineTo(s1.x, s1.y);
+        ctx.strokeStyle = "rgba(42,122,176,0.75)";
+        ctx.lineWidth = LINE_WIDTH;
+        ctx.setLineDash([5, 4]);
+        ctx.lineCap = "round";
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, POINT_R + 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(42,122,176,0.9)";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(s0.x, s0.y, POINT_R + 0.5, 0, Math.PI * 2);
+        ctx.arc(s1.x, s1.y, POINT_R + 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(42,122,176,0.7)";
+        ctx.fill();
+      }
+    }
     if (draft.kind === "circle" && draft.centerId && draft.cursor) {
       const c = pointById(draft.centerId);
       if (c) {
@@ -8268,6 +8358,52 @@ body.dark-canvas .coord-curve-row {
       return;
     }
 
+    if (tool === "tangent") {
+      e.preventDefault();
+      let cir = null;
+      let pid = null;
+      let touch = null;
+      const pHit = nearestPointHit(world.x, world.y);
+      if (pHit) {
+        const ons = circlesThroughPoint(pHit);
+        if (ons.length) {
+          cir = ons[0];
+          pid = pHit.id;
+          touch = { x: pHit.x, y: pHit.y };
+        }
+      }
+      if (!cir) {
+        cir = nearestCircleHit(world.x, world.y);
+        if (!cir) {
+          statusHint.textContent = t("tangent_need_circle");
+          return;
+        }
+        touch = projectOntoCircle(cir, world.x, world.y);
+        if (!touch) {
+          statusHint.textContent = t("tangent_need_circle");
+          return;
+        }
+        const near = nearestPointHit(touch.x, touch.y);
+        if (near && pointLiesOnCircle(cir, near, HIT_POINT / view.scale)) {
+          pid = near.id;
+          touch = { x: near.x, y: near.y };
+        }
+      }
+      draft = {
+        kind: "tangent",
+        circleId: cir.id,
+        pointId: pid,
+        touch,
+        halfLen: 0,
+        cursor: { x: touch.x, y: touch.y },
+        pointerId: e.pointerId,
+        button: e.button,
+      };
+      statusHint.textContent = t("hint_tangent");
+      draw();
+      return;
+    }
+
     if (tool === "circle") {
       const sn = snapWorld(world.x, world.y) || nearestPointHit(world.x, world.y);
       if (!draft || draft.kind !== "circle") {
@@ -8413,6 +8549,52 @@ body.dark-canvas .coord-curve-row {
     setSelection(
       seg ? [{ type: "segment", id: seg.id }] : [{ type: "point", id: endId }]
     );
+    updateStatus();
+    draw();
+  }
+
+  function finishTangent() {
+    if (!draft || draft.kind !== "tangent") return;
+    const cir = circles.find((c) => c.id === draft.circleId);
+    const touch = draft.touch ? { x: draft.touch.x, y: draft.touch.y } : null;
+    const existingPid = draft.pointId || null;
+    const halfLen = Math.abs(Number(draft.halfLen) || 0);
+    const style = lineStyle || "solid";
+    draft = null;
+    if (!cir || !touch) {
+      updateStatus();
+      draw();
+      return;
+    }
+    const minHalf = TANGENT_MIN_PX / view.scale / 2;
+    if (halfLen < minHalf) {
+      statusHint.textContent = t("tangent_too_short");
+      updateStatus();
+      draw();
+      return;
+    }
+    const tan = tangentUnitAt(cir, touch);
+    if (!tan) {
+      statusHint.textContent = t("tangent_need_circle");
+      updateStatus();
+      draw();
+      return;
+    }
+    pushHistory();
+    let pid = existingPid;
+    if (pid && !pointById(pid)) pid = null;
+    if (!pid) {
+      const eps = HIT_POINT / view.scale;
+      const near = nearestPointHit(touch.x, touch.y);
+      if (near && pointLiesOnCircle(cir, near, eps)) pid = near.id;
+      else pid = addPoint(touch.x, touch.y, true).id;
+    }
+    const p = pointById(pid) || touch;
+    const aId = addPoint(p.x - halfLen * tan.tx, p.y - halfLen * tan.ty, true).id;
+    const bId = addPoint(p.x + halfLen * tan.tx, p.y + halfLen * tan.ty, true).id;
+    const seg = addSegment(aId, bId, style, true);
+    history[histIndex] = snapshot();
+    setSelection(seg ? [{ type: "segment", id: seg.id }] : [{ type: "point", id: aId }]);
     updateStatus();
     draw();
   }
@@ -8671,6 +8853,21 @@ body.dark-canvas .coord-curve-row {
       return;
     }
 
+    if (draft && draft.kind === "tangent" && draft.touch) {
+      const p = draft.pointId ? pointById(draft.pointId) : draft.touch;
+      const cir = circles.find((c) => c.id === draft.circleId);
+      const tan = p && cir ? tangentUnitAt(cir, p) : null;
+      if (p && tan) {
+        const vx = world.x - p.x;
+        const vy = world.y - p.y;
+        const half = vx * tan.tx + vy * tan.ty;
+        draft.halfLen = half;
+        draft.cursor = { x: p.x + half * tan.tx, y: p.y + half * tan.ty };
+      }
+      draw();
+      return;
+    }
+
     if (draft && draft.kind === "exportCrop") {
       draft.x1 = world.x;
       draft.y1 = world.y;
@@ -8781,6 +8978,14 @@ body.dark-canvas .coord-curve-row {
         if (draft.button != null && e.button !== draft.button) return;
       }
       finishHorizontal();
+      return;
+    }
+    if (draft && draft.kind === "tangent") {
+      if (e) {
+        if (draft.pointerId != null && e.pointerId !== draft.pointerId) return;
+        if (draft.button != null && e.button !== draft.button) return;
+      }
+      finishTangent();
       return;
     }
     if (draft && draft.kind === "boxSelect") {
@@ -9677,7 +9882,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.3.2",
+      version: "13.3.3",
       app: "simple-diagram",
       points,
       segments,
