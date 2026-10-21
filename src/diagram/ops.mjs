@@ -1,8 +1,6 @@
 import { emptyDiagram, cloneDoc } from "./empty-doc.mjs";
 import { createIdFactory } from "./ids.mjs";
 import { applyBuiltinTemplate, BUILTIN_TEMPLATE_IDS } from "./templates.mjs";
-import { applyBuiltinTemplate } from "./apply-template.mjs";
-import { BUILTIN_TEMPLATES } from "./templates.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -783,30 +781,6 @@ const HANDLERS = {
     return doc;
   },
 
-  /**
-   * Insert a UI builtin template (rightTri, frustum, circleGeom, …).
-   * Cells → world via cellSize (default 20). Optional dx/dy/scale/idPrefix.
-   */
-  insertTemplate(doc, op) {
-    const id = op.id || op.templateId || op.template;
-    if (!id) throw new Error("insertTemplate: id required");
-    if (!BUILTIN_TEMPLATES[id]) {
-      throw new Error(
-        `insertTemplate: unknown id "${id}". Known: ${Object.keys(BUILTIN_TEMPLATES).join(", ")}`
-      );
-    }
-    applyBuiltinTemplate(doc, id, {
-      dx: op.dx,
-      dy: op.dy,
-      scale: op.scale,
-      cellSize: op.cellSize,
-      originX: op.originX,
-      originY: op.originY,
-      idPrefix: op.idPrefix,
-    });
-    return doc;
-  },
-
   movePoint(doc, op) {
     const p = doc.points.find((x) => x.id === op.id);
     if (!p) throw new Error(`movePoint: not found: ${op.id}`);
@@ -881,7 +855,6 @@ HANDLERS.addParallel = HANDLERS.addParallelMark;
 HANDLERS.addEqual = HANDLERS.addEqualMark;
 HANDLERS.addLength = HANDLERS.addLengthLabel;
 HANDLERS.addArc = HANDLERS.addAngleArc;
-HANDLERS.addTemplate = HANDLERS.insertTemplate;
 HANDLERS.addTemplate = HANDLERS.insertTemplate;
 
 export const OP_NAMES = Object.keys(HANDLERS).sort();

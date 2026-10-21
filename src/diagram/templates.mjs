@@ -11,6 +11,8 @@ import { createIdFactory } from "./ids.mjs";
 
 /** Cell → world scale matching app.js GRID_SIZE. */
 export const TEMPLATE_CELL_SIZE = 20;
+/** @deprecated alias — prefer TEMPLATE_CELL_SIZE */
+export const TEMPLATE_CELL = TEMPLATE_CELL_SIZE;
 
 /**
  * Copy of app.js BUILTIN_TEMPLATES (geometry only).

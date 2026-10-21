@@ -12,27 +12,18 @@ export { summarizeDiagram, OP_CATALOG } from "./summarize.mjs";
 export {
   BUILTIN_TEMPLATES,
   BUILTIN_TEMPLATE_IDS,
-  TEMPLATE_GROUPS,
+  TEMPLATE_CELL_SIZE,
+  TEMPLATE_CELL_SIZE as TEMPLATE_CELL,
   listBuiltinTemplates,
-  TEMPLATE_CELL,
+  applyBuiltinTemplate,
 } from "./templates.mjs";
-export { applyBuiltinTemplate } from "./apply-template.mjs";
 export {
   MACRO_NAMES,
-  MACRO_HANDLERS,
-  macroOps,
   runMacro,
   drawRightTriangle,
-  drawRightTriangleFilled,
-  drawIsoTriangle,
-  drawCircleGeom,
-  drawCircleWithTangent,
   drawFrustum,
+  drawCircleWithTangent,
   drawCuboid,
   drawCube,
-  drawRectPrism,
-  drawPyramid,
-  drawCylinder,
-  drawCone,
 } from "./macros.mjs";
 export { documentToSvg } from "./export-svg.mjs";
