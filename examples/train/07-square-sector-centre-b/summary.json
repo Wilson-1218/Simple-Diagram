@@ -1,0 +1,55 @@
+{
+  "name": "07-square-sector-centre-b",
+  "formatVersion": 1,
+  "version": "13.5.1",
+  "counts": {
+    "points": 5,
+    "segments": 5,
+    "labels": 5,
+    "circles": 1,
+    "ellipses": 0,
+    "sectors": 1,
+    "fills": 1,
+    "fillKinds": {
+      "segment": 1
+    },
+    "rightAngles": 4,
+    "angleArcs": 0,
+    "coordPlots": 0,
+    "lengthLabels": 1,
+    "parallelMarks": 0,
+    "equalMarks": 0
+  },
+  "pointIds": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E"
+  ],
+  "segmentIds": [
+    "AB",
+    "BC",
+    "CD",
+    "DA",
+    "BD"
+  ],
+  "circleIds": [
+    "cB"
+  ],
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "gridSnap": true,
+  "gridMode": "triangle"
+}

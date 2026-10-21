@@ -1,0 +1,141 @@
+[
+  {
+    "op": "addPoint",
+    "id": "O",
+    "x": 100,
+    "y": 280
+  },
+  {
+    "op": "addPoint",
+    "id": "A",
+    "x": 100,
+    "y": 100
+  },
+  {
+    "op": "addPoint",
+    "id": "C",
+    "x": 280,
+    "y": 100
+  },
+  {
+    "op": "addPoint",
+    "id": "B",
+    "x": 280,
+    "y": 280
+  },
+  {
+    "op": "addSegment",
+    "id": "OA",
+    "a": "O",
+    "b": "A"
+  },
+  {
+    "op": "addSegment",
+    "id": "AC",
+    "a": "A",
+    "b": "C"
+  },
+  {
+    "op": "addSegment",
+    "id": "CB",
+    "a": "C",
+    "b": "B"
+  },
+  {
+    "op": "addSegment",
+    "id": "BO",
+    "a": "B",
+    "b": "O"
+  },
+  {
+    "op": "addCircle",
+    "id": "cO",
+    "centerId": "O",
+    "throughId": "A"
+  },
+  {
+    "op": "addCircle",
+    "id": "cB",
+    "centerId": "B",
+    "throughId": "C"
+  },
+  {
+    "op": "addSector",
+    "id": "arcAB",
+    "centerId": "O",
+    "startId": "A",
+    "endId": "B",
+    "mode": "arc"
+  },
+  {
+    "op": "addSector",
+    "id": "arcCO",
+    "centerId": "B",
+    "startId": "C",
+    "endId": "O",
+    "mode": "arc"
+  },
+  {
+    "op": "addFill",
+    "kind": "segment",
+    "circleId": "cO",
+    "centerId": "O",
+    "startId": "A",
+    "endId": "B",
+    "opacity": 0.18
+  },
+  {
+    "op": "addFill",
+    "kind": "segment",
+    "circleId": "cB",
+    "centerId": "B",
+    "startId": "C",
+    "endId": "O",
+    "opacity": 0.18
+  },
+  {
+    "op": "addRightAngle",
+    "vertex": "O",
+    "arm1": "A",
+    "arm2": "B"
+  },
+  {
+    "op": "addRightAngle",
+    "vertex": "B",
+    "arm1": "C",
+    "arm2": "O"
+  },
+  {
+    "op": "addLabel",
+    "pointId": "O",
+    "text": "O",
+    "ox": -14,
+    "oy": 14
+  },
+  {
+    "op": "addLabel",
+    "pointId": "A",
+    "text": "A",
+    "ox": -14,
+    "oy": -12
+  },
+  {
+    "op": "addLabel",
+    "pointId": "C",
+    "text": "C",
+    "ox": 14,
+    "oy": -12
+  },
+  {
+    "op": "addLabel",
+    "pointId": "B",
+    "text": "B",
+    "ox": 14,
+    "oy": 14
+  },
+  {
+    "op": "setMeta",
+    "name": "08-two-sectors-perpendicular",
+    "hideExportPoints": true
+  }
+]

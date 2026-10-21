@@ -1,0 +1,54 @@
+{
+  "name": "02-parallelogram-be-fc",
+  "formatVersion": 1,
+  "version": "13.5.1",
+  "counts": {
+    "points": 7,
+    "segments": 6,
+    "labels": 7,
+    "circles": 0,
+    "ellipses": 0,
+    "sectors": 0,
+    "fills": 0,
+    "fillKinds": {},
+    "rightAngles": 0,
+    "angleArcs": 0,
+    "coordPlots": 0,
+    "lengthLabels": 0,
+    "parallelMarks": 4,
+    "equalMarks": 0
+  },
+  "pointIds": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G"
+  ],
+  "segmentIds": [
+    "AB",
+    "BC",
+    "CD",
+    "DA",
+    "BE",
+    "FC"
+  ],
+  "circleIds": [],
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "gridSnap": true,
+  "gridMode": "triangle"
+}

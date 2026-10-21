@@ -1,0 +1,51 @@
+{
+  "name": "06-sector-aob-shaded",
+  "formatVersion": 1,
+  "version": "13.5.1",
+  "counts": {
+    "points": 3,
+    "segments": 3,
+    "labels": 3,
+    "circles": 1,
+    "ellipses": 0,
+    "sectors": 1,
+    "fills": 1,
+    "fillKinds": {
+      "segment": 1
+    },
+    "rightAngles": 0,
+    "angleArcs": 1,
+    "coordPlots": 0,
+    "lengthLabels": 1,
+    "parallelMarks": 0,
+    "equalMarks": 0
+  },
+  "pointIds": [
+    "O",
+    "A",
+    "B"
+  ],
+  "segmentIds": [
+    "OA",
+    "OB",
+    "AB"
+  ],
+  "circleIds": [
+    "c1"
+  ],
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "gridSnap": true,
+  "gridMode": "triangle"
+}

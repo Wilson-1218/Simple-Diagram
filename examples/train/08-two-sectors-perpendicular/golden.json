@@ -1,0 +1,192 @@
+{
+  "formatVersion": 1,
+  "version": "13.5.1",
+  "app": "simple-diagram",
+  "points": [
+    {
+      "id": "O",
+      "x": 100,
+      "y": 280
+    },
+    {
+      "id": "A",
+      "x": 100,
+      "y": 100
+    },
+    {
+      "id": "C",
+      "x": 280,
+      "y": 100
+    },
+    {
+      "id": "B",
+      "x": 280,
+      "y": 280
+    }
+  ],
+  "segments": [
+    {
+      "id": "OA",
+      "a": "O",
+      "b": "A",
+      "style": "solid"
+    },
+    {
+      "id": "AC",
+      "a": "A",
+      "b": "C",
+      "style": "solid"
+    },
+    {
+      "id": "CB",
+      "a": "C",
+      "b": "B",
+      "style": "solid"
+    },
+    {
+      "id": "BO",
+      "a": "B",
+      "b": "O",
+      "style": "solid"
+    }
+  ],
+  "labels": [
+    {
+      "id": "lab_0005",
+      "pointId": "O",
+      "text": "O",
+      "ox": -14,
+      "oy": 14,
+      "size": 16
+    },
+    {
+      "id": "lab_0006",
+      "pointId": "A",
+      "text": "A",
+      "ox": -14,
+      "oy": -12,
+      "size": 16
+    },
+    {
+      "id": "lab_0007",
+      "pointId": "C",
+      "text": "C",
+      "ox": 14,
+      "oy": -12,
+      "size": 16
+    },
+    {
+      "id": "lab_0008",
+      "pointId": "B",
+      "text": "B",
+      "ox": 14,
+      "oy": 14,
+      "size": 16
+    }
+  ],
+  "rightAngles": [
+    {
+      "id": "ra_0003",
+      "vertex": "O",
+      "arm1": "A",
+      "arm2": "B",
+      "size": 10
+    },
+    {
+      "id": "ra_0004",
+      "vertex": "B",
+      "arm1": "C",
+      "arm2": "O",
+      "size": 10
+    }
+  ],
+  "angleArcs": [],
+  "midTicks": [],
+  "parallelMarks": [],
+  "equalMarks": [],
+  "lengthLabels": [],
+  "circles": [
+    {
+      "id": "cO",
+      "centerId": "O",
+      "throughId": "A",
+      "style": "solid"
+    },
+    {
+      "id": "cB",
+      "centerId": "B",
+      "throughId": "C",
+      "style": "solid"
+    }
+  ],
+  "ellipses": [],
+  "sectors": [
+    {
+      "id": "arcAB",
+      "centerId": "O",
+      "startId": "A",
+      "endId": "B",
+      "style": "solid",
+      "mode": "arc"
+    },
+    {
+      "id": "arcCO",
+      "centerId": "B",
+      "startId": "C",
+      "endId": "O",
+      "style": "solid",
+      "mode": "arc"
+    }
+  ],
+  "fills": [
+    {
+      "id": "fill_0001",
+      "kind": "segment",
+      "startId": "A",
+      "endId": "B",
+      "color": "#666666",
+      "opacity": 0.18,
+      "circleId": "cO",
+      "centerId": "O"
+    },
+    {
+      "id": "fill_0002",
+      "kind": "segment",
+      "startId": "C",
+      "endId": "O",
+      "color": "#666666",
+      "opacity": 0.18,
+      "circleId": "cB",
+      "centerId": "B"
+    }
+  ],
+  "coordPlots": [],
+  "exportCrop": null,
+  "sectorMode": "arc",
+  "fillMode": "polygon",
+  "shapeMode": "square",
+  "circlePartMode": "chord",
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "nextLetter": "A",
+  "labelFontSize": 16,
+  "rightAngleSize": 10,
+  "activeParallelGroup": 0,
+  "activeEqualGroup": 0,
+  "activeArcGroup": 0,
+  "gridSnap": true,
+  "gridMode": "triangle",
+  "hideExportPoints": true,
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "name": "08-two-sectors-perpendicular"
+}

@@ -1,0 +1,154 @@
+[
+  {
+    "op": "addPoint",
+    "id": "A",
+    "x": 100,
+    "y": 120
+  },
+  {
+    "op": "addPoint",
+    "id": "B",
+    "x": 100,
+    "y": 280
+  },
+  {
+    "op": "addPoint",
+    "id": "C",
+    "x": 260,
+    "y": 280
+  },
+  {
+    "op": "addPoint",
+    "id": "D",
+    "x": 260,
+    "y": 120
+  },
+  {
+    "op": "addPoint",
+    "id": "E",
+    "x": 213.1370849898476,
+    "y": 166.8629150101524
+  },
+  {
+    "op": "addSegment",
+    "id": "AB",
+    "a": "A",
+    "b": "B"
+  },
+  {
+    "op": "addSegment",
+    "id": "BC",
+    "a": "B",
+    "b": "C"
+  },
+  {
+    "op": "addSegment",
+    "id": "CD",
+    "a": "C",
+    "b": "D"
+  },
+  {
+    "op": "addSegment",
+    "id": "DA",
+    "a": "D",
+    "b": "A"
+  },
+  {
+    "op": "addSegment",
+    "id": "BD",
+    "a": "B",
+    "b": "D"
+  },
+  {
+    "op": "addCircle",
+    "id": "cB",
+    "centerId": "B",
+    "throughId": "A"
+  },
+  {
+    "op": "addSector",
+    "id": "arcAC",
+    "centerId": "B",
+    "startId": "A",
+    "endId": "C",
+    "mode": "arc"
+  },
+  {
+    "op": "addFill",
+    "kind": "segment",
+    "circleId": "cB",
+    "centerId": "B",
+    "startId": "E",
+    "endId": "C",
+    "opacity": 0.2
+  },
+  {
+    "op": "addRightAngle",
+    "vertex": "A",
+    "arm1": "B",
+    "arm2": "D"
+  },
+  {
+    "op": "addRightAngle",
+    "vertex": "B",
+    "arm1": "A",
+    "arm2": "C"
+  },
+  {
+    "op": "addRightAngle",
+    "vertex": "C",
+    "arm1": "B",
+    "arm2": "D"
+  },
+  {
+    "op": "addRightAngle",
+    "vertex": "D",
+    "arm1": "A",
+    "arm2": "C"
+  },
+  {
+    "op": "addLengthLabel",
+    "segmentId": "CD",
+    "text": "8"
+  },
+  {
+    "op": "addLabel",
+    "pointId": "A",
+    "text": "A",
+    "ox": -14,
+    "oy": -10
+  },
+  {
+    "op": "addLabel",
+    "pointId": "B",
+    "text": "B",
+    "ox": -14,
+    "oy": 14
+  },
+  {
+    "op": "addLabel",
+    "pointId": "C",
+    "text": "C",
+    "ox": 14,
+    "oy": 14
+  },
+  {
+    "op": "addLabel",
+    "pointId": "D",
+    "text": "D",
+    "ox": 14,
+    "oy": -10
+  },
+  {
+    "op": "addLabel",
+    "pointId": "E",
+    "text": "E",
+    "ox": 12,
+    "oy": -12
+  },
+  {
+    "op": "setMeta",
+    "name": "07-square-sector-centre-b",
+    "hideExportPoints": true
+  }
+]

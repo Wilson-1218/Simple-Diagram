@@ -1,0 +1,189 @@
+{
+  "formatVersion": 1,
+  "version": "13.5.1",
+  "app": "simple-diagram",
+  "points": [
+    {
+      "id": "A",
+      "x": 220,
+      "y": 60
+    },
+    {
+      "id": "B",
+      "x": 80,
+      "y": 280
+    },
+    {
+      "id": "C",
+      "x": 380,
+      "y": 280
+    },
+    {
+      "id": "D",
+      "x": 185,
+      "y": 115
+    },
+    {
+      "id": "E",
+      "x": 300,
+      "y": 170
+    },
+    {
+      "id": "F",
+      "x": 192.5,
+      "y": 280
+    }
+  ],
+  "segments": [
+    {
+      "id": "AB",
+      "a": "A",
+      "b": "B",
+      "style": "solid"
+    },
+    {
+      "id": "BC",
+      "a": "B",
+      "b": "C",
+      "style": "solid"
+    },
+    {
+      "id": "CA",
+      "a": "C",
+      "b": "A",
+      "style": "solid"
+    },
+    {
+      "id": "AE",
+      "a": "A",
+      "b": "E",
+      "style": "solid"
+    },
+    {
+      "id": "EC",
+      "a": "E",
+      "b": "C",
+      "style": "solid"
+    },
+    {
+      "id": "DE",
+      "a": "D",
+      "b": "E",
+      "style": "solid"
+    },
+    {
+      "id": "BE",
+      "a": "B",
+      "b": "E",
+      "style": "solid"
+    },
+    {
+      "id": "EF",
+      "a": "E",
+      "b": "F",
+      "style": "solid"
+    }
+  ],
+  "labels": [
+    {
+      "id": "lab_0003",
+      "pointId": "A",
+      "text": "A",
+      "ox": 0,
+      "oy": -16,
+      "size": 16
+    },
+    {
+      "id": "lab_0004",
+      "pointId": "B",
+      "text": "B",
+      "ox": -14,
+      "oy": 14,
+      "size": 16
+    },
+    {
+      "id": "lab_0005",
+      "pointId": "C",
+      "text": "C",
+      "ox": 14,
+      "oy": 14,
+      "size": 16
+    },
+    {
+      "id": "lab_0006",
+      "pointId": "D",
+      "text": "D",
+      "ox": -16,
+      "oy": 0,
+      "size": 16
+    },
+    {
+      "id": "lab_0007",
+      "pointId": "E",
+      "text": "E",
+      "ox": 14,
+      "oy": -8,
+      "size": 16
+    },
+    {
+      "id": "lab_0008",
+      "pointId": "F",
+      "text": "F",
+      "ox": 0,
+      "oy": 16,
+      "size": 16
+    }
+  ],
+  "rightAngles": [],
+  "angleArcs": [],
+  "midTicks": [],
+  "parallelMarks": [],
+  "equalMarks": [
+    {
+      "id": "em_0001",
+      "segmentId": "AE",
+      "group": 0,
+      "side": 1
+    },
+    {
+      "id": "em_0002",
+      "segmentId": "EC",
+      "group": 0,
+      "side": 1
+    }
+  ],
+  "lengthLabels": [],
+  "circles": [],
+  "ellipses": [],
+  "sectors": [],
+  "fills": [],
+  "coordPlots": [],
+  "exportCrop": null,
+  "sectorMode": "arc",
+  "fillMode": "polygon",
+  "shapeMode": "square",
+  "circlePartMode": "chord",
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "nextLetter": "A",
+  "labelFontSize": 16,
+  "rightAngleSize": 10,
+  "activeParallelGroup": 0,
+  "activeEqualGroup": 0,
+  "activeArcGroup": 0,
+  "gridSnap": true,
+  "gridMode": "triangle",
+  "hideExportPoints": true,
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "name": "04-tri-abc-bdef-ratios"
+}

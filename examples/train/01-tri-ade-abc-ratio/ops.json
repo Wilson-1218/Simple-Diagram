@@ -1,0 +1,108 @@
+[
+  {
+    "op": "addPoint",
+    "id": "A",
+    "x": 80,
+    "y": 60
+  },
+  {
+    "op": "addPoint",
+    "id": "B",
+    "x": 80,
+    "y": 260
+  },
+  {
+    "op": "addPoint",
+    "id": "C",
+    "x": 340,
+    "y": 260
+  },
+  {
+    "op": "addPoint",
+    "id": "D",
+    "x": 80,
+    "y": 210
+  },
+  {
+    "op": "addPoint",
+    "id": "E",
+    "x": 184,
+    "y": 260
+  },
+  {
+    "op": "addSegment",
+    "id": "AB",
+    "a": "A",
+    "b": "B"
+  },
+  {
+    "op": "addSegment",
+    "id": "BC",
+    "a": "B",
+    "b": "C"
+  },
+  {
+    "op": "addSegment",
+    "id": "CA",
+    "a": "C",
+    "b": "A"
+  },
+  {
+    "op": "addSegment",
+    "id": "AE",
+    "a": "A",
+    "b": "E"
+  },
+  {
+    "op": "addSegment",
+    "id": "DE",
+    "a": "D",
+    "b": "E"
+  },
+  {
+    "op": "addRightAngle",
+    "vertex": "B",
+    "arm1": "A",
+    "arm2": "C"
+  },
+  {
+    "op": "addLabel",
+    "pointId": "A",
+    "text": "A",
+    "ox": 0,
+    "oy": -16
+  },
+  {
+    "op": "addLabel",
+    "pointId": "B",
+    "text": "B",
+    "ox": -16,
+    "oy": 12
+  },
+  {
+    "op": "addLabel",
+    "pointId": "C",
+    "text": "C",
+    "ox": 14,
+    "oy": 12
+  },
+  {
+    "op": "addLabel",
+    "pointId": "D",
+    "text": "D",
+    "ox": -16,
+    "oy": 0
+  },
+  {
+    "op": "addLabel",
+    "pointId": "E",
+    "text": "E",
+    "ox": 0,
+    "oy": 16
+  },
+  {
+    "op": "setMeta",
+    "name": "01-tri-ade-abc-ratio",
+    "hideExportPoints": true
+  }
+]
