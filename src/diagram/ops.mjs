@@ -327,6 +327,61 @@ const HANDLERS = {
     return doc;
   },
 
+  /**
+   * Foot of perpendicular: project pointId onto the line through a segment
+   * (segmentId) or through endpoints a/b. Creates foot point (marker "foot")
+   * and optional altitude segment (drawSegment default true).
+   */
+  addFoot(doc, op, nextId) {
+    requirePoint(doc, op.pointId, "addFoot");
+    const from = pointById(doc, op.pointId);
+    let a;
+    let b;
+    if (op.segmentId) {
+      requireSegment(doc, op.segmentId, "addFoot");
+      const seg = doc.segments.find((s) => s.id === op.segmentId);
+      a = pointById(doc, seg.a);
+      b = pointById(doc, seg.b);
+    } else {
+      const aId = op.a != null ? op.a : op.lineA;
+      const bId = op.b != null ? op.b : op.lineB;
+      requirePoint(doc, aId, "addFoot");
+      requirePoint(doc, bId, "addFoot");
+      a = pointById(doc, aId);
+      b = pointById(doc, bId);
+    }
+    if (!a || !b) throw new Error("addFoot: line endpoints missing");
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    if (!(len2 > 1e-18)) throw new Error("addFoot: line is degenerate");
+    const t = ((from.x - a.x) * dx + (from.y - a.y) * dy) / len2;
+    const fx = a.x + t * dx;
+    const fy = a.y + t * dy;
+    if (Math.hypot(from.x - fx, from.y - fy) < 1e-9) {
+      throw new Error("addFoot: point already lies on the line");
+    }
+    const footHint = op.footId != null ? op.footId : op.id;
+    const marker = op.marker === false || op.marker === "" ? undefined : op.marker || "foot";
+    const foot = pushPoint(doc, nextId, fx, fy, footHint || undefined, marker);
+    if (op.label || op.labelText) {
+      const text = op.labelText != null ? String(op.labelText) : String(op.label === true ? "H" : op.label);
+      HANDLERS.addLabel(doc, { pointId: foot.id, text, ox: -10, oy: -12 }, nextId);
+    }
+    const drawSeg = op.drawSegment !== false && op.segment !== false;
+    if (drawSeg) {
+      const style = styleOr(op.style, "solid");
+      const segHint = op.altitudeId || (op.idPrefix ? `${op.idPrefix}alt` : undefined);
+      try {
+        pushSegment(doc, nextId, op.pointId, foot.id, style, segHint);
+      } catch (err) {
+        // Duplicate altitude is OK (reuse existing).
+        if (!String(err.message || err).includes("already exists")) throw err;
+      }
+    }
+    return doc;
+  },
+
   addCircle(doc, op, nextId) {
     const id = resolveId(op, nextId, "cir");
     requirePoint(doc, op.centerId, "addCircle");

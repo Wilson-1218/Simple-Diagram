@@ -1628,6 +1628,9 @@ body.dark-canvas .coord-curve-row {
           <button type="button" class="tool" data-tool="perpendicular" title="垂線：點選一點後向下拖曳定長" data-i18n-title="tip_tool_perpendicular">
             <span class="icon">↓</span><span class="label" data-i18n="tool_perpendicular">垂線</span>
           </button>
+          <button type="button" class="tool" data-tool="foot" title="垂足：先點一點，再點線段（正交投影）" data-i18n-title="tip_tool_foot">
+            <span class="icon">⊥</span><span class="label" data-i18n="tool_foot">垂足</span>
+          </button>
           <button type="button" class="tool" data-tool="tangent" title="圓的切線：點圓周上（或近圓周）後拖曳定長" data-i18n-title="tip_tool_tangent">
             <span class="icon">⊤</span><span class="label" data-i18n="tool_tangent">切線</span>
           </button>
@@ -2182,6 +2185,7 @@ body.dark-canvas .coord-curve-row {
     equal: "等長記號",
     length: "長度標註",
     perpendicular: "垂線",
+    foot: "垂足",
     tangent: "切線",
     circlePart: "圓件",
     shape: "圖形",
@@ -2378,6 +2382,7 @@ body.dark-canvas .coord-curve-row {
       tool_exportCrop: "框選", tool_label: "標籤", tool_intersect: "交點",
       tool_rightAngle: "直角", tool_angleArc: "角弧", tool_midTick: "中點", tool_ratio: "比例",
       tool_parallel: "平行", tool_equal: "等長", tool_length: "長度", tool_perpendicular: "垂線",
+      tool_foot: "垂足",
       tool_tangent: "切線", tool_circlePart: "圓件", tool_shape: "圖形",
       tool_reflex: "優角", tool_coord: "座標", tool_fill: "填色",
       group_templates: "模板", group_props: "屬性", group_view: "檢視／匯出",
@@ -2551,6 +2556,11 @@ body.dark-canvas .coord-curve-row {
       tip_tool_ratio: "比例分點 (R)",
       tip_tool_horizontal: "水平線：點選一點後左右拖曳定長 (H)",
       tip_tool_perpendicular: "垂線：點選一點後向下拖曳定長",
+      tip_tool_foot: "垂足：先點一點，再點線段（正交投影）",
+      hint_foot: "先點一點，再點線段以建立垂足",
+      foot_need_point: "請先點選既有點",
+      foot_need_segment: "請再點選線段",
+      foot_on_line: "點已在線上，無需垂足",
       tip_tool_tangent: "圓的切線：點圓周上（或近圓周）後拖曳定長；可再拖端點調整",
       hint_tangent: "點圓周上（或近圓周），拖曳設定切線長度",
       tangent_need_circle: "請點選圓或圓周上的點",
@@ -2597,6 +2607,7 @@ body.dark-canvas .coord-curve-row {
       tool_exportCrop: "Crop", tool_label: "Label", tool_intersect: "Xsect",
       tool_rightAngle: "Right", tool_angleArc: "Angle", tool_midTick: "Mid", tool_ratio: "Ratio",
       tool_parallel: "Par", tool_equal: "Equal", tool_length: "Len", tool_perpendicular: "Perp",
+      tool_foot: "Foot",
       tool_tangent: "Tan", tool_circlePart: "Chord", tool_shape: "Shape",
       tool_reflex: "Reflex", tool_coord: "Axes", tool_fill: "Fill",
       group_templates: "Templates", group_props: "Props", group_view: "View / Export",
@@ -2771,6 +2782,11 @@ body.dark-canvas .coord-curve-row {
       tip_tool_ratio: "Ratio point (R)",
       tip_tool_horizontal: "Horizontal: pick a point, drag left/right for length (H)",
       tip_tool_perpendicular: "Perpendicular: pick a point, drag down for length",
+      tip_tool_foot: "Foot of perpendicular: point, then line/segment",
+      hint_foot: "Click a point, then a segment to drop a perpendicular",
+      foot_need_point: "Click an existing point first",
+      foot_need_segment: "Now click a segment",
+      foot_on_line: "Point is already on the line",
       tip_tool_tangent: "Circle tangent: click on (or near) the circle, then drag for length; drag ends to adjust",
       hint_tangent: "Click on the circle (or near it), drag to set tangent length",
       tangent_need_circle: "Click a circle or a point on a circle",
@@ -4335,6 +4351,10 @@ body.dark-canvas .coord-curve-row {
         : (uiLang === "en" ? "Click the first segment" : "請點第一條線段");
       return;
     }
+    if (draft && draft.kind === "foot") {
+      statusHint.textContent = t("foot_need_segment");
+      return;
+    }
 
     const hints = {
       select: t("hint_select"),
@@ -4356,6 +4376,7 @@ body.dark-canvas .coord-curve-row {
       ratio: t("hint_ratio"),
       length: t("hint_length"),
       perpendicular: t("hint_perpendicular"),
+      foot: t("hint_foot"),
       tangent: t("hint_tangent"),
       circlePart: t("hint_circlePart"),
       shape: t("hint_shape"),
@@ -4867,6 +4888,16 @@ body.dark-canvas .coord-curve-row {
       onSeg: t >= -1e-9 && t <= 1 + 1e-9,
       tRaw: t,
     };
+  }
+
+  /** Orthogonal projection onto the infinite line through A–B. */
+  function projectPointToLine(p, a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    if (len2 < 1e-18) return { x: a.x, y: a.y, t: 0, ok: false };
+    const t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+    return { x: a.x + t * dx, y: a.y + t * dy, t, ok: true };
   }
 
   /** Infinite-line intersection of segments AB and CD. */
@@ -8461,6 +8492,39 @@ body.dark-canvas .coord-curve-row {
         ctx.fill();
       }
     }
+    if (draft.kind === "foot" && draft.pointId) {
+      const from = pointById(draft.pointId);
+      if (from) {
+        const sf = worldToScreen(from.x, from.y);
+        ctx.beginPath();
+        ctx.arc(sf.x, sf.y, 7, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(42,122,176,0.85)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([]);
+        ctx.stroke();
+        if (draft.preview) {
+          const sp = worldToScreen(draft.preview.x, draft.preview.y);
+          ctx.beginPath();
+          ctx.moveTo(sf.x, sf.y);
+          ctx.lineTo(sp.x, sp.y);
+          ctx.strokeStyle = "rgba(42,122,176,0.7)";
+          ctx.lineWidth = LINE_WIDTH;
+          ctx.setLineDash([5, 4]);
+          ctx.lineCap = "round";
+          ctx.stroke();
+          ctx.setLineDash([]);
+          const r = 5;
+          ctx.beginPath();
+          ctx.moveTo(sp.x - r, sp.y - r);
+          ctx.lineTo(sp.x + r, sp.y + r);
+          ctx.moveTo(sp.x + r, sp.y - r);
+          ctx.lineTo(sp.x - r, sp.y + r);
+          ctx.strokeStyle = "rgba(42,122,176,0.9)";
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+      }
+    }
     if (draft.kind === "tangent" && draft.touch) {
       const p = draft.pointId ? pointById(draft.pointId) : draft.touch;
       const cir = circles.find((c) => c.id === draft.circleId);
@@ -8966,7 +9030,8 @@ body.dark-canvas .coord-curve-row {
       tool === "parallel" ||
       tool === "equal" ||
       tool === "length" ||
-      tool === "intersect"
+      tool === "intersect" ||
+      (tool === "foot" && draft && draft.kind === "foot")
     ) {
       hoverSnap = null;
       hoverGeomSnap = null;
@@ -9331,6 +9396,30 @@ body.dark-canvas .coord-curve-row {
       return;
     }
 
+    if (tool === "foot") {
+      if (!draft || draft.kind !== "foot") {
+        const sn = snapWorld(world.x, world.y) || nearestPointHit(world.x, world.y);
+        if (!sn) {
+          statusHint.textContent = t("foot_need_point");
+          return;
+        }
+        draft = { kind: "foot", pointId: sn.id, preview: null };
+        statusHint.textContent = t("foot_need_segment");
+        setSelection([{ type: "point", id: sn.id }]);
+        draw();
+        return;
+      }
+      const seg = nearestSegmentHit(world.x, world.y);
+      if (!seg) {
+        statusHint.textContent = t("foot_need_segment");
+        return;
+      }
+      const fromId = draft.pointId;
+      draft = null;
+      finishFootDrop(fromId, seg.id);
+      return;
+    }
+
     if (tool === "horizontal") {
       const sn = snapWorld(world.x, world.y) || nearestPointHit(world.x, world.y);
       if (!sn) {
@@ -9519,6 +9608,47 @@ body.dark-canvas .coord-curve-row {
       return;
     }
 
+  }
+
+  /** Drop foot of perpendicular from point onto the line through a segment. */
+  function finishFootDrop(pointId, segmentId) {
+    const from = pointById(pointId);
+    const seg = segmentById(segmentId);
+    if (!from || !seg) return;
+    const a = pointById(seg.a);
+    const b = pointById(seg.b);
+    if (!a || !b) return;
+    const proj = projectPointToLine(from, a, b);
+    if (!proj.ok) {
+      statusHint.textContent = t("foot_need_segment");
+      updateStatus();
+      draw();
+      return;
+    }
+    if (Math.hypot(from.x - proj.x, from.y - proj.y) < 1e-6) {
+      statusHint.textContent = t("foot_on_line");
+      updateStatus();
+      draw();
+      return;
+    }
+    pushHistory();
+    let footPt = null;
+    const near = snapWorld(proj.x, proj.y);
+    if (near && dist(near, { x: proj.x, y: proj.y }) < (SNAP_PX * 0.6) / view.scale) {
+      footPt = near;
+      if (footPt.marker !== "foot" && footPt.marker !== "x") footPt.marker = "foot";
+    } else {
+      footPt = addPoint(proj.x, proj.y, true, "foot", true);
+    }
+    const style = lineStyle || "solid";
+    const altitude = addSegment(from.id, footPt.id, style, true);
+    history[histIndex] = snapshot();
+    const sel = [{ type: "point", id: footPt.id }];
+    if (altitude) sel.unshift({ type: "segment", id: altitude.id });
+    setSelection(sel);
+    openLabelPrompt(footPt.id, nextLetter);
+    updateStatus();
+    draw();
   }
 
   /**
@@ -10460,6 +10590,21 @@ body.dark-canvas .coord-curve-row {
       const cur = sn ? { x: sn.x, y: sn.y } : applyGrid(world.x, world.y);
       draft.x1 = cur.x;
       draft.y1 = cur.y;
+      draw();
+      return;
+    }
+
+    if (draft && draft.kind === "foot" && draft.pointId) {
+      const from = pointById(draft.pointId);
+      const seg = nearestSegmentHit(world.x, world.y);
+      if (from && seg) {
+        const a = pointById(seg.a);
+        const b = pointById(seg.b);
+        if (a && b) {
+          const proj = projectPointToLine(from, a, b);
+          draft.preview = proj.ok ? { x: proj.x, y: proj.y, segId: seg.id } : null;
+        } else draft.preview = null;
+      } else draft.preview = null;
       draw();
       return;
     }
@@ -12914,6 +13059,7 @@ ${body}</svg>`;
     else if (id === "tool_circlePart") setTool("circlePart");
     else if (id === "tool_midTick") setTool("midTick");
     else if (id === "tool_ratio") setTool("ratio");
+    else if (id === "tool_foot") setTool("foot");
     else if (id === "tool_hand") setTool("hand");
     else if (id === "flip_mark") flipSelectedMarks();
     else if (id === "cycle_mark") {

@@ -59,6 +59,10 @@ export const OP_CATALOG = {
   addEqualMark: { args: "segmentId, group?, side?" },
   addLengthLabel: { args: "segmentId, text, side?" },
   addMidTick: { args: "segmentId, pointId?" },
+  addFoot: {
+    args: "pointId, segmentId | a+b, footId?, drawSegment?, style?, label?, marker?",
+    note: "orthogonal projection onto line; marker foot; altitude segment by default",
+  },
   addCircle: { args: "centerId, throughId, style?" },
   addEllipse: { args: "centerId, rxId, ryId, style?, backDashed?" },
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },

@@ -206,7 +206,7 @@ node tools/validate-diagram.mjs examples/cube-sketch.json
 
 純函式：`applyOps(doc, ops[]) → doc`（見 `src/diagram/`）。
 
-常用 op：`addPoint`、`addSegment`、`addLabel`、`addRightAngle`、`addAngleArc`／`addReflex`、`addParallelMark`、`addEqualMark`、`addLengthLabel`、`addCircle`、`addEllipse`、`addSector`、`addFill`（polygon｜sector｜segment）、`addShape`、`addTangent`／`addRadius`／`addDiameter`／`addChord`、`alignPoints`／`distributePoints`／`equalizeSegments`、`addCoordPlot`、`addCurve`、`setView`、`setMeta`／`setLayers`、`movePoint`、`remove`。詳見 [`agent-draw-playbook.md`](agent-draw-playbook.md)。
+常用 op：`addPoint`、`addSegment`、`addLabel`、`addRightAngle`、`addAngleArc`／`addReflex`、`addParallelMark`、`addEqualMark`、`addLengthLabel`、`addCircle`、`addEllipse`、`addSector`、`addFill`（polygon｜sector｜segment）、`addShape`、`addFoot`、`addTangent`／`addRadius`／`addDiameter`／`addChord`、`alignPoints`／`distributePoints`／`equalizeSegments`、`addCoordPlot`、`addCurve`、`setView`、`setMeta`／`setLayers`、`movePoint`、`remove`。詳見 [`agent-draw-playbook.md`](agent-draw-playbook.md)。
 
 CLI：
 
