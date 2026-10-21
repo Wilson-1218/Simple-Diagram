@@ -1,8 +1,9 @@
 {
   "name": "simple-diagram",
-  "version": "13.5.0",
+  "version": "13.5.1",
   "private": true,
   "type": "module",
+  "license": "MIT",
   "description": "Simple Diagram — hand-drawn math figures + AI JSON/ops layer",
   "engines": {
     "node": ">=18"

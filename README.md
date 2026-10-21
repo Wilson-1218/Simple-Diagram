@@ -61,7 +61,22 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.5.0）
+## 授權／轉載聲明 / License & attribution
+
+**MIT License** · Copyright © 2026 **Wilson Li**（[Wilson-1218](https://github.com/Wilson-1218)）· 見 [`LICENSE`](LICENSE)。
+
+| 中文 | English |
+|---|---|
+| 可自由使用、複製及二次開發 | Free to use, copy, and modify |
+| 轉載或再發佈時請保留來源聲明：**Simple Diagram**（Wilson Li）及下列連結 | When redistributing or republishing, please keep attribution: **“Simple Diagram”** by Wilson Li — and the link below |
+
+**https://github.com/Wilson-1218/Simple-Diagram**
+
+網頁右下角與 `?` 快捷鍵面板亦有簡短聲明。
+
+---
+
+## 目前版本 / Current version（v13.5.1）
 
 **左側兩欄網格**（頂部品牌＋繪製／構造／記號）｜**頂部 overlay**（不佔畫布高度）｜**左側情境浮層**｜**匯出 ▾**
 
@@ -77,7 +92,8 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 **v13.4.0**：圖形（正方／等邊／長方／等腰）、圓件（弦／直徑／半徑）、多選對齊／等距／等長、扇形／弓形填色、圖層顯示鎖定、範本擴充、快捷鍵（B／T／I 等）。  
 **v13.4.1**：修復關閉網格層／頂欄「網格」後格線仍顯示（`layers.gridShow` 控制繪製；頂欄同步顯示＋吸附）。  
 **v13.4.2**：AI 層優化 — sector/segment `addFill`、圖形／切線／弦徑便利 op、對齊／圖層 ops、MCP summarize、[`docs/agent-draw-playbook.md`](docs/agent-draw-playbook.md)。
-**v13.5.0**：AI 模板 `insertTemplate`、HKDSE macros（`run_macro`）、eval 套件、headless SVG／PNG 匯出 CLI／MCP。
+**v13.5.0**：AI 模板 `insertTemplate`、HKDSE macros（`run_macro`）、eval 套件、headless SVG／PNG 匯出 CLI／MCP。  
+**v13.5.1**：MIT 授權＋雙語轉載聲明（README／網頁／`?` 面板）；`package.json` `"license": "MIT"`。
 
 | 位置 | 內容 |
 |---|---|
@@ -166,6 +182,7 @@ Agent 手冊：[`docs/agent-draw-playbook.md`](docs/agent-draw-playbook.md)。
 
 | 檔案 | 說明 |
 |---|---|
+| `LICENSE` | MIT（Copyright © 2026 Wilson Li） |
 | `index.html` | 主頁（搭配 `styles.css`、`app.js`） |
 | `styles.css` | 樣式 |
 | `app.js` | 應用邏輯 |
