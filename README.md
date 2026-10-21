@@ -61,14 +61,15 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.2.1）
+## 目前版本 / Current version（v13.2.2）
 
 **左側兩欄網格**（繪製／構造／記號）｜**上方屬性／檔案列**｜**匯出 ▾**
 
 預設：網格開、三角格、匯出隱藏點開、畫布縮放 **2×**。  
 長度沿邊傾斜；標籤避線；對齊輔助（不進匯出）；離開警告僅未儲存時。  
 **v13.2**：新增 AI／自動化 JSON＋ops 層（`formatVersion`、CLI、MCP、驗證）；人手畫布流程不變。  
-**v13.2.1**：修復關閉的 `<dialog>`（含座標圖對話框）因 CSS `display` 而出現在頁面底部。
+**v13.2.1**：修復關閉的 `<dialog>`（含座標圖對話框）因 CSS `display` 而出現在頁面底部。  
+**v13.2.2**：上線品牌 logo（等距立方體＋粗體 SD）與 favicon。
 
 | 位置 | 內容 |
 |---|---|

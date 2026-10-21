@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.2.1" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.2.2" />
   <title>Simple Diagram · Wilson</title>
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <style>
 :root {
   --bg: #e8e6e1;
@@ -133,12 +136,30 @@ body {
 
 .brand {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(6px * var(--tb));
   margin-right: calc(4px * var(--tb));
   padding-right: calc(8px * var(--tb));
   border-right: 1px solid var(--bar-border);
   line-height: 1.15;
   align-self: center;
+}
+
+.brand-logo {
+  width: calc(36px * var(--tb));
+  height: calc(36px * var(--tb));
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .brand-name {
@@ -1220,8 +1241,11 @@ body.dark-canvas .coord-curve-row {
   <div id="app">
     <header class="top-bar toolbar" role="toolbar" aria-label="屬性與檔案" data-i18n-aria="aria_toolbar_props">
       <div class="brand">
-        <span class="brand-name">Simple Diagram</span>
-        <span class="brand-sub">v13.2.1</span>
+        <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
+        <div class="brand-text">
+          <span class="brand-name">Simple Diagram</span>
+          <span class="brand-sub">v13.2.2</span>
+        </div>
       </div>
       <div class="tool-group" data-group="lang">
         <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
@@ -9041,7 +9065,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: 13.21,
+      version: 13.22,
       app: "simple-diagram",
       points,
       segments,

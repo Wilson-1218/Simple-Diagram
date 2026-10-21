@@ -125,12 +125,30 @@ body {
 
 .brand {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(6px * var(--tb));
   margin-right: calc(4px * var(--tb));
   padding-right: calc(8px * var(--tb));
   border-right: 1px solid var(--bar-border);
   line-height: 1.15;
   align-self: center;
+}
+
+.brand-logo {
+  width: calc(36px * var(--tb));
+  height: calc(36px * var(--tb));
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .brand-name {
