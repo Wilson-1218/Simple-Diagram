@@ -158,22 +158,9 @@ const CASES = [
         x: (7 * G.x - 3 * H.x) / 4,
         y: (7 * G.y - 3 * H.y) / 4,
       };
-      // CDEF collinear — place D,E on CF between C and F
-      const D = {
-        x: C2.x + 0.35 * (F.x - C2.x),
-        y: C2.y + 0.35 * (F.y - C2.y),
-      };
-      const E = {
-        x: C2.x + 0.55 * (F.x - C2.x),
-        y: C2.y + 0.55 * (F.y - C2.y),
-      };
-      // Also need A-E-G? Looking at figure: AEG may be a line. Check if E on AG.
-      // Force E = intersection of CF with AG for cleaner figure matching "AEG"
+      // CDEF collinear on CF: D = BH∩CF, E = AG∩CF (exam figure placement)
       const E2 = lineIntersect(C2, F, A, G);
-      const D2 = {
-        x: C2.x + 0.4 * (E2.x - C2.x),
-        y: C2.y + 0.4 * (E2.y - C2.y),
-      };
+      const D2 = lineIntersect(C2, F, B, H);
       return [
         { op: "addPoint", id: "A", ...A },
         { op: "addPoint", id: "B", ...B },
@@ -195,7 +182,8 @@ const CASES = [
         { op: "addLabel", pointId: "A", text: "A", ox: -14, oy: 12 },
         { op: "addLabel", pointId: "B", text: "B", ox: -14, oy: -8 },
         { op: "addLabel", pointId: "C", text: "C", ox: 0, oy: -16 },
-        { op: "addLabel", pointId: "D", text: "D", ox: 12, oy: -8 },
+        // Just right of D at BH∩CF — avoid negative oy that floats above the crossing
+        { op: "addLabel", pointId: "D", text: "D", ox: 14, oy: 2 },
         { op: "addLabel", pointId: "E", text: "E", ox: -14, oy: 4 },
         { op: "addLabel", pointId: "F", text: "F", ox: 0, oy: 16 },
         { op: "addLabel", pointId: "G", text: "G", ox: 14, oy: 12 },
