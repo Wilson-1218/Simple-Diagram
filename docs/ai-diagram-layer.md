@@ -1,6 +1,6 @@
 # AI Diagram Layer · AI 圖層（ABCD）
 
-**狀態：** 已實作（v13.2）· 產品名 **Simple Diagram**  
+**狀態：** 已實作（v13.2）· AI 優化 **v13.4.2**· 產品名 **Simple Diagram**  
 **原則：** AI 只走 **JSON document + ops**，不模擬人手 UI；現有畫布／快捷鍵／存檔／Pages 不變。
 
 **PR：** https://github.com/Wilson-1218/Simple-Diagram/pull/1 · `cursor/ai-diagram-layer-037e` → `main`
@@ -24,7 +24,7 @@
 | 確定性 ID | 自動 `p_0001`…；或 op 內顯式 `id` |
 
 **已覆蓋（HKDSE 立體＋座標 MVP）：**  
-`addPoint` · `addSegment` · `addLabel` · `addRightAngle` · `addAngleArc`／`addReflex` · `addParallelMark`／`addEqualMark` · `addLengthLabel` · `addMidTick` · `addCircle` · `addEllipse` · `addSector` · `addFill` · `addCoordPlot` · `addCurve` · `setView` · `setMeta` · `movePoint` · `remove`（含 `type: "fill"`）
+`addPoint` · `addSegment` · `addLabel` · `addRightAngle` · `addAngleArc`／`addReflex` · `addParallelMark`／`addEqualMark` · `addLengthLabel` · `addMidTick` · `addCircle` · `addEllipse` · `addSector` · `addFill`（含 sector/segment）· `addShape` · `addTangent`/`addRadius`/`addDiameter`/`addChord` · `alignPoints`/`distributePoints`/`equalizeSegments` · `setLayers` · `addCoordPlot` · `addCurve` · `setView` · `setMeta` · `movePoint` · `remove`（含 `type: "fill"`）
 
 ## C — AI 介面
 
@@ -33,7 +33,9 @@
 | CLI | 見上；`node tools/validate-diagram.mjs <file>` |
 | MCP | `node mcp/server.mjs`（stdio，無額外依賴） |
 
-**MCP tools：** `create_diagram` · `apply_ops` · `validate_diagram` · `load_example` · `list_ops`
+**MCP tools：** `create_diagram` · `apply_ops`（預設 validate+summarize）· `summarize_diagram` · `validate_diagram` · `load_example` · `list_ops`
+
+Agent 手冊：[`agent-draw-playbook.md`](agent-draw-playbook.md)
 
 Cursor 設定範例（`cwd` 改成 repo 絕對路徑）：
 

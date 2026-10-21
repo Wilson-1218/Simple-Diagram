@@ -1,0 +1,21 @@
+[
+  { "op": "addPoint", "id": "O", "x": 200, "y": 220 },
+  { "op": "addPoint", "id": "A", "x": 280, "y": 220 },
+  { "op": "addLabel", "pointId": "O", "text": "O", "ox": 10, "oy": -14 },
+  { "op": "addLabel", "pointId": "A", "text": "A", "ox": 12, "oy": 4 },
+  { "op": "addCircle", "id": "c1", "centerId": "O", "throughId": "A" },
+  { "op": "addRadius", "id": "OA", "circleId": "c1", "throughId": "A", "style": "dotted" },
+  { "op": "addTangent", "circleId": "c1", "touchId": "A", "halfLen": 55, "aId": "T0", "bId": "T1", "id": "tan1" },
+  { "op": "addChord", "circleId": "c1", "deg0": 40, "deg1": 140, "aId": "P", "bId": "Q", "id": "chord1" },
+  { "op": "addDiameter", "circleId": "c1", "deg": 90, "aId": "D0", "bId": "D1", "id": "diam1", "style": "dashed" },
+  {
+    "op": "addFill",
+    "kind": "segment",
+    "circleId": "c1",
+    "startId": "P",
+    "endId": "Q",
+    "opacity": 0.2
+  },
+  { "op": "setView", "x": 80, "y": 40, "scale": 2 },
+  { "op": "setMeta", "name": "circle-tangent.json", "nextLetter": "B", "hideExportPoints": true }
+]

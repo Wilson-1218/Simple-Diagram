@@ -1,0 +1,17 @@
+[
+  { "op": "addPoint", "id": "A", "x": 120, "y": 280 },
+  { "op": "addPoint", "id": "B", "x": 320, "y": 280 },
+  { "op": "addPoint", "id": "C", "x": 120, "y": 120 },
+  { "op": "addSegment", "id": "AB", "a": "A", "b": "B" },
+  { "op": "addSegment", "id": "BC", "a": "B", "b": "C" },
+  { "op": "addSegment", "id": "CA", "a": "C", "b": "A" },
+  { "op": "addRightAngle", "vertex": "A", "arm1": "B", "arm2": "C" },
+  { "op": "addLabel", "pointId": "A", "text": "A", "ox": -16, "oy": 14 },
+  { "op": "addLabel", "pointId": "B", "text": "B", "ox": 14, "oy": 14 },
+  { "op": "addLabel", "pointId": "C", "text": "C", "ox": -16, "oy": -14 },
+  { "op": "addLengthLabel", "segmentId": "AB", "text": "6" },
+  { "op": "addLengthLabel", "segmentId": "CA", "text": "8" },
+  { "op": "addFill", "kind": "polygon", "pointIds": ["A", "B", "C"], "opacity": 0.15 },
+  { "op": "setView", "x": 40, "y": 20, "scale": 2 },
+  { "op": "setMeta", "name": "right-triangle-ops.json", "nextLetter": "D", "hideExportPoints": true }
+]

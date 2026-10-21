@@ -19,7 +19,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | 欄位 | 型別 | 說明 |
 |---|---|---|
 | `formatVersion` | number | **Schema 版**；新檔寫 `1`；載入時缺省＝v1 |
-| `version` | number \| string | 應用版（如 `13.4.1`），僅資訊用 |
+| `version` | number \| string | 應用版（如 `13.4.2`），僅資訊用 |
 | `app` | string | 固定 `"simple-diagram"` |
 | `name` | string | 檔名提示 |
 | `savedAt` | number | 可選；儲存時間戳 |
@@ -45,6 +45,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `activeParallelGroup` | 0\|1 | UI：單／雙平行 |
 | `activeEqualGroup` | 0\|1 | UI：單／雙等長 |
 | `activeArcGroup` | 0\|1 | UI：單／雙角弧 |
+| `layers` | object | 圖層顯示／鎖定（`gridShow`/`coordsShow`/`helpersShow` + `*Lock`） |
 | `gridSnap` | boolean | 網格吸附 |
 | `gridMode` | `"square"`\|`"triangle"` | 網格種類 |
 | `hideExportPoints` | boolean | 匯出隱藏頂點 |
@@ -136,10 +137,14 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 ### fills
 
 ```json
-{ "id": "f1", "pointIds": ["A", "B", "C", "D"], "color": "#666666", "opacity": 0.2 }
+{ "id": "f1", "kind": "polygon", "pointIds": ["A", "B", "C", "D"], "color": "#666666", "opacity": 0.2 }
+{ "id": "f2", "kind": "sector", "centerId": "O", "startId": "A", "endId": "B", "color": "#666666", "opacity": 0.2 }
+{ "id": "f3", "kind": "segment", "circleId": "c1", "startId": "P", "endId": "Q", "opacity": 0.2 }
 ```
 
-- 依既有頂點順序圍成封閉多邊形（≥3）；`opacity` 0–1；繪於線段／標籤之下
+- `kind`：`polygon`（預設）｜`sector`｜`segment`（弓形）
+- 多邊形：依既有頂點順序（≥3）；扇形：圓心＋兩端點；弓形：圓＋弦兩端
+- `opacity` 0–1；繪於線段／標籤之下
 - UI 色票：灰 10／20／35／50% 與藍灰約 22%（`#6b8799`）
 
 ### coordPlots
@@ -185,6 +190,9 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | [`examples/right-triangle.json`](../examples/right-triangle.json) | 直角三角形＋長度 |
 | [`examples/coord-sin.json`](../examples/coord-sin.json) | 座標軸＋ sin 曲線 |
 | [`examples/ops-cube.json`](../examples/ops-cube.json) | 以 ops 重建立方體的指令陣列 |
+| [`examples/ops-right-triangle.json`](../examples/ops-right-triangle.json) | 直角三角形＋填色 ops |
+| [`examples/ops-circle-tangent.json`](../examples/ops-circle-tangent.json) | 圓＋半徑／切線／弦／直徑／弓形填色 |
+| [`examples/ops-shapes-align.json`](../examples/ops-shapes-align.json) | 常用圖形＋對齊 |
 
 驗證：
 
@@ -198,7 +206,7 @@ node tools/validate-diagram.mjs examples/cube-sketch.json
 
 純函式：`applyOps(doc, ops[]) → doc`（見 `src/diagram/`）。
 
-常用 op：`addPoint`、`addSegment`、`addLabel`、`addRightAngle`、`addAngleArc`／`addReflex`、`addParallelMark`、`addEqualMark`、`addLengthLabel`、`addCircle`、`addEllipse`、`addSector`、`addFill`、`addCoordPlot`、`addCurve`、`setView`、`setMeta`、`movePoint`、`remove`（`type: "fill"`）。
+常用 op：`addPoint`、`addSegment`、`addLabel`、`addRightAngle`、`addAngleArc`／`addReflex`、`addParallelMark`、`addEqualMark`、`addLengthLabel`、`addCircle`、`addEllipse`、`addSector`、`addFill`（polygon｜sector｜segment）、`addShape`、`addTangent`／`addRadius`／`addDiameter`／`addChord`、`alignPoints`／`distributePoints`／`equalizeSegments`、`addCoordPlot`、`addCurve`、`setView`、`setMeta`／`setLayers`、`movePoint`、`remove`。詳見 [`agent-draw-playbook.md`](agent-draw-playbook.md)。
 
 CLI：
 
