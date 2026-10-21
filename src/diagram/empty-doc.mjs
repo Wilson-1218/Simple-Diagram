@@ -1,7 +1,7 @@
 /** Empty Simple Diagram document (formatVersion 1). */
 
 export const CURRENT_FORMAT_VERSION = 1;
-export const APP_VERSION = "13.3.1";
+export const APP_VERSION = "13.3.2";
 
 /**
  * @param {Record<string, unknown>} [overrides]

@@ -1,9 +1,9 @@
 # Simple Diagram 功能清單
 
 手繪風格立體圖編輯器。應用位於儲存庫根目錄（`index.html` / `app.js` / `styles.css`）。  
-目前版本：**v13.3.1**。
+目前版本：**v13.3.2**。
 
-工具列：**左側兩欄網格**＝繪製／構造／記號；**頂部為 overlay 浮層**（不佔畫布高度）＝品牌／中EN／模板／檢視／編輯／檔案；線型與填色色票改為左側情境浮層。
+工具列：**左側兩欄網格**（頂部品牌 Logo＋名稱）＝繪製／構造／記號；**頂部 overlay**（不佔畫布高度）＝中EN／模板／檢視／編輯／檔案；線型、弧／扇、單／雙／翻面、填色色票為左側情境浮層。
 
 ---
 
@@ -42,7 +42,7 @@
 
 ## 簡短操作流程
 
-1. 開啟 `index.html` 或 `simple-diagram-standalone.html`（標題應見 **Simple Diagram · v13.3.1**）。
+1. 開啟 `index.html` 或 `simple-diagram-standalone.html`（標題應見 **Simple Diagram · v13.3.2**）。
 2. 左側選工具；頂部 overlay「匯出 ▾」預覽或存檔。
 3. Chrome／Edge 存檔可選資料夾；匯出不受深色畫布影響。
 4. AI／自動化：見 [`diagram-format.md`](diagram-format.md) 與 README「AI / Automation」（JSON＋ops，不模擬 UI）。

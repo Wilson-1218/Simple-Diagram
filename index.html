@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.3.1" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.3.2" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.3.1" />
+  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.3.2" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -17,6 +17,13 @@
   <div id="app">
     <div class="body-row">
       <aside class="tool-rail" role="toolbar" aria-label="繪圖工具" data-i18n-aria="aria_toolbar_tools">
+        <div class="rail-brand">
+          <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
+          <div class="brand-text">
+            <span class="brand-name">Simple Diagram</span>
+            <span class="brand-sub">v13.3.2</span>
+          </div>
+        </div>
         <div class="rail-section" data-group="draw">
           <span class="rail-title" title="繪製" data-i18n="rail_draw" data-i18n-title="rail_draw_title">繪</span>
           <button type="button" class="tool active" data-tool="select" title="選取／移動 (V)" data-i18n-title="tip_tool_select">
@@ -46,10 +53,6 @@
           <button type="button" class="tool" data-tool="label" title="標籤：左鍵自訂／右鍵直接套預設" data-i18n-title="tip_tool_label">
             <span class="icon">A</span><span class="label" data-i18n="tool_label">標籤</span>
           </button>
-          <span class="rail-mini-opts" id="sectorModeBar" title="弧段僅畫弧；扇形含兩條半徑" data-i18n-title="tip_sector_bar">
-            <button type="button" class="mark-group-btn rail-mini-btn active" data-sector-mode="arc" title="只畫圓弧" data-i18n-title="tip_sector_arc">弧</button>
-            <button type="button" class="mark-group-btn rail-mini-btn" data-sector-mode="sector" title="扇形（弧＋兩半徑）" data-i18n-title="tip_sector_pie">扇</button>
-          </span>
         </div>
 
         <div class="rail-section" data-group="construct">
@@ -91,11 +94,6 @@
           <button type="button" class="tool" data-tool="equal" title="等長記號：左鍵單劃／右鍵雙劃" data-i18n-title="tip_tool_equal">
             <span class="icon">⫽</span><span class="label" data-i18n="tool_equal">等長</span>
           </button>
-          <span class="rail-mini-opts" id="markGroupBar" title="單／雙記號與翻面" data-i18n-title="tip_mark_bar">
-            <button type="button" class="mark-group-btn rail-mini-btn active" data-mark-group="0" title="單箭／單劃（G）" data-i18n-title="tip_mark_single">單</button>
-            <button type="button" class="mark-group-btn rail-mini-btn" data-mark-group="1" title="雙箭／雙劃（G）" data-i18n-title="tip_mark_double">雙</button>
-            <button type="button" class="rail-mini-btn" id="btnFlipMark" title="記號翻面（選取平行／等長記號後）" data-i18n-title="tip_mark_flip">翻面</button>
-          </span>
           <button type="button" class="tool" data-tool="length" title="線段長度標註（例：6）" data-i18n-title="tip_tool_length">
             <span class="icon">6</span><span class="label" data-i18n="tool_length">長度</span>
           </button>
@@ -107,14 +105,7 @@
 
         <!-- Overlay chrome: does not reserve layout height -->
         <header class="chrome-overlay toolbar" role="toolbar" aria-label="屬性與檔案" data-i18n-aria="aria_toolbar_props">
-          <div class="chrome-cluster chrome-brand">
-            <div class="brand">
-              <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
-              <div class="brand-text">
-                <span class="brand-name">Simple Diagram</span>
-                <span class="brand-sub">v13.3.1</span>
-              </div>
-            </div>
+          <div class="chrome-cluster chrome-lang">
             <div class="tool-group" data-group="lang">
               <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
               <button type="button" id="btnLangEn" class="lang-btn" data-lang="en" title="English UI" data-i18n-title="tip_lang_en">EN</button>
@@ -217,6 +208,19 @@
               <option value="14">大</option>
               <option value="18">特大</option>
             </select>
+          </div>
+          <div class="float-panel float-sector" id="sectorFloat" hidden>
+            <span class="float-mini-opts" id="sectorModeBar" title="弧段僅畫弧；扇形含兩條半徑" data-i18n-title="tip_sector_bar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-sector-mode="arc" title="只畫圓弧" data-i18n-title="tip_sector_arc">弧</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-sector-mode="sector" title="扇形（弧＋兩半徑）" data-i18n-title="tip_sector_pie">扇</button>
+            </span>
+          </div>
+          <div class="float-panel float-mark" id="markFloat" hidden>
+            <span class="float-mini-opts" id="markGroupBar" title="單／雙記號與翻面" data-i18n-title="tip_mark_bar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-mark-group="0" title="單箭／單劃（G）" data-i18n-title="tip_mark_single">單</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-mark-group="1" title="雙箭／雙劃（G）" data-i18n-title="tip_mark_double">雙</button>
+              <button type="button" class="rail-mini-btn" id="btnFlipMark" title="記號翻面（選取平行／等長記號後）" data-i18n-title="tip_mark_flip">翻面</button>
+            </span>
           </div>
           <div class="float-panel float-fill" id="fillFloat" hidden>
             <span class="fill-swatch-bar" id="fillPresetBar" title="填色陰影透明度" data-i18n-title="tip_fill_bar">
@@ -429,6 +433,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261021-release-v13.3.1"></script>
+  <script src="app.js?v=20261021-release-v13.3.2"></script>
 </body>
 </html>

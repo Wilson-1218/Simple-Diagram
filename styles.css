@@ -148,11 +148,11 @@ body {
   max-width: 100%;
 }
 
-.chrome-brand {
+.chrome-lang {
   background: rgba(247, 245, 240, 0.92);
   border: 1px solid var(--bar-border);
   border-radius: var(--radius);
-  padding: calc(3px * var(--tb)) calc(6px * var(--tb));
+  padding: calc(3px * var(--tb)) calc(5px * var(--tb));
   backdrop-filter: blur(4px);
 }
 
@@ -166,19 +166,21 @@ body {
   margin-left: auto;
 }
 
-.brand {
+/* Brand block at top of left tool rail */
+.rail-brand {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  gap: calc(6px * var(--tb));
-  margin-right: calc(4px * var(--tb));
-  padding-right: calc(8px * var(--tb));
-  border-right: 1px solid var(--bar-border);
+  gap: calc(4px * var(--tb));
+  padding: calc(4px * var(--tb)) calc(2px * var(--tb)) calc(6px * var(--tb));
+  margin-bottom: calc(2px * var(--tb));
+  border-bottom: 1px solid var(--bar-border);
+  flex-shrink: 0;
+  text-align: center;
   line-height: 1.15;
-  align-self: center;
 }
 
-.brand-logo {
+.rail-brand .brand-logo {
   width: calc(36px * var(--tb));
   height: calc(36px * var(--tb));
   display: block;
@@ -188,21 +190,24 @@ body {
   background: #fff;
 }
 
-.brand-text {
+.rail-brand .brand-text {
   display: flex;
   flex-direction: column;
+  align-items: center;
   min-width: 0;
+  max-width: 100%;
 }
 
-.brand-name {
+.rail-brand .brand-name {
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   color: var(--accent);
-  font-size: calc(13px * var(--tb));
+  font-size: calc(11px * var(--tb));
+  white-space: nowrap;
 }
 
-.brand-sub {
-  font-size: calc(10px * var(--tb));
+.rail-brand .brand-sub {
+  font-size: calc(9px * var(--tb));
   color: var(--muted);
 }
 
@@ -557,7 +562,7 @@ button:disabled {
 /* Contextual floats beside left rail (over canvas) */
 .float-stack {
   position: absolute;
-  top: calc(56px * var(--tb, 1.2));
+  top: calc(48px * var(--tb, 1.2));
   left: calc(8px * var(--tb, 1.2));
   z-index: 35;
   display: flex;
@@ -601,6 +606,23 @@ button:disabled {
   width: 100%;
   font-size: calc(11px * var(--tb, 1.2));
   padding: calc(3px * var(--tb, 1.2)) calc(4px * var(--tb, 1.2));
+}
+
+.float-mini-opts {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(3px * var(--tb, 1.2));
+  width: 100%;
+}
+
+.float-panel .rail-mini-btn {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: calc(24px * var(--tb, 1.2));
+  padding: calc(4px * var(--tb, 1.2)) calc(6px * var(--tb, 1.2));
+  font-size: calc(11px * var(--tb, 1.2));
+  font-weight: 600;
 }
 
 /* Fill shade swatches — clipped so checkerboard cannot bleed */
@@ -659,7 +681,7 @@ button:disabled {
 }
 
 body.dark-canvas .float-panel,
-body.dark-canvas .chrome-brand,
+body.dark-canvas .chrome-lang,
 body.dark-canvas .chrome-actions {
   background: rgba(42, 48, 56, 0.94);
 }
@@ -1377,8 +1399,8 @@ body.dark-canvas .coord-curve-row {
 }
 
 @media (max-width: 720px) {
-  .brand-sub {
-    display: none;
+  .rail-brand .brand-name {
+    font-size: calc(10px * var(--tb, 1.2));
   }
 
   .group-title {

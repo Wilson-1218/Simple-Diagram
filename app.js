@@ -1271,11 +1271,7 @@
     document.querySelectorAll("[data-sector-mode]").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.sectorMode === sectorMode);
     });
-    const bar = document.getElementById("sectorModeBar");
-    if (bar) {
-      const selSector = selection.some((s) => s.type === "sector");
-      bar.classList.toggle("is-dim", tool !== "sector" && !selSector);
-    }
+    syncContextualFloats();
   }
 
   function setSectorMode(mode) {
@@ -1323,10 +1319,16 @@
   const SIZE_TOOLS = new Set(["label", "rightAngle", "angleArc", "reflex"]);
   const SIZE_SEL_TYPES = new Set(["label", "rightAngle", "angleArc"]);
 
-  /** Show/hide line-style + fill floats beside the left rail. */
+  const SECTOR_TOOLS = new Set(["sector"]);
+  const MARK_MODE_TOOLS = new Set(["parallel", "equal", "angleArc"]);
+  const MARK_SEL_TYPES = new Set(["parallelMark", "equalMark", "angleArc"]);
+
+  /** Show/hide contextual floats beside the left rail. */
   function syncContextualFloats() {
     const styleFloat = document.getElementById("styleFloat");
     const fillFloat = document.getElementById("fillFloat");
+    const sectorFloat = document.getElementById("sectorFloat");
+    const markFloat = document.getElementById("markFloat");
     if (styleFloat) {
       const strokeSel = selection.some((s) => STROKE_SEL_TYPES.has(s.type));
       const sizeSel = selection.some((s) => SIZE_SEL_TYPES.has(s.type));
@@ -1338,6 +1340,14 @@
     }
     if (fillFloat) {
       fillFloat.hidden = tool !== "fill";
+    }
+    if (sectorFloat) {
+      const selSector = selection.some((s) => s.type === "sector");
+      sectorFloat.hidden = !(SECTOR_TOOLS.has(tool) || (tool === "select" && selSector));
+    }
+    if (markFloat) {
+      const selMark = selection.some((s) => MARK_SEL_TYPES.has(s.type));
+      markFloat.hidden = !(MARK_MODE_TOOLS.has(tool) || (tool === "select" && selMark));
     }
   }
 
@@ -5176,18 +5186,7 @@
     document.querySelectorAll("[data-mark-group]").forEach((btn) => {
       btn.classList.toggle("active", Number(btn.dataset.markGroup) === g);
     });
-    const bar = document.getElementById("markGroupBar");
-    if (bar) {
-      const selMark = selection.some(
-        (s) =>
-          s.type === "parallelMark" ||
-          s.type === "equalMark" ||
-          s.type === "angleArc"
-      );
-      const relevant =
-        tool === "parallel" || tool === "equal" || tool === "angleArc" || selMark;
-      bar.classList.toggle("is-dim", !relevant);
-    }
+    syncContextualFloats();
   }
 
   function drawMidTick(mt) {
@@ -7811,7 +7810,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.3.1",
+      version: "13.3.2",
       app: "simple-diagram",
       points,
       segments,

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.3.1" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.3.2" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -156,11 +156,11 @@ body {
   max-width: 100%;
 }
 
-.chrome-brand {
+.chrome-lang {
   background: rgba(247, 245, 240, 0.92);
   border: 1px solid var(--bar-border);
   border-radius: var(--radius);
-  padding: calc(3px * var(--tb)) calc(6px * var(--tb));
+  padding: calc(3px * var(--tb)) calc(5px * var(--tb));
   backdrop-filter: blur(4px);
 }
 
@@ -174,19 +174,21 @@ body {
   margin-left: auto;
 }
 
-.brand {
+/* Brand block at top of left tool rail */
+.rail-brand {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  gap: calc(6px * var(--tb));
-  margin-right: calc(4px * var(--tb));
-  padding-right: calc(8px * var(--tb));
-  border-right: 1px solid var(--bar-border);
+  gap: calc(4px * var(--tb));
+  padding: calc(4px * var(--tb)) calc(2px * var(--tb)) calc(6px * var(--tb));
+  margin-bottom: calc(2px * var(--tb));
+  border-bottom: 1px solid var(--bar-border);
+  flex-shrink: 0;
+  text-align: center;
   line-height: 1.15;
-  align-self: center;
 }
 
-.brand-logo {
+.rail-brand .brand-logo {
   width: calc(36px * var(--tb));
   height: calc(36px * var(--tb));
   display: block;
@@ -196,21 +198,24 @@ body {
   background: #fff;
 }
 
-.brand-text {
+.rail-brand .brand-text {
   display: flex;
   flex-direction: column;
+  align-items: center;
   min-width: 0;
+  max-width: 100%;
 }
 
-.brand-name {
+.rail-brand .brand-name {
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   color: var(--accent);
-  font-size: calc(13px * var(--tb));
+  font-size: calc(11px * var(--tb));
+  white-space: nowrap;
 }
 
-.brand-sub {
-  font-size: calc(10px * var(--tb));
+.rail-brand .brand-sub {
+  font-size: calc(9px * var(--tb));
   color: var(--muted);
 }
 
@@ -565,7 +570,7 @@ button:disabled {
 /* Contextual floats beside left rail (over canvas) */
 .float-stack {
   position: absolute;
-  top: calc(56px * var(--tb, 1.2));
+  top: calc(48px * var(--tb, 1.2));
   left: calc(8px * var(--tb, 1.2));
   z-index: 35;
   display: flex;
@@ -609,6 +614,23 @@ button:disabled {
   width: 100%;
   font-size: calc(11px * var(--tb, 1.2));
   padding: calc(3px * var(--tb, 1.2)) calc(4px * var(--tb, 1.2));
+}
+
+.float-mini-opts {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(3px * var(--tb, 1.2));
+  width: 100%;
+}
+
+.float-panel .rail-mini-btn {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: calc(24px * var(--tb, 1.2));
+  padding: calc(4px * var(--tb, 1.2)) calc(6px * var(--tb, 1.2));
+  font-size: calc(11px * var(--tb, 1.2));
+  font-weight: 600;
 }
 
 /* Fill shade swatches — clipped so checkerboard cannot bleed */
@@ -667,7 +689,7 @@ button:disabled {
 }
 
 body.dark-canvas .float-panel,
-body.dark-canvas .chrome-brand,
+body.dark-canvas .chrome-lang,
 body.dark-canvas .chrome-actions {
   background: rgba(42, 48, 56, 0.94);
 }
@@ -1385,8 +1407,8 @@ body.dark-canvas .coord-curve-row {
 }
 
 @media (max-width: 720px) {
-  .brand-sub {
-    display: none;
+  .rail-brand .brand-name {
+    font-size: calc(10px * var(--tb, 1.2));
   }
 
   .group-title {
@@ -1426,6 +1448,13 @@ body.dark-canvas .coord-curve-row {
   <div id="app">
     <div class="body-row">
       <aside class="tool-rail" role="toolbar" aria-label="繪圖工具" data-i18n-aria="aria_toolbar_tools">
+        <div class="rail-brand">
+          <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
+          <div class="brand-text">
+            <span class="brand-name">Simple Diagram</span>
+            <span class="brand-sub">v13.3.2</span>
+          </div>
+        </div>
         <div class="rail-section" data-group="draw">
           <span class="rail-title" title="繪製" data-i18n="rail_draw" data-i18n-title="rail_draw_title">繪</span>
           <button type="button" class="tool active" data-tool="select" title="選取／移動 (V)" data-i18n-title="tip_tool_select">
@@ -1455,10 +1484,6 @@ body.dark-canvas .coord-curve-row {
           <button type="button" class="tool" data-tool="label" title="標籤：左鍵自訂／右鍵直接套預設" data-i18n-title="tip_tool_label">
             <span class="icon">A</span><span class="label" data-i18n="tool_label">標籤</span>
           </button>
-          <span class="rail-mini-opts" id="sectorModeBar" title="弧段僅畫弧；扇形含兩條半徑" data-i18n-title="tip_sector_bar">
-            <button type="button" class="mark-group-btn rail-mini-btn active" data-sector-mode="arc" title="只畫圓弧" data-i18n-title="tip_sector_arc">弧</button>
-            <button type="button" class="mark-group-btn rail-mini-btn" data-sector-mode="sector" title="扇形（弧＋兩半徑）" data-i18n-title="tip_sector_pie">扇</button>
-          </span>
         </div>
 
         <div class="rail-section" data-group="construct">
@@ -1500,11 +1525,6 @@ body.dark-canvas .coord-curve-row {
           <button type="button" class="tool" data-tool="equal" title="等長記號：左鍵單劃／右鍵雙劃" data-i18n-title="tip_tool_equal">
             <span class="icon">⫽</span><span class="label" data-i18n="tool_equal">等長</span>
           </button>
-          <span class="rail-mini-opts" id="markGroupBar" title="單／雙記號與翻面" data-i18n-title="tip_mark_bar">
-            <button type="button" class="mark-group-btn rail-mini-btn active" data-mark-group="0" title="單箭／單劃（G）" data-i18n-title="tip_mark_single">單</button>
-            <button type="button" class="mark-group-btn rail-mini-btn" data-mark-group="1" title="雙箭／雙劃（G）" data-i18n-title="tip_mark_double">雙</button>
-            <button type="button" class="rail-mini-btn" id="btnFlipMark" title="記號翻面（選取平行／等長記號後）" data-i18n-title="tip_mark_flip">翻面</button>
-          </span>
           <button type="button" class="tool" data-tool="length" title="線段長度標註（例：6）" data-i18n-title="tip_tool_length">
             <span class="icon">6</span><span class="label" data-i18n="tool_length">長度</span>
           </button>
@@ -1516,14 +1536,7 @@ body.dark-canvas .coord-curve-row {
 
         <!-- Overlay chrome: does not reserve layout height -->
         <header class="chrome-overlay toolbar" role="toolbar" aria-label="屬性與檔案" data-i18n-aria="aria_toolbar_props">
-          <div class="chrome-cluster chrome-brand">
-            <div class="brand">
-              <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
-              <div class="brand-text">
-                <span class="brand-name">Simple Diagram</span>
-                <span class="brand-sub">v13.3.1</span>
-              </div>
-            </div>
+          <div class="chrome-cluster chrome-lang">
             <div class="tool-group" data-group="lang">
               <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
               <button type="button" id="btnLangEn" class="lang-btn" data-lang="en" title="English UI" data-i18n-title="tip_lang_en">EN</button>
@@ -1626,6 +1639,19 @@ body.dark-canvas .coord-curve-row {
               <option value="14">大</option>
               <option value="18">特大</option>
             </select>
+          </div>
+          <div class="float-panel float-sector" id="sectorFloat" hidden>
+            <span class="float-mini-opts" id="sectorModeBar" title="弧段僅畫弧；扇形含兩條半徑" data-i18n-title="tip_sector_bar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-sector-mode="arc" title="只畫圓弧" data-i18n-title="tip_sector_arc">弧</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-sector-mode="sector" title="扇形（弧＋兩半徑）" data-i18n-title="tip_sector_pie">扇</button>
+            </span>
+          </div>
+          <div class="float-panel float-mark" id="markFloat" hidden>
+            <span class="float-mini-opts" id="markGroupBar" title="單／雙記號與翻面" data-i18n-title="tip_mark_bar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-mark-group="0" title="單箭／單劃（G）" data-i18n-title="tip_mark_single">單</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-mark-group="1" title="雙箭／雙劃（G）" data-i18n-title="tip_mark_double">雙</button>
+              <button type="button" class="rail-mini-btn" id="btnFlipMark" title="記號翻面（選取平行／等長記號後）" data-i18n-title="tip_mark_flip">翻面</button>
+            </span>
           </div>
           <div class="float-panel float-fill" id="fillFloat" hidden>
             <span class="fill-swatch-bar" id="fillPresetBar" title="填色陰影透明度" data-i18n-title="tip_fill_bar">
@@ -3112,11 +3138,7 @@ body.dark-canvas .coord-curve-row {
     document.querySelectorAll("[data-sector-mode]").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.sectorMode === sectorMode);
     });
-    const bar = document.getElementById("sectorModeBar");
-    if (bar) {
-      const selSector = selection.some((s) => s.type === "sector");
-      bar.classList.toggle("is-dim", tool !== "sector" && !selSector);
-    }
+    syncContextualFloats();
   }
 
   function setSectorMode(mode) {
@@ -3164,10 +3186,16 @@ body.dark-canvas .coord-curve-row {
   const SIZE_TOOLS = new Set(["label", "rightAngle", "angleArc", "reflex"]);
   const SIZE_SEL_TYPES = new Set(["label", "rightAngle", "angleArc"]);
 
-  /** Show/hide line-style + fill floats beside the left rail. */
+  const SECTOR_TOOLS = new Set(["sector"]);
+  const MARK_MODE_TOOLS = new Set(["parallel", "equal", "angleArc"]);
+  const MARK_SEL_TYPES = new Set(["parallelMark", "equalMark", "angleArc"]);
+
+  /** Show/hide contextual floats beside the left rail. */
   function syncContextualFloats() {
     const styleFloat = document.getElementById("styleFloat");
     const fillFloat = document.getElementById("fillFloat");
+    const sectorFloat = document.getElementById("sectorFloat");
+    const markFloat = document.getElementById("markFloat");
     if (styleFloat) {
       const strokeSel = selection.some((s) => STROKE_SEL_TYPES.has(s.type));
       const sizeSel = selection.some((s) => SIZE_SEL_TYPES.has(s.type));
@@ -3179,6 +3207,14 @@ body.dark-canvas .coord-curve-row {
     }
     if (fillFloat) {
       fillFloat.hidden = tool !== "fill";
+    }
+    if (sectorFloat) {
+      const selSector = selection.some((s) => s.type === "sector");
+      sectorFloat.hidden = !(SECTOR_TOOLS.has(tool) || (tool === "select" && selSector));
+    }
+    if (markFloat) {
+      const selMark = selection.some((s) => MARK_SEL_TYPES.has(s.type));
+      markFloat.hidden = !(MARK_MODE_TOOLS.has(tool) || (tool === "select" && selMark));
     }
   }
 
@@ -7017,18 +7053,7 @@ body.dark-canvas .coord-curve-row {
     document.querySelectorAll("[data-mark-group]").forEach((btn) => {
       btn.classList.toggle("active", Number(btn.dataset.markGroup) === g);
     });
-    const bar = document.getElementById("markGroupBar");
-    if (bar) {
-      const selMark = selection.some(
-        (s) =>
-          s.type === "parallelMark" ||
-          s.type === "equalMark" ||
-          s.type === "angleArc"
-      );
-      const relevant =
-        tool === "parallel" || tool === "equal" || tool === "angleArc" || selMark;
-      bar.classList.toggle("is-dim", !relevant);
-    }
+    syncContextualFloats();
   }
 
   function drawMidTick(mt) {
@@ -9652,7 +9677,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.3.1",
+      version: "13.3.2",
       app: "simple-diagram",
       points,
       segments,

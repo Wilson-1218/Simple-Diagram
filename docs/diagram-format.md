@@ -19,7 +19,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | 欄位 | 型別 | 說明 |
 |---|---|---|
 | `formatVersion` | number | **Schema 版**；新檔寫 `1`；載入時缺省＝v1 |
-| `version` | number \| string | 應用版（如 `13.3.1`），僅資訊用 |
+| `version` | number \| string | 應用版（如 `13.3.2`），僅資訊用 |
 | `app` | string | 固定 `"simple-diagram"` |
 | `name` | string | 檔名提示 |
 | `savedAt` | number | 可選；儲存時間戳 |
