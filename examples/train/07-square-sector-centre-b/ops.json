@@ -75,12 +75,17 @@
   },
   {
     "op": "addFill",
-    "kind": "segment",
-    "circleId": "cB",
+    "kind": "polyArc",
+    "pointIds": [
+      "E",
+      "D",
+      "C"
+    ],
     "centerId": "B",
-    "startId": "E",
-    "endId": "C",
-    "opacity": 0.2
+    "startId": "C",
+    "endId": "E",
+    "circleId": "cB",
+    "opacity": 0.22
   },
   {
     "op": "addRightAngle",
@@ -109,7 +114,7 @@
   {
     "op": "addLengthLabel",
     "segmentId": "CD",
-    "text": "8"
+    "text": "8 cm"
   },
   {
     "op": "addLabel",
@@ -143,8 +148,8 @@
     "op": "addLabel",
     "pointId": "E",
     "text": "E",
-    "ox": 12,
-    "oy": -12
+    "ox": -14,
+    "oy": -10
   },
   {
     "op": "setMeta",

@@ -1,7 +1,7 @@
 {
   "name": "07-square-sector-centre-b",
   "formatVersion": 1,
-  "version": "13.5.2",
+  "version": "13.5.3",
   "counts": {
     "points": 5,
     "segments": 5,
@@ -11,7 +11,7 @@
     "sectors": 1,
     "fills": 1,
     "fillKinds": {
-      "segment": 1
+      "polygon": 1
     },
     "rightAngles": 4,
     "angleArcs": 0,

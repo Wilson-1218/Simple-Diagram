@@ -24,6 +24,12 @@
     "y": 280
   },
   {
+    "op": "addPoint",
+    "id": "P",
+    "x": 190,
+    "y": 124.11542731880104
+  },
+  {
     "op": "addSegment",
     "id": "OA",
     "a": "O",
@@ -77,21 +83,29 @@
   },
   {
     "op": "addFill",
-    "kind": "segment",
-    "circleId": "cO",
-    "centerId": "O",
-    "startId": "A",
-    "endId": "B",
-    "opacity": 0.18
-  },
-  {
-    "op": "addFill",
-    "kind": "segment",
-    "circleId": "cB",
-    "centerId": "B",
-    "startId": "C",
-    "endId": "O",
-    "opacity": 0.18
+    "kind": "pathFill",
+    "opacity": 0.22,
+    "edges": [
+      {
+        "type": "line",
+        "a": "A",
+        "b": "C"
+      },
+      {
+        "type": "arc",
+        "centerId": "B",
+        "from": "C",
+        "to": "P",
+        "circleId": "cB"
+      },
+      {
+        "type": "arc",
+        "centerId": "O",
+        "from": "P",
+        "to": "A",
+        "circleId": "cO"
+      }
+    ]
   },
   {
     "op": "addRightAngle",

@@ -256,11 +256,39 @@ export function validateDiagram(doc) {
       }
       if (typeof f.id !== "string" || !f.id) errors.push(`${path}.id required`);
       const kind =
-        f.kind === "sector" || f.kind === "segment" ? f.kind : "polygon";
+        f.kind === "sector" ||
+        f.kind === "segment" ||
+        f.kind === "polyArc" ||
+        f.kind === "pathFill"
+          ? f.kind
+          : "polygon";
       if (f.kind != null && kind === "polygon" && f.kind !== "polygon") {
-        errors.push(`${path}.kind must be polygon|sector|segment`);
+        errors.push(`${path}.kind must be polygon|sector|segment|polyArc|pathFill`);
       }
-      if (kind === "polygon") {
+      if (kind === "pathFill") {
+        if (!Array.isArray(f.edges) || f.edges.length < 2) {
+          errors.push(`${path}.edges must be an array of ≥2 edges`);
+        } else {
+          for (let j = 0; j < f.edges.length; j++) {
+            const e = f.edges[j];
+            const ep = `${path}.edges[${j}]`;
+            if (!e || typeof e !== "object") {
+              errors.push(`${ep} must be an object`);
+              continue;
+            }
+            if (e.type === "line") {
+              needPoint(e.a, `${ep}.a`);
+              needPoint(e.b, `${ep}.b`);
+            } else if (e.type === "arc") {
+              needPoint(e.centerId, `${ep}.centerId`);
+              needPoint(e.from, `${ep}.from`);
+              needPoint(e.to, `${ep}.to`);
+            } else {
+              errors.push(`${ep}.type must be line|arc`);
+            }
+          }
+        }
+      } else if (kind === "polygon") {
         if (!Array.isArray(f.pointIds) || f.pointIds.length < 3) {
           errors.push(`${path}.pointIds must be an array of ≥3 ids`);
         } else {
@@ -268,6 +296,17 @@ export function validateDiagram(doc) {
             needPoint(f.pointIds[j], `${path}.pointIds[${j}]`);
           }
         }
+      } else if (kind === "polyArc") {
+        if (!Array.isArray(f.pointIds) || f.pointIds.length < 2) {
+          errors.push(`${path}.pointIds must be an array of ≥2 ids`);
+        } else {
+          for (let j = 0; j < f.pointIds.length; j++) {
+            needPoint(f.pointIds[j], `${path}.pointIds[${j}]`);
+          }
+        }
+        needPoint(f.centerId, `${path}.centerId`);
+        needPoint(f.startId, `${path}.startId`);
+        needPoint(f.endId, `${path}.endId`);
       } else if (kind === "sector") {
         needPoint(f.centerId, `${path}.centerId`);
         needPoint(f.startId, `${path}.startId`);

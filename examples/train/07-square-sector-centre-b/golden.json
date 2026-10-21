@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "version": "13.5.2",
+  "version": "13.5.3",
   "app": "simple-diagram",
   "points": [
     {
@@ -98,8 +98,8 @@
       "id": "lab_0011",
       "pointId": "E",
       "text": "E",
-      "ox": 12,
-      "oy": -12,
+      "ox": -14,
+      "oy": -10,
       "size": 16
     }
   ],
@@ -141,7 +141,7 @@
     {
       "id": "ll_0006",
       "segmentId": "CD",
-      "text": "8",
+      "text": "8 cm",
       "side": 1
     }
   ],
@@ -167,13 +167,18 @@
   "fills": [
     {
       "id": "fill_0001",
-      "kind": "segment",
-      "startId": "E",
-      "endId": "C",
+      "kind": "polyArc",
+      "pointIds": [
+        "E",
+        "D",
+        "C"
+      ],
+      "centerId": "B",
+      "startId": "C",
+      "endId": "E",
       "color": "#666666",
-      "opacity": 0.2,
-      "circleId": "cB",
-      "centerId": "B"
+      "opacity": 0.22,
+      "circleId": "cB"
     }
   ],
   "coordPlots": [],
