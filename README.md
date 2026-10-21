@@ -16,14 +16,22 @@
 
 ---
 
+## 注意 / Notice
+
+| 中文 | English |
+|---|---|
+| **不支援移動設備**（手機／平板） | **Not supported on mobile devices** (phones / tablets) |
+| 請用桌上型電腦瀏覽器，或本機開檔 | Use a **desktop** browser, or open the files locally |
+
+---
+
 ## 線上使用 / Use online
 
 開啟 GitHub Pages（無需下載）：
 
 **https://wilson-1218.github.io/Simple-Diagram/**
 
-建議 **Chrome／Edge**。
-
+建議 **Chrome／Edge**（桌面版）。
 ---
 
 ## 本機開啟 / Open locally
