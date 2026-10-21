@@ -42,7 +42,7 @@ node tools/validate-diagram.mjs /tmp/tri.json
 
 | Need | Op |
 |---|---|
-| Square / △ / rect | `addShape` (`square`\|`equilateral`\|`rect`\|`iso`) |
+| Common exam shapes | `addShape` (`square`\|`rect`\|`rhombus`\|`parallelogram`\|`trapezoid`\|`kite`\|`equilateral`\|`iso`\|`rightTri`\|`isoRight`\|`pentagon`\|`hexagon`\|`circle`\|`semicircle`) |
 | Circle tangent / radius / diameter / chord | `addTangent` · `addRadius` · `addDiameter` · `addChord` |
 | Polygon / sector / segment shade | `addFill` with `kind` |
 | Layer show/lock | `setLayers` / `setMeta.layers` |
@@ -59,7 +59,10 @@ UI-only (no dedicated op — approximate with points/segments/movePoint): live m
 { "op": "addFill", "kind": "polygon", "pointIds": ["A","B","C"], "opacity": 0.2 }
 { "op": "addFill", "kind": "sector", "centerId": "O", "startId": "A", "endId": "B", "opacity": 0.2 }
 { "op": "addFill", "kind": "segment", "circleId": "c1", "startId": "P", "endId": "Q", "opacity": 0.2 }
+{ "op": "addFill", "kind": "polygon", "pointIds": ["D","E","F"], "color": "#ffffff", "opacity": 1 }
 ```
+
+Later fills paint on top. Opaque white (`#ffffff`, `opacity: 1`) punches out shaded regions for exam-style composite shading.
 
 ---
 

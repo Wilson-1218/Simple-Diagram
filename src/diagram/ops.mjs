@@ -510,11 +510,21 @@ const HANDLERS = {
   },
 
   /**
-   * Place a common shape (square | equilateral | rect | iso) by corner/origin + size.
-   * Creates points + segments; optional labels via label:true.
+   * Place a common shape by corner/origin + size.
+   * kinds: square|rect|rhombus|parallelogram|trapezoid|kite|equilateral|iso|
+   * rightTri|isoRight|pentagon|hexagon|circle|semicircle
+   * Creates points + segments (circle/semicircle also circle/sector); optional labels.
    */
   addShape(doc, op, nextId) {
-    const kind = op.kind || op.shape || "square";
+    let kind = op.kind || op.shape || "square";
+    if (kind === "isosceles") kind = "iso";
+    if (kind === "right" || kind === "rightTriangle") kind = "rightTri";
+    if (kind === "isoRightTriangle") kind = "isoRight";
+    if (kind === "para") kind = "parallelogram";
+    if (kind === "trap" || kind === "isosTrapezoid") kind = "trapezoid";
+    if (kind === "pent") kind = "pentagon";
+    if (kind === "hex") kind = "hexagon";
+    if (kind === "semi") kind = "semicircle";
     const x0 = Number(op.x);
     const y0 = Number(op.y);
     if (!Number.isFinite(x0) || !Number.isFinite(y0)) {
@@ -523,22 +533,95 @@ const HANDLERS = {
     const w = Math.abs(Number(op.w != null ? op.w : op.size != null ? op.size : 80));
     if (!(w > 1e-6)) throw new Error("addShape: w/size must be > 0");
     const hRaw = op.h != null ? Number(op.h) : w;
-    const h = Math.abs(hRaw);
+    const h = Math.abs(hRaw) > 1e-6 ? Math.abs(hRaw) : w;
     const style = styleOr(op.style, "solid");
     const prefix = op.idPrefix != null ? String(op.idPrefix) : "";
+
+    const labelPoint = (p, i) => {
+      if (!(op.label || op.labels)) return;
+      const text =
+        Array.isArray(op.labels) && op.labels[i] != null
+          ? String(op.labels[i])
+          : String.fromCharCode(65 + i);
+      HANDLERS.addLabel(doc, { pointId: p.id, text, ox: -10, oy: -12 }, nextId);
+    };
+
+    if (kind === "circle") {
+      const cHint = prefix ? `${prefix}0` : op.centerId;
+      const tHint = prefix ? `${prefix}1` : op.throughId;
+      const c = pushPoint(doc, nextId, x0, y0, cHint || undefined);
+      const t = pushPoint(doc, nextId, x0 + w, y0, tHint || undefined);
+      labelPoint(c, 0);
+      labelPoint(t, 1);
+      const id = resolveId(op, nextId, "cir");
+      doc.circles.push({
+        id,
+        centerId: c.id,
+        throughId: t.id,
+        style,
+      });
+      return doc;
+    }
+
+    if (kind === "semicircle") {
+      const a = pushPoint(doc, nextId, x0, y0, prefix ? `${prefix}0` : undefined);
+      const b = pushPoint(doc, nextId, x0 + w, y0, prefix ? `${prefix}1` : undefined);
+      const c = pushPoint(doc, nextId, x0 + w / 2, y0, prefix ? `${prefix}2` : undefined);
+      labelPoint(a, 0);
+      labelPoint(b, 1);
+      labelPoint(c, 2);
+      pushSegment(doc, nextId, a.id, b.id, style, prefix ? `${prefix}s0` : undefined);
+      const id = resolveId(op, nextId, "sec");
+      doc.sectors.push({
+        id,
+        centerId: c.id,
+        startId: a.id,
+        endId: b.id,
+        style,
+        mode: "arc",
+      });
+      return doc;
+    }
+
     const pts = [];
     if (kind === "square" || kind === "rect") {
       const hh = kind === "square" ? w : h;
       pts.push([x0, y0], [x0 + w, y0], [x0 + w, y0 + hh], [x0, y0 + hh]);
+    } else if (kind === "rhombus") {
+      const cx = x0 + w / 2;
+      const cy = y0 + h / 2;
+      pts.push([cx, y0], [x0 + w, cy], [cx, y0 + h], [x0, cy]);
+    } else if (kind === "parallelogram") {
+      const shear = w * 0.35;
+      pts.push([x0, y0], [x0 + w, y0], [x0 + w + shear, y0 + h], [x0 + shear, y0 + h]);
+    } else if (kind === "trapezoid") {
+      const inset = w * 0.22;
+      pts.push([x0, y0], [x0 + w, y0], [x0 + w - inset, y0 + h], [x0 + inset, y0 + h]);
+    } else if (kind === "kite") {
+      const cx = x0 + w / 2;
+      const midY = y0 + h * 0.38;
+      pts.push([cx, y0], [x0 + w, midY], [cx, y0 + h], [x0, midY]);
     } else if (kind === "equilateral") {
       const hh = (Math.sqrt(3) / 2) * w;
       pts.push([x0, y0], [x0 + w, y0], [x0 + w / 2, y0 - hh]);
-    } else if (kind === "iso" || kind === "isosceles") {
-      const hh = h > 1e-6 ? h : w;
-      pts.push([x0, y0], [x0 + w, y0], [x0 + w / 2, y0 - hh]);
+    } else if (kind === "iso") {
+      pts.push([x0, y0], [x0 + w, y0], [x0 + w / 2, y0 - h]);
+    } else if (kind === "rightTri") {
+      pts.push([x0, y0], [x0 + w, y0], [x0, y0 + h]);
+    } else if (kind === "isoRight") {
+      pts.push([x0, y0], [x0 + w, y0], [x0, y0 + w]);
+    } else if (kind === "pentagon" || kind === "hexagon") {
+      const n = kind === "pentagon" ? 5 : 6;
+      const cx = x0 + w / 2;
+      const cy = y0 + w / 2;
+      const r = w / 2;
+      for (let i = 0; i < n; i++) {
+        const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+        pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+      }
     } else {
       throw new Error(
-        `addShape: unknown kind "${kind}" (use square|rect|equilateral|iso)`
+        `addShape: unknown kind "${kind}" (use square|rect|rhombus|parallelogram|trapezoid|kite|equilateral|iso|rightTri|isoRight|pentagon|hexagon|circle|semicircle)`
       );
     }
     const ids = [];
@@ -546,13 +629,7 @@ const HANDLERS = {
       const hint = prefix ? `${prefix}${i}` : op.pointIds && op.pointIds[i];
       const p = pushPoint(doc, nextId, pts[i][0], pts[i][1], hint || undefined);
       ids.push(p.id);
-      if (op.label || op.labels) {
-        const text =
-          Array.isArray(op.labels) && op.labels[i] != null
-            ? String(op.labels[i])
-            : String.fromCharCode(65 + i);
-        HANDLERS.addLabel(doc, { pointId: p.id, text, ox: -10, oy: -12 }, nextId);
-      }
+      labelPoint(p, i);
     }
     for (let i = 0; i < ids.length; i++) {
       const a = ids[i];

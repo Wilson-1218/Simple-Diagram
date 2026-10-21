@@ -68,7 +68,7 @@ export const OP_CATALOG = {
   },
   addShape: {
     args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?",
-    note: "kind square|rect|equilateral|iso",
+    note: "kind square|rect|rhombus|parallelogram|trapezoid|kite|equilateral|iso|rightTri|isoRight|pentagon|hexagon|circle|semicircle",
   },
   addTangent: { args: "circleId, touchId|angle|deg, halfLen|length, style?" },
   addRadius: { args: "circleId, throughId|angle|deg, style?" },

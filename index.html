@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.5.3" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.5.4" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.5.3" />
+  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.5.4" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.3</span>
+            <span class="brand-sub">v13.5.4</span>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -262,20 +262,31 @@
               <button type="button" class="mark-group-btn rail-mini-btn" data-fill-mode="sector" title="扇形填色" data-i18n-title="tip_fill_sector" data-i18n="fill_mode_sector">扇形</button>
               <button type="button" class="mark-group-btn rail-mini-btn" data-fill-mode="segment" title="弓形填色" data-i18n-title="tip_fill_segment" data-i18n="fill_mode_segment">弓形</button>
             </span>
-            <span class="fill-swatch-bar" id="fillPresetBar" title="填色陰影透明度" data-i18n-title="tip_fill_bar">
+            <span class="fill-swatch-bar" id="fillPresetBar" title="填色陰影／白色挖空" data-i18n-title="tip_fill_bar">
               <button type="button" class="fill-swatch" data-fill-key="g10" title="灰影 10%" data-i18n-title="tip_fill_g10" style="--swatch:rgba(102,102,102,0.10)" aria-label="10%"></button>
               <button type="button" class="fill-swatch active" data-fill-key="g20" title="灰影 20%" data-i18n-title="tip_fill_g20" style="--swatch:rgba(102,102,102,0.20)" aria-label="20%"></button>
               <button type="button" class="fill-swatch" data-fill-key="g35" title="灰影 35%" data-i18n-title="tip_fill_g35" style="--swatch:rgba(102,102,102,0.35)" aria-label="35%"></button>
               <button type="button" class="fill-swatch" data-fill-key="g50" title="灰影 50%" data-i18n-title="tip_fill_g50" style="--swatch:rgba(102,102,102,0.50)" aria-label="50%"></button>
               <button type="button" class="fill-swatch" data-fill-key="bg22" title="藍灰影 22%" data-i18n-title="tip_fill_bg" style="--swatch:rgba(107,135,153,0.22)" aria-label="blue-gray"></button>
+              <button type="button" class="fill-swatch" data-fill-key="white" title="白色（蓋住下方陰影）" data-i18n-title="tip_fill_white" data-i18n-aria="tip_fill_white" style="--swatch:rgba(255,255,255,0.82)" aria-label="白色"></button>
             </span>
           </div>
           <div class="float-panel float-shape" id="shapeFloat" hidden>
-            <span class="float-mini-opts" id="shapeModeBar" title="常用圖形" data-i18n-title="tip_shape_bar">
-              <button type="button" class="mark-group-btn rail-mini-btn active" data-shape-mode="square" title="正方形：對角拖曳" data-i18n-title="tip_shape_square" data-i18n="shape_square">正方</button>
-              <button type="button" class="mark-group-btn rail-mini-btn" data-shape-mode="equilateral" title="等邊三角形：底邊拖曳" data-i18n-title="tip_shape_equilateral" data-i18n="shape_equilateral">等邊</button>
-              <button type="button" class="mark-group-btn rail-mini-btn" data-shape-mode="rect" title="長方形：自由寬高" data-i18n-title="tip_shape_rect" data-i18n="shape_rect">長方</button>
-              <button type="button" class="mark-group-btn rail-mini-btn" data-shape-mode="iso" title="等腰三角形：底×高" data-i18n-title="tip_shape_iso" data-i18n="shape_iso">等腰</button>
+            <span class="float-mini-opts shape-icon-grid" id="shapeModeBar" title="常用圖形" data-i18n-title="tip_shape_bar">
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn active" data-shape-mode="square" title="正方形：對角拖曳" data-i18n-title="tip_shape_square" data-i18n-aria="tip_shape_square" aria-label="正方形"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="rect" title="長方形：自由寬高" data-i18n-title="tip_shape_rect" data-i18n-aria="tip_shape_rect" aria-label="長方形"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="rhombus" title="菱形：對角拖曳" data-i18n-title="tip_shape_rhombus" data-i18n-aria="tip_shape_rhombus" aria-label="菱形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,4 20,12 12,20 4,12"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="parallelogram" title="平行四邊形：底×高" data-i18n-title="tip_shape_parallelogram" data-i18n-aria="tip_shape_parallelogram" aria-label="平行四邊形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6,7 20,7 18,17 4,17"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="trapezoid" title="等腰梯形：底×高" data-i18n-title="tip_shape_trapezoid" data-i18n-aria="tip_shape_trapezoid" aria-label="等腰梯形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="4,18 20,18 16,6 8,6"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="kite" title="鳶形：外接框拖曳" data-i18n-title="tip_shape_kite" data-i18n-aria="tip_shape_kite" aria-label="鳶形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 19,10 12,21 5,10"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="equilateral" title="等邊三角形：底邊拖曳" data-i18n-title="tip_shape_equilateral" data-i18n-aria="tip_shape_equilateral" aria-label="等邊三角形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,4 21,19 3,19"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="iso" title="等腰三角形：底×高" data-i18n-title="tip_shape_iso" data-i18n-aria="tip_shape_iso" aria-label="等腰三角形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,5 21,19 3,19"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="rightTri" title="直角三角形：直角在起點" data-i18n-title="tip_shape_rightTri" data-i18n-aria="tip_shape_rightTri" aria-label="直角三角形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="4,4 4,20 20,20"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="isoRight" title="等腰直角三角形：直角在起點" data-i18n-title="tip_shape_isoRight" data-i18n-aria="tip_shape_isoRight" aria-label="等腰直角三角形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,5 5,19 19,19"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="pentagon" title="正五邊形：外接框拖曳" data-i18n-title="tip_shape_pentagon" data-i18n-aria="tip_shape_pentagon" aria-label="正五邊形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 21,10 17.5,20.5 6.5,20.5 3,10"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="hexagon" title="正六邊形：外接框拖曳" data-i18n-title="tip_shape_hexagon" data-i18n-aria="tip_shape_hexagon" aria-label="正六邊形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7,4 17,4 22,12 17,20 7,20 2,12"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="circle" title="圓：圓心拖至圓周" data-i18n-title="tip_shape_circle" data-i18n-aria="tip_shape_circle" aria-label="圓"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="semicircle" title="半圓：直徑拖曳，弧向拖曳側" data-i18n-title="tip_shape_semicircle" data-i18n-aria="tip_shape_semicircle" aria-label="半圓"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14 A8 8 0 0 1 20 14"/><line x1="4" y1="14" x2="20" y2="14"/></svg></button>
             </span>
           </div>
           <div class="float-panel float-circle-part" id="circlePartFloat" hidden>
@@ -511,6 +522,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261021-release-v13.5.3"></script>
+  <script src="app.js?v=20261021-release-v13.5.4"></script>
 </body>
 </html>
