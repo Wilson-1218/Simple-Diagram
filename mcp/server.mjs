@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
  * Minimal MCP server (stdio JSON-RPC) for Simple Diagram.
- * Tools: create_diagram, apply_ops, validate_diagram, load_example, list_ops
+ * Tools: create_diagram, apply_ops, validate_diagram, summarize_diagram,
+ *         load_example, list_ops
  *
- * Cursor MCP config example — see README «AI / Automation».
+ * Agents: prefer apply_ops with validate+summarize to cut round-trips.
+ * See docs/agent-draw-playbook.md
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -12,8 +14,11 @@ import {
   applyOps,
   emptyDiagram,
   validateDiagram,
+  summarizeDiagram,
   OP_NAMES,
+  OP_CATALOG,
   CURRENT_FORMAT_VERSION,
+  APP_VERSION,
 } from "../src/diagram/index.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -22,14 +27,15 @@ const EXAMPLES_DIR = join(ROOT, "examples");
 
 const SERVER_INFO = {
   name: "simple-diagram",
-  version: "13.4.1",
+  version: APP_VERSION,
 };
 
 function listExamples() {
   try {
     return readdirSync(EXAMPLES_DIR)
       .filter((f) => f.endsWith(".json"))
-      .map((f) => f.replace(/\.json$/, ""));
+      .map((f) => f.replace(/\.json$/, ""))
+      .sort();
   } catch {
     return [];
   }
@@ -46,11 +52,13 @@ const TOOLS = [
   {
     name: "create_diagram",
     description:
-      "Create an empty Simple Diagram JSON document (formatVersion 1). Optional overrides as JSON object fields.",
+      "Create an empty Simple Diagram JSON (formatVersion 1). " +
+      "Prefer this once, then apply_ops with many ops in one call. " +
+      "Do not simulate UI clicks — only emit document JSON + ops.",
     inputSchema: {
       type: "object",
       properties: {
-        name: { type: "string", description: "Document name (e.g. cube.json)" },
+        name: { type: "string", description: "Document name (e.g. triangle.json)" },
         view: {
           type: "object",
           properties: {
@@ -59,13 +67,19 @@ const TOOLS = [
             scale: { type: "number" },
           },
         },
+        gridMode: { type: "string", enum: ["square", "triangle"] },
+        gridSnap: { type: "boolean" },
       },
     },
   },
   {
     name: "apply_ops",
     description:
-      "Apply an array of diagram ops to a document (or empty if omitted). Returns the new document. Ops: " +
+      "Apply diagram ops to a document (or empty if doc omitted). " +
+      "Batch many ops in one call. Returns { doc, validation?, summary? }. " +
+      "Defaults: validate=true, summarize=true (set false to shrink payload). " +
+      "On error, returns { error, hint } with the failing op index. " +
+      "Known ops: " +
       OP_NAMES.join(", "),
     inputSchema: {
       type: "object",
@@ -73,12 +87,21 @@ const TOOLS = [
         doc: { type: "object", description: "Existing diagram JSON (optional)" },
         ops: {
           type: "array",
-          description: "Array of op objects, each with \"op\" field",
+          description:
+            'Op objects with "op" field, e.g. {"op":"addPoint","id":"A","x":0,"y":0}',
           items: { type: "object" },
         },
         validate: {
           type: "boolean",
-          description: "If true, validate result and include validation in response",
+          description: "Validate after apply (default true)",
+        },
+        summarize: {
+          type: "boolean",
+          description: "Include compact summary (default true)",
+        },
+        returnDoc: {
+          type: "boolean",
+          description: "Include full doc in response (default true)",
         },
       },
       required: ["ops"],
@@ -86,7 +109,21 @@ const TOOLS = [
   },
   {
     name: "validate_diagram",
-    description: "Validate a Simple Diagram JSON document. Returns { ok, errors, warnings }.",
+    description:
+      "Validate a Simple Diagram JSON document. Returns { ok, errors, warnings }. " +
+      "Fix errors by correcting point refs / fill kinds / styles, then re-apply.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        doc: { type: "object", description: "Diagram JSON" },
+      },
+      required: ["doc"],
+    },
+  },
+  {
+    name: "summarize_diagram",
+    description:
+      "Compact counts + ids for a diagram (no full geometry). Use to check progress without resending the whole doc.",
     inputSchema: {
       type: "object",
       properties: {
@@ -98,14 +135,16 @@ const TOOLS = [
   {
     name: "load_example",
     description:
-      "Load a bundled example diagram by name (without .json). Available: " +
-      listExamples().join(", "),
+      "Load a bundled example diagram or ops file by basename (no .json). " +
+      "Available: " +
+      listExamples().join(", ") +
+      ". Ops files (*-ops / ops-*) are arrays — use as apply_ops.ops, not as doc.",
     inputSchema: {
       type: "object",
       properties: {
         name: {
           type: "string",
-          description: "Example basename, e.g. cube-sketch",
+          description: "Example basename, e.g. cube-sketch or ops-circle-tangent",
         },
       },
       required: ["name"],
@@ -113,7 +152,8 @@ const TOOLS = [
   },
   {
     name: "list_ops",
-    description: "List supported op names and formatVersion.",
+    description:
+      "List supported op names with short arg hints, formatVersion, app version, and examples.",
     inputSchema: { type: "object", properties: {} },
   },
 ];
@@ -132,30 +172,67 @@ function callTool(name, args) {
       const overrides = {};
       if (args.name) overrides.name = args.name;
       if (args.view) overrides.view = args.view;
+      if (args.gridMode === "square" || args.gridMode === "triangle") {
+        overrides.gridMode = args.gridMode;
+      }
+      if (args.gridSnap != null) overrides.gridSnap = !!args.gridSnap;
       return toolResult(emptyDiagram(overrides));
     }
     case "apply_ops": {
       if (!Array.isArray(args.ops)) {
-        return toolResult({ error: "ops must be an array" }, true);
+        return toolResult(
+          {
+            error: "ops must be an array",
+            hint: 'Pass ops: [{ "op": "addPoint", "id": "A", "x": 0, "y": 0 }, ...]',
+          },
+          true
+        );
       }
+      const wantValidate = args.validate !== false;
+      const wantSummary = args.summarize !== false;
+      const wantDoc = args.returnDoc !== false;
       try {
         const doc = applyOps(args.doc || null, args.ops);
-        if (args.validate) {
-          const v = validateDiagram(doc);
-          return toolResult({ doc, validation: v });
-        }
-        return toolResult(doc);
+        const out = {};
+        if (wantDoc) out.doc = doc;
+        if (wantValidate) out.validation = validateDiagram(doc);
+        if (wantSummary) out.summary = summarizeDiagram(doc);
+        if (!wantDoc && !wantValidate && !wantSummary) out.doc = doc;
+        return toolResult(out);
       } catch (err) {
-        return toolResult({ error: err.message || String(err) }, true);
+        const msg = err.message || String(err);
+        let hint =
+          "Check op name spelling and that point/segment/circle ids exist before use.";
+        const m = /ops\[(\d+)\]/.exec(msg);
+        if (m) {
+          const i = Number(m[1]);
+          const bad = args.ops[i];
+          hint += ` Failing op index ${i}: ${JSON.stringify(bad)}`;
+        }
+        return toolResult({ error: msg, hint }, true);
       }
     }
     case "validate_diagram": {
       if (!args.doc) return toolResult({ error: "doc required" }, true);
       return toolResult(validateDiagram(args.doc));
     }
+    case "summarize_diagram": {
+      if (!args.doc) return toolResult({ error: "doc required" }, true);
+      return toolResult(summarizeDiagram(args.doc));
+    }
     case "load_example": {
       try {
-        return toolResult(loadExample(args.name));
+        const data = loadExample(args.name);
+        const isOps =
+          Array.isArray(data) ||
+          (data && Array.isArray(data.ops) && !data.points);
+        return toolResult({
+          kind: isOps ? "ops" : "document",
+          data,
+          tip: isOps
+            ? "Pass data (or data.ops) to apply_ops.ops"
+            : "Use as apply_ops.doc or open in the editor",
+        });
       } catch (err) {
         return toolResult(
           { error: err.message || String(err), available: listExamples() },
@@ -166,8 +243,11 @@ function callTool(name, args) {
     case "list_ops": {
       return toolResult({
         formatVersion: CURRENT_FORMAT_VERSION,
+        appVersion: APP_VERSION,
         ops: OP_NAMES,
+        catalog: OP_CATALOG,
         examples: listExamples(),
+        playbook: "docs/agent-draw-playbook.md",
       });
     }
     default:
@@ -180,7 +260,6 @@ let buffer = "";
 process.stdin.setEncoding("utf8");
 process.stdin.on("data", (chunk) => {
   buffer += chunk;
-  // Support Content-Length framing (MCP) and newline-delimited JSON
   while (true) {
     if (buffer.startsWith("{")) {
       const nl = buffer.indexOf("\n");
@@ -260,9 +339,9 @@ function handleMessage(raw) {
     return;
   }
   if (msg.method === "tools/call") {
-    const name = msg.params?.name;
-    const args = msg.params?.arguments || {};
-    const result = callTool(name, args);
+    const tname = msg.params?.name;
+    const targs = msg.params?.arguments || {};
+    const result = callTool(tname, targs);
     send({ jsonrpc: "2.0", id: msg.id, result });
     return;
   }
@@ -280,5 +359,5 @@ function handleMessage(raw) {
 }
 
 process.stderr.write(
-  `[simple-diagram MCP] ready · formatVersion ${CURRENT_FORMAT_VERSION} · ${OP_NAMES.length} ops\n`
+  `[simple-diagram MCP] ready · v${APP_VERSION} · formatVersion ${CURRENT_FORMAT_VERSION} · ${OP_NAMES.length} ops\n`
 );

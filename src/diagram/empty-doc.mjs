@@ -1,7 +1,16 @@
 /** Empty Simple Diagram document (formatVersion 1). */
 
 export const CURRENT_FORMAT_VERSION = 1;
-export const APP_VERSION = "13.4.1";
+export const APP_VERSION = "13.4.2";
+
+export const DEFAULT_LAYERS = {
+  gridShow: true,
+  gridLock: false,
+  coordsShow: true,
+  coordsLock: false,
+  helpersShow: true,
+  helpersLock: false,
+};
 
 /**
  * @param {Record<string, unknown>} [overrides]
@@ -27,6 +36,10 @@ export function emptyDiagram(overrides = {}) {
     coordPlots: [],
     exportCrop: null,
     sectorMode: "arc",
+    fillMode: "polygon",
+    shapeMode: "square",
+    circlePartMode: "chord",
+    layers: { ...DEFAULT_LAYERS },
     nextLetter: "A",
     labelFontSize: 16,
     rightAngleSize: 10,

@@ -143,3 +143,96 @@ test("applyOps does not mutate input", () => {
   applyOps(base, [{ op: "addPoint", id: "Z", x: 1, y: 1 }]);
   assert.equal(JSON.stringify(base), before);
 });
+
+test("addFill sector and segment kinds", () => {
+  const doc = applyOps(null, [
+    { op: "addPoint", id: "O", x: 0, y: 0 },
+    { op: "addPoint", id: "A", x: 40, y: 0 },
+    { op: "addPoint", id: "B", x: 0, y: -40 },
+    { op: "addCircle", id: "c1", centerId: "O", throughId: "A" },
+    {
+      op: "addFill",
+      id: "fs",
+      kind: "sector",
+      centerId: "O",
+      startId: "A",
+      endId: "B",
+      opacity: 0.25,
+    },
+    {
+      op: "addFill",
+      id: "fg",
+      kind: "segment",
+      circleId: "c1",
+      startId: "A",
+      endId: "B",
+      opacity: 0.2,
+    },
+  ]);
+  assert.equal(doc.fills.length, 2);
+  assert.equal(doc.fills[0].kind, "sector");
+  assert.equal(doc.fills[1].kind, "segment");
+  assert.equal(validateDiagram(doc).ok, true, validateDiagram(doc).errors.join("; "));
+});
+
+test("circle part helpers + shape + layers", () => {
+  const doc = applyOps(null, [
+    { op: "addPoint", id: "O", x: 0, y: 0 },
+    { op: "addPoint", id: "A", x: 50, y: 0 },
+    { op: "addCircle", id: "c1", centerId: "O", throughId: "A" },
+    { op: "addTangent", circleId: "c1", touchId: "A", halfLen: 30, aId: "T0", bId: "T1" },
+    { op: "addRadius", circleId: "c1", deg: 90, throughPointId: "R" },
+    { op: "addDiameter", circleId: "c1", deg: 0, aId: "D0", bId: "D1" },
+    { op: "addChord", circleId: "c1", deg0: 20, deg1: 100, aId: "P", bId: "Q" },
+    { op: "addShape", kind: "square", x: 100, y: 100, w: 40, idPrefix: "S" },
+    { op: "setLayers", gridShow: false, helpersShow: true },
+    { op: "alignPoints", pointIds: ["S0", "S1"], axis: "top" },
+  ]);
+  assert.ok(doc.segments.length >= 5);
+  assert.equal(doc.layers.gridShow, false);
+  assert.equal(validateDiagram(doc).ok, true, validateDiagram(doc).errors.join("; "));
+});
+
+test("fixture ops-right-triangle applies cleanly", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { resolve, dirname } = await import("node:path");
+  const { fileURLToPath } = await import("node:url");
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+  const ops = JSON.parse(
+    readFileSync(resolve(root, "examples/ops-right-triangle.json"), "utf8")
+  );
+  const doc = applyOps(null, ops);
+  assert.equal(doc.points.length, 3);
+  assert.equal(doc.fills.length, 1);
+  assert.equal(validateDiagram(doc).ok, true);
+});
+
+test("fixture ops-circle-tangent applies cleanly", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { resolve, dirname } = await import("node:path");
+  const { fileURLToPath } = await import("node:url");
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+  const ops = JSON.parse(
+    readFileSync(resolve(root, "examples/ops-circle-tangent.json"), "utf8")
+  );
+  const doc = applyOps(null, ops);
+  assert.ok(doc.circles.length === 1);
+  assert.ok(doc.fills.some((f) => f.kind === "segment"));
+  assert.equal(validateDiagram(doc).ok, true, validateDiagram(doc).errors.join("; "));
+});
+
+test("OP_NAMES includes v13.4 AI helpers", () => {
+  for (const name of [
+    "addShape",
+    "addTangent",
+    "addRadius",
+    "addDiameter",
+    "addChord",
+    "alignPoints",
+    "distributePoints",
+    "equalizeSegments",
+    "setLayers",
+  ]) {
+    assert.ok(OP_NAMES.includes(name), name);
+  }
+});

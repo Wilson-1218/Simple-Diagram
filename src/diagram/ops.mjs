@@ -62,6 +62,89 @@ function requireSegment(doc, id, ctx) {
   }
 }
 
+function requireCircle(doc, id, ctx) {
+  const cir = doc.circles.find((c) => c.id === id);
+  if (!cir) throw new Error(`${ctx}: circle not found: ${id}`);
+  return cir;
+}
+
+function pointById(doc, id) {
+  return doc.points.find((p) => p.id === id) || null;
+}
+
+function circleGeom(doc, circleId, ctx) {
+  const cir = requireCircle(doc, circleId, ctx);
+  const c = pointById(doc, cir.centerId);
+  const thr = pointById(doc, cir.throughId);
+  if (!c || !thr) throw new Error(`${ctx}: circle points missing`);
+  const r = Math.hypot(thr.x - c.x, thr.y - c.y);
+  if (!(r > 1e-9)) throw new Error(`${ctx}: circle radius too small`);
+  return { cir, c, r };
+}
+
+function pushPoint(doc, nextId, x, y, idHint, marker) {
+  const id = idHint
+    ? resolveId({ id: idHint }, nextId, "p")
+    : nextId("p");
+  if (doc.points.some((p) => p.id === id)) throw new Error(`duplicate point id ${id}`);
+  const p = { id, x: Number(x), y: Number(y) };
+  if (marker) p.marker = marker;
+  doc.points.push(p);
+  return p;
+}
+
+function pushSegment(doc, nextId, a, b, style, idHint) {
+  const id = idHint
+    ? resolveId({ id: idHint }, nextId, "s")
+    : nextId("s");
+  if (doc.segments.some((s) => s.id === id)) throw new Error(`duplicate segment id ${id}`);
+  if (a === b) throw new Error("segment ends must differ");
+  doc.segments.push({ id, a, b, style: styleOr(style, "solid") });
+  return id;
+}
+
+function pointOnCircle(c, r, angle) {
+  return { x: c.x + r * Math.cos(angle), y: c.y + r * Math.sin(angle) };
+}
+
+function resolveCircleAngle(doc, geom, op, ctx) {
+  if (op.touchId || op.throughId || op.pointId) {
+    const pid = op.touchId || op.throughId || op.pointId;
+    requirePoint(doc, pid, ctx);
+    const p = pointById(doc, pid);
+    return Math.atan2(p.y - geom.c.y, p.x - geom.c.x);
+  }
+  if (op.angle != null) {
+    const a = Number(op.angle);
+    if (!Number.isFinite(a)) throw new Error(`${ctx}: angle must be finite`);
+    return a;
+  }
+  if (op.deg != null) {
+    const d = Number(op.deg);
+    if (!Number.isFinite(d)) throw new Error(`${ctx}: deg must be finite`);
+    return (d * Math.PI) / 180;
+  }
+  return 0;
+}
+
+const DEFAULT_LAYERS = {
+  gridShow: true,
+  gridLock: false,
+  coordsShow: true,
+  coordsLock: false,
+  helpersShow: true,
+  helpersLock: false,
+};
+
+function normalizeLayers(raw) {
+  const base = { ...DEFAULT_LAYERS };
+  if (!raw || typeof raw !== "object") return base;
+  for (const k of Object.keys(DEFAULT_LAYERS)) {
+    if (raw[k] != null) base[k] = !!raw[k];
+  }
+  return base;
+}
+
 function styleOr(s, fallback = "solid") {
   if (s == null || s === "") return fallback;
   if (!LINE_STYLES.has(s)) throw new Error(`invalid line style: ${s}`);
@@ -291,25 +374,304 @@ const HANDLERS = {
     return doc;
   },
 
-  /** Region fill: closed polygon by existing point ids (≥3), translucent solid. */
+  /**
+   * Region fill. kind: "polygon" (default) | "sector" | "segment".
+   * polygon: pointIds ≥3
+   * sector: centerId + startId + endId (+ optional circleId)
+   * segment (circular): circleId|centerId + startId + endId (chord endpoints)
+   */
   addFill(doc, op, nextId) {
     const id = resolveId(op, nextId, "fill");
     if (doc.fills.some((f) => f.id === id)) throw new Error(`addFill: duplicate id ${id}`);
-    const raw = op.pointIds != null ? op.pointIds : op.points;
-    if (!Array.isArray(raw) || raw.length < 3) {
-      throw new Error("addFill: pointIds must be an array of ≥3 point ids");
+    const kind =
+      op.kind === "sector" || op.kind === "segment" ? op.kind : "polygon";
+    const color = normalizeFillColor(op.color, "#666666");
+    const opacity = clampOpacity(op.opacity, 0.2);
+    if (kind === "polygon") {
+      const raw = op.pointIds != null ? op.pointIds : op.points;
+      if (!Array.isArray(raw) || raw.length < 3) {
+        throw new Error("addFill(polygon): pointIds must be an array of ≥3 point ids");
+      }
+      const pointIds = raw.map((x) => String(x));
+      for (const pid of pointIds) requirePoint(doc, pid, "addFill");
+      if (new Set(pointIds).size < 3) {
+        throw new Error("addFill: need at least 3 distinct point ids");
+      }
+      doc.fills.push({ id, kind: "polygon", pointIds, color, opacity });
+      return doc;
     }
-    const pointIds = raw.map((x) => String(x));
-    for (const pid of pointIds) requirePoint(doc, pid, "addFill");
-    if (new Set(pointIds).size < 3) {
-      throw new Error("addFill: need at least 3 distinct point ids");
+    if (kind === "sector") {
+      requirePoint(doc, op.centerId, "addFill(sector)");
+      requirePoint(doc, op.startId, "addFill(sector)");
+      requirePoint(doc, op.endId, "addFill(sector)");
+      const f = {
+        id,
+        kind: "sector",
+        centerId: op.centerId,
+        startId: op.startId,
+        endId: op.endId,
+        color,
+        opacity,
+      };
+      if (op.circleId) {
+        requireCircle(doc, op.circleId, "addFill(sector)");
+        f.circleId = op.circleId;
+      }
+      doc.fills.push(f);
+      return doc;
     }
-    doc.fills.push({
+    // circular segment
+    requirePoint(doc, op.startId, "addFill(segment)");
+    requirePoint(doc, op.endId, "addFill(segment)");
+    if (op.circleId) requireCircle(doc, op.circleId, "addFill(segment)");
+    else if (op.centerId) requirePoint(doc, op.centerId, "addFill(segment)");
+    else throw new Error("addFill(segment): need circleId or centerId");
+    const f = {
       id,
-      pointIds,
-      color: normalizeFillColor(op.color, "#666666"),
-      opacity: clampOpacity(op.opacity, 0.2),
+      kind: "segment",
+      startId: op.startId,
+      endId: op.endId,
+      color,
+      opacity,
+    };
+    if (op.circleId) f.circleId = op.circleId;
+    if (op.centerId) f.centerId = op.centerId;
+    doc.fills.push(f);
+    return doc;
+  },
+
+  /**
+   * Place a common shape (square | equilateral | rect | iso) by corner/origin + size.
+   * Creates points + segments; optional labels via label:true.
+   */
+  addShape(doc, op, nextId) {
+    const kind = op.kind || op.shape || "square";
+    const x0 = Number(op.x);
+    const y0 = Number(op.y);
+    if (!Number.isFinite(x0) || !Number.isFinite(y0)) {
+      throw new Error("addShape: x,y must be finite (origin / first corner)");
+    }
+    const w = Math.abs(Number(op.w != null ? op.w : op.size != null ? op.size : 80));
+    if (!(w > 1e-6)) throw new Error("addShape: w/size must be > 0");
+    const hRaw = op.h != null ? Number(op.h) : w;
+    const h = Math.abs(hRaw);
+    const style = styleOr(op.style, "solid");
+    const prefix = op.idPrefix != null ? String(op.idPrefix) : "";
+    const pts = [];
+    if (kind === "square" || kind === "rect") {
+      const hh = kind === "square" ? w : h;
+      pts.push([x0, y0], [x0 + w, y0], [x0 + w, y0 + hh], [x0, y0 + hh]);
+    } else if (kind === "equilateral") {
+      const hh = (Math.sqrt(3) / 2) * w;
+      pts.push([x0, y0], [x0 + w, y0], [x0 + w / 2, y0 - hh]);
+    } else if (kind === "iso" || kind === "isosceles") {
+      const hh = h > 1e-6 ? h : w;
+      pts.push([x0, y0], [x0 + w, y0], [x0 + w / 2, y0 - hh]);
+    } else {
+      throw new Error(
+        `addShape: unknown kind "${kind}" (use square|rect|equilateral|iso)`
+      );
+    }
+    const ids = [];
+    for (let i = 0; i < pts.length; i++) {
+      const hint = prefix ? `${prefix}${i}` : op.pointIds && op.pointIds[i];
+      const p = pushPoint(doc, nextId, pts[i][0], pts[i][1], hint || undefined);
+      ids.push(p.id);
+      if (op.label || op.labels) {
+        const text =
+          Array.isArray(op.labels) && op.labels[i] != null
+            ? String(op.labels[i])
+            : String.fromCharCode(65 + i);
+        HANDLERS.addLabel(doc, { pointId: p.id, text, ox: -10, oy: -12 }, nextId);
+      }
+    }
+    for (let i = 0; i < ids.length; i++) {
+      const a = ids[i];
+      const b = ids[(i + 1) % ids.length];
+      const segHint = prefix ? `${prefix}s${i}` : undefined;
+      pushSegment(doc, nextId, a, b, style, segHint);
+    }
+    return doc;
+  },
+
+  /** Tangent segment at a circle point; halfLen = half of total length. */
+  addTangent(doc, op, nextId) {
+    const geom = circleGeom(doc, op.circleId, "addTangent");
+    const ang = resolveCircleAngle(doc, geom, op, "addTangent");
+    const touch =
+      op.touchId || op.pointId
+        ? pointById(doc, op.touchId || op.pointId)
+        : pointOnCircle(geom.c, geom.r, ang);
+    let touchId = op.touchId || op.pointId || null;
+    if (!touchId) {
+      touchId = pushPoint(doc, nextId, touch.x, touch.y, op.touchPointId).id;
+    }
+    const half = Math.abs(Number(op.halfLen != null ? op.halfLen : op.length != null ? Number(op.length) / 2 : 40));
+    if (!(half > 1e-6)) throw new Error("addTangent: halfLen/length must be > 0");
+    const tx = -Math.sin(ang);
+    const ty = Math.cos(ang);
+    const a = pushPoint(
+      doc,
+      nextId,
+      touch.x - half * tx,
+      touch.y - half * ty,
+      op.aId
+    );
+    const b = pushPoint(
+      doc,
+      nextId,
+      touch.x + half * tx,
+      touch.y + half * ty,
+      op.bId
+    );
+    pushSegment(doc, nextId, a.id, b.id, op.style, op.id);
+    return doc;
+  },
+
+  /** Radius segment: center → rim (throughId or angle/deg). */
+  addRadius(doc, op, nextId) {
+    const geom = circleGeom(doc, op.circleId, "addRadius");
+    let throughId = op.throughId || null;
+    if (!throughId) {
+      const ang = resolveCircleAngle(doc, geom, op, "addRadius");
+      const p = pointOnCircle(geom.c, geom.r, ang);
+      throughId = pushPoint(doc, nextId, p.x, p.y, op.throughPointId).id;
+    } else {
+      requirePoint(doc, throughId, "addRadius");
+    }
+    pushSegment(doc, nextId, geom.cir.centerId, throughId, op.style, op.id);
+    return doc;
+  },
+
+  /** Diameter through center; direction from angle/deg or throughId. */
+  addDiameter(doc, op, nextId) {
+    const geom = circleGeom(doc, op.circleId, "addDiameter");
+    const ang = resolveCircleAngle(doc, geom, op, "addDiameter");
+    const p0 = pointOnCircle(geom.c, geom.r, ang);
+    const p1 = pointOnCircle(geom.c, geom.r, ang + Math.PI);
+    const a = pushPoint(doc, nextId, p0.x, p0.y, op.aId);
+    const b = pushPoint(doc, nextId, p1.x, p1.y, op.bId);
+    pushSegment(doc, nextId, a.id, b.id, op.style, op.id);
+    return doc;
+  },
+
+  /** Chord between two rim points (ids or angle0/angle1 or deg0/deg1). */
+  addChord(doc, op, nextId) {
+    const geom = circleGeom(doc, op.circleId, "addChord");
+    let aId = op.startId || op.a || null;
+    let bId = op.endId || op.b || null;
+    if (!aId) {
+      let ang0;
+      if (op.angle0 != null) ang0 = Number(op.angle0);
+      else if (op.deg0 != null) ang0 = (Number(op.deg0) * Math.PI) / 180;
+      else throw new Error("addChord: need startId or angle0/deg0");
+      if (!Number.isFinite(ang0)) throw new Error("addChord: angle0 invalid");
+      const p = pointOnCircle(geom.c, geom.r, ang0);
+      aId = pushPoint(doc, nextId, p.x, p.y, op.aId).id;
+    } else requirePoint(doc, aId, "addChord");
+    if (!bId) {
+      let ang1;
+      if (op.angle1 != null) ang1 = Number(op.angle1);
+      else if (op.deg1 != null) ang1 = (Number(op.deg1) * Math.PI) / 180;
+      else throw new Error("addChord: need endId or angle1/deg1");
+      if (!Number.isFinite(ang1)) throw new Error("addChord: angle1 invalid");
+      const p = pointOnCircle(geom.c, geom.r, ang1);
+      bId = pushPoint(doc, nextId, p.x, p.y, op.bId).id;
+    } else requirePoint(doc, bId, "addChord");
+    pushSegment(doc, nextId, aId, bId, op.style, op.id);
+    return doc;
+  },
+
+  /** Align selected points: axis left|center|right|top|middle|bottom. */
+  alignPoints(doc, op) {
+    const ids = op.pointIds || op.ids;
+    if (!Array.isArray(ids) || ids.length < 2) {
+      throw new Error("alignPoints: pointIds needs ≥2 ids");
+    }
+    const pts = ids.map((id) => {
+      requirePoint(doc, id, "alignPoints");
+      return pointById(doc, id);
     });
+    const axis = op.axis || op.align || "left";
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const midX = (minX + maxX) / 2;
+    const midY = (minY + maxY) / 2;
+    for (const p of pts) {
+      if (axis === "left") p.x = minX;
+      else if (axis === "right") p.x = maxX;
+      else if (axis === "center" || axis === "hcenter") p.x = midX;
+      else if (axis === "top") p.y = minY;
+      else if (axis === "bottom") p.y = maxY;
+      else if (axis === "middle" || axis === "vcenter") p.y = midY;
+      else throw new Error(`alignPoints: unknown axis "${axis}"`);
+    }
+    return doc;
+  },
+
+  /** Equal-space points along X or Y (sorted by that axis). */
+  distributePoints(doc, op) {
+    const ids = op.pointIds || op.ids;
+    if (!Array.isArray(ids) || ids.length < 3) {
+      throw new Error("distributePoints: pointIds needs ≥3 ids");
+    }
+    const axis = op.axis === "y" || op.axis === "v" ? "y" : "x";
+    const pts = ids.map((id) => {
+      requirePoint(doc, id, "distributePoints");
+      return pointById(doc, id);
+    });
+    pts.sort((a, b) => (axis === "x" ? a.x - b.x : a.y - b.y));
+    const first = pts[0];
+    const last = pts[pts.length - 1];
+    const span = axis === "x" ? last.x - first.x : last.y - first.y;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const t = i / (pts.length - 1);
+      if (axis === "x") pts[i].x = first.x + span * t;
+      else pts[i].y = first.y + span * t;
+    }
+    return doc;
+  },
+
+  /** Set equal length for ≥2 segments by scaling from midpoint (to median length). */
+  equalizeSegments(doc, op) {
+    const ids = op.segmentIds || op.ids;
+    if (!Array.isArray(ids) || ids.length < 2) {
+      throw new Error("equalizeSegments: segmentIds needs ≥2");
+    }
+    const segs = ids.map((id) => {
+      requireSegment(doc, id, "equalizeSegments");
+      return doc.segments.find((s) => s.id === id);
+    });
+    const lens = segs.map((s) => {
+      const a = pointById(doc, s.a);
+      const b = pointById(doc, s.b);
+      return Math.hypot(b.x - a.x, b.y - a.y);
+    });
+    const target =
+      op.length != null
+        ? Number(op.length)
+        : lens.slice().sort((a, b) => a - b)[Math.floor(lens.length / 2)];
+    if (!(target > 1e-9)) throw new Error("equalizeSegments: target length invalid");
+    for (let i = 0; i < segs.length; i++) {
+      const s = segs[i];
+      const a = pointById(doc, s.a);
+      const b = pointById(doc, s.b);
+      const len = lens[i];
+      if (!(len > 1e-9)) continue;
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const ux = (b.x - a.x) / len;
+      const uy = (b.y - a.y) / len;
+      const half = target / 2;
+      a.x = mx - ux * half;
+      a.y = my - uy * half;
+      b.x = mx + ux * half;
+      b.y = my + uy * half;
+    }
     return doc;
   },
 
@@ -390,6 +752,9 @@ const HANDLERS = {
       "gridMode",
       "hideExportPoints",
       "sectorMode",
+      "fillMode",
+      "shapeMode",
+      "circlePartMode",
       "name",
       "activeParallelGroup",
       "activeEqualGroup",
@@ -399,6 +764,19 @@ const HANDLERS = {
       if (op[k] !== undefined) doc[k] = op[k];
     }
     if (op.exportCrop !== undefined) doc.exportCrop = op.exportCrop;
+    if (op.layers !== undefined) {
+      doc.layers = normalizeLayers({ ...(doc.layers || {}), ...op.layers });
+    }
+    return doc;
+  },
+
+  /** Alias: set layer show/lock flags. */
+  setLayers(doc, op) {
+    const patch = { ...(op.layers || {}) };
+    for (const k of Object.keys(DEFAULT_LAYERS)) {
+      if (op[k] !== undefined) patch[k] = op[k];
+    }
+    doc.layers = normalizeLayers({ ...(doc.layers || {}), ...patch });
     return doc;
   },
 

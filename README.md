@@ -61,7 +61,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.4.1）
+## 目前版本 / Current version（v13.4.2）
 
 **左側兩欄網格**（頂部品牌＋繪製／構造／記號）｜**頂部 overlay**（不佔畫布高度）｜**左側情境浮層**｜**匯出 ▾**
 
@@ -75,7 +75,8 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 **v13.3.2**：品牌移入左側工具列頂；弧／扇、單／雙／翻面改情境浮層。  
 **v13.3.3**：構造「切線」— 圓上周點＋拖曳定長；端點可再調。  
 **v13.4.0**：圖形（正方／等邊／長方／等腰）、圓件（弦／直徑／半徑）、多選對齊／等距／等長、扇形／弓形填色、圖層顯示鎖定、範本擴充、快捷鍵（B／T／I 等）。  
-**v13.4.1**：修復關閉網格層／頂欄「網格」後格線仍顯示（`layers.gridShow` 控制繪製；頂欄同步顯示＋吸附）。
+**v13.4.1**：修復關閉網格層／頂欄「網格」後格線仍顯示（`layers.gridShow` 控制繪製；頂欄同步顯示＋吸附）。  
+**v13.4.2**：AI 層優化 — sector/segment `addFill`、圖形／切線／弦徑便利 op、對齊／圖層 ops、MCP summarize、[`docs/agent-draw-playbook.md`](docs/agent-draw-playbook.md)。
 
 | 位置 | 內容 |
 |---|---|
@@ -120,9 +121,10 @@ node tools/validate-diagram.mjs examples/cube-sketch.json
 npm test
 ```
 
-模組入口：`src/diagram/`（`applyOps`、`validateDiagram`、`emptyDiagram`）。  
+模組入口：`src/diagram/`（`applyOps`、`validateDiagram`、`emptyDiagram`、`summarizeDiagram`）。  
 格式說明：[`docs/diagram-format.md`](docs/diagram-format.md)。  
-範例：`examples/`（立方體、直角三角形、座標＋sin）。
+Agent 手冊：[`docs/agent-draw-playbook.md`](docs/agent-draw-playbook.md)。  
+範例 ops：`examples/ops-*.json`、`frustum-square-ops.json`。
 
 ### MCP（Cursor 等）
 

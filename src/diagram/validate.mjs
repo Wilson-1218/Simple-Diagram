@@ -255,11 +255,36 @@ export function validateDiagram(doc) {
         continue;
       }
       if (typeof f.id !== "string" || !f.id) errors.push(`${path}.id required`);
-      if (!Array.isArray(f.pointIds) || f.pointIds.length < 3) {
-        errors.push(`${path}.pointIds must be an array of ≥3 ids`);
+      const kind =
+        f.kind === "sector" || f.kind === "segment" ? f.kind : "polygon";
+      if (f.kind != null && kind === "polygon" && f.kind !== "polygon") {
+        errors.push(`${path}.kind must be polygon|sector|segment`);
+      }
+      if (kind === "polygon") {
+        if (!Array.isArray(f.pointIds) || f.pointIds.length < 3) {
+          errors.push(`${path}.pointIds must be an array of ≥3 ids`);
+        } else {
+          for (let j = 0; j < f.pointIds.length; j++) {
+            needPoint(f.pointIds[j], `${path}.pointIds[${j}]`);
+          }
+        }
+      } else if (kind === "sector") {
+        needPoint(f.centerId, `${path}.centerId`);
+        needPoint(f.startId, `${path}.startId`);
+        needPoint(f.endId, `${path}.endId`);
       } else {
-        for (let j = 0; j < f.pointIds.length; j++) {
-          needPoint(f.pointIds[j], `${path}.pointIds[${j}]`);
+        needPoint(f.startId, `${path}.startId`);
+        needPoint(f.endId, `${path}.endId`);
+        if (f.circleId != null) {
+          if (typeof f.circleId !== "string" || !f.circleId) {
+            errors.push(`${path}.circleId invalid`);
+          } else if (Array.isArray(d.circles) && !d.circles.some((c) => c.id === f.circleId)) {
+            errors.push(`${path}.circleId missing circle ref: ${f.circleId}`);
+          }
+        } else if (f.centerId != null) {
+          needPoint(f.centerId, `${path}.centerId`);
+        } else {
+          errors.push(`${path} segment fill needs circleId or centerId`);
         }
       }
       if (f.opacity != null && !Number.isFinite(Number(f.opacity))) {
@@ -270,6 +295,25 @@ export function validateDiagram(doc) {
       }
       if (f.color != null && typeof f.color !== "string") {
         errors.push(`${path}.color must be a string`);
+      }
+    }
+  }
+
+  if (d.layers != null) {
+    if (typeof d.layers !== "object" || Array.isArray(d.layers)) {
+      errors.push("layers must be an object");
+    } else {
+      for (const k of [
+        "gridShow",
+        "gridLock",
+        "coordsShow",
+        "coordsLock",
+        "helpersShow",
+        "helpersLock",
+      ]) {
+        if (d.layers[k] != null && typeof d.layers[k] !== "boolean") {
+          warnings.push(`layers.${k} should be boolean`);
+        }
       }
     }
   }

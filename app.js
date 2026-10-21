@@ -9162,7 +9162,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.4.1",
+      version: "13.4.2",
       app: "simple-diagram",
       points,
       segments,
