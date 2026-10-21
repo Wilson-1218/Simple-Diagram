@@ -225,6 +225,7 @@ test("fixture ops-circle-tangent applies cleanly", async () => {
 test("OP_NAMES includes v13.4 AI helpers", () => {
   for (const name of [
     "addShape",
+    "addFoot",
     "addTangent",
     "addRadius",
     "addDiameter",
@@ -236,6 +237,23 @@ test("OP_NAMES includes v13.4 AI helpers", () => {
   ]) {
     assert.ok(OP_NAMES.includes(name), name);
   }
+});
+
+test("addFoot projects onto line and draws altitude", () => {
+  const doc = applyOps(null, [
+    { op: "addPoint", id: "A", x: 0, y: 0 },
+    { op: "addPoint", id: "B", x: 100, y: 0 },
+    { op: "addPoint", id: "P", x: 40, y: 60 },
+    { op: "addSegment", id: "ab", a: "A", b: "B" },
+    { op: "addFoot", pointId: "P", segmentId: "ab", footId: "H", labelText: "H" },
+  ]);
+  const H = doc.points.find((p) => p.id === "H");
+  assert.ok(H);
+  assert.equal(H.marker, "foot");
+  assert.ok(Math.abs(H.x - 40) < 1e-9);
+  assert.ok(Math.abs(H.y - 0) < 1e-9);
+  assert.ok(doc.segments.some((s) => (s.a === "P" && s.b === "H") || (s.a === "H" && s.b === "P")));
+  assert.equal(validateDiagram(doc).ok, true, validateDiagram(doc).errors.join("; "));
 });
 
 test("insertTemplate rightTri / frustum / circleGeom / genTri", async () => {

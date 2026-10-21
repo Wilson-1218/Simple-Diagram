@@ -104,6 +104,7 @@
     equal: "等長記號",
     length: "長度標註",
     perpendicular: "垂線",
+    foot: "垂足",
     tangent: "切線",
     circlePart: "圓件",
     shape: "圖形",
@@ -180,11 +181,31 @@
     { key: "g35", color: "#666666", opacity: 0.35 },
     { key: "g50", color: "#666666", opacity: 0.5 },
     { key: "bg22", color: "#6b8799", opacity: 0.22 },
+    /** Opaque white — paint later fills on top to punch out shaded regions. */
+    { key: "white", color: "#ffffff", opacity: 1 },
   ];
   /** @type {"polygon"|"sector"|"segment"} */
   let fillMode = "polygon";
-  /** @type {"square"|"equilateral"|"rect"|"iso"} */
+  const SHAPE_MODES = [
+    "square",
+    "rect",
+    "rhombus",
+    "parallelogram",
+    "trapezoid",
+    "kite",
+    "equilateral",
+    "iso",
+    "rightTri",
+    "isoRight",
+    "pentagon",
+    "hexagon",
+    "circle",
+    "semicircle",
+  ];
   let shapeMode = "square";
+  function isShapeMode(mode) {
+    return SHAPE_MODES.indexOf(mode) >= 0;
+  }
   /** @type {"chord"|"diameter"|"radius"} */
   let circlePartMode = "chord";
   /** Layer visibility / lock (grid draw vs gridSnap are independent). */
@@ -280,6 +301,7 @@
       tool_exportCrop: "框選", tool_label: "標籤", tool_intersect: "交點",
       tool_rightAngle: "直角", tool_angleArc: "角弧", tool_midTick: "中點", tool_ratio: "比例",
       tool_parallel: "平行", tool_equal: "等長", tool_length: "長度", tool_perpendicular: "垂線",
+      tool_foot: "垂足",
       tool_tangent: "切線", tool_circlePart: "圓件", tool_shape: "圖形",
       tool_reflex: "優角", tool_coord: "座標", tool_fill: "填色",
       group_templates: "模板", group_props: "屬性", group_view: "檢視／匯出",
@@ -289,10 +311,21 @@
       btn_layers: "圖層 ▾", layers_title: "圖層", layers_grid: "網格", layers_coords: "座標",
       layers_helpers: "記號", layers_show: "顯示", layers_lock: "鎖定",
       tip_layers: "圖層顯示／鎖定（網格／座標／記號）",
-      shape_square: "正方", shape_equilateral: "等邊", shape_rect: "長方", shape_iso: "等腰",
-      tip_shape_bar: "常用圖形", tip_shape_square: "正方形：對角拖曳",
-      tip_shape_equilateral: "等邊三角形：底邊拖曳", tip_shape_rect: "長方形：自由寬高",
+      tip_shape_bar: "常用圖形",
+      tip_shape_square: "正方形：對角拖曳",
+      tip_shape_rect: "長方形：自由寬高",
+      tip_shape_rhombus: "菱形：對角拖曳",
+      tip_shape_parallelogram: "平行四邊形：底×高",
+      tip_shape_trapezoid: "等腰梯形：底×高",
+      tip_shape_kite: "鳶形：外接框拖曳",
+      tip_shape_equilateral: "等邊三角形：底邊拖曳",
       tip_shape_iso: "等腰三角形：底×高",
+      tip_shape_rightTri: "直角三角形：直角在起點",
+      tip_shape_isoRight: "等腰直角三角形：直角在起點",
+      tip_shape_pentagon: "正五邊形：外接框拖曳",
+      tip_shape_hexagon: "正六邊形：外接框拖曳",
+      tip_shape_circle: "圓：圓心拖至圓周",
+      tip_shape_semicircle: "半圓：直徑拖曳，弧向拖曳側",
       circlePart_chord: "弦", circlePart_diameter: "直徑", circlePart_radius: "半徑",
       tip_circlePart_bar: "弦／直徑／半徑", tip_circlePart_chord: "弦：圓上兩點",
       tip_circlePart_diameter: "直徑：過圓心", tip_circlePart_radius: "半徑：圓心到圓周",
@@ -382,8 +415,9 @@
       tip_fill_g35: "灰影 35%",
       tip_fill_g50: "灰影 50%",
       tip_fill_bg: "藍灰影 22%",
-      tip_fill_bar: "填色陰影透明度",
-      tip_tool_shape: "常用圖形：正方／等邊／長方／等腰 (B)",
+      tip_fill_white: "白色（蓋住下方陰影）",
+      tip_fill_bar: "填色陰影／白色挖空",
+      tip_tool_shape: "常用圖形：圖示選形後拖曳放置 (B)",
       tip_tool_circlePart: "弦／直徑／半徑：在圓上拖曳建立 (T)",
       circlePart_need_circle: "請點選圓或圓周上的點",
       circlePart_too_short: "拖曳太短，已取消",
@@ -441,6 +475,11 @@
       tip_tool_ratio: "比例分點 (R)",
       tip_tool_horizontal: "水平線：點選一點後左右拖曳定長 (H)",
       tip_tool_perpendicular: "垂線：點選一點後向下拖曳定長",
+      tip_tool_foot: "垂足：先點一點，再點線段（正交投影）",
+      hint_foot: "先點一點，再點線段以建立垂足",
+      foot_need_point: "請先點選既有點",
+      foot_need_segment: "請再點選線段",
+      foot_on_line: "點已在線上，無需垂足",
       tip_tool_tangent: "圓的切線：點圓周上（或近圓周）後拖曳定長；可再拖端點調整",
       hint_tangent: "點圓周上（或近圓周），拖曳設定切線長度",
       tangent_need_circle: "請點選圓或圓周上的點",
@@ -487,6 +526,7 @@
       tool_exportCrop: "Crop", tool_label: "Label", tool_intersect: "Xsect",
       tool_rightAngle: "Right", tool_angleArc: "Angle", tool_midTick: "Mid", tool_ratio: "Ratio",
       tool_parallel: "Par", tool_equal: "Equal", tool_length: "Len", tool_perpendicular: "Perp",
+      tool_foot: "Foot",
       tool_tangent: "Tan", tool_circlePart: "Chord", tool_shape: "Shape",
       tool_reflex: "Reflex", tool_coord: "Axes", tool_fill: "Fill",
       group_templates: "Templates", group_props: "Props", group_view: "View / Export",
@@ -496,10 +536,21 @@
       btn_layers: "Layers ▾", layers_title: "Layers", layers_grid: "Grid", layers_coords: "Axes",
       layers_helpers: "Marks", layers_show: "Show", layers_lock: "Lock",
       tip_layers: "Layer show/lock (grid / axes / marks)",
-      shape_square: "Sq", shape_equilateral: "Eq", shape_rect: "Rect", shape_iso: "Iso",
-      tip_shape_bar: "Common shapes", tip_shape_square: "Square: drag from corner",
-      tip_shape_equilateral: "Equilateral: drag base", tip_shape_rect: "Rectangle: free w×h",
+      tip_shape_bar: "Common shapes",
+      tip_shape_square: "Square: drag from corner",
+      tip_shape_rect: "Rectangle: free w×h",
+      tip_shape_rhombus: "Rhombus: drag diagonals",
+      tip_shape_parallelogram: "Parallelogram: base×height",
+      tip_shape_trapezoid: "Isosceles trapezoid: base×height",
+      tip_shape_kite: "Kite: drag bounding box",
+      tip_shape_equilateral: "Equilateral: drag base",
       tip_shape_iso: "Isosceles: base×height",
+      tip_shape_rightTri: "Right triangle: right angle at start",
+      tip_shape_isoRight: "Isosceles right triangle: right angle at start",
+      tip_shape_pentagon: "Regular pentagon: drag bounds",
+      tip_shape_hexagon: "Regular hexagon: drag bounds",
+      tip_shape_circle: "Circle: center to rim",
+      tip_shape_semicircle: "Semicircle: drag diameter; arc toward drag side",
       circlePart_chord: "Chord", circlePart_diameter: "Diam", circlePart_radius: "Rad",
       tip_circlePart_bar: "Chord / diameter / radius", tip_circlePart_chord: "Chord: two points on circle",
       tip_circlePart_diameter: "Diameter through center", tip_circlePart_radius: "Radius: center to rim",
@@ -590,8 +641,9 @@
       tip_fill_g35: "Gray shade 35%",
       tip_fill_g50: "Gray shade 50%",
       tip_fill_bg: "Blue-gray shade 22%",
-      tip_fill_bar: "Fill shade opacity",
-      tip_tool_shape: "Shapes: square / equilateral / rect / isosceles (B)",
+      tip_fill_white: "White (covers shade below)",
+      tip_fill_bar: "Fill shade / white punch-out",
+      tip_tool_shape: "Shapes: pick icon, then drag to place (B)",
       tip_tool_circlePart: "Chord / diameter / radius: drag on a circle (T)",
       circlePart_need_circle: "Click a circle or a point on a circle",
       circlePart_too_short: "Drag too short — cancelled",
@@ -649,6 +701,11 @@
       tip_tool_ratio: "Ratio point (R)",
       tip_tool_horizontal: "Horizontal: pick a point, drag left/right for length (H)",
       tip_tool_perpendicular: "Perpendicular: pick a point, drag down for length",
+      tip_tool_foot: "Foot of perpendicular: point, then line/segment",
+      hint_foot: "Click a point, then a segment to drop a perpendicular",
+      foot_need_point: "Click an existing point first",
+      foot_need_segment: "Now click a segment",
+      foot_on_line: "Point is already on the line",
       tip_tool_tangent: "Circle tangent: click on (or near) the circle, then drag for length; drag ends to adjust",
       hint_tangent: "Click on the circle (or near it), drag to set tangent length",
       tangent_need_circle: "Click a circle or a point on a circle",
@@ -1509,8 +1566,7 @@
   }
 
   function setShapeMode(mode) {
-    if (mode === "equilateral" || mode === "rect" || mode === "iso") shapeMode = mode;
-    else shapeMode = "square";
+    shapeMode = isShapeMode(mode) ? mode : "square";
     syncShapeModeUI();
     if (tool === "shape") updateStatus();
   }
@@ -2214,6 +2270,10 @@
         : (uiLang === "en" ? "Click the first segment" : "請點第一條線段");
       return;
     }
+    if (draft && draft.kind === "foot") {
+      statusHint.textContent = t("foot_need_segment");
+      return;
+    }
 
     const hints = {
       select: t("hint_select"),
@@ -2235,6 +2295,7 @@
       ratio: t("hint_ratio"),
       length: t("hint_length"),
       perpendicular: t("hint_perpendicular"),
+      foot: t("hint_foot"),
       tangent: t("hint_tangent"),
       circlePart: t("hint_circlePart"),
       shape: t("hint_shape"),
@@ -2445,12 +2506,7 @@
       fillMode = data.fillMode;
       syncFillModeUI();
     }
-    if (
-      data.shapeMode === "square" ||
-      data.shapeMode === "equilateral" ||
-      data.shapeMode === "rect" ||
-      data.shapeMode === "iso"
-    ) {
+    if (isShapeMode(data.shapeMode)) {
       shapeMode = data.shapeMode;
       syncShapeModeUI();
     }
@@ -2751,6 +2807,16 @@
       onSeg: t >= -1e-9 && t <= 1 + 1e-9,
       tRaw: t,
     };
+  }
+
+  /** Orthogonal projection onto the infinite line through A–B. */
+  function projectPointToLine(p, a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    if (len2 < 1e-18) return { x: a.x, y: a.y, t: 0, ok: false };
+    const t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+    return { x: a.x + t * dx, y: a.y + t * dy, t, ok: true };
   }
 
   /** Infinite-line intersection of segments AB and CD. */
@@ -6345,6 +6411,39 @@
         ctx.fill();
       }
     }
+    if (draft.kind === "foot" && draft.pointId) {
+      const from = pointById(draft.pointId);
+      if (from) {
+        const sf = worldToScreen(from.x, from.y);
+        ctx.beginPath();
+        ctx.arc(sf.x, sf.y, 7, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(42,122,176,0.85)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([]);
+        ctx.stroke();
+        if (draft.preview) {
+          const sp = worldToScreen(draft.preview.x, draft.preview.y);
+          ctx.beginPath();
+          ctx.moveTo(sf.x, sf.y);
+          ctx.lineTo(sp.x, sp.y);
+          ctx.strokeStyle = "rgba(42,122,176,0.7)";
+          ctx.lineWidth = LINE_WIDTH;
+          ctx.setLineDash([5, 4]);
+          ctx.lineCap = "round";
+          ctx.stroke();
+          ctx.setLineDash([]);
+          const r = 5;
+          ctx.beginPath();
+          ctx.moveTo(sp.x - r, sp.y - r);
+          ctx.lineTo(sp.x + r, sp.y + r);
+          ctx.moveTo(sp.x + r, sp.y - r);
+          ctx.lineTo(sp.x - r, sp.y + r);
+          ctx.strokeStyle = "rgba(42,122,176,0.9)";
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+      }
+    }
     if (draft.kind === "tangent" && draft.touch) {
       const p = draft.pointId ? pointById(draft.pointId) : draft.touch;
       const cir = circles.find((c) => c.id === draft.circleId);
@@ -6416,26 +6515,52 @@
       ctx.setLineDash([]);
     }
     if (draft.kind === "shape" && draft.x0 != null) {
-      const corners = shapeCornersFromDrag(
+      const geom = shapeGeometryFromDrag(
         draft.mode || shapeMode,
         draft.x0,
         draft.y0,
         draft.x1,
         draft.y1
       );
-      if (corners && corners.length) {
-        ctx.beginPath();
-        const s0 = worldToScreen(corners[0].x, corners[0].y);
-        ctx.moveTo(s0.x, s0.y);
-        for (let i = 1; i < corners.length; i++) {
-          const s = worldToScreen(corners[i].x, corners[i].y);
-          ctx.lineTo(s.x, s.y);
-        }
-        ctx.closePath();
+      if (geom) {
         ctx.strokeStyle = "rgba(42,122,176,0.7)";
         ctx.lineWidth = LINE_WIDTH;
         ctx.setLineDash([5, 4]);
-        ctx.stroke();
+        if (geom.type === "circle") {
+          const sc = worldToScreen(geom.center.x, geom.center.y);
+          const st = worldToScreen(geom.through.x, geom.through.y);
+          const r = Math.hypot(st.x - sc.x, st.y - sc.y);
+          ctx.beginPath();
+          ctx.arc(sc.x, sc.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (geom.type === "semicircle") {
+          const sc = worldToScreen(geom.center.x, geom.center.y);
+          const sa = worldToScreen(geom.a.x, geom.a.y);
+          const sb = worldToScreen(geom.b.x, geom.b.y);
+          const r = Math.hypot(sa.x - sc.x, sa.y - sc.y);
+          const a0 = Math.atan2(sa.y - sc.y, sa.x - sc.x);
+          const a1 = Math.atan2(sb.y - sc.y, sb.x - sc.x);
+          let delta = a1 - a0;
+          while (delta <= -Math.PI) delta += Math.PI * 2;
+          while (delta > Math.PI) delta -= Math.PI * 2;
+          ctx.beginPath();
+          ctx.moveTo(sa.x, sa.y);
+          ctx.lineTo(sb.x, sb.y);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(sc.x, sc.y, r, a0, a1, delta < 0);
+          ctx.stroke();
+        } else if (geom.corners && geom.corners.length) {
+          ctx.beginPath();
+          const s0 = worldToScreen(geom.corners[0].x, geom.corners[0].y);
+          ctx.moveTo(s0.x, s0.y);
+          for (let i = 1; i < geom.corners.length; i++) {
+            const s = worldToScreen(geom.corners[i].x, geom.corners[i].y);
+            ctx.lineTo(s.x, s.y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
         ctx.setLineDash([]);
       }
     }
@@ -6824,7 +6949,8 @@
       tool === "parallel" ||
       tool === "equal" ||
       tool === "length" ||
-      tool === "intersect"
+      tool === "intersect" ||
+      (tool === "foot" && draft && draft.kind === "foot")
     ) {
       hoverSnap = null;
       hoverGeomSnap = null;
@@ -7189,6 +7315,30 @@
       return;
     }
 
+    if (tool === "foot") {
+      if (!draft || draft.kind !== "foot") {
+        const sn = snapWorld(world.x, world.y) || nearestPointHit(world.x, world.y);
+        if (!sn) {
+          statusHint.textContent = t("foot_need_point");
+          return;
+        }
+        draft = { kind: "foot", pointId: sn.id, preview: null };
+        statusHint.textContent = t("foot_need_segment");
+        setSelection([{ type: "point", id: sn.id }]);
+        draw();
+        return;
+      }
+      const seg = nearestSegmentHit(world.x, world.y);
+      if (!seg) {
+        statusHint.textContent = t("foot_need_segment");
+        return;
+      }
+      const fromId = draft.pointId;
+      draft = null;
+      finishFootDrop(fromId, seg.id);
+      return;
+    }
+
     if (tool === "horizontal") {
       const sn = snapWorld(world.x, world.y) || nearestPointHit(world.x, world.y);
       if (!sn) {
@@ -7379,6 +7529,47 @@
 
   }
 
+  /** Drop foot of perpendicular from point onto the line through a segment. */
+  function finishFootDrop(pointId, segmentId) {
+    const from = pointById(pointId);
+    const seg = segmentById(segmentId);
+    if (!from || !seg) return;
+    const a = pointById(seg.a);
+    const b = pointById(seg.b);
+    if (!a || !b) return;
+    const proj = projectPointToLine(from, a, b);
+    if (!proj.ok) {
+      statusHint.textContent = t("foot_need_segment");
+      updateStatus();
+      draw();
+      return;
+    }
+    if (Math.hypot(from.x - proj.x, from.y - proj.y) < 1e-6) {
+      statusHint.textContent = t("foot_on_line");
+      updateStatus();
+      draw();
+      return;
+    }
+    pushHistory();
+    let footPt = null;
+    const near = snapWorld(proj.x, proj.y);
+    if (near && dist(near, { x: proj.x, y: proj.y }) < (SNAP_PX * 0.6) / view.scale) {
+      footPt = near;
+      if (footPt.marker !== "foot" && footPt.marker !== "x") footPt.marker = "foot";
+    } else {
+      footPt = addPoint(proj.x, proj.y, true, "foot", true);
+    }
+    const style = lineStyle || "solid";
+    const altitude = addSegment(from.id, footPt.id, style, true);
+    history[histIndex] = snapshot();
+    const sel = [{ type: "point", id: footPt.id }];
+    if (altitude) sel.unshift({ type: "segment", id: altitude.id });
+    setSelection(sel);
+    openLabelPrompt(footPt.id, nextLetter);
+    updateStatus();
+    draw();
+  }
+
   /**
    * Screen-vertical foot: lock x to origin, only allow downward (+y).
    * Snap only if an existing point lies nearly on that vertical (≤1.5px),
@@ -7495,60 +7686,195 @@
     draw();
   }
 
-  function shapeCornersFromDrag(mode, x0, y0, x1, y1) {
+  function regularPolygonCorners(n, cx, cy, r, startAng) {
+    const pts = [];
+    const a0 = startAng != null ? startAng : -Math.PI / 2;
+    for (let i = 0; i < n; i++) {
+      const a = a0 + (i * 2 * Math.PI) / n;
+      pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+    }
+    return pts;
+  }
+
+  /** @returns {null|{type:"poly",corners:Array}|{type:"circle",center,through}|{type:"semicircle",a,b,center}} */
+  function shapeGeometryFromDrag(mode, x0, y0, x1, y1) {
     const minSize = 8 / view.scale;
+    if (mode === "circle") {
+      const r = Math.hypot(x1 - x0, y1 - y0);
+      if (r < minSize) return null;
+      return { type: "circle", center: { x: x0, y: y0 }, through: { x: x1, y: y1 } };
+    }
+    if (mode === "semicircle") {
+      const dx = x1 - x0;
+      if (Math.abs(dx) < minSize) return null;
+      const left = x0 <= x1 ? x0 : x1;
+      const right = x0 <= x1 ? x1 : x0;
+      const yBase = y0;
+      const r = (right - left) / 2;
+      const cx = (left + right) / 2;
+      const preferUp = y1 < y0;
+      // Order endpoints so minor semicircle bulges toward drag side (see sectorGeom).
+      const a = preferUp ? { x: right, y: yBase } : { x: left, y: yBase };
+      const b = preferUp ? { x: left, y: yBase } : { x: right, y: yBase };
+      return { type: "semicircle", a, b, center: { x: cx, y: yBase }, r };
+    }
     if (mode === "square") {
       const s = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
       if (s < minSize) return null;
       const sx = x1 >= x0 ? 1 : -1;
       const sy = y1 >= y0 ? 1 : -1;
-      const xA = x0;
-      const yA = y0;
-      const xB = x0 + sx * s;
-      const yB = y0;
-      const xC = x0 + sx * s;
-      const yC = y0 + sy * s;
-      const xD = x0;
-      const yD = y0 + sy * s;
-      return [
-        { x: xA, y: yA },
-        { x: xB, y: yB },
-        { x: xC, y: yC },
-        { x: xD, y: yD },
-      ];
+      return {
+        type: "poly",
+        corners: [
+          { x: x0, y: y0 },
+          { x: x0 + sx * s, y: y0 },
+          { x: x0 + sx * s, y: y0 + sy * s },
+          { x: x0, y: y0 + sy * s },
+        ],
+      };
     }
     if (mode === "rect") {
       if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
-      return [
-        { x: x0, y: y0 },
-        { x: x1, y: y0 },
-        { x: x1, y: y1 },
-        { x: x0, y: y1 },
-      ];
+      return {
+        type: "poly",
+        corners: [
+          { x: x0, y: y0 },
+          { x: x1, y: y0 },
+          { x: x1, y: y1 },
+          { x: x0, y: y1 },
+        ],
+      };
+    }
+    if (mode === "rhombus") {
+      if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
+      const cx = (x0 + x1) / 2;
+      const cy = (y0 + y1) / 2;
+      return {
+        type: "poly",
+        corners: [
+          { x: cx, y: y0 },
+          { x: x1, y: cy },
+          { x: cx, y: y1 },
+          { x: x0, y: cy },
+        ],
+      };
+    }
+    if (mode === "parallelogram") {
+      if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
+      const shear = (x1 - x0) * 0.35;
+      return {
+        type: "poly",
+        corners: [
+          { x: x0, y: y0 },
+          { x: x1, y: y0 },
+          { x: x1 + shear, y: y1 },
+          { x: x0 + shear, y: y1 },
+        ],
+      };
+    }
+    if (mode === "trapezoid") {
+      if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
+      const left = Math.min(x0, x1);
+      const right = Math.max(x0, x1);
+      const w = right - left;
+      const inset = w * 0.22;
+      return {
+        type: "poly",
+        corners: [
+          { x: left, y: y0 },
+          { x: right, y: y0 },
+          { x: right - inset, y: y1 },
+          { x: left + inset, y: y1 },
+        ],
+      };
+    }
+    if (mode === "kite") {
+      if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
+      const left = Math.min(x0, x1);
+      const right = Math.max(x0, x1);
+      const top = Math.min(y0, y1);
+      const bot = Math.max(y0, y1);
+      const cx = (left + right) / 2;
+      const midY = top + (bot - top) * 0.38;
+      return {
+        type: "poly",
+        corners: [
+          { x: cx, y: top },
+          { x: right, y: midY },
+          { x: cx, y: bot },
+          { x: left, y: midY },
+        ],
+      };
     }
     if (mode === "equilateral") {
       const base = x1 - x0;
       if (Math.abs(base) < minSize) return null;
       const h = (Math.abs(base) * Math.sqrt(3)) / 2;
       const midX = (x0 + x1) / 2;
-      const apexY = y1 >= y0 ? y0 + h : y0 - h;
-      // Prefer drag direction: if y1 suggests upward, flip
       const preferUp = y1 < y0;
-      const ay = preferUp ? y0 - h : y0 + (y1 >= y0 ? h : -h);
-      void apexY;
-      return [
-        { x: x0, y: y0 },
-        { x: x1, y: y0 },
-        { x: midX, y: preferUp ? y0 - h : y0 + h },
-      ];
+      return {
+        type: "poly",
+        corners: [
+          { x: x0, y: y0 },
+          { x: x1, y: y0 },
+          { x: midX, y: preferUp ? y0 - h : y0 + h },
+        ],
+      };
     }
-    // iso: base from (x0,y0)-(x1,y0), height from y0 to y1
-    if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
-    return [
-      { x: x0, y: y0 },
-      { x: x1, y: y0 },
-      { x: (x0 + x1) / 2, y: y1 },
-    ];
+    if (mode === "iso") {
+      if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
+      return {
+        type: "poly",
+        corners: [
+          { x: x0, y: y0 },
+          { x: x1, y: y0 },
+          { x: (x0 + x1) / 2, y: y1 },
+        ],
+      };
+    }
+    if (mode === "rightTri") {
+      if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
+      return {
+        type: "poly",
+        corners: [
+          { x: x0, y: y0 },
+          { x: x1, y: y0 },
+          { x: x0, y: y1 },
+        ],
+      };
+    }
+    if (mode === "isoRight") {
+      const s = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+      if (s < minSize) return null;
+      const sx = x1 >= x0 ? 1 : -1;
+      const sy = y1 >= y0 ? 1 : -1;
+      return {
+        type: "poly",
+        corners: [
+          { x: x0, y: y0 },
+          { x: x0 + sx * s, y: y0 },
+          { x: x0, y: y0 + sy * s },
+        ],
+      };
+    }
+    if (mode === "pentagon" || mode === "hexagon") {
+      const w = Math.abs(x1 - x0);
+      const h = Math.abs(y1 - y0);
+      const s = Math.max(w, h);
+      if (s < minSize) return null;
+      const cx = (x0 + x1) / 2;
+      const cy = (y0 + y1) / 2;
+      const r = s / 2;
+      const n = mode === "pentagon" ? 5 : 6;
+      return { type: "poly", corners: regularPolygonCorners(n, cx, cy, r) };
+    }
+    return null;
+  }
+
+  /** Back-compat helper for preview/callers that expect corner arrays. */
+  function shapeCornersFromDrag(mode, x0, y0, x1, y1) {
+    const g = shapeGeometryFromDrag(mode, x0, y0, x1, y1);
+    return g && g.type === "poly" ? g.corners : null;
   }
 
   function finishShape() {
@@ -7560,14 +7886,48 @@
     const y1 = draft.y1;
     const style = lineStyle || "solid";
     draft = null;
-    const corners = shapeCornersFromDrag(mode, x0, y0, x1, y1);
-    if (!corners) {
+    const geom = shapeGeometryFromDrag(mode, x0, y0, x1, y1);
+    if (!geom) {
       statusHint.textContent = t("shape_too_small");
       updateStatus();
       draw();
       return;
     }
     pushHistory();
+    if (geom.type === "circle") {
+      const cId = addPoint(geom.center.x, geom.center.y, true, null, true).id;
+      const tId = addPoint(geom.through.x, geom.through.y, true, null, true).id;
+      const cir = { id: uid(), centerId: cId, throughId: tId, style };
+      circles.push(cir);
+      history[histIndex] = snapshot();
+      setSelection([{ type: "circle", id: cir.id }]);
+      updateStatus();
+      draw();
+      return;
+    }
+    if (geom.type === "semicircle") {
+      const aId = addPoint(geom.a.x, geom.a.y, true, null, true).id;
+      const bId = addPoint(geom.b.x, geom.b.y, true, null, true).id;
+      const cId = addPoint(geom.center.x, geom.center.y, true, null, true).id;
+      const seg = addSegment(aId, bId, style, true);
+      const sec = {
+        id: uid(),
+        centerId: cId,
+        startId: aId,
+        endId: bId,
+        style,
+        mode: "arc",
+      };
+      sectors.push(sec);
+      history[histIndex] = snapshot();
+      const sel = [{ type: "sector", id: sec.id }];
+      if (seg) sel.push({ type: "segment", id: seg.id });
+      setSelection(sel);
+      updateStatus();
+      draw();
+      return;
+    }
+    const corners = geom.corners;
     const ids = corners.map((p) => addPoint(p.x, p.y, true, null, true).id);
     const newSegs = [];
     for (let i = 0; i < ids.length; i++) {
@@ -8149,6 +8509,21 @@
       const cur = sn ? { x: sn.x, y: sn.y } : applyGrid(world.x, world.y);
       draft.x1 = cur.x;
       draft.y1 = cur.y;
+      draw();
+      return;
+    }
+
+    if (draft && draft.kind === "foot" && draft.pointId) {
+      const from = pointById(draft.pointId);
+      const seg = nearestSegmentHit(world.x, world.y);
+      if (from && seg) {
+        const a = pointById(seg.a);
+        const b = pointById(seg.b);
+        if (a && b) {
+          const proj = projectPointToLine(from, a, b);
+          draft.preview = proj.ok ? { x: proj.x, y: proj.y, segId: seg.id } : null;
+        } else draft.preview = null;
+      } else draft.preview = null;
       draw();
       return;
     }
@@ -9176,7 +9551,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.3",
+      version: "13.5.4",
       app: "simple-diagram",
       points,
       segments,
@@ -9440,12 +9815,7 @@ ${body}</svg>`;
     if (data.fillMode === "sector" || data.fillMode === "segment" || data.fillMode === "polygon") {
       fillMode = data.fillMode;
     }
-    if (
-      data.shapeMode === "square" ||
-      data.shapeMode === "equilateral" ||
-      data.shapeMode === "rect" ||
-      data.shapeMode === "iso"
-    ) {
+    if (isShapeMode(data.shapeMode)) {
       shapeMode = data.shapeMode;
     }
     if (
@@ -10608,6 +10978,7 @@ ${body}</svg>`;
     else if (id === "tool_circlePart") setTool("circlePart");
     else if (id === "tool_midTick") setTool("midTick");
     else if (id === "tool_ratio") setTool("ratio");
+    else if (id === "tool_foot") setTool("foot");
     else if (id === "tool_hand") setTool("hand");
     else if (id === "flip_mark") flipSelectedMarks();
     else if (id === "cycle_mark") {
@@ -10616,8 +10987,9 @@ ${body}</svg>`;
         const order = ["polygon", "sector", "segment"];
         setFillMode(order[(order.indexOf(fillMode) + 1) % order.length]);
       } else if (tool === "shape") {
-        const order = ["square", "equilateral", "rect", "iso"];
-        setShapeMode(order[(order.indexOf(shapeMode) + 1) % order.length]);
+        const order = SHAPE_MODES;
+        const idx = order.indexOf(shapeMode);
+        setShapeMode(order[((idx >= 0 ? idx : 0) + 1) % order.length]);
       } else if (tool === "circlePart") {
         const order = ["chord", "diameter", "radius"];
         setCirclePartMode(order[(order.indexOf(circlePartMode) + 1) % order.length]);

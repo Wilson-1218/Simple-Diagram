@@ -59,6 +59,10 @@ export const OP_CATALOG = {
   addEqualMark: { args: "segmentId, group?, side?" },
   addLengthLabel: { args: "segmentId, text, side?" },
   addMidTick: { args: "segmentId, pointId?" },
+  addFoot: {
+    args: "pointId, segmentId | a+b, footId?, drawSegment?, style?, label?, marker?",
+    note: "orthogonal projection onto line; marker foot; altitude segment by default",
+  },
   addCircle: { args: "centerId, throughId, style?" },
   addEllipse: { args: "centerId, rxId, ryId, style?, backDashed?" },
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },
@@ -68,7 +72,7 @@ export const OP_CATALOG = {
   },
   addShape: {
     args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?",
-    note: "kind square|rect|equilateral|iso",
+    note: "kind square|rect|rhombus|parallelogram|trapezoid|kite|equilateral|iso|rightTri|isoRight|pentagon|hexagon|circle|semicircle",
   },
   addTangent: { args: "circleId, touchId|angle|deg, halfLen|length, style?" },
   addRadius: { args: "circleId, throughId|angle|deg, style?" },

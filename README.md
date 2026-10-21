@@ -76,7 +76,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.5.3）
+## 目前版本 / Current version（v13.5.4）
 
 **左側兩欄網格**（頂部品牌＋繪製／構造／記號）｜**頂部 overlay**（不佔畫布高度）｜**左側情境浮層**｜**匯出 ▾**
 
@@ -96,12 +96,13 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 **v13.5.1**：MIT 授權＋雙語轉載聲明（README／網頁／`?` 面板）；`package.json` `"license": "MIT"`。  
 **v13.5.2**：Mensuration AI train pack（`examples/train/`，10 題 seed `20261021`）＋ eval。  
 **v13.5.3**：Train case 03 — point/label D at BH∩CF（不再偏高）。
+**v13.5.4**：圖形浮層改圖示網格（無文字標籤）；擴充 HKDSE 常用形（菱形／平行四邊形／等腰梯形／鳶形／直角／等腰直角／正五／正六／圓／半圓）並接 `addShape`；填色色票新增**白色**（不透明，疊在灰影上挖空）；構造還原**垂足**（點→線段正交投影）＋ `addFoot`。
 
 | 位置 | 內容 |
 |---|---|
 | **左頂：品牌** | Logo、Simple Diagram、版本號 |
 | **左：繪製** | 選取、手掌、點、線段、圓弧、橢圓、扇弧、**填色**、**圖形**、標籤 |
-| **左：構造** | 交點、中點、比例、水平、垂線、**切線**、**圓件**、座標 |
+| **左：構造** | 交點、中點、比例、水平、垂線、**垂足**、**切線**、**圓件**、座標 |
 | **左：記號** | 直角、角弧、優角、平行、等長、長度 |
 | **浮層：線型** | 線段／弧／橢圓／扇等工具，或選取邊時顯示 |
 | **浮層：弧／扇** | 扇弧工具（或選取扇／弧）時顯示 |
