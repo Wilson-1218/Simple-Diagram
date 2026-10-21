@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.3.3" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.4.0" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.3.3" />
+  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.4.0" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.3.3</span>
+            <span class="brand-sub">v13.4.0</span>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -47,8 +47,11 @@
           <button type="button" class="tool" data-tool="sector" title="扇形／弧段：圓心 → 起點 → 終點；工具列切換弧／扇形 (A)" data-i18n-title="tip_tool_sector">
             <span class="icon">◔</span><span class="label" data-i18n="tool_sector">扇弧</span>
           </button>
-          <button type="button" class="tool" data-tool="fill" title="填色：依序點頂點，再點起點完成" data-i18n-title="tip_tool_fill">
+          <button type="button" class="tool" data-tool="fill" title="填色：多邊形／扇形／弓形" data-i18n-title="tip_tool_fill">
             <span class="icon">▣</span><span class="label" data-i18n="tool_fill">填色</span>
+          </button>
+          <button type="button" class="tool" data-tool="shape" title="常用圖形：正方／等邊／長方／等腰 (B)" data-i18n-title="tip_tool_shape">
+            <span class="icon">◻</span><span class="label" data-i18n="tool_shape">圖形</span>
           </button>
           <button type="button" class="tool" data-tool="label" title="標籤：左鍵自訂／右鍵直接套預設" data-i18n-title="tip_tool_label">
             <span class="icon">A</span><span class="label" data-i18n="tool_label">標籤</span>
@@ -74,6 +77,9 @@
           </button>
           <button type="button" class="tool" data-tool="tangent" title="圓的切線：點圓周上（或近圓周）後拖曳定長" data-i18n-title="tip_tool_tangent">
             <span class="icon">⊤</span><span class="label" data-i18n="tool_tangent">切線</span>
+          </button>
+          <button type="button" class="tool" data-tool="circlePart" title="弦／直徑／半徑：在圓上拖曳建立 (T)" data-i18n-title="tip_tool_circlePart">
+            <span class="icon">⌀</span><span class="label" data-i18n="tool_circlePart">圓件</span>
           </button>
           <button type="button" class="tool" data-tool="coord" title="座標軸：點選原點位置；可加曲線" data-i18n-title="tip_tool_coord">
             <span class="icon">⊥</span><span class="label" data-i18n="tool_coord">座標</span>
@@ -123,16 +129,20 @@
                   <div class="menu-section-title">平面</div>
                   <button type="button" data-tpl="rightTri">直角三角形</button>
                   <button type="button" data-tpl="isoTri">等腰三角形</button>
+                  <button type="button" data-tpl="genTri">一般三角形</button>
                   <button type="button" data-tpl="parallelogram">平行四邊形</button>
                   <button type="button" data-tpl="trapezoid">梯形</button>
                   <button type="button" data-tpl="pentagon">正五邊形</button>
                   <button type="button" data-tpl="circleCenter">圓＋圓心</button>
+                  <button type="button" data-tpl="circleGeom">圓＋弦徑</button>
                   <div class="menu-section-title">立體</div>
                   <button type="button" data-tpl="tetra">四面體</button>
                   <button type="button" data-tpl="pyramid">正方錐</button>
                   <button type="button" data-tpl="altBase">高到底</button>
                   <button type="button" data-tpl="triPrism">三棱柱</button>
+                  <button type="button" data-tpl="rectPrism">直棱柱</button>
                   <button type="button" data-tpl="cuboid">長方體</button>
+                  <button type="button" data-tpl="frustum">圓台／截錐</button>
                   <button type="button" data-tpl="cylinder">圓柱</button>
                   <button type="button" data-tpl="cone">圓錐</button>
                   <div class="menu-section-title">自訂</div>
@@ -154,6 +164,27 @@
               <label class="check-opt" title="深色畫布（僅編輯；匯出仍為白底黑線）" data-i18n-title="tip_dark">
                 <input type="checkbox" id="chkDarkCanvas" /> <span data-i18n="chk_dark">深色畫布</span>
               </label>
+              <div class="menu-wrap">
+                <button type="button" id="btnLayersMenu" class="menu-btn" title="圖層顯示／鎖定" data-i18n-title="tip_layers" aria-haspopup="true" aria-expanded="false" data-i18n="btn_layers">圖層 ▾</button>
+                <div class="menu-panel menu-panel-layers" id="layersMenu" hidden>
+                  <div class="menu-section-title" data-i18n="layers_title">圖層</div>
+                  <div class="layers-row" data-layer="grid">
+                    <span class="layers-name" data-i18n="layers_grid">網格</span>
+                    <label class="layers-opt"><input type="checkbox" data-layer-show="grid" checked /> <span data-i18n="layers_show">顯示</span></label>
+                    <label class="layers-opt"><input type="checkbox" data-layer-lock="grid" /> <span data-i18n="layers_lock">鎖定</span></label>
+                  </div>
+                  <div class="layers-row" data-layer="coords">
+                    <span class="layers-name" data-i18n="layers_coords">座標</span>
+                    <label class="layers-opt"><input type="checkbox" data-layer-show="coords" checked /> <span data-i18n="layers_show">顯示</span></label>
+                    <label class="layers-opt"><input type="checkbox" data-layer-lock="coords" /> <span data-i18n="layers_lock">鎖定</span></label>
+                  </div>
+                  <div class="layers-row" data-layer="helpers">
+                    <span class="layers-name" data-i18n="layers_helpers">記號</span>
+                    <label class="layers-opt"><input type="checkbox" data-layer-show="helpers" checked /> <span data-i18n="layers_show">顯示</span></label>
+                    <label class="layers-opt"><input type="checkbox" data-layer-lock="helpers" /> <span data-i18n="layers_lock">鎖定</span></label>
+                  </div>
+                </div>
+              </div>
               <div class="menu-wrap">
                 <button type="button" id="btnRecentMenu" class="menu-btn" title="最近開啟的專案" data-i18n-title="tip_recent" aria-haspopup="true" aria-expanded="false">最近 ▾</button>
                 <div class="menu-panel menu-panel-wide" id="recentMenu" hidden>
@@ -226,12 +257,46 @@
             </span>
           </div>
           <div class="float-panel float-fill" id="fillFloat" hidden>
+            <span class="float-mini-opts" id="fillModeBar" title="填色模式" data-i18n-title="tip_fill_mode">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-fill-mode="polygon" title="多邊形填色" data-i18n-title="tip_fill_polygon" data-i18n="fill_mode_polygon">多邊形</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-fill-mode="sector" title="扇形填色" data-i18n-title="tip_fill_sector" data-i18n="fill_mode_sector">扇形</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-fill-mode="segment" title="弓形填色" data-i18n-title="tip_fill_segment" data-i18n="fill_mode_segment">弓形</button>
+            </span>
             <span class="fill-swatch-bar" id="fillPresetBar" title="填色陰影透明度" data-i18n-title="tip_fill_bar">
               <button type="button" class="fill-swatch" data-fill-key="g10" title="灰影 10%" data-i18n-title="tip_fill_g10" style="--swatch:rgba(102,102,102,0.10)" aria-label="10%"></button>
               <button type="button" class="fill-swatch active" data-fill-key="g20" title="灰影 20%" data-i18n-title="tip_fill_g20" style="--swatch:rgba(102,102,102,0.20)" aria-label="20%"></button>
               <button type="button" class="fill-swatch" data-fill-key="g35" title="灰影 35%" data-i18n-title="tip_fill_g35" style="--swatch:rgba(102,102,102,0.35)" aria-label="35%"></button>
               <button type="button" class="fill-swatch" data-fill-key="g50" title="灰影 50%" data-i18n-title="tip_fill_g50" style="--swatch:rgba(102,102,102,0.50)" aria-label="50%"></button>
               <button type="button" class="fill-swatch" data-fill-key="bg22" title="藍灰影 22%" data-i18n-title="tip_fill_bg" style="--swatch:rgba(107,135,153,0.22)" aria-label="blue-gray"></button>
+            </span>
+          </div>
+          <div class="float-panel float-shape" id="shapeFloat" hidden>
+            <span class="float-mini-opts" id="shapeModeBar" title="常用圖形" data-i18n-title="tip_shape_bar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-shape-mode="square" title="正方形：對角拖曳" data-i18n-title="tip_shape_square" data-i18n="shape_square">正方</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-shape-mode="equilateral" title="等邊三角形：底邊拖曳" data-i18n-title="tip_shape_equilateral" data-i18n="shape_equilateral">等邊</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-shape-mode="rect" title="長方形：自由寬高" data-i18n-title="tip_shape_rect" data-i18n="shape_rect">長方</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-shape-mode="iso" title="等腰三角形：底×高" data-i18n-title="tip_shape_iso" data-i18n="shape_iso">等腰</button>
+            </span>
+          </div>
+          <div class="float-panel float-circle-part" id="circlePartFloat" hidden>
+            <span class="float-mini-opts" id="circlePartModeBar" title="弦／直徑／半徑" data-i18n-title="tip_circlePart_bar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-circle-part="chord" title="弦：圓上兩點" data-i18n-title="tip_circlePart_chord" data-i18n="circlePart_chord">弦</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-circle-part="diameter" title="直徑：過圓心" data-i18n-title="tip_circlePart_diameter" data-i18n="circlePart_diameter">直徑</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-circle-part="radius" title="半徑：圓心到圓周" data-i18n-title="tip_circlePart_radius" data-i18n="circlePart_radius">半徑</button>
+            </span>
+          </div>
+          <div class="float-panel float-align" id="alignFloat" hidden>
+            <span class="float-title" data-i18n="align_title">對齊</span>
+            <span class="float-mini-opts" id="alignBar">
+              <button type="button" class="rail-mini-btn" data-align="left" title="左對齊" data-i18n-title="tip_align_left">L</button>
+              <button type="button" class="rail-mini-btn" data-align="center" title="水平置中" data-i18n-title="tip_align_center">C</button>
+              <button type="button" class="rail-mini-btn" data-align="right" title="右對齊" data-i18n-title="tip_align_right">R</button>
+              <button type="button" class="rail-mini-btn" data-align="top" title="上對齊" data-i18n-title="tip_align_top">T</button>
+              <button type="button" class="rail-mini-btn" data-align="middle" title="垂直置中" data-i18n-title="tip_align_middle">M</button>
+              <button type="button" class="rail-mini-btn" data-align="bottom" title="下對齊" data-i18n-title="tip_align_bottom">B</button>
+              <button type="button" class="rail-mini-btn" data-align="distH" title="水平等距" data-i18n-title="tip_align_distH" data-i18n="align_distH">橫距</button>
+              <button type="button" class="rail-mini-btn" data-align="distV" title="垂直等距" data-i18n-title="tip_align_distV" data-i18n="align_distV">縱距</button>
+              <button type="button" class="rail-mini-btn" data-align="equalLen" title="等長（≥2 線段）" data-i18n-title="tip_align_equalLen" data-i18n="align_equalLen">等長</button>
             </span>
           </div>
         </div>
@@ -436,6 +501,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261021-release-v13.3.3"></script>
+  <script src="app.js?v=20261021-release-v13.4.0"></script>
 </body>
 </html>

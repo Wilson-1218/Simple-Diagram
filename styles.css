@@ -466,6 +466,39 @@ button:disabled {
   min-width: 160px;
 }
 
+.menu-panel-layers {
+  min-width: 200px;
+  padding: 6px 8px 8px;
+}
+
+.layers-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  font-size: calc(12px * var(--tb, 1));
+}
+
+.layers-name {
+  color: var(--ink, #222);
+  font-weight: 600;
+}
+
+.layers-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: calc(11px * var(--tb, 1));
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.layers-opt input {
+  margin: 0;
+}
+
 .chrome-actions .menu-panel {
   left: auto;
   right: 0;

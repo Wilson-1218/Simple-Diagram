@@ -105,6 +105,8 @@
     length: "長度標註",
     perpendicular: "垂線",
     tangent: "切線",
+    circlePart: "圓件",
+    shape: "圖形",
     reflex: "優角",
     coord: "座標圖",
   };
@@ -167,8 +169,8 @@
   /** Circular arc / sector pie: startId defines radius+start angle; endId end angle (on same r). */
   /** @type {{id:string,centerId:string,startId:string,endId:string,style?:string,mode?:string}[]} */
   let sectors = [];
-  /** Region shade fills: closed polygon of existing point ids (≥3). */
-  /** @type {{id:string,pointIds:string[],color:string,opacity:number}[]} */
+  /** Region shade fills: polygon | sector | segment. */
+  /** @type {{id:string,kind?:string,pointIds?:string[],circleId?:string,centerId?:string,startId?:string,endId?:string,color:string,opacity:number}[]} */
   let fills = [];
   /** Active fill preset key (see FILL_PRESETS). */
   let activeFillKey = "g20";
@@ -179,6 +181,21 @@
     { key: "g50", color: "#666666", opacity: 0.5 },
     { key: "bg22", color: "#6b8799", opacity: 0.22 },
   ];
+  /** @type {"polygon"|"sector"|"segment"} */
+  let fillMode = "polygon";
+  /** @type {"square"|"equilateral"|"rect"|"iso"} */
+  let shapeMode = "square";
+  /** @type {"chord"|"diameter"|"radius"} */
+  let circlePartMode = "chord";
+  /** Layer visibility / lock (grid draw vs gridSnap are independent). */
+  let layers = {
+    gridShow: true,
+    gridLock: false,
+    coordsShow: true,
+    coordsLock: false,
+    helpersShow: true,
+    helpersLock: false,
+  };
   /** @type {"arc"|"sector"} */
   let sectorMode = "arc";
   /** Optional world-space crop for export/preview: {minX,minY,maxX,maxY} */
@@ -263,12 +280,29 @@
       tool_exportCrop: "框選", tool_label: "標籤", tool_intersect: "交點",
       tool_rightAngle: "直角", tool_angleArc: "角弧", tool_midTick: "中點", tool_ratio: "比例",
       tool_parallel: "平行", tool_equal: "等長", tool_length: "長度", tool_perpendicular: "垂線",
-      tool_tangent: "切線",
+      tool_tangent: "切線", tool_circlePart: "圓件", tool_shape: "圖形",
       tool_reflex: "優角", tool_coord: "座標", tool_fill: "填色",
       group_templates: "模板", group_props: "屬性", group_view: "檢視／匯出",
       rail_draw: "繪", rail_construct: "構", rail_marks: "記",
       rail_draw_title: "繪製", rail_construct_title: "構造", rail_marks_title: "記號",
       chk_grid: "網格", chk_hide_pts: "匯出隱藏點", chk_dark: "深色畫布",
+      btn_layers: "圖層 ▾", layers_title: "圖層", layers_grid: "網格", layers_coords: "座標",
+      layers_helpers: "記號", layers_show: "顯示", layers_lock: "鎖定",
+      tip_layers: "圖層顯示／鎖定（網格／座標／記號）",
+      shape_square: "正方", shape_equilateral: "等邊", shape_rect: "長方", shape_iso: "等腰",
+      tip_shape_bar: "常用圖形", tip_shape_square: "正方形：對角拖曳",
+      tip_shape_equilateral: "等邊三角形：底邊拖曳", tip_shape_rect: "長方形：自由寬高",
+      tip_shape_iso: "等腰三角形：底×高",
+      circlePart_chord: "弦", circlePart_diameter: "直徑", circlePart_radius: "半徑",
+      tip_circlePart_bar: "弦／直徑／半徑", tip_circlePart_chord: "弦：圓上兩點",
+      tip_circlePart_diameter: "直徑：過圓心", tip_circlePart_radius: "半徑：圓心到圓周",
+      fill_mode_polygon: "多邊形", fill_mode_sector: "扇形", fill_mode_segment: "弓形",
+      tip_fill_mode: "填色模式", tip_fill_polygon: "多邊形填色", tip_fill_sector: "扇形填色",
+      tip_fill_segment: "弓形填色",
+      align_title: "對齊", align_distH: "橫距", align_distV: "縱距", align_equalLen: "等長",
+      tip_align_left: "左對齊", tip_align_center: "水平置中", tip_align_right: "右對齊",
+      tip_align_top: "上對齊", tip_align_middle: "垂直置中", tip_align_bottom: "下對齊",
+      tip_align_distH: "水平等距", tip_align_distV: "垂直等距", tip_align_equalLen: "等長（≥2 線段）",
       grid_square: "方格", grid_triangle: "三角格",
       btn_ok: "確定", btn_cancel: "取消",
       coord_title: "座標圖／曲線", coord_curve_type: "曲線類型", coord_none: "僅座標軸",
@@ -334,15 +368,26 @@
       hint_parallel: "點線段：左鍵＝單箭 · 右鍵＝雙箭（工具列「單／雙」或 G 可預設）",
       hint_equal: "點線段：左鍵＝單劃 · 右鍵＝雙劃（工具列「單／雙」或 G 可預設）",
       hint_fill: "依序點頂點，再點起點完成",
+      hint_fill_sector: "點既有扇形，或圓心→起點→終點",
+      hint_fill_segment: "在同一圓上點兩點（填次要弓形）",
+      hint_shape: "拖曳放置圖形，放開完成",
+      hint_circlePart: "在圓上拖曳建立弦／直徑／半徑",
       fill_need_point: "請點選既有頂點",
       fill_need_more: "依序點頂點（≥3），再點起點完成",
       fill_closed: "已填色",
+      fill_sector_need: "請點扇形或圓心／起／終點",
+      fill_segment_need: "請在同一圓上點兩點",
       tip_fill_g10: "灰影 10%",
       tip_fill_g20: "灰影 20%",
       tip_fill_g35: "灰影 35%",
       tip_fill_g50: "灰影 50%",
       tip_fill_bg: "藍灰影 22%",
       tip_fill_bar: "填色陰影透明度",
+      tip_tool_shape: "常用圖形：正方／等邊／長方／等腰 (B)",
+      tip_tool_circlePart: "弦／直徑／半徑：在圓上拖曳建立 (T)",
+      circlePart_need_circle: "請點選圓或圓周上的點",
+      circlePart_too_short: "拖曳太短，已取消",
+      shape_too_small: "圖形太小，已取消",
       btn_template: "模板 ▾", btn_save_tpl: "存為模板", btn_recent: "最近 ▾",
       btn_copy: "複製", btn_delete: "刪除", btn_clear: "清除", btn_save: "儲存", btn_load: "開啟",
       btn_export_menu: "匯出 ▾", btn_export_crop: "框選匯出", btn_clear_crop: "清除裁切", btn_preview: "預覽匯出",
@@ -411,7 +456,7 @@
       tip_mark_double: "雙箭／雙劃（G）",
       tip_mark_flip: "記號翻面（選取平行／等長記號後）",
       tip_tool_length: "線段長度標註（例：6）",
-      tip_tool_fill: "填色：依序點頂點，再點起點完成",
+      tip_tool_fill: "填色：多邊形／扇形／弓形；浮層切換模式與色票 (I)",
       tip_preview_crop: "關閉後拖曳框選匯出範圍",
       tip_preview_clear_crop: "改回自動裁切整圖",
       tip_preview_png: "儲存 PNG（Chrome／Edge 可選資料夾與檔名）",
@@ -435,12 +480,30 @@
       tool_exportCrop: "Crop", tool_label: "Label", tool_intersect: "Xsect",
       tool_rightAngle: "Right", tool_angleArc: "Angle", tool_midTick: "Mid", tool_ratio: "Ratio",
       tool_parallel: "Par", tool_equal: "Equal", tool_length: "Len", tool_perpendicular: "Perp",
-      tool_tangent: "Tan",
+      tool_tangent: "Tan", tool_circlePart: "Chord", tool_shape: "Shape",
       tool_reflex: "Reflex", tool_coord: "Axes", tool_fill: "Fill",
       group_templates: "Templates", group_props: "Props", group_view: "View / Export",
       rail_draw: "Draw", rail_construct: "Build", rail_marks: "Mark",
       rail_draw_title: "Draw", rail_construct_title: "Construct", rail_marks_title: "Marks",
       chk_grid: "Grid", chk_hide_pts: "Hide pts", chk_dark: "Dark",
+      btn_layers: "Layers ▾", layers_title: "Layers", layers_grid: "Grid", layers_coords: "Axes",
+      layers_helpers: "Marks", layers_show: "Show", layers_lock: "Lock",
+      tip_layers: "Layer show/lock (grid / axes / marks)",
+      shape_square: "Sq", shape_equilateral: "Eq", shape_rect: "Rect", shape_iso: "Iso",
+      tip_shape_bar: "Common shapes", tip_shape_square: "Square: drag from corner",
+      tip_shape_equilateral: "Equilateral: drag base", tip_shape_rect: "Rectangle: free w×h",
+      tip_shape_iso: "Isosceles: base×height",
+      circlePart_chord: "Chord", circlePart_diameter: "Diam", circlePart_radius: "Rad",
+      tip_circlePart_bar: "Chord / diameter / radius", tip_circlePart_chord: "Chord: two points on circle",
+      tip_circlePart_diameter: "Diameter through center", tip_circlePart_radius: "Radius: center to rim",
+      fill_mode_polygon: "Poly", fill_mode_sector: "Pie", fill_mode_segment: "Seg",
+      tip_fill_mode: "Fill mode", tip_fill_polygon: "Polygon fill", tip_fill_sector: "Sector fill",
+      tip_fill_segment: "Segment fill",
+      align_title: "Align", align_distH: "DistH", align_distV: "DistV", align_equalLen: "EqLen",
+      tip_align_left: "Align left", tip_align_center: "Align center", tip_align_right: "Align right",
+      tip_align_top: "Align top", tip_align_middle: "Align middle", tip_align_bottom: "Align bottom",
+      tip_align_distH: "Distribute horizontally", tip_align_distV: "Distribute vertically",
+      tip_align_equalLen: "Equal length (≥2 segments)",
       grid_square: "Square", grid_triangle: "Tri",
       btn_ok: "OK", btn_cancel: "Cancel",
       coord_title: "Axes / curves", coord_curve_type: "Curve type", coord_none: "Axes only",
@@ -506,15 +569,26 @@
       hint_parallel: "Click segment: LMB single · RMB double chevron",
       hint_equal: "Click segment: LMB single · RMB double tick",
       hint_fill: "Click vertices in order, then click the start point to finish",
+      hint_fill_sector: "Click an existing sector, or center → start → end",
+      hint_fill_segment: "Click two points on the same circle (minor segment)",
+      hint_shape: "Drag to place a shape, release to commit",
+      hint_circlePart: "Drag on a circle to make a chord / diameter / radius",
       fill_need_point: "Click an existing vertex",
       fill_need_more: "Click vertices in order (≥3), then click the start point",
       fill_closed: "Fill added",
+      fill_sector_need: "Click a sector or center/start/end points",
+      fill_segment_need: "Click two points on the same circle",
       tip_fill_g10: "Gray shade 10%",
       tip_fill_g20: "Gray shade 20%",
       tip_fill_g35: "Gray shade 35%",
       tip_fill_g50: "Gray shade 50%",
       tip_fill_bg: "Blue-gray shade 22%",
       tip_fill_bar: "Fill shade opacity",
+      tip_tool_shape: "Shapes: square / equilateral / rect / isosceles (B)",
+      tip_tool_circlePart: "Chord / diameter / radius: drag on a circle (T)",
+      circlePart_need_circle: "Click a circle or a point on a circle",
+      circlePart_too_short: "Drag too short — cancelled",
+      shape_too_small: "Shape too small — cancelled",
       btn_template: "Templates ▾", btn_save_tpl: "Save tpl", btn_recent: "Recent ▾",
       btn_copy: "Copy", btn_delete: "Delete", btn_clear: "Clear", btn_save: "Save", btn_load: "Open",
       btn_export_menu: "Export ▾", btn_export_crop: "Crop export", btn_clear_crop: "Clear crop", btn_preview: "Preview",
@@ -583,7 +657,7 @@
       tip_mark_double: "Double chevron/tick (G)",
       tip_mark_flip: "Flip mark (select parallel/equal mark first)",
       tip_tool_length: "Segment length label (e.g. 6)",
-      tip_tool_fill: "Fill: click vertices in order, then click the start point to finish",
+      tip_tool_fill: "Fill: polygon / sector / segment; float for mode & swatches (I)",
       tip_preview_crop: "Close, then drag a crop box",
       tip_preview_clear_crop: "Back to auto crop of whole figure",
       tip_preview_png: "Save PNG (Chrome/Edge: pick folder & name)",
@@ -710,6 +784,9 @@
     tool_circle: "c",
     tool_ellipse: "e",
     tool_sector: "a",
+    tool_fill: "i",
+    tool_shape: "b",
+    tool_circlePart: "t",
     tool_midTick: "m",
     tool_ratio: "r",
     tool_hand: " ",
@@ -727,6 +804,9 @@
     tool_circle: "圓／弧工具",
     tool_ellipse: "橢圓工具",
     tool_sector: "扇形／弧工具",
+    tool_fill: "填色工具",
+    tool_shape: "圖形工具",
+    tool_circlePart: "圓件（弦／徑）",
     tool_midTick: "中點工具",
     tool_ratio: "比例工具",
     tool_hand: "手掌（空白鍵暫用）",
@@ -812,6 +892,7 @@
     selected = selection.length ? selection[selection.length - 1] : null;
     syncToolbarFromSelection();
     syncFillPresetUI();
+    syncContextualFloats();
   }
   function isSelected(type, id) {
     return selection.some((s) => s.type === type && s.id === id);
@@ -827,6 +908,8 @@
       else selection = [...selection, item];
       selected = selection.length ? selection[selection.length - 1] : null;
       syncToolbarFromSelection();
+      syncFillPresetUI();
+      syncContextualFloats();
     } else {
       setSelection([item]);
     }
@@ -1324,6 +1407,8 @@
     "horizontal",
     "perpendicular",
     "tangent",
+    "circlePart",
+    "shape",
     "circle",
     "ellipse",
     "sector",
@@ -1335,6 +1420,30 @@
   const SECTOR_TOOLS = new Set(["sector"]);
   const MARK_MODE_TOOLS = new Set(["parallel", "equal", "angleArc"]);
   const MARK_SEL_TYPES = new Set(["parallelMark", "equalMark", "angleArc"]);
+  const HELPER_HIT_TYPES = new Set([
+    "midTick",
+    "parallelMark",
+    "equalMark",
+    "rightAngle",
+    "angleArc",
+    "lengthLabel",
+  ]);
+
+  function selectionHasAlignableItems() {
+    let n = 0;
+    for (const s of selection) {
+      if (s.type === "point" || s.type === "segment" || s.type === "fill") n++;
+      else if (
+        s.type === "circle" ||
+        s.type === "ellipse" ||
+        s.type === "sector" ||
+        s.type === "label"
+      )
+        n++;
+      if (n >= 2) return true;
+    }
+    return false;
+  }
 
   /** Show/hide contextual floats beside the left rail. */
   function syncContextualFloats() {
@@ -1342,6 +1451,9 @@
     const fillFloat = document.getElementById("fillFloat");
     const sectorFloat = document.getElementById("sectorFloat");
     const markFloat = document.getElementById("markFloat");
+    const shapeFloat = document.getElementById("shapeFloat");
+    const circlePartFloat = document.getElementById("circlePartFloat");
+    const alignFloat = document.getElementById("alignFloat");
     if (styleFloat) {
       const strokeSel = selection.some((s) => STROKE_SEL_TYPES.has(s.type));
       const sizeSel = selection.some((s) => SIZE_SEL_TYPES.has(s.type));
@@ -1362,6 +1474,81 @@
       const selMark = selection.some((s) => MARK_SEL_TYPES.has(s.type));
       markFloat.hidden = !(MARK_MODE_TOOLS.has(tool) || (tool === "select" && selMark));
     }
+    if (shapeFloat) {
+      shapeFloat.hidden = tool !== "shape";
+    }
+    if (circlePartFloat) {
+      circlePartFloat.hidden = tool !== "circlePart";
+    }
+    if (alignFloat) {
+      alignFloat.hidden = !(tool === "select" && selectionHasAlignableItems());
+    }
+  }
+
+  function syncShapeModeUI() {
+    document.querySelectorAll("[data-shape-mode]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.shapeMode === shapeMode);
+    });
+    syncContextualFloats();
+  }
+
+  function setShapeMode(mode) {
+    if (mode === "equilateral" || mode === "rect" || mode === "iso") shapeMode = mode;
+    else shapeMode = "square";
+    syncShapeModeUI();
+    if (tool === "shape") updateStatus();
+  }
+
+  function syncCirclePartModeUI() {
+    document.querySelectorAll("[data-circle-part]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.circlePart === circlePartMode);
+    });
+    syncContextualFloats();
+  }
+
+  function setCirclePartMode(mode) {
+    if (mode === "diameter" || mode === "radius") circlePartMode = mode;
+    else circlePartMode = "chord";
+    syncCirclePartModeUI();
+    if (tool === "circlePart") updateStatus();
+  }
+
+  function syncFillModeUI() {
+    document.querySelectorAll("[data-fill-mode]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.fillMode === fillMode);
+    });
+    syncContextualFloats();
+  }
+
+  function setFillMode(mode) {
+    if (mode === "sector" || mode === "segment") fillMode = mode;
+    else fillMode = "polygon";
+    draft = null;
+    syncFillModeUI();
+    if (tool === "fill") updateStatus();
+    draw();
+  }
+
+  function syncLayersUI() {
+    document.querySelectorAll("[data-layer-show]").forEach((el) => {
+      const k = el.dataset.layerShow;
+      if (k === "grid") el.checked = !!layers.gridShow;
+      else if (k === "coords") el.checked = !!layers.coordsShow;
+      else if (k === "helpers") el.checked = !!layers.helpersShow;
+    });
+    document.querySelectorAll("[data-layer-lock]").forEach((el) => {
+      const k = el.dataset.layerLock;
+      if (k === "grid") el.checked = !!layers.gridLock;
+      else if (k === "coords") el.checked = !!layers.coordsLock;
+      else if (k === "helpers") el.checked = !!layers.helpersLock;
+    });
+  }
+
+  function applyLayersPatch(patch) {
+    layers = { ...layers, ...patch };
+    syncLayersUI();
+    draw();
+    updateStatus();
   }
 
   function setFillPreset(key, applyToSelection) {
@@ -1385,8 +1572,38 @@
     if (tool === "fill") updateStatus();
   }
 
+  function fillKindOf(fill) {
+    if (!fill) return "polygon";
+    if (fill.kind === "sector" || fill.kind === "segment") return fill.kind;
+    return "polygon";
+  }
+
+  function normalizeFillRecord(f) {
+    if (!f || typeof f !== "object") return null;
+    const kind = fillKindOf(f);
+    const out = {
+      id: typeof f.id === "string" ? f.id : uid(),
+      kind,
+      color: f.color || "#666666",
+      opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+    };
+    if (kind === "polygon") {
+      out.pointIds = Array.isArray(f.pointIds) ? [...f.pointIds] : [];
+    } else if (kind === "sector") {
+      out.circleId = f.circleId || null;
+      out.centerId = f.centerId || null;
+      out.startId = f.startId || null;
+      out.endId = f.endId || null;
+    } else {
+      out.circleId = f.circleId || null;
+      out.startId = f.startId || null;
+      out.endId = f.endId || null;
+    }
+    return out;
+  }
+
   function fillWorldPoints(fill) {
-    if (!fill || !Array.isArray(fill.pointIds)) return null;
+    if (!fill || fillKindOf(fill) !== "polygon" || !Array.isArray(fill.pointIds)) return null;
     const pts = [];
     for (const id of fill.pointIds) {
       const p = pointById(id);
@@ -1394,6 +1611,49 @@
       pts.push(p);
     }
     return pts.length >= 3 ? pts : null;
+  }
+
+  function fillSectorGeom(fill) {
+    if (!fill || fillKindOf(fill) !== "sector") return null;
+    const c = pointById(fill.centerId);
+    const s = pointById(fill.startId);
+    const e = pointById(fill.endId);
+    if (!c || !s || !e) return null;
+    const r = dist(c, s);
+    if (r < 1e-9) return null;
+    const a0 = Math.atan2(s.y - c.y, s.x - c.x);
+    const a1 = Math.atan2(e.y - c.y, e.x - c.x);
+    let delta = a1 - a0;
+    while (delta <= -Math.PI) delta += Math.PI * 2;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    return { c, s, e, r, a0, a1, delta, anticlockwise: delta < 0 };
+  }
+
+  function fillSegmentGeom(fill) {
+    if (!fill || fillKindOf(fill) !== "segment") return null;
+    let c = null;
+    let r = 0;
+    if (fill.circleId) {
+      const cir = circles.find((x) => x.id === fill.circleId);
+      const g = circleGeomBasic(cir);
+      if (!g) return null;
+      c = g.c;
+      r = g.r;
+    } else if (fill.centerId) {
+      c = pointById(fill.centerId);
+      const s0 = pointById(fill.startId);
+      if (!c || !s0) return null;
+      r = dist(c, s0);
+    }
+    const s = pointById(fill.startId);
+    const e = pointById(fill.endId);
+    if (!c || !s || !e || r < 1e-9) return null;
+    const a0 = Math.atan2(s.y - c.y, s.x - c.x);
+    const a1 = Math.atan2(e.y - c.y, e.x - c.x);
+    let delta = a1 - a0;
+    while (delta <= -Math.PI) delta += Math.PI * 2;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    return { c, s, e, r, a0, a1, delta, anticlockwise: delta < 0 };
   }
 
   function pointInPolygon(wx, wy, pts) {
@@ -1410,28 +1670,86 @@
     return inside;
   }
 
+  function pointInFillSector(wx, wy, g) {
+    if (!g) return false;
+    const d = Math.hypot(wx - g.c.x, wy - g.c.y);
+    if (d > g.r + 1e-9) return false;
+    const ang = Math.atan2(wy - g.c.y, wx - g.c.x);
+    return angleOnMinorArc(ang, g.a0, g.delta);
+  }
+
+  function pointInFillSegment(wx, wy, g) {
+    if (!g) return false;
+    const d = Math.hypot(wx - g.c.x, wy - g.c.y);
+    if (d > g.r + 1e-9) return false;
+    const cross =
+      (g.e.x - g.s.x) * (wy - g.s.y) - (g.e.y - g.s.y) * (wx - g.s.x);
+    const crossC =
+      (g.e.x - g.s.x) * (g.c.y - g.s.y) - (g.e.y - g.s.y) * (g.c.x - g.s.x);
+    // Minor segment is on the opposite side of the center relative to the chord
+    if (cross * crossC > 0) return false;
+    return true;
+  }
+
+  function pointInFill(fill, wx, wy) {
+    const kind = fillKindOf(fill);
+    if (kind === "sector") return pointInFillSector(wx, wy, fillSectorGeom(fill));
+    if (kind === "segment") return pointInFillSegment(wx, wy, fillSegmentGeom(fill));
+    const pts = fillWorldPoints(fill);
+    return !!(pts && pointInPolygon(wx, wy, pts));
+  }
+
   function nearestFillHit(wx, wy) {
-    // Topmost fill wins (last in array drawn later among fills)
     for (let i = fills.length - 1; i >= 0; i--) {
       const f = fills[i];
-      const pts = fillWorldPoints(f);
-      if (pts && pointInPolygon(wx, wy, pts)) return f;
+      if (pointInFill(f, wx, wy)) return f;
     }
     return null;
   }
 
-  function drawFillShape(fill, selected, toScreenFn) {
+  function buildFillPath(ctxOrC, fill, toS) {
+    const kind = fillKindOf(fill);
+    if (kind === "sector") {
+      const g = fillSectorGeom(fill);
+      if (!g) return false;
+      const sc = toS(g.c.x, g.c.y);
+      const ss = toS(g.s.x, g.s.y);
+      const rScreen = Math.hypot(ss.x - sc.x, ss.y - sc.y);
+      ctxOrC.beginPath();
+      ctxOrC.moveTo(sc.x, sc.y);
+      ctxOrC.lineTo(ss.x, ss.y);
+      ctxOrC.arc(sc.x, sc.y, rScreen, g.a0, g.a1, g.anticlockwise);
+      ctxOrC.closePath();
+      return true;
+    }
+    if (kind === "segment") {
+      const g = fillSegmentGeom(fill);
+      if (!g) return false;
+      const sc = toS(g.c.x, g.c.y);
+      const ss = toS(g.s.x, g.s.y);
+      const rScreen = Math.hypot(ss.x - sc.x, ss.y - sc.y);
+      ctxOrC.beginPath();
+      ctxOrC.moveTo(ss.x, ss.y);
+      ctxOrC.arc(sc.x, sc.y, rScreen, g.a0, g.a1, g.anticlockwise);
+      ctxOrC.closePath();
+      return true;
+    }
     const pts = fillWorldPoints(fill);
-    if (!pts) return;
-    const toS = toScreenFn || ((x, y) => worldToScreen(x, y));
+    if (!pts) return false;
     const s0 = toS(pts[0].x, pts[0].y);
-    ctx.beginPath();
-    ctx.moveTo(s0.x, s0.y);
+    ctxOrC.beginPath();
+    ctxOrC.moveTo(s0.x, s0.y);
     for (let i = 1; i < pts.length; i++) {
       const s = toS(pts[i].x, pts[i].y);
-      ctx.lineTo(s.x, s.y);
+      ctxOrC.lineTo(s.x, s.y);
     }
-    ctx.closePath();
+    ctxOrC.closePath();
+    return true;
+  }
+
+  function drawFillShape(fill, selected, toScreenFn) {
+    const toS = toScreenFn || ((x, y) => worldToScreen(x, y));
+    if (!buildFillPath(ctx, fill, toS)) return;
     ctx.fillStyle = hexToRgba(fill.color, fill.opacity);
     ctx.fill();
     if (selected) {
@@ -1443,12 +1761,136 @@
     }
   }
 
+  /** SVG path `d` for a fill (polygon / sector pie / circular segment). */
+  function fillToSvgPath(fill, toS) {
+    const kind = fillKindOf(fill);
+    if (kind === "sector") {
+      const g = fillSectorGeom(fill);
+      if (!g) return null;
+      const sc = toS(g.c.x, g.c.y);
+      const ss = toS(g.s.x, g.s.y);
+      const se = toS(g.e.x, g.e.y);
+      const r = Math.hypot(ss.x - sc.x, ss.y - sc.y);
+      const large = Math.abs(g.delta) > Math.PI ? 1 : 0;
+      const sweep = g.anticlockwise ? 0 : 1;
+      return (
+        "M" +
+        sc.x.toFixed(2) +
+        " " +
+        sc.y.toFixed(2) +
+        " L" +
+        ss.x.toFixed(2) +
+        " " +
+        ss.y.toFixed(2) +
+        " A" +
+        r.toFixed(2) +
+        " " +
+        r.toFixed(2) +
+        " 0 " +
+        large +
+        " " +
+        sweep +
+        " " +
+        se.x.toFixed(2) +
+        " " +
+        se.y.toFixed(2) +
+        " Z"
+      );
+    }
+    if (kind === "segment") {
+      const g = fillSegmentGeom(fill);
+      if (!g) return null;
+      const sc = toS(g.c.x, g.c.y);
+      const ss = toS(g.s.x, g.s.y);
+      const se = toS(g.e.x, g.e.y);
+      const r = Math.hypot(ss.x - sc.x, ss.y - sc.y);
+      const large = Math.abs(g.delta) > Math.PI ? 1 : 0;
+      const sweep = g.anticlockwise ? 0 : 1;
+      return (
+        "M" +
+        ss.x.toFixed(2) +
+        " " +
+        ss.y.toFixed(2) +
+        " A" +
+        r.toFixed(2) +
+        " " +
+        r.toFixed(2) +
+        " 0 " +
+        large +
+        " " +
+        sweep +
+        " " +
+        se.x.toFixed(2) +
+        " " +
+        se.y.toFixed(2) +
+        " Z"
+      );
+    }
+    const pts = fillWorldPoints(fill);
+    if (!pts) return null;
+    return (
+      pts
+        .map((p, i) => {
+          const s = toS(p.x, p.y);
+          return (i === 0 ? "M" : "L") + s.x.toFixed(2) + " " + s.y.toFixed(2);
+        })
+        .join(" ") + " Z"
+    );
+  }
+
+  function fillReferencedPointIds(fill) {
+    const ids = [];
+    const kind = fillKindOf(fill);
+    if (kind === "polygon" && Array.isArray(fill.pointIds)) {
+      for (const id of fill.pointIds) ids.push(id);
+    } else {
+      if (fill.centerId) ids.push(fill.centerId);
+      if (fill.startId) ids.push(fill.startId);
+      if (fill.endId) ids.push(fill.endId);
+    }
+    return ids;
+  }
+
   function addFillFromPointIds(pointIds, color, opacity, skipHist) {
     if (!pointIds || pointIds.length < 3) return null;
     if (!skipHist) pushHistory();
     const f = {
       id: uid(),
+      kind: "polygon",
       pointIds: [...pointIds],
+      color: color || activeFillStyle().color,
+      opacity: opacity != null ? opacity : activeFillStyle().opacity,
+    };
+    fills.push(f);
+    return f;
+  }
+
+  function addFillSector(centerId, startId, endId, circleId, color, opacity, skipHist) {
+    if (!centerId || !startId || !endId) return null;
+    if (!skipHist) pushHistory();
+    const f = {
+      id: uid(),
+      kind: "sector",
+      circleId: circleId || null,
+      centerId,
+      startId,
+      endId,
+      color: color || activeFillStyle().color,
+      opacity: opacity != null ? opacity : activeFillStyle().opacity,
+    };
+    fills.push(f);
+    return f;
+  }
+
+  function addFillSegment(startId, endId, circleId, color, opacity, skipHist) {
+    if (!startId || !endId || !circleId) return null;
+    if (!skipHist) pushHistory();
+    const f = {
+      id: uid(),
+      kind: "segment",
+      circleId,
+      startId,
+      endId,
       color: color || activeFillStyle().color,
       opacity: opacity != null ? opacity : activeFillStyle().opacity,
     };
@@ -1475,6 +1917,14 @@
   }
 
   function handleFillClick(world) {
+    if (fillMode === "sector") {
+      handleFillSectorClick(world);
+      return;
+    }
+    if (fillMode === "segment") {
+      handleFillSegmentClick(world);
+      return;
+    }
     // Prefer start vertex when closing so nearby last-point doesn't steal the hit
     let sn = null;
     if (draft && draft.kind === "fill" && draft.pointIds && draft.pointIds.length >= 3) {
@@ -1496,14 +1946,12 @@
       draw();
       return;
     }
-    // Primary close: re-click first selected point (≥3 vertices)
     if (draft.pointIds.length >= 3 && pid === draft.pointIds[0]) {
       commitFillDraft();
       return;
     }
     if (pid === draft.pointIds[draft.pointIds.length - 1]) return;
     if (draft.pointIds.includes(pid) && pid !== draft.pointIds[0]) {
-      // Mid-chain revisit of a non-start vertex: ignore (keep order simple)
       statusHint.textContent =
         draft.pointIds.length >= 3 ? t("hint_fill") : t("fill_need_more");
       return;
@@ -1512,6 +1960,143 @@
     draft.cursor = { x: world.x, y: world.y };
     statusHint.textContent =
       draft.pointIds.length >= 3 ? t("hint_fill") : t("fill_need_more");
+    draw();
+  }
+
+  function handleFillSectorClick(world) {
+    // Click existing sector entity → fill pie
+    const secHit = nearestSectorHit(world.x, world.y);
+    if (secHit && (!draft || draft.kind !== "fillSector")) {
+      const g = sectorGeom(secHit);
+      if (g) {
+        const style = activeFillStyle();
+        const created = addFillSector(
+          secHit.centerId,
+          secHit.startId,
+          secHit.endId,
+          null,
+          style.color,
+          style.opacity
+        );
+        draft = null;
+        if (created) {
+          setSelection([{ type: "fill", id: created.id }]);
+          statusHint.textContent = t("fill_closed");
+        }
+        updateStatus();
+        draw();
+        return;
+      }
+    }
+    const sn = nearestPointHit(world.x, world.y);
+    if (!sn) {
+      statusHint.textContent = t("fill_sector_need");
+      return;
+    }
+    if (!draft || draft.kind !== "fillSector") {
+      draft = {
+        kind: "fillSector",
+        centerId: sn.id,
+        startId: null,
+        cursor: { x: sn.x, y: sn.y },
+      };
+      statusHint.textContent = t("hint_fill_sector");
+      draw();
+      return;
+    }
+    if (!draft.startId) {
+      if (sn.id === draft.centerId) return;
+      draft.startId = sn.id;
+      draft.cursor = { x: sn.x, y: sn.y };
+      statusHint.textContent = t("hint_fill_sector");
+      draw();
+      return;
+    }
+    if (sn.id === draft.centerId || sn.id === draft.startId) return;
+    const style = activeFillStyle();
+    const created = addFillSector(
+      draft.centerId,
+      draft.startId,
+      sn.id,
+      null,
+      style.color,
+      style.opacity
+    );
+    draft = null;
+    if (created) {
+      setSelection([{ type: "fill", id: created.id }]);
+      statusHint.textContent = t("fill_closed");
+    }
+    updateStatus();
+    draw();
+  }
+
+  function handleFillSegmentClick(world) {
+    let cir = null;
+    let pid = null;
+    let touch = null;
+    const pHit = nearestPointHit(world.x, world.y);
+    if (pHit) {
+      const ons = circlesThroughPoint(pHit);
+      if (ons.length) {
+        cir = ons[0];
+        pid = pHit.id;
+        touch = { x: pHit.x, y: pHit.y };
+      }
+    }
+    if (!cir) {
+      cir = nearestCircleHit(world.x, world.y);
+      if (!cir) {
+        statusHint.textContent = t("fill_segment_need");
+        return;
+      }
+      touch = projectOntoCircle(cir, world.x, world.y);
+      if (!touch) return;
+      const near = nearestPointHit(touch.x, touch.y);
+      if (near && pointLiesOnCircle(cir, near, HIT_POINT / view.scale)) {
+        pid = near.id;
+        touch = { x: near.x, y: near.y };
+      }
+    }
+    if (!pid && touch) {
+      // Create rim point once; history folded into fill commit
+      pid = addPoint(touch.x, touch.y, true, null, true).id;
+    }
+    if (!pid) {
+      statusHint.textContent = t("fill_segment_need");
+      return;
+    }
+    if (!draft || draft.kind !== "fillSegment") {
+      draft = {
+        kind: "fillSegment",
+        circleId: cir.id,
+        startId: pid,
+        cursor: pointById(pid) || { x: world.x, y: world.y },
+        createdStart: !pHit,
+      };
+      statusHint.textContent = t("hint_fill_segment");
+      draw();
+      return;
+    }
+    if (cir.id !== draft.circleId) {
+      statusHint.textContent = t("fill_segment_need");
+      return;
+    }
+    if (pid === draft.startId) return;
+    const style = activeFillStyle();
+    const created = addFillSegment(
+      draft.startId,
+      pid,
+      draft.circleId,
+      style.color,
+      style.opacity
+    );
+    draft = null;
+    if (created) {
+      setSelection([{ type: "fill", id: created.id }]);
+      statusHint.textContent = t("fill_closed");
+    }
+    updateStatus();
     draw();
   }
 
@@ -1635,7 +2220,14 @@
       length: t("hint_length"),
       perpendicular: t("hint_perpendicular"),
       tangent: t("hint_tangent"),
-      fill: t("hint_fill"),
+      circlePart: t("hint_circlePart"),
+      shape: t("hint_shape"),
+      fill:
+        fillMode === "sector"
+          ? t("hint_fill_sector")
+          : fillMode === "segment"
+            ? t("hint_fill_segment")
+            : t("hint_fill"),
     };
     statusHint.textContent = hints[tool] || "";
   }
@@ -1659,6 +2251,9 @@
     syncMarkGroupUI();
     syncSectorModeUI();
     syncFillPresetUI();
+    syncFillModeUI();
+    syncShapeModeUI();
+    syncCirclePartModeUI();
     syncContextualFloats();
     updateStatus();
     draw();
@@ -1760,6 +2355,10 @@
       gridSnap,
       gridMode,
       hideExportPoints,
+      layers,
+      fillMode,
+      shapeMode,
+      circlePartMode,
     });
   }
 
@@ -1799,12 +2398,7 @@
     circles = data.circles || [];
     ellipses = data.ellipses || [];
     sectors = data.sectors || [];
-    fills = (data.fills || []).map((f) => ({
-      id: f.id,
-      pointIds: Array.isArray(f.pointIds) ? [...f.pointIds] : [],
-      color: f.color || "#666666",
-      opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
-    }));
+    fills = (data.fills || []).map((f) => normalizeFillRecord(f)).filter(Boolean);
     if (data.activeParallelGroup != null) activeParallelGroup = data.activeParallelGroup ? 1 : 0;
     if (data.activeEqualGroup != null) activeEqualGroup = data.activeEqualGroup ? 1 : 0;
     if (data.activeArcGroup != null) activeArcGroup = data.activeArcGroup ? 1 : 0;
@@ -1819,6 +2413,38 @@
     if (data.hideExportPoints != null) {
       hideExportPoints = !!data.hideExportPoints;
       if (chkHideExportPoints) chkHideExportPoints.checked = hideExportPoints;
+    }
+    if (data.layers && typeof data.layers === "object") {
+      layers = {
+        gridShow: data.layers.gridShow != null ? !!data.layers.gridShow : true,
+        gridLock: !!data.layers.gridLock,
+        coordsShow: data.layers.coordsShow != null ? !!data.layers.coordsShow : true,
+        coordsLock: !!data.layers.coordsLock,
+        helpersShow: data.layers.helpersShow != null ? !!data.layers.helpersShow : true,
+        helpersLock: !!data.layers.helpersLock,
+      };
+      syncLayersUI();
+    }
+    if (data.fillMode === "sector" || data.fillMode === "segment" || data.fillMode === "polygon") {
+      fillMode = data.fillMode;
+      syncFillModeUI();
+    }
+    if (
+      data.shapeMode === "square" ||
+      data.shapeMode === "equilateral" ||
+      data.shapeMode === "rect" ||
+      data.shapeMode === "iso"
+    ) {
+      shapeMode = data.shapeMode;
+      syncShapeModeUI();
+    }
+    if (
+      data.circlePartMode === "chord" ||
+      data.circlePartMode === "diameter" ||
+      data.circlePartMode === "radius"
+    ) {
+      circlePartMode = data.circlePartMode;
+      syncCirclePartModeUI();
     }
     nextLetter = data.nextLetter || "A";
     labelFontSize = clampLabelSize(data.labelFontSize || labelFontSize || DEFAULT_LABEL_SIZE);
@@ -1987,20 +2613,24 @@
   }
 
   function hitTest(wx, wy) {
+    const helpersOk = !!layers.helpersShow && !layers.helpersLock;
+    const coordsOk = !!layers.coordsShow && !layers.coordsLock;
     const p = nearestPointHit(wx, wy);
     if (p) return { type: "point", id: p.id };
     const lab = nearestLabelHit(wx, wy);
     if (lab) return { type: "label", id: lab.id };
-    const ll = nearestLengthHit(wx, wy);
-    if (ll) return { type: "lengthLabel", id: ll.id };
-    const ra = nearestRightHit(wx, wy);
-    if (ra) return { type: "rightAngle", id: ra.id };
-    const aa = nearestAngleArcHit(wx, wy);
-    if (aa) return { type: "angleArc", id: aa.id };
-    const pm = nearestSegMarkHit(wx, wy, parallelMarks, "parallelMark");
-    if (pm) return pm;
-    const em = nearestSegMarkHit(wx, wy, equalMarks, "equalMark");
-    if (em) return em;
+    if (helpersOk) {
+      const ll = nearestLengthHit(wx, wy);
+      if (ll) return { type: "lengthLabel", id: ll.id };
+      const ra = nearestRightHit(wx, wy);
+      if (ra) return { type: "rightAngle", id: ra.id };
+      const aa = nearestAngleArcHit(wx, wy);
+      if (aa) return { type: "angleArc", id: aa.id };
+      const pm = nearestSegMarkHit(wx, wy, parallelMarks, "parallelMark");
+      if (pm) return pm;
+      const em = nearestSegMarkHit(wx, wy, equalMarks, "equalMark");
+      if (em) return em;
+    }
     const cir = nearestCircleHit(wx, wy);
     if (cir) return { type: "circle", id: cir.id };
     const el = nearestEllipseHit(wx, wy);
@@ -2011,10 +2641,12 @@
     if (seg) return { type: "segment", id: seg.id };
     const fillHit = nearestFillHit(wx, wy);
     if (fillHit) return { type: "fill", id: fillHit.id };
-    const clab = nearestCoordCurveLabelHit(wx, wy);
-    if (clab) return { type: "coordPlot", id: clab.plotId, curveId: clab.curveId, label: true };
-    const cp = nearestCoordPlotHit(wx, wy);
-    if (cp) return { type: "coordPlot", id: cp.id };
+    if (coordsOk) {
+      const clab = nearestCoordCurveLabelHit(wx, wy);
+      if (clab) return { type: "coordPlot", id: clab.plotId, curveId: clab.curveId, label: true };
+      const cp = nearestCoordPlotHit(wx, wy);
+      if (cp) return { type: "coordPlot", id: cp.id };
+    }
     return null;
   }
 
@@ -2550,7 +3182,10 @@
       sectors = sectors.filter(
         (s) => s.centerId !== id && s.startId !== id && s.endId !== id
       );
-      fills = fills.filter((f) => !(f.pointIds || []).includes(id));
+      fills = fills.filter((f) => {
+        const refs = fillReferencedPointIds(f);
+        return !refs.includes(id);
+      });
       midTicks = midTicks.filter((m) => m.pointId !== id);
       const segIds = new Set(segments.map((s) => s.id));
       midTicks = midTicks.filter((m) => segIds.has(m.segmentId));
@@ -2579,6 +3214,7 @@
       lengthLabels = lengthLabels.filter((m) => m.id !== id);
     } else if (type === "circle") {
       circles = circles.filter((c) => c.id !== id);
+      fills = fills.filter((f) => f.circleId !== id);
     } else if (type === "ellipse") {
       ellipses = ellipses.filter((e) => e.id !== id);
     } else if (type === "sector") {
@@ -5724,6 +6360,69 @@
         ctx.fill();
       }
     }
+    if (draft.kind === "circlePart" && draft.touch) {
+      const cir = circles.find((c) => c.id === draft.circleId);
+      const g = circleGeomBasic(cir);
+      const mode = draft.mode || circlePartMode;
+      ctx.strokeStyle = "rgba(42,122,176,0.75)";
+      ctx.lineWidth = LINE_WIDTH;
+      ctx.setLineDash([5, 4]);
+      ctx.lineCap = "round";
+      if (mode === "chord" && draft.endTouch) {
+        const s0 = worldToScreen(draft.touch.x, draft.touch.y);
+        const s1 = worldToScreen(draft.endTouch.x, draft.endTouch.y);
+        ctx.beginPath();
+        ctx.moveTo(s0.x, s0.y);
+        ctx.lineTo(s1.x, s1.y);
+        ctx.stroke();
+      } else if (mode === "diameter" && g) {
+        const end = draft.endTouch || draft.touch;
+        const dx = end.x - g.c.x;
+        const dy = end.y - g.c.y;
+        const L = Math.hypot(dx, dy) || 1;
+        const a = { x: g.c.x - g.r * (dx / L), y: g.c.y - g.r * (dy / L) };
+        const b = { x: g.c.x + g.r * (dx / L), y: g.c.y + g.r * (dy / L) };
+        const s0 = worldToScreen(a.x, a.y);
+        const s1 = worldToScreen(b.x, b.y);
+        ctx.beginPath();
+        ctx.moveTo(s0.x, s0.y);
+        ctx.lineTo(s1.x, s1.y);
+        ctx.stroke();
+      } else if (mode === "radius" && g) {
+        const end = draft.endTouch || draft.touch;
+        const s0 = worldToScreen(g.c.x, g.c.y);
+        const s1 = worldToScreen(end.x, end.y);
+        ctx.beginPath();
+        ctx.moveTo(s0.x, s0.y);
+        ctx.lineTo(s1.x, s1.y);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+    if (draft.kind === "shape" && draft.x0 != null) {
+      const corners = shapeCornersFromDrag(
+        draft.mode || shapeMode,
+        draft.x0,
+        draft.y0,
+        draft.x1,
+        draft.y1
+      );
+      if (corners && corners.length) {
+        ctx.beginPath();
+        const s0 = worldToScreen(corners[0].x, corners[0].y);
+        ctx.moveTo(s0.x, s0.y);
+        for (let i = 1; i < corners.length; i++) {
+          const s = worldToScreen(corners[i].x, corners[i].y);
+          ctx.lineTo(s.x, s.y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = "rgba(42,122,176,0.7)";
+        ctx.lineWidth = LINE_WIDTH;
+        ctx.setLineDash([5, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
     if (draft.kind === "circle" && draft.centerId && draft.cursor) {
       const c = pointById(draft.centerId);
       if (c) {
@@ -6030,7 +6729,7 @@
     ctx.fillStyle = edPaper();
     ctx.fillRect(0, 0, w, h);
 
-    if (gridSnap) drawActiveGrid(w, h);
+    if (layers.gridShow) drawActiveGrid(w, h);
 
     if (points.length === 0 && !draft) {
       const o = worldToScreen(0, 0);
@@ -6060,27 +6759,31 @@
     for (const seg of segments) {
       drawSegment(seg, isSelected("segment", seg.id));
     }
-    for (const mt of midTicks) drawMidTick(mt);
-    for (const pm of parallelMarks) {
-      drawParallelMark(pm, isSelected("parallelMark", pm.id));
+    if (layers.helpersShow) {
+      for (const mt of midTicks) drawMidTick(mt);
+      for (const pm of parallelMarks) {
+        drawParallelMark(pm, isSelected("parallelMark", pm.id));
+      }
+      for (const em of equalMarks) {
+        drawEqualMark(em, isSelected("equalMark", em.id));
+      }
+      for (const ll of lengthLabels) {
+        drawLengthLabel(ll, isSelected("lengthLabel", ll.id));
+      }
+      for (const ra of rightAngles) {
+        drawRightAngle(ra, isSelected("rightAngle", ra.id));
+      }
+      for (const arc of angleArcs) {
+        drawAngleArc(arc, isSelected("angleArc", arc.id));
+      }
     }
-    for (const em of equalMarks) {
-      drawEqualMark(em, isSelected("equalMark", em.id));
-    }
-    for (const ll of lengthLabels) {
-      drawLengthLabel(ll, isSelected("lengthLabel", ll.id));
-    }
-    for (const ra of rightAngles) {
-      drawRightAngle(ra, isSelected("rightAngle", ra.id));
-    }
-    for (const arc of angleArcs) {
-      drawAngleArc(arc, isSelected("angleArc", arc.id));
-    }
-    for (const cp of coordPlots) {
-      drawCoordPlot(cp, isSelected("coordPlot", cp.id));
-    }
-    for (const cp of coordPlots) {
-      if (isSelected("coordPlot", cp.id)) drawCoordPlotResizeHandles(cp);
+    if (layers.coordsShow) {
+      for (const cp of coordPlots) {
+        drawCoordPlot(cp, isSelected("coordPlot", cp.id));
+      }
+      for (const cp of coordPlots) {
+        if (isSelected("coordPlot", cp.id)) drawCoordPlotResizeHandles(cp);
+      }
     }
     for (const p of points) {
       drawPoint(p, isSelected("point", p.id));
@@ -6297,8 +7000,8 @@
             if (lab) pointIds.add(lab.pointId);
           } else if (s.type === "fill") {
             const f = fills.find((x) => x.id === s.id);
-            if (f && Array.isArray(f.pointIds)) {
-              for (const pid of f.pointIds) pointIds.add(pid);
+            if (f) {
+              for (const pid of fillReferencedPointIds(f)) pointIds.add(pid);
             }
           }
         }
@@ -6534,6 +7237,53 @@
       return;
     }
 
+    if (tool === "circlePart") {
+      e.preventDefault();
+      const picked = pickCircleTouch(world);
+      if (!picked) {
+        statusHint.textContent = t("circlePart_need_circle");
+        return;
+      }
+      const { cir, pid, touch } = picked;
+      const g = circleGeomBasic(cir);
+      draft = {
+        kind: "circlePart",
+        mode: circlePartMode,
+        circleId: cir.id,
+        pointId: pid,
+        touch,
+        endTouch: { x: touch.x, y: touch.y },
+        endPointId: pid,
+        len: g ? g.r : 0,
+        cursor: { x: touch.x, y: touch.y },
+        pointerId: e.pointerId,
+        button: e.button,
+      };
+      statusHint.textContent = t("hint_circlePart");
+      draw();
+      return;
+    }
+
+    if (tool === "shape") {
+      e.preventDefault();
+      const sn = snapWorld(world.x, world.y);
+      const x0 = sn ? sn.x : applyGrid(world.x, world.y).x;
+      const y0 = sn ? sn.y : applyGrid(world.x, world.y).y;
+      draft = {
+        kind: "shape",
+        mode: shapeMode,
+        x0,
+        y0,
+        x1: x0,
+        y1: y0,
+        pointerId: e.pointerId,
+        button: e.button,
+      };
+      statusHint.textContent = t("hint_shape");
+      draw();
+      return;
+    }
+
     if (tool === "circle") {
       const sn = snapWorld(world.x, world.y) || nearestPointHit(world.x, world.y);
       if (!draft || draft.kind !== "circle") {
@@ -6726,6 +7476,347 @@
     history[histIndex] = snapshot();
     setSelection(seg ? [{ type: "segment", id: seg.id }] : [{ type: "point", id: aId }]);
     updateStatus();
+    draw();
+  }
+
+  function shapeCornersFromDrag(mode, x0, y0, x1, y1) {
+    const minSize = 8 / view.scale;
+    if (mode === "square") {
+      const s = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+      if (s < minSize) return null;
+      const sx = x1 >= x0 ? 1 : -1;
+      const sy = y1 >= y0 ? 1 : -1;
+      const xA = x0;
+      const yA = y0;
+      const xB = x0 + sx * s;
+      const yB = y0;
+      const xC = x0 + sx * s;
+      const yC = y0 + sy * s;
+      const xD = x0;
+      const yD = y0 + sy * s;
+      return [
+        { x: xA, y: yA },
+        { x: xB, y: yB },
+        { x: xC, y: yC },
+        { x: xD, y: yD },
+      ];
+    }
+    if (mode === "rect") {
+      if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
+      return [
+        { x: x0, y: y0 },
+        { x: x1, y: y0 },
+        { x: x1, y: y1 },
+        { x: x0, y: y1 },
+      ];
+    }
+    if (mode === "equilateral") {
+      const base = x1 - x0;
+      if (Math.abs(base) < minSize) return null;
+      const h = (Math.abs(base) * Math.sqrt(3)) / 2;
+      const midX = (x0 + x1) / 2;
+      const apexY = y1 >= y0 ? y0 + h : y0 - h;
+      // Prefer drag direction: if y1 suggests upward, flip
+      const preferUp = y1 < y0;
+      const ay = preferUp ? y0 - h : y0 + (y1 >= y0 ? h : -h);
+      void apexY;
+      return [
+        { x: x0, y: y0 },
+        { x: x1, y: y0 },
+        { x: midX, y: preferUp ? y0 - h : y0 + h },
+      ];
+    }
+    // iso: base from (x0,y0)-(x1,y0), height from y0 to y1
+    if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
+    return [
+      { x: x0, y: y0 },
+      { x: x1, y: y0 },
+      { x: (x0 + x1) / 2, y: y1 },
+    ];
+  }
+
+  function finishShape() {
+    if (!draft || draft.kind !== "shape") return;
+    const mode = draft.mode || shapeMode;
+    const x0 = draft.x0;
+    const y0 = draft.y0;
+    const x1 = draft.x1;
+    const y1 = draft.y1;
+    const style = lineStyle || "solid";
+    draft = null;
+    const corners = shapeCornersFromDrag(mode, x0, y0, x1, y1);
+    if (!corners) {
+      statusHint.textContent = t("shape_too_small");
+      updateStatus();
+      draw();
+      return;
+    }
+    pushHistory();
+    const ids = corners.map((p) => addPoint(p.x, p.y, true, null, true).id);
+    const newSegs = [];
+    for (let i = 0; i < ids.length; i++) {
+      const a = ids[i];
+      const b = ids[(i + 1) % ids.length];
+      const seg = addSegment(a, b, style, true);
+      if (seg) newSegs.push({ type: "segment", id: seg.id });
+    }
+    history[histIndex] = snapshot();
+    setSelection(newSegs.length ? newSegs : ids.map((id) => ({ type: "point", id })));
+    updateStatus();
+    draw();
+  }
+
+  function pickCircleTouch(world) {
+    let cir = null;
+    let pid = null;
+    let touch = null;
+    const pHit = nearestPointHit(world.x, world.y);
+    if (pHit) {
+      const ons = circlesThroughPoint(pHit);
+      if (ons.length) {
+        cir = ons[0];
+        pid = pHit.id;
+        touch = { x: pHit.x, y: pHit.y };
+      }
+    }
+    if (!cir) {
+      cir = nearestCircleHit(world.x, world.y);
+      if (!cir) return null;
+      touch = projectOntoCircle(cir, world.x, world.y);
+      if (!touch) return null;
+      const near = nearestPointHit(touch.x, touch.y);
+      if (near && pointLiesOnCircle(cir, near, HIT_POINT / view.scale)) {
+        pid = near.id;
+        touch = { x: near.x, y: near.y };
+      }
+    }
+    return { cir, pid, touch };
+  }
+
+  function finishCirclePart() {
+    if (!draft || draft.kind !== "circlePart") return;
+    const mode = draft.mode || circlePartMode;
+    const cir = circles.find((c) => c.id === draft.circleId);
+    const style = lineStyle || "solid";
+    const g = circleGeomBasic(cir);
+    const startTouch = draft.touch ? { x: draft.touch.x, y: draft.touch.y } : null;
+    const startPid = draft.pointId || null;
+    const endTouch = draft.endTouch ? { x: draft.endTouch.x, y: draft.endTouch.y } : null;
+    const endPid = draft.endPointId || null;
+    draft = null;
+    if (!cir || !g || !startTouch) {
+      updateStatus();
+      draw();
+      return;
+    }
+    const minLen = TANGENT_MIN_PX / view.scale;
+    if (mode === "chord") {
+      if (!endTouch || dist(startTouch, endTouch) < minLen) {
+        statusHint.textContent = t("circlePart_too_short");
+        updateStatus();
+        draw();
+        return;
+      }
+      pushHistory();
+      let aId = startPid;
+      let bId = endPid;
+      if (!aId || !pointById(aId)) {
+        aId = addPoint(startTouch.x, startTouch.y, true, null, true).id;
+      }
+      if (!bId || !pointById(bId)) {
+        bId = addPoint(endTouch.x, endTouch.y, true, null, true).id;
+      }
+      const seg = addSegment(aId, bId, style, true);
+      history[histIndex] = snapshot();
+      setSelection(seg ? [{ type: "segment", id: seg.id }] : [{ type: "point", id: aId }]);
+      updateStatus();
+      draw();
+      return;
+    }
+    if (mode === "diameter") {
+      const dx = endTouch ? endTouch.x - g.c.x : startTouch.x - g.c.x;
+      const dy = endTouch ? endTouch.y - g.c.y : startTouch.y - g.c.y;
+      const L = Math.hypot(dx, dy) || 1;
+      if (L < minLen / 4) {
+        statusHint.textContent = t("circlePart_too_short");
+        updateStatus();
+        draw();
+        return;
+      }
+      const ux = dx / L;
+      const uy = dy / L;
+      const a = { x: g.c.x - g.r * ux, y: g.c.y - g.r * uy };
+      const b = { x: g.c.x + g.r * ux, y: g.c.y + g.r * uy };
+      pushHistory();
+      const aId = addPoint(a.x, a.y, true, null, true).id;
+      const bId = addPoint(b.x, b.y, true, null, true).id;
+      const seg = addSegment(aId, bId, style, true);
+      history[histIndex] = snapshot();
+      setSelection(seg ? [{ type: "segment", id: seg.id }] : [{ type: "point", id: aId }]);
+      updateStatus();
+      draw();
+      return;
+    }
+    // radius: center → rim point along drag direction
+    let rim = endTouch || startTouch;
+    if (endTouch) {
+      const dx = endTouch.x - g.c.x;
+      const dy = endTouch.y - g.c.y;
+      const L = Math.hypot(dx, dy) || 1;
+      const useR = Math.min(g.r, Math.max(minLen, L));
+      rim = { x: g.c.x + (dx / L) * useR, y: g.c.y + (dy / L) * useR };
+    } else {
+      rim = projectOntoCircle(cir, startTouch.x, startTouch.y) || startTouch;
+    }
+    if (dist(g.c, rim) < minLen) {
+      statusHint.textContent = t("circlePart_too_short");
+      updateStatus();
+      draw();
+      return;
+    }
+    pushHistory();
+    let cId = cir.centerId;
+    if (!pointById(cId)) cId = addPoint(g.c.x, g.c.y, true, null, true).id;
+    let rId = endPid || startPid;
+    const existing = rId ? pointById(rId) : null;
+    if (!existing || dist(existing, rim) > HIT_POINT / view.scale) {
+      rId = addPoint(rim.x, rim.y, true, null, true).id;
+    }
+    const seg = addSegment(cId, rId, style, true);
+    history[histIndex] = snapshot();
+    setSelection(seg ? [{ type: "segment", id: seg.id }] : [{ type: "point", id: rId }]);
+    updateStatus();
+    draw();
+  }
+
+  /** Collect movable point centers from current selection for align/distribute. */
+  function alignablePointEntries() {
+    const map = new Map();
+    function addPid(id) {
+      const p = pointById(id);
+      if (p && !map.has(id)) map.set(id, p);
+    }
+    for (const s of selection) {
+      if (s.type === "point") addPid(s.id);
+      else if (s.type === "segment") {
+        const seg = segmentById(s.id);
+        if (seg) {
+          addPid(seg.a);
+          addPid(seg.b);
+        }
+      } else if (s.type === "circle") {
+        const cir = circles.find((c) => c.id === s.id);
+        if (cir) {
+          addPid(cir.centerId);
+          addPid(cir.throughId);
+        }
+      } else if (s.type === "ellipse") {
+        const el = ellipses.find((c) => c.id === s.id);
+        if (el) {
+          addPid(el.centerId);
+          addPid(el.rxId);
+          addPid(el.ryId);
+        }
+      } else if (s.type === "sector") {
+        const sec = sectors.find((c) => c.id === s.id);
+        if (sec) {
+          addPid(sec.centerId);
+          addPid(sec.startId);
+          addPid(sec.endId);
+        }
+      } else if (s.type === "fill") {
+        const f = fills.find((x) => x.id === s.id);
+        if (f) for (const pid of fillReferencedPointIds(f)) addPid(pid);
+      } else if (s.type === "label") {
+        const lab = labels.find((l) => l.id === s.id);
+        if (lab) addPid(lab.pointId);
+      }
+    }
+    return [...map.values()];
+  }
+
+  function selectedSegmentsForAlign() {
+    const segs = [];
+    for (const s of selection) {
+      if (s.type === "segment") {
+        const seg = segmentById(s.id);
+        if (seg) segs.push(seg);
+      }
+    }
+    return segs;
+  }
+
+  function runAlignAction(action) {
+    if (action === "equalLen") {
+      const segs = selectedSegmentsForAlign();
+      if (segs.length < 2) {
+        statusHint.textContent = t("tip_align_equalLen");
+        return;
+      }
+      pushHistory();
+      const lens = segs.map((seg) => {
+        const a = pointById(seg.a);
+        const b = pointById(seg.b);
+        return a && b ? dist(a, b) : 0;
+      });
+      const target = lens.reduce((s, v) => s + v, 0) / lens.length;
+      for (const seg of segs) {
+        const a = pointById(seg.a);
+        const b = pointById(seg.b);
+        if (!a || !b) continue;
+        const cur = dist(a, b);
+        if (cur < 1e-9) continue;
+        const mx = (a.x + b.x) / 2;
+        const my = (a.y + b.y) / 2;
+        const ux = (b.x - a.x) / cur;
+        const uy = (b.y - a.y) / cur;
+        const half = target / 2;
+        a.x = mx - ux * half;
+        a.y = my - uy * half;
+        b.x = mx + ux * half;
+        b.y = my + uy * half;
+      }
+      draw();
+      return;
+    }
+    const pts = alignablePointEntries();
+    if (pts.length < 2) return;
+    if ((action === "distH" || action === "distV") && pts.length < 3) {
+      statusHint.textContent =
+        action === "distH" ? t("tip_align_distH") : t("tip_align_distV");
+      return;
+    }
+    pushHistory();
+    if (action === "left") {
+      const x = Math.min(...pts.map((p) => p.x));
+      for (const p of pts) p.x = x;
+    } else if (action === "right") {
+      const x = Math.max(...pts.map((p) => p.x));
+      for (const p of pts) p.x = x;
+    } else if (action === "center") {
+      const x = (Math.min(...pts.map((p) => p.x)) + Math.max(...pts.map((p) => p.x))) / 2;
+      for (const p of pts) p.x = x;
+    } else if (action === "top") {
+      const y = Math.min(...pts.map((p) => p.y));
+      for (const p of pts) p.y = y;
+    } else if (action === "bottom") {
+      const y = Math.max(...pts.map((p) => p.y));
+      for (const p of pts) p.y = y;
+    } else if (action === "middle") {
+      const y = (Math.min(...pts.map((p) => p.y)) + Math.max(...pts.map((p) => p.y))) / 2;
+      for (const p of pts) p.y = y;
+    } else if (action === "distH" || action === "distV") {
+      const sorted = [...pts].sort((a, b) =>
+        action === "distH" ? a.x - b.x || a.y - b.y : a.y - b.y || a.x - b.x
+      );
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      for (let i = 1; i < sorted.length - 1; i++) {
+        const tt = i / (sorted.length - 1);
+        if (action === "distH") sorted[i].x = first.x + (last.x - first.x) * tt;
+        else sorted[i].y = first.y + (last.y - first.y) * tt;
+      }
+    }
     draw();
   }
 
@@ -6998,6 +8089,54 @@
       return;
     }
 
+    if (draft && draft.kind === "circlePart" && draft.touch) {
+      const cir = circles.find((c) => c.id === draft.circleId);
+      const g = circleGeomBasic(cir);
+      const mode = draft.mode || circlePartMode;
+      if (mode === "chord" && cir) {
+        const touch = projectOntoCircle(cir, world.x, world.y);
+        if (touch) {
+          draft.endTouch = touch;
+          const near = nearestPointHit(touch.x, touch.y);
+          if (near && pointLiesOnCircle(cir, near, HIT_POINT / view.scale)) {
+            draft.endPointId = near.id;
+            draft.endTouch = { x: near.x, y: near.y };
+          } else draft.endPointId = null;
+          draft.cursor = { x: draft.endTouch.x, y: draft.endTouch.y };
+        }
+      } else if (mode === "diameter" && g) {
+        const dx = world.x - g.c.x;
+        const dy = world.y - g.c.y;
+        const L = Math.hypot(dx, dy) || 1;
+        draft.endTouch = { x: g.c.x + (dx / L) * g.r, y: g.c.y + (dy / L) * g.r };
+        draft.cursor = { ...draft.endTouch };
+        draft.len = g.r * 2;
+      } else if (mode === "radius" && g) {
+        const dx = world.x - g.c.x;
+        const dy = world.y - g.c.y;
+        const L = Math.hypot(dx, dy) || 1;
+        const useR = Math.min(g.r, L);
+        draft.endTouch = { x: g.c.x + (dx / L) * useR, y: g.c.y + (dy / L) * useR };
+        draft.len = useR;
+        draft.cursor = { ...draft.endTouch };
+        const near = nearestPointHit(draft.endTouch.x, draft.endTouch.y);
+        if (near && pointLiesOnCircle(cir, near, HIT_POINT / view.scale)) {
+          draft.endPointId = near.id;
+        } else draft.endPointId = null;
+      }
+      draw();
+      return;
+    }
+
+    if (draft && draft.kind === "shape") {
+      const sn = snapWorld(world.x, world.y);
+      const cur = sn ? { x: sn.x, y: sn.y } : applyGrid(world.x, world.y);
+      draft.x1 = cur.x;
+      draft.y1 = cur.y;
+      draw();
+      return;
+    }
+
     if (draft && draft.kind === "exportCrop") {
       draft.x1 = world.x;
       draft.y1 = world.y;
@@ -7116,6 +8255,22 @@
         if (draft.button != null && e.button !== draft.button) return;
       }
       finishTangent();
+      return;
+    }
+    if (draft && draft.kind === "circlePart") {
+      if (e) {
+        if (draft.pointerId != null && e.pointerId !== draft.pointerId) return;
+        if (draft.button != null && e.button !== draft.button) return;
+      }
+      finishCirclePart();
+      return;
+    }
+    if (draft && draft.kind === "shape") {
+      if (e) {
+        if (draft.pointerId != null && e.pointerId !== draft.pointerId) return;
+        if (draft.button != null && e.button !== draft.button) return;
+      }
+      finishShape();
       return;
     }
     if (draft && draft.kind === "boxSelect") {
@@ -7320,16 +8475,7 @@
     c.fillRect(0, 0, off.width, off.height);
 
     for (const f of fills) {
-      const pts = fillWorldPoints(f);
-      if (!pts) continue;
-      const s0 = toS(pts[0].x, pts[0].y);
-      c.beginPath();
-      c.moveTo(s0.x, s0.y);
-      for (let i = 1; i < pts.length; i++) {
-        const s = toS(pts[i].x, pts[i].y);
-        c.lineTo(s.x, s.y);
-      }
-      c.closePath();
+      if (!buildFillPath(c, f, toS)) continue;
       c.fillStyle = hexToRgba(f.color, f.opacity);
       c.fill();
     }
@@ -7352,161 +8498,165 @@
       c.setLineDash([]);
     }
 
-    for (const mt of midTicks) {
-      const seg = segmentById(mt.segmentId);
-      if (!seg) continue;
-      const a = pointById(seg.a);
-      const bp = pointById(seg.b);
-      if (!a || !bp) continue;
-      let mx, my;
-      if (mt.pointId && pointById(mt.pointId)) {
-        mx = pointById(mt.pointId).x;
-        my = pointById(mt.pointId).y;
-      } else {
-        mx = (a.x + bp.x) / 2;
-        my = (a.y + bp.y) / 2;
-      }
-      const sa = toS(a.x, a.y);
-      const sb = toS(bp.x, bp.y);
-      const sm = toS(mx, my);
-      let dx = sb.x - sa.x,
-        dy = sb.y - sa.y;
-      const len = Math.hypot(dx, dy) || 1;
-      dx /= len;
-      dy /= len;
-      const nx = -dy,
-        ny = dx;
-      const t = MID_TICK * scale * 0.75;
-      c.beginPath();
-      c.moveTo(sm.x - nx * t, sm.y - ny * t);
-      c.lineTo(sm.x + nx * t, sm.y + ny * t);
-      c.strokeStyle = "#111";
-      c.lineWidth = LINE_WIDTH * scale * 0.75;
-      c.stroke();
-    }
-
-    {
-      const unit = scale * 0.75;
-      const markLw = LINE_WIDTH * 1.55 * unit;
-      for (const pm of parallelMarks) {
-        const seg = segmentById(pm.segmentId);
+    if (layers.helpersShow) {
+      for (const mt of midTicks) {
+        const seg = segmentById(mt.segmentId);
         if (!seg) continue;
-        const basis = segmentDrawBasis(
-          seg,
-          markTAlong("parallel", pm.segmentId, pm.group),
-          toS
-        );
-        if (!basis) continue;
-        const chevrons = parallelMarkDrawChevrons(
-          basis,
-          pm.group,
-          pm.side === -1 ? -1 : 1,
-          11 * unit,
-          9 * unit
-        );
-        c.strokeStyle = "#111";
-        c.lineWidth = markLw;
-        c.lineCap = "round";
-        c.lineJoin = "round";
-        for (const pts of chevrons) {
-          c.beginPath();
-          c.moveTo(pts[0].x, pts[0].y);
-          c.lineTo(pts[1].x, pts[1].y);
-          c.lineTo(pts[2].x, pts[2].y);
-          c.stroke();
+        const a = pointById(seg.a);
+        const bp = pointById(seg.b);
+        if (!a || !bp) continue;
+        let mx, my;
+        if (mt.pointId && pointById(mt.pointId)) {
+          mx = pointById(mt.pointId).x;
+          my = pointById(mt.pointId).y;
+        } else {
+          mx = (a.x + bp.x) / 2;
+          my = (a.y + bp.y) / 2;
         }
-      }
-      for (const em of equalMarks) {
-        const seg = segmentById(em.segmentId);
-        if (!seg) continue;
-        const basis = segmentDrawBasis(
-          seg,
-          markTAlong("equal", em.segmentId, em.group),
-          toS
-        );
-        if (!basis) continue;
-        const strokes = equalMarkDrawStrokes(
-          basis,
-          em.group,
-          em.side === -1 ? -1 : 1,
-          MID_TICK * 2.35 * unit,
-          7 * unit
-        );
-        c.strokeStyle = "#111";
-        c.lineWidth = markLw;
-        c.lineCap = "round";
-        for (const s of strokes) {
-          c.beginPath();
-          c.moveTo(s.x1, s.y1);
-          c.lineTo(s.x2, s.y2);
-          c.stroke();
-        }
-      }
-    }
-
-    for (const ra of rightAngles) {
-      const v = pointById(ra.vertex);
-      const a1 = pointById(ra.arm1);
-      const a2 = pointById(ra.arm2);
-      if (!v || !a1 || !a2) continue;
-      const sv = toS(v.x, v.y);
-      const s1 = toS(a1.x, a1.y);
-      const s2 = toS(a2.x, a2.y);
-      let ux = s1.x - sv.x,
-        uy = s1.y - sv.y;
-      let vx = s2.x - sv.x,
-        vy = s2.y - sv.y;
-      const lu = Math.hypot(ux, uy) || 1;
-      const lv = Math.hypot(vx, vy) || 1;
-      ux /= lu;
-      uy /= lu;
-      vx /= lv;
-      vy /= lv;
-      const size = (ra.size || DEFAULT_RA_SIZE) * scale * 0.75;
-      c.beginPath();
-      c.moveTo(sv.x + ux * size, sv.y + uy * size);
-      c.lineTo(sv.x + ux * size + vx * size, sv.y + uy * size + vy * size);
-      c.lineTo(sv.x + vx * size, sv.y + vy * size);
-      c.strokeStyle = "#111";
-      c.lineWidth = LINE_WIDTH * scale * 0.7;
-      c.stroke();
-    }
-
-    for (const arc of angleArcs) {
-      const v = pointById(arc.vertex);
-      const a1 = pointById(arc.arm1);
-      const a2 = pointById(arc.arm2);
-      if (!v || !a1 || !a2) continue;
-      const sv = toS(v.x, v.y);
-      const s1 = toS(a1.x, a1.y);
-      const s2 = toS(a2.x, a2.y);
-      const ang1 = Math.atan2(s1.y - sv.y, s1.x - sv.x);
-      const ang2 = Math.atan2(s2.y - sv.y, s2.x - sv.x);
-      const delta = angleSweepDelta(ang1, ang2, !!arc.reflex);
-      const baseR = (arc.size || DEFAULT_RA_SIZE) * ANGLE_ARC_R * (arc.reflex ? 1.15 : 1) * scale * 0.75;
-      const count = (arc.group || 0) === 0 ? 1 : 2;
-      c.strokeStyle = "#111";
-      c.lineWidth = LINE_WIDTH * ANGLE_ARC_LW_EXPORT * scale;
-      c.lineCap = "round";
-      for (let i = 0; i < count; i++) {
+        const sa = toS(a.x, a.y);
+        const sb = toS(bp.x, bp.y);
+        const sm = toS(mx, my);
+        let dx = sb.x - sa.x,
+          dy = sb.y - sa.y;
+        const len = Math.hypot(dx, dy) || 1;
+        dx /= len;
+        dy /= len;
+        const nx = -dy,
+          ny = dx;
+        const t = MID_TICK * scale * 0.75;
         c.beginPath();
-        c.arc(sv.x, sv.y, baseR + i * 6 * scale * 0.75, ang1, ang1 + delta, delta < 0);
+        c.moveTo(sm.x - nx * t, sm.y - ny * t);
+        c.lineTo(sm.x + nx * t, sm.y + ny * t);
+        c.strokeStyle = "#111";
+        c.lineWidth = LINE_WIDTH * scale * 0.75;
         c.stroke();
       }
-      const text = (arc.text || "").trim();
-      if (text) {
-        const mid = ang1 + delta / 2;
-        const labelR = baseR + (count - 1) * 6 * scale * 0.75 + 12 * scale * 0.75;
-        const lx = sv.x + Math.cos(mid) * labelR;
-        const ly = sv.y + Math.sin(mid) * labelR;
-        const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
-        paintLabelText(c, text, lx, ly, fontPx, "#111", true);
+
+      {
+        const unit = scale * 0.75;
+        const markLw = LINE_WIDTH * 1.55 * unit;
+        for (const pm of parallelMarks) {
+          const seg = segmentById(pm.segmentId);
+          if (!seg) continue;
+          const basis = segmentDrawBasis(
+            seg,
+            markTAlong("parallel", pm.segmentId, pm.group),
+            toS
+          );
+          if (!basis) continue;
+          const chevrons = parallelMarkDrawChevrons(
+            basis,
+            pm.group,
+            pm.side === -1 ? -1 : 1,
+            11 * unit,
+            9 * unit
+          );
+          c.strokeStyle = "#111";
+          c.lineWidth = markLw;
+          c.lineCap = "round";
+          c.lineJoin = "round";
+          for (const pts of chevrons) {
+            c.beginPath();
+            c.moveTo(pts[0].x, pts[0].y);
+            c.lineTo(pts[1].x, pts[1].y);
+            c.lineTo(pts[2].x, pts[2].y);
+            c.stroke();
+          }
+        }
+        for (const em of equalMarks) {
+          const seg = segmentById(em.segmentId);
+          if (!seg) continue;
+          const basis = segmentDrawBasis(
+            seg,
+            markTAlong("equal", em.segmentId, em.group),
+            toS
+          );
+          if (!basis) continue;
+          const strokes = equalMarkDrawStrokes(
+            basis,
+            em.group,
+            em.side === -1 ? -1 : 1,
+            MID_TICK * 2.35 * unit,
+            7 * unit
+          );
+          c.strokeStyle = "#111";
+          c.lineWidth = markLw;
+          c.lineCap = "round";
+          for (const s of strokes) {
+            c.beginPath();
+            c.moveTo(s.x1, s.y1);
+            c.lineTo(s.x2, s.y2);
+            c.stroke();
+          }
+        }
+      }
+
+      for (const ra of rightAngles) {
+        const v = pointById(ra.vertex);
+        const a1 = pointById(ra.arm1);
+        const a2 = pointById(ra.arm2);
+        if (!v || !a1 || !a2) continue;
+        const sv = toS(v.x, v.y);
+        const s1 = toS(a1.x, a1.y);
+        const s2 = toS(a2.x, a2.y);
+        let ux = s1.x - sv.x,
+          uy = s1.y - sv.y;
+        let vx = s2.x - sv.x,
+          vy = s2.y - sv.y;
+        const lu = Math.hypot(ux, uy) || 1;
+        const lv = Math.hypot(vx, vy) || 1;
+        ux /= lu;
+        uy /= lu;
+        vx /= lv;
+        vy /= lv;
+        const size = (ra.size || DEFAULT_RA_SIZE) * scale * 0.75;
+        c.beginPath();
+        c.moveTo(sv.x + ux * size, sv.y + uy * size);
+        c.lineTo(sv.x + ux * size + vx * size, sv.y + uy * size + vy * size);
+        c.lineTo(sv.x + vx * size, sv.y + vy * size);
+        c.strokeStyle = "#111";
+        c.lineWidth = LINE_WIDTH * scale * 0.7;
+        c.stroke();
+      }
+
+      for (const arc of angleArcs) {
+        const v = pointById(arc.vertex);
+        const a1 = pointById(arc.arm1);
+        const a2 = pointById(arc.arm2);
+        if (!v || !a1 || !a2) continue;
+        const sv = toS(v.x, v.y);
+        const s1 = toS(a1.x, a1.y);
+        const s2 = toS(a2.x, a2.y);
+        const ang1 = Math.atan2(s1.y - sv.y, s1.x - sv.x);
+        const ang2 = Math.atan2(s2.y - sv.y, s2.x - sv.x);
+        const delta = angleSweepDelta(ang1, ang2, !!arc.reflex);
+        const baseR = (arc.size || DEFAULT_RA_SIZE) * ANGLE_ARC_R * (arc.reflex ? 1.15 : 1) * scale * 0.75;
+        const count = (arc.group || 0) === 0 ? 1 : 2;
+        c.strokeStyle = "#111";
+        c.lineWidth = LINE_WIDTH * ANGLE_ARC_LW_EXPORT * scale;
+        c.lineCap = "round";
+        for (let i = 0; i < count; i++) {
+          c.beginPath();
+          c.arc(sv.x, sv.y, baseR + i * 6 * scale * 0.75, ang1, ang1 + delta, delta < 0);
+          c.stroke();
+        }
+        const text = (arc.text || "").trim();
+        if (text) {
+          const mid = ang1 + delta / 2;
+          const labelR = baseR + (count - 1) * 6 * scale * 0.75 + 12 * scale * 0.75;
+          const lx = sv.x + Math.cos(mid) * labelR;
+          const ly = sv.y + Math.sin(mid) * labelR;
+          const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
+          paintLabelText(c, text, lx, ly, fontPx, "#111", true);
+        }
       }
     }
 
-    for (const cp of coordPlots) {
-      const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
-      paintCoordPlot(c, cp, toS, LINE_WIDTH * scale * 0.75, fontPx, "#111", false);
+    if (layers.coordsShow) {
+      for (const cp of coordPlots) {
+        const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
+        paintCoordPlot(c, cp, toS, LINE_WIDTH * scale * 0.75, fontPx, "#111", false);
+      }
     }
 
     for (const cir of circles) {
@@ -7615,13 +8765,15 @@
       }
     }
 
-    for (const ll of lengthLabels) {
-      const seg = segmentById(ll.segmentId);
-      if (!seg) continue;
-      const place = lengthLabelPlacement(seg, ll.side, toS, 14 * scale * 0.75);
-      if (!place) continue;
-      const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
-      paintLabelText(c, ll.text, place.x, place.y, fontPx, "#111", true, place.angle);
+    if (layers.helpersShow) {
+      for (const ll of lengthLabels) {
+        const seg = segmentById(ll.segmentId);
+        if (!seg) continue;
+        const place = lengthLabelPlacement(seg, ll.side, toS, 14 * scale * 0.75);
+        if (!place) continue;
+        const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
+        paintLabelText(c, ll.text, place.x, place.y, fontPx, "#111", true, place.angle);
+      }
     }
 
     for (const lab of labels) {
@@ -7719,14 +8871,8 @@
 
     let body = "";
     for (const f of fills) {
-      const pts = fillWorldPoints(f);
-      if (!pts) continue;
-      const d = pts
-        .map((p, i) => {
-          const s = toS(p.x, p.y);
-          return (i === 0 ? "M" : "L") + s.x.toFixed(2) + " " + s.y.toFixed(2);
-        })
-        .join(" ") + " Z";
+      const d = fillToSvgPath(f, toS);
+      if (!d) continue;
       body += `<path d="${d}" fill="${hexToRgba(f.color, f.opacity)}" stroke="none" />\n`;
     }
     for (const seg of segments) {
@@ -7740,7 +8886,7 @@
       body += `<line x1="${sa.x.toFixed(2)}" y1="${sa.y.toFixed(2)}" x2="${sb.x.toFixed(2)}" y2="${sb.y.toFixed(2)}" stroke="#111" stroke-width="${lw.toFixed(2)}" stroke-linecap="${cap}"${dashAttr(seg.style)} />\n`;
     }
 
-    for (const mt of midTicks) {
+    if (layers.helpersShow) for (const mt of midTicks) {
       const seg = segmentById(mt.segmentId);
       if (!seg) continue;
       const a = pointById(seg.a);
@@ -7768,7 +8914,7 @@
       body += `<line x1="${(sm.x - nx * t).toFixed(2)}" y1="${(sm.y - ny * t).toFixed(2)}" x2="${(sm.x + nx * t).toFixed(2)}" y2="${(sm.y + ny * t).toFixed(2)}" stroke="#111" stroke-width="${(LINE_WIDTH * scale * 0.75).toFixed(2)}" stroke-linecap="round" />\n`;
     }
 
-    {
+    if (layers.helpersShow) {
       const unit = scale * 0.75;
       const lw = (LINE_WIDTH * 1.55 * unit).toFixed(2);
       for (const pm of parallelMarks) {
@@ -7813,7 +8959,7 @@
       }
     }
 
-    for (const ra of rightAngles) {
+    if (layers.helpersShow) for (const ra of rightAngles) {
       const v = pointById(ra.vertex);
       const a1 = pointById(ra.arm1);
       const a2 = pointById(ra.arm2);
@@ -7841,7 +8987,7 @@
       body += `<polyline points="${p1x.toFixed(2)},${p1y.toFixed(2)} ${p2x.toFixed(2)},${p2y.toFixed(2)} ${p3x.toFixed(2)},${p3y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${(LINE_WIDTH * scale * 0.7).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" />\n`;
     }
 
-    for (const arc of angleArcs) {
+    if (layers.helpersShow) for (const arc of angleArcs) {
       const v = pointById(arc.vertex);
       const a1 = pointById(arc.arm1);
       const a2 = pointById(arc.arm2);
@@ -7878,11 +9024,13 @@
       }
     }
 
-        for (const cp of coordPlots) {
-      body += svgCoordPlot(cp, toS, scale);
+    if (layers.coordsShow) {
+      for (const cp of coordPlots) {
+        body += svgCoordPlot(cp, toS, scale);
+      }
     }
 
-for (const cir of circles) {
+    for (const cir of circles) {
       const cen = pointById(cir.centerId);
       const thr = pointById(cir.throughId);
       if (!cen || !thr) continue;
@@ -7958,7 +9106,7 @@ for (const cir of circles) {
       body += `<path d="M${x0.toFixed(2)},${y0.toFixed(2)} A${sr.toFixed(2)},${sr.toFixed(2)} 0 ${large} ${sweep} ${x1.toFixed(2)},${y1.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="${cap}"${dashAttr} />\n`;
     }
 
-    for (const ll of lengthLabels) {
+    if (layers.helpersShow) for (const ll of lengthLabels) {
       const seg = segmentById(ll.segmentId);
       if (!seg) continue;
       const place = lengthLabelPlacement(seg, ll.side, toS, 14 * scale * 0.75);
@@ -8012,7 +9160,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.3.3",
+      version: "13.4.0",
       app: "simple-diagram",
       points,
       segments,
@@ -8030,6 +9178,10 @@ ${body}</svg>`;
       coordPlots,
       exportCrop,
       sectorMode,
+      fillMode,
+      shapeMode,
+      circlePartMode,
+      layers: { ...layers },
       nextLetter,
       labelFontSize,
       rightAngleSize,
@@ -8266,14 +9418,37 @@ ${body}</svg>`;
     circles = data.circles || [];
     ellipses = data.ellipses || [];
     sectors = data.sectors || [];
-    fills = (data.fills || []).map((f) => ({
-      id: f.id,
-      pointIds: Array.isArray(f.pointIds) ? [...f.pointIds] : [],
-      color: f.color || "#666666",
-      opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
-    }));
+    fills = (data.fills || []).map((f) => normalizeFillRecord(f)).filter(Boolean);
     exportCrop = data.exportCrop || null;
     if (data.sectorMode === "sector" || data.sectorMode === "arc") sectorMode = data.sectorMode;
+    if (data.fillMode === "sector" || data.fillMode === "segment" || data.fillMode === "polygon") {
+      fillMode = data.fillMode;
+    }
+    if (
+      data.shapeMode === "square" ||
+      data.shapeMode === "equilateral" ||
+      data.shapeMode === "rect" ||
+      data.shapeMode === "iso"
+    ) {
+      shapeMode = data.shapeMode;
+    }
+    if (
+      data.circlePartMode === "chord" ||
+      data.circlePartMode === "diameter" ||
+      data.circlePartMode === "radius"
+    ) {
+      circlePartMode = data.circlePartMode;
+    }
+    if (data.layers && typeof data.layers === "object") {
+      layers = {
+        gridShow: data.layers.gridShow != null ? !!data.layers.gridShow : true,
+        gridLock: !!data.layers.gridLock,
+        coordsShow: data.layers.coordsShow != null ? !!data.layers.coordsShow : true,
+        coordsLock: !!data.layers.coordsLock,
+        helpersShow: data.layers.helpersShow != null ? !!data.layers.helpersShow : true,
+        helpersLock: !!data.layers.helpersLock,
+      };
+    }
     nextLetter = data.nextLetter || "A";
     labelFontSize = clampLabelSize(data.labelFontSize || DEFAULT_LABEL_SIZE);
     rightAngleSize = data.rightAngleSize || DEFAULT_RA_SIZE;
@@ -8287,6 +9462,7 @@ ${body}</svg>`;
     }
     if (data.hideExportPoints != null) hideExportPoints = !!data.hideExportPoints;
     syncViewOptionUI();
+    syncLayersUI();
     if (labelSizeSelect) labelSizeSelect.value = String(labelFontSize);
     if (rightAngleSizeSelect) rightAngleSizeSelect.value = String(rightAngleSize);
     applyLoadedView(data.view);
@@ -8301,6 +9477,9 @@ ${body}</svg>`;
     history[histIndex] = snapshot();
     syncSectorModeUI();
     syncFillPresetUI();
+    syncFillModeUI();
+    syncShapeModeUI();
+    syncCirclePartModeUI();
     syncExportCropUI();
     syncMarkGroupUI();
     updateStatus();
@@ -8508,6 +9687,84 @@ ${body}</svg>`;
       ],
       segs: [],
       circles: [[0, 1, "solid"]],
+    },
+    genTri: {
+      nextLetter: "D",
+      pts: [
+        [-5, 3, "A", -14, 10],
+        [4, 2, "B", 14, 10],
+        [-1, -3, "C", 0, -16],
+      ],
+      segs: [
+        [0, 1],
+        [1, 2],
+        [2, 0],
+      ],
+    },
+    circleGeom: {
+      nextLetter: "D",
+      pts: [
+        [0, 0, "O", 12, -12],
+        [4, 0, "A", 14, 0],
+        [-4, 0, "B", -14, 0],
+        [2, 3.464, "C", 12, 12],
+        [-2, 3.464, "D", -12, 12],
+      ],
+      segs: [
+        [0, 1], // radius OA
+        [1, 2], // diameter AB
+        [3, 4], // chord CD
+      ],
+      circles: [[0, 1, "solid"]],
+    },
+    rectPrism: {
+      nextLetter: "G",
+      pts: [
+        [-4, 2, "A", -14, 10],
+        [2, 3, "B", 14, 10],
+        [4, 0, "C", 16, 0],
+        [-2, -1, "D", -16, -6],
+        [-4, -2, "E", -14, -12],
+        [2, -1, "F", 14, -12],
+      ],
+      segs: [
+        [0, 1],
+        [1, 2],
+        [2, 3, "dashed"],
+        [3, 0],
+        [0, 4],
+        [1, 5],
+        [4, 5],
+        [2, 5],
+        [3, 4, "dashed"],
+      ],
+    },
+    frustum: {
+      nextLetter: "I",
+      pts: [
+        [-5, 3, "A", -16, 10],
+        [5, 3, "B", 16, 10],
+        [3, -1, "C", 14, -6],
+        [-3, -1, "D", -14, -6],
+        [-3, -3, "E", -14, -14],
+        [3, -3, "F", 14, -14],
+        [2, -5, "G", 12, -18],
+        [-2, -5, "H", -12, -18],
+      ],
+      segs: [
+        [0, 1],
+        [1, 2],
+        [2, 3, "dashed"],
+        [3, 0],
+        [4, 5],
+        [5, 6],
+        [6, 7, "dashed"],
+        [7, 4],
+        [0, 4],
+        [1, 5],
+        [2, 6],
+        [3, 7, "dashed"],
+      ],
     },
     tetra: {
       nextLetter: "E",
@@ -8728,6 +9985,10 @@ ${body}</svg>`;
     if (!templateMenu || !btnTemplateMenu) return;
     if (typeof closeExportMenu === "function") closeExportMenu();
     closeRecentMenu();
+    const layersMenuEl = document.getElementById("layersMenu");
+    const btnLayers = document.getElementById("btnLayersMenu");
+    if (layersMenuEl) layersMenuEl.setAttribute("hidden", "");
+    if (btnLayers) btnLayers.setAttribute("aria-expanded", "false");
     refreshCustomTemplateMenu();
     templateMenu.removeAttribute("hidden");
     btnTemplateMenu.setAttribute("aria-expanded", "true");
@@ -9100,8 +10361,8 @@ ${body}</svg>`;
       } else if (s.type === "fill") {
         fillIds.add(s.id);
         const f = fills.find((c) => c.id === s.id);
-        if (f && Array.isArray(f.pointIds)) {
-          for (const pid of f.pointIds) pointIds.add(pid);
+        if (f) {
+          for (const pid of fillReferencedPointIds(f)) pointIds.add(pid);
         }
       } else if (s.type === "label") {
         const lab = labels.find((l) => l.id === s.id);
@@ -9182,14 +10443,47 @@ ${body}</svg>`;
     for (const id of fillIds) {
       const f = fills.find((c) => c.id === id);
       if (!f) continue;
-      const mapped = (f.pointIds || []).map((pid) => idMap[pid]).filter(Boolean);
-      if (mapped.length < 3) continue;
-      const nf = {
-        id: uid(),
-        pointIds: mapped,
-        color: f.color || "#666666",
-        opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
-      };
+      const kind = fillKindOf(f);
+      let nf = null;
+      if (kind === "sector") {
+        const cId = idMap[f.centerId];
+        const sId = idMap[f.startId];
+        const eId = idMap[f.endId];
+        if (!cId || !sId || !eId) continue;
+        nf = {
+          id: uid(),
+          kind: "sector",
+          circleId: f.circleId || null,
+          centerId: cId,
+          startId: sId,
+          endId: eId,
+          color: f.color || "#666666",
+          opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+        };
+      } else if (kind === "segment") {
+        const sId = idMap[f.startId];
+        const eId = idMap[f.endId];
+        if (!sId || !eId || !f.circleId) continue;
+        nf = {
+          id: uid(),
+          kind: "segment",
+          circleId: f.circleId,
+          startId: sId,
+          endId: eId,
+          color: f.color || "#666666",
+          opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+        };
+      } else {
+        const mapped = (f.pointIds || []).map((pid) => idMap[pid]).filter(Boolean);
+        if (mapped.length < 3) continue;
+        nf = {
+          id: uid(),
+          kind: "polygon",
+          pointIds: mapped,
+          color: f.color || "#666666",
+          opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+        };
+      }
       fills.push(nf);
       newSel.push({ type: "fill", id: nf.id });
     }
@@ -9293,13 +10587,25 @@ ${body}</svg>`;
     else if (id === "tool_circle") setTool("circle");
     else if (id === "tool_ellipse") setTool("ellipse");
     else if (id === "tool_sector") setTool("sector");
+    else if (id === "tool_fill") setTool("fill");
+    else if (id === "tool_shape") setTool("shape");
+    else if (id === "tool_circlePart") setTool("circlePart");
     else if (id === "tool_midTick") setTool("midTick");
     else if (id === "tool_ratio") setTool("ratio");
     else if (id === "tool_hand") setTool("hand");
     else if (id === "flip_mark") flipSelectedMarks();
     else if (id === "cycle_mark") {
       if (tool === "sector") setSectorMode(sectorMode === "arc" ? "sector" : "arc");
-      else if (tool === "parallel") setActiveMarkGroup(activeParallelGroup ? 0 : 1);
+      else if (tool === "fill") {
+        const order = ["polygon", "sector", "segment"];
+        setFillMode(order[(order.indexOf(fillMode) + 1) % order.length]);
+      } else if (tool === "shape") {
+        const order = ["square", "equilateral", "rect", "iso"];
+        setShapeMode(order[(order.indexOf(shapeMode) + 1) % order.length]);
+      } else if (tool === "circlePart") {
+        const order = ["chord", "diameter", "radius"];
+        setCirclePartMode(order[(order.indexOf(circlePartMode) + 1) % order.length]);
+      } else if (tool === "parallel") setActiveMarkGroup(activeParallelGroup ? 0 : 1);
       else if (tool === "equal") setActiveMarkGroup(activeEqualGroup ? 0 : 1);
       else if (tool === "angleArc") setActiveMarkGroup(activeArcGroup ? 0 : 1);
       else setActiveMarkGroup(activeParallelGroup ? 0 : 1);
@@ -9958,11 +11264,67 @@ ${body}</svg>`;
   syncMarkGroupUI();
   syncSectorModeUI();
   syncFillPresetUI();
+  syncFillModeUI();
+  syncShapeModeUI();
+  syncCirclePartModeUI();
+  syncLayersUI();
   document.querySelectorAll("[data-fill-key]").forEach((btn) => {
     btn.addEventListener("click", () => {
       setFillPreset(btn.dataset.fillKey, true);
     });
   });
+  document.querySelectorAll("[data-fill-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => setFillMode(btn.dataset.fillMode));
+  });
+  document.querySelectorAll("[data-shape-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => setShapeMode(btn.dataset.shapeMode));
+  });
+  document.querySelectorAll("[data-circle-part]").forEach((btn) => {
+    btn.addEventListener("click", () => setCirclePartMode(btn.dataset.circlePart));
+  });
+  document.querySelectorAll("[data-align]").forEach((btn) => {
+    btn.addEventListener("click", () => runAlignAction(btn.dataset.align));
+  });
+  document.querySelectorAll("[data-layer-show]").forEach((el) => {
+    el.addEventListener("change", () => {
+      const k = el.dataset.layerShow;
+      if (k === "grid") applyLayersPatch({ gridShow: !!el.checked });
+      else if (k === "coords") applyLayersPatch({ coordsShow: !!el.checked });
+      else if (k === "helpers") applyLayersPatch({ helpersShow: !!el.checked });
+    });
+  });
+  document.querySelectorAll("[data-layer-lock]").forEach((el) => {
+    el.addEventListener("change", () => {
+      const k = el.dataset.layerLock;
+      if (k === "grid") applyLayersPatch({ gridLock: !!el.checked });
+      else if (k === "coords") applyLayersPatch({ coordsLock: !!el.checked });
+      else if (k === "helpers") applyLayersPatch({ helpersLock: !!el.checked });
+    });
+  });
+  const btnLayersMenu = document.getElementById("btnLayersMenu");
+  const layersMenu = document.getElementById("layersMenu");
+  function closeLayersMenu() {
+    if (layersMenu) layersMenu.setAttribute("hidden", "");
+    if (btnLayersMenu) btnLayersMenu.setAttribute("aria-expanded", "false");
+  }
+  function openLayersMenu() {
+    if (!layersMenu || !btnLayersMenu) return;
+    if (typeof closeExportMenu === "function") closeExportMenu();
+    if (typeof closeTemplateMenu === "function") closeTemplateMenu();
+    if (typeof closeRecentMenu === "function") closeRecentMenu();
+    syncLayersUI();
+    layersMenu.removeAttribute("hidden");
+    btnLayersMenu.setAttribute("aria-expanded", "true");
+  }
+  if (btnLayersMenu && layersMenu) {
+    btnLayersMenu.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (layersMenu.hasAttribute("hidden")) openLayersMenu();
+      else closeLayersMenu();
+    });
+    layersMenu.addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", () => closeLayersMenu());
+  }
   syncExportCropUI();
   renderRecentMenu();
   applyDarkCanvasClass();
