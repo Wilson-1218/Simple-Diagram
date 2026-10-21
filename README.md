@@ -1,13 +1,37 @@
 # Simple Diagram
 
-手繪風格立體幾何圖編輯器（黑線、白底、數學斜體標籤）。瀏覽器靜態站，無需建置。
+手繪風格立體／平面數學圖編輯器 · Hand-drawn math diagram editor（黑線、白底、數學斜體標籤）。靜態站，無需建置。
 
-## 如何本機開啟
+---
+
+## 目標 / Objective
+
+| 中文 | English |
+|---|---|
+| **主要目的**：用手繪方式畫簡單的數學考試圖 | **Main purpose**: draw simple math exam diagrams by hand |
+| 主要面向 **HKDSE**（香港中學文憑試） | Mainly for **HKDSE** (Hong Kong Diploma of Secondary Education) |
+| 更新不定時 | Updates are irregular |
+
+產品名稱：**Simple Diagram**
+
+---
+
+## 線上使用 / Use online
+
+開啟 GitHub Pages（無需下載）：
+
+**https://wilson-1218.github.io/Simple-Diagram/**
+
+建議 **Chrome／Edge**。
+
+---
+
+## 本機開啟 / Open locally
 
 **方式一：直接開檔**
 
-- 用瀏覽器開啟根目錄的 `index.html`
-- 或開啟單檔版 `simple-diagram-standalone.html`（無需其他檔案）
+- 瀏覽器開啟 `index.html`
+- 或單檔版 `simple-diagram-standalone.html`（無需其他檔案）
 
 **方式二：本機伺服器（建議）**
 
@@ -17,13 +41,19 @@ npx --yes serve -l 5173 .
 
 然後開啟 http://localhost:5173/
 
-建議使用 **Chrome／Edge**（可選資料夾另存）。以 `file://` 開啟時，部分 API 可能改為下載行為。
+以 `file://` 開啟時，部分 API 可能改為下載行為。
 
-## 介面語言
+---
+
+## 介面語言 / UI language
 
 頂欄可切換 **中｜EN**（按鈕與工具提示同步；畫布數學標籤不變）。
 
-## 目前版本（v13.1）
+Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math labels stay the same).
+
+---
+
+## 目前版本 / Current version（v13.1）
 
 **左側兩欄網格**（繪製／構造／記號）｜**上方屬性／檔案列**｜**匯出 ▾**
 
@@ -39,9 +69,11 @@ npx --yes serve -l 5173 .
 | **上：屬性** | 線型、字級 |
 | **上：檢視** | 網格、深色、最近、複製／復原、「匯出 ▾」、`?` |
 
-更多說明見 [`docs/simple-diagram-features.md`](docs/simple-diagram-features.md)、視覺風格見 [`docs/simple-diagram-style.md`](docs/simple-diagram-style.md)。
+更多說明：[`docs/simple-diagram-features.md`](docs/simple-diagram-features.md) · 視覺風格：[`docs/simple-diagram-style.md`](docs/simple-diagram-style.md)
 
-## 檔案
+---
+
+## 檔案 / Files
 
 | 檔案 | 說明 |
 |---|---|
