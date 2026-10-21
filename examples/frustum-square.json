@@ -1,0 +1,214 @@
+{
+  "formatVersion": 1,
+  "version": 13.2,
+  "app": "simple-diagram",
+  "points": [
+    {
+      "id": "A",
+      "x": 90,
+      "y": 310
+    },
+    {
+      "id": "B",
+      "x": 310,
+      "y": 310
+    },
+    {
+      "id": "C",
+      "x": 370,
+      "y": 190
+    },
+    {
+      "id": "D",
+      "x": 150,
+      "y": 190
+    },
+    {
+      "id": "E",
+      "x": 155,
+      "y": 120
+    },
+    {
+      "id": "F",
+      "x": 265,
+      "y": 120
+    },
+    {
+      "id": "G",
+      "x": 295,
+      "y": 60
+    },
+    {
+      "id": "H",
+      "x": 185,
+      "y": 60
+    }
+  ],
+  "segments": [
+    {
+      "id": "AB",
+      "a": "A",
+      "b": "B",
+      "style": "solid"
+    },
+    {
+      "id": "BC",
+      "a": "B",
+      "b": "C",
+      "style": "solid"
+    },
+    {
+      "id": "CD",
+      "a": "C",
+      "b": "D",
+      "style": "dashed"
+    },
+    {
+      "id": "DA",
+      "a": "D",
+      "b": "A",
+      "style": "dashed"
+    },
+    {
+      "id": "EF",
+      "a": "E",
+      "b": "F",
+      "style": "solid"
+    },
+    {
+      "id": "FG",
+      "a": "F",
+      "b": "G",
+      "style": "solid"
+    },
+    {
+      "id": "GH",
+      "a": "G",
+      "b": "H",
+      "style": "solid"
+    },
+    {
+      "id": "HE",
+      "a": "H",
+      "b": "E",
+      "style": "solid"
+    },
+    {
+      "id": "AE",
+      "a": "A",
+      "b": "E",
+      "style": "solid"
+    },
+    {
+      "id": "BF",
+      "a": "B",
+      "b": "F",
+      "style": "solid"
+    },
+    {
+      "id": "CG",
+      "a": "C",
+      "b": "G",
+      "style": "solid"
+    },
+    {
+      "id": "DH",
+      "a": "D",
+      "b": "H",
+      "style": "dashed"
+    }
+  ],
+  "labels": [
+    {
+      "id": "lab_0001",
+      "pointId": "A",
+      "text": "A",
+      "ox": -20,
+      "oy": 18,
+      "size": 16
+    },
+    {
+      "id": "lab_0002",
+      "pointId": "B",
+      "text": "B",
+      "ox": 20,
+      "oy": 18,
+      "size": 16
+    },
+    {
+      "id": "lab_0003",
+      "pointId": "C",
+      "text": "C",
+      "ox": 20,
+      "oy": 0,
+      "size": 16
+    },
+    {
+      "id": "lab_0004",
+      "pointId": "D",
+      "text": "D",
+      "ox": -22,
+      "oy": 0,
+      "size": 16
+    },
+    {
+      "id": "lab_0005",
+      "pointId": "E",
+      "text": "E",
+      "ox": -20,
+      "oy": 12,
+      "size": 16
+    },
+    {
+      "id": "lab_0006",
+      "pointId": "F",
+      "text": "F",
+      "ox": 18,
+      "oy": 12,
+      "size": 16
+    },
+    {
+      "id": "lab_0007",
+      "pointId": "G",
+      "text": "G",
+      "ox": 18,
+      "oy": -14,
+      "size": 16
+    },
+    {
+      "id": "lab_0008",
+      "pointId": "H",
+      "text": "H",
+      "ox": -18,
+      "oy": -14,
+      "size": 16
+    }
+  ],
+  "rightAngles": [],
+  "angleArcs": [],
+  "midTicks": [],
+  "parallelMarks": [],
+  "equalMarks": [],
+  "lengthLabels": [],
+  "circles": [],
+  "ellipses": [],
+  "sectors": [],
+  "coordPlots": [],
+  "exportCrop": null,
+  "sectorMode": "arc",
+  "nextLetter": "I",
+  "labelFontSize": 16,
+  "rightAngleSize": 10,
+  "activeParallelGroup": 0,
+  "activeEqualGroup": 0,
+  "activeArcGroup": 0,
+  "gridSnap": true,
+  "gridMode": "triangle",
+  "hideExportPoints": true,
+  "view": {
+    "x": 40,
+    "y": 20,
+    "scale": 2
+  },
+  "name": "frustum-square.json"
+}

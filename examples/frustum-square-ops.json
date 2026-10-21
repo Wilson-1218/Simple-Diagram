@@ -1,0 +1,37 @@
+[
+  { "op": "addPoint", "id": "A", "x": 90, "y": 310 },
+  { "op": "addPoint", "id": "B", "x": 310, "y": 310 },
+  { "op": "addPoint", "id": "C", "x": 370, "y": 190 },
+  { "op": "addPoint", "id": "D", "x": 150, "y": 190 },
+  { "op": "addPoint", "id": "E", "x": 155, "y": 120 },
+  { "op": "addPoint", "id": "F", "x": 265, "y": 120 },
+  { "op": "addPoint", "id": "G", "x": 295, "y": 60 },
+  { "op": "addPoint", "id": "H", "x": 185, "y": 60 },
+
+  { "op": "addSegment", "id": "AB", "a": "A", "b": "B", "style": "solid" },
+  { "op": "addSegment", "id": "BC", "a": "B", "b": "C", "style": "solid" },
+  { "op": "addSegment", "id": "CD", "a": "C", "b": "D", "style": "dashed" },
+  { "op": "addSegment", "id": "DA", "a": "D", "b": "A", "style": "dashed" },
+
+  { "op": "addSegment", "id": "EF", "a": "E", "b": "F", "style": "solid" },
+  { "op": "addSegment", "id": "FG", "a": "F", "b": "G", "style": "solid" },
+  { "op": "addSegment", "id": "GH", "a": "G", "b": "H", "style": "solid" },
+  { "op": "addSegment", "id": "HE", "a": "H", "b": "E", "style": "solid" },
+
+  { "op": "addSegment", "id": "AE", "a": "A", "b": "E", "style": "solid" },
+  { "op": "addSegment", "id": "BF", "a": "B", "b": "F", "style": "solid" },
+  { "op": "addSegment", "id": "CG", "a": "C", "b": "G", "style": "solid" },
+  { "op": "addSegment", "id": "DH", "a": "D", "b": "H", "style": "dashed" },
+
+  { "op": "addLabel", "pointId": "A", "text": "A", "ox": -20, "oy": 18 },
+  { "op": "addLabel", "pointId": "B", "text": "B", "ox": 20, "oy": 18 },
+  { "op": "addLabel", "pointId": "C", "text": "C", "ox": 20, "oy": 0 },
+  { "op": "addLabel", "pointId": "D", "text": "D", "ox": -22, "oy": 0 },
+  { "op": "addLabel", "pointId": "E", "text": "E", "ox": -20, "oy": 12 },
+  { "op": "addLabel", "pointId": "F", "text": "F", "ox": 18, "oy": 12 },
+  { "op": "addLabel", "pointId": "G", "text": "G", "ox": 18, "oy": -14 },
+  { "op": "addLabel", "pointId": "H", "text": "H", "ox": -18, "oy": -14 },
+
+  { "op": "setView", "x": 40, "y": 20, "scale": 2 },
+  { "op": "setMeta", "name": "frustum-square.json", "nextLetter": "I", "hideExportPoints": true }
+]
