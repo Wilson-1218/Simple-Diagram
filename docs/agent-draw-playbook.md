@@ -85,3 +85,22 @@ UI-only (no dedicated op — approximate with points/segments/movePoint): live m
 | `examples/ops-shapes-align.json` | `addShape` + align |
 | `examples/frustum-square-ops.json` | Solid frustum projection |
 | `examples/ops-cube.json` | Cube wireframe |
+
+
+## v13.5 — templates, macros, export
+
+| Need | How |
+|---|---|
+| Builtin Templates menu figure | `{ "op": "insertTemplate", "id": "frustum" }` (also `rightTri`, `circleGeom`, `cuboid`, …) |
+| One-shot HKDSE macro | MCP `run_macro` or `node tools/export-diagram.mjs --macro drawFrustum --out out.svg` |
+| Macros | `drawRightTriangle`, `drawFrustum`, `drawCircleWithTangent`, `drawCuboid`, `drawCube` |
+| Export SVG/PNG | `node tools/export-diagram.mjs --in doc.json --out out.svg` (PNG needs playwright) |
+| MCP | `list_templates`, `run_macro`, `export_svg` |
+
+```bash
+node tools/export-diagram.mjs --macro drawRightTriangle --params '{"a":160,"b":120}' --out /tmp/tri.svg --validate
+node tools/export-diagram.mjs --ops examples/frustum-square-ops.json --out /tmp/fr.svg --validate
+npm test   # includes HKDSE eval suite
+```
+
+Demo fixtures: `examples/eval-out/demo-right-triangle.*`, `demo-frustum.*`.

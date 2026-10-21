@@ -15,6 +15,11 @@ import {
   emptyDiagram,
   validateDiagram,
   summarizeDiagram,
+  documentToSvg,
+  runMacro,
+  MACRO_NAMES,
+  listBuiltinTemplates,
+  BUILTIN_TEMPLATE_IDS,
   OP_NAMES,
   OP_CATALOG,
   CURRENT_FORMAT_VERSION,
@@ -153,8 +158,45 @@ const TOOLS = [
   {
     name: "list_ops",
     description:
-      "List supported op names with short arg hints, formatVersion, app version, and examples.",
+      "List supported op names with short arg hints, formatVersion, app version, macros, templates, and examples.",
     inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "list_templates",
+    description:
+      "List builtin geometry template ids (same as Templates menu): plane + solid. Use with insertTemplate op or run_macro insert.",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "run_macro",
+    description:
+      "Run a high-level draw macro (returns ops + applied doc + validation + summary). " +
+      "Macros: " +
+      MACRO_NAMES.join(", ") +
+      ". Prefer this for HKDSE solids/triangles instead of hand-building points.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Macro name, e.g. drawFrustum" },
+        params: { type: "object", description: "Macro parameters" },
+        doc: { type: "object", description: "Optional base document to apply onto" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "export_svg",
+    description:
+      "Render a diagram document to SVG markup (headless, white paper / black ink). " +
+      "For files on disk use: node tools/export-diagram.mjs --in doc.json --out out.svg|png",
+    inputSchema: {
+      type: "object",
+      properties: {
+        doc: { type: "object", description: "Diagram JSON" },
+        scale: { type: "number", description: "Export scale (default 2)" },
+      },
+      required: ["doc"],
+    },
   },
 ];
 
@@ -246,9 +288,54 @@ function callTool(name, args) {
         appVersion: APP_VERSION,
         ops: OP_NAMES,
         catalog: OP_CATALOG,
+        macros: MACRO_NAMES,
+        templates: BUILTIN_TEMPLATE_IDS,
         examples: listExamples(),
         playbook: "docs/agent-draw-playbook.md",
+        exportCli: "node tools/export-diagram.mjs --ops … --out out.svg --validate",
       });
+    }
+    case "list_templates": {
+      return toolResult({
+        templates: listBuiltinTemplates(),
+        ids: BUILTIN_TEMPLATE_IDS,
+        tip: 'apply_ops with { "op": "insertTemplate", "id": "frustum" }',
+      });
+    }
+    case "run_macro": {
+      try {
+        if (!args.name) return toolResult({ error: "name required" }, true);
+        const params = { ...(args.params || {}), apply: true };
+        if (args.doc) params.applyTo = args.doc;
+        const { ops, doc } = runMacro(args.name, params);
+        return toolResult({
+          ops,
+          doc,
+          validation: validateDiagram(doc),
+          summary: summarizeDiagram(doc),
+        });
+      } catch (err) {
+        return toolResult(
+          {
+            error: err.message || String(err),
+            hint: `Known macros: ${MACRO_NAMES.join(", ")}`,
+          },
+          true
+        );
+      }
+    }
+    case "export_svg": {
+      if (!args.doc) return toolResult({ error: "doc required" }, true);
+      try {
+        const svg = documentToSvg(args.doc, { scale: args.scale });
+        return toolResult({
+          svg,
+          summary: summarizeDiagram(args.doc),
+          validation: validateDiagram(args.doc),
+        });
+      } catch (err) {
+        return toolResult({ error: err.message || String(err) }, true);
+      }
     }
     default:
       return toolResult({ error: `unknown tool: ${name}` }, true);

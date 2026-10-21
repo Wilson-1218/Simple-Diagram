@@ -61,7 +61,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.4.2）
+## 目前版本 / Current version（v13.5.0）
 
 **左側兩欄網格**（頂部品牌＋繪製／構造／記號）｜**頂部 overlay**（不佔畫布高度）｜**左側情境浮層**｜**匯出 ▾**
 
@@ -77,6 +77,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 **v13.4.0**：圖形（正方／等邊／長方／等腰）、圓件（弦／直徑／半徑）、多選對齊／等距／等長、扇形／弓形填色、圖層顯示鎖定、範本擴充、快捷鍵（B／T／I 等）。  
 **v13.4.1**：修復關閉網格層／頂欄「網格」後格線仍顯示（`layers.gridShow` 控制繪製；頂欄同步顯示＋吸附）。  
 **v13.4.2**：AI 層優化 — sector/segment `addFill`、圖形／切線／弦徑便利 op、對齊／圖層 ops、MCP summarize、[`docs/agent-draw-playbook.md`](docs/agent-draw-playbook.md)。
+**v13.5.0**：AI 模板 `insertTemplate`、HKDSE macros（`run_macro`）、eval 套件、headless SVG／PNG 匯出 CLI／MCP。
 
 | 位置 | 內容 |
 |---|---|
@@ -116,6 +117,9 @@ node tools/apply-ops.mjs --ops examples/ops-cube.json --out cube.json --validate
 
 # 驗證
 node tools/validate-diagram.mjs examples/cube-sketch.json
+
+# 匯出 SVG（PNG 需 playwright）
+node tools/export-diagram.mjs --macro drawFrustum --out /tmp/frustum.svg --validate
 
 # 測試
 npm test
