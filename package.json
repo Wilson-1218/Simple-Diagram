@@ -1,6 +1,6 @@
 {
   "name": "simple-diagram",
-  "version": "13.4.0",
+  "version": "13.4.1",
   "private": true,
   "type": "module",
   "description": "Simple Diagram — hand-drawn math figures + AI JSON/ops layer",

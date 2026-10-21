@@ -22,7 +22,7 @@ const EXAMPLES_DIR = join(ROOT, "examples");
 
 const SERVER_INFO = {
   name: "simple-diagram",
-  version: "13.4.0",
+  version: "13.4.1",
 };
 
 function listExamples() {
