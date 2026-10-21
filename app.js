@@ -473,6 +473,13 @@
       aria_add_curve: "新增曲線類型",
       hint_idle: "空白鍵＋拖曳平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
       title_doc: "Simple Diagram · Wilson",
+      shortcuts_title: "快捷鍵（可自訂）",
+      shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
+      shortcuts_reset: "還原預設",
+      btn_close: "關閉",
+      attr_credit: "Simple Diagram · Wilson Li · MIT",
+      attr_credit_tip: "授權與轉載聲明（開啟 ? 看完整說明）",
+      attr_help: "可自由使用、複製及二次開發；轉載或再發佈時請保留來源聲明：Simple Diagram（Wilson Li）及 GitHub 連結。",
     },
     en: {
       tool_select: "Select", tool_hand: "Pan", tool_point: "Point", tool_line: "Line",
@@ -674,6 +681,13 @@
       aria_add_curve: "Add curve type",
       hint_idle: "Space+drag pan · wheel zoom · Esc cancel · ? shortcuts",
       title_doc: "Simple Diagram · Wilson",
+      shortcuts_title: "Keyboard shortcuts (editable)",
+      shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
+      shortcuts_reset: "Reset defaults",
+      btn_close: "Close",
+      attr_credit: "Simple Diagram · Wilson Li · MIT",
+      attr_credit_tip: "License & attribution (open ? for details)",
+      attr_help: "Free to use, copy, and modify. Please keep attribution: “Simple Diagram” by Wilson Li — and the GitHub link.",
     },
   };
 
@@ -9162,7 +9176,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.0",
+      version: "13.5.1",
       app: "simple-diagram",
       points,
       segments,
