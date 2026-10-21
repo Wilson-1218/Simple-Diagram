@@ -61,12 +61,13 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.1）
+## 目前版本 / Current version（v13.2）
 
 **左側兩欄網格**（繪製／構造／記號）｜**上方屬性／檔案列**｜**匯出 ▾**
 
 預設：網格開、三角格、匯出隱藏點開、畫布縮放 **2×**。  
-長度沿邊傾斜；標籤避線；對齊輔助（不進匯出）；離開警告僅未儲存時。
+長度沿邊傾斜；標籤避線；對齊輔助（不進匯出）；離開警告僅未儲存時。  
+**v13.2**：新增 AI／自動化 JSON＋ops 層（`formatVersion`、CLI、MCP、驗證）；人手畫布流程不變。
 
 | 位置 | 內容 |
 |---|---|
@@ -77,7 +78,67 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 | **上：屬性** | 線型、字級 |
 | **上：檢視** | 網格、深色、最近、複製／復原、「匯出 ▾」、`?` |
 
-更多說明：[`docs/simple-diagram-features.md`](docs/simple-diagram-features.md) · 視覺風格：[`docs/simple-diagram-style.md`](docs/simple-diagram-style.md)
+更多說明：[`docs/simple-diagram-features.md`](docs/simple-diagram-features.md) · 視覺風格：[`docs/simple-diagram-style.md`](docs/simple-diagram-style.md) · JSON 格式：[`docs/diagram-format.md`](docs/diagram-format.md)
+
+---
+
+## AI / Automation（JSON + ops）
+
+| 中文 | English |
+|---|---|
+| AI **不**模擬滑鼠／DOM；只產生或修改 **JSON 圖檔** | AI does **not** click the UI; it edits the **JSON document** |
+| 人手「開啟」可直接載入 AI 產出的 JSON | Human **Open** loads AI-produced JSON as usual |
+| Schema：`formatVersion: 1`（缺省視為 v1） | Schema: `formatVersion: 1` (missing ⇒ v1) |
+
+### CLI
+
+```bash
+# 空檔
+node tools/apply-ops.mjs --create --out empty.json
+
+# 套用 ops
+node tools/apply-ops.mjs --ops examples/ops-cube.json --out cube.json --validate
+
+# 驗證
+node tools/validate-diagram.mjs examples/cube-sketch.json
+
+# 測試
+npm test
+```
+
+模組入口：`src/diagram/`（`applyOps`、`validateDiagram`、`emptyDiagram`）。  
+格式說明：[`docs/diagram-format.md`](docs/diagram-format.md)。  
+範例：`examples/`（立方體、直角三角形、座標＋sin）。
+
+### MCP（Cursor 等）
+
+無額外 npm 依賴。在 Cursor MCP 設定加入：
+
+```json
+{
+  "mcpServers": {
+    "simple-diagram": {
+      "command": "node",
+      "args": ["mcp/server.mjs"],
+      "cwd": "/absolute/path/to/Simple-Diagram"
+    }
+  }
+}
+```
+
+| Tool | 用途 |
+|---|---|
+| `create_diagram` | 建立空文件 |
+| `apply_ops` | 對文件套用 ops 陣列 |
+| `validate_diagram` | 驗證文件 |
+| `load_example` | 載入 `examples/` 內建範例 |
+| `list_ops` | 列出支援的 op 名稱 |
+
+啟動：`npm run mcp` 或 `node mcp/server.mjs`（stdio）。
+
+### Ops 覆蓋（HKDSE 立體＋座標 MVP）
+
+`addPoint` · `addSegment`（含 style）· `addLabel` · `addRightAngle` · `addAngleArc`／`addReflex` · `addParallelMark`／`addEqualMark` · `addLengthLabel` · `addMidTick` · `addCircle` · `addEllipse` · `addSector` · `addCoordPlot` · `addCurve` · `setView` · `setMeta` · `movePoint` · `remove`
 
 ---
 
@@ -89,3 +150,8 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 | `styles.css` | 樣式 |
 | `app.js` | 應用邏輯 |
 | `simple-diagram-standalone.html` | 單檔可攜版 |
+| `src/diagram/` | Ops／驗證（Node ESM，亦可於支援 ESM 的環境引用） |
+| `tools/` | CLI：`apply-ops.mjs`、`validate-diagram.mjs` |
+| `mcp/server.mjs` | MCP stdio 伺服器 |
+| `examples/` | 範例 JSON／ops |
+| `tests/` | `node --test` 測試 |

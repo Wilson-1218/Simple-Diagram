@@ -1,0 +1,49 @@
+{
+  "formatVersion": 1,
+  "version": 13.2,
+  "app": "simple-diagram",
+  "name": "right-triangle.json",
+  "points": [
+    { "id": "A", "x": 100, "y": 280 },
+    { "id": "B", "x": 300, "y": 280 },
+    { "id": "C", "x": 100, "y": 120 }
+  ],
+  "segments": [
+    { "id": "AB", "a": "A", "b": "B", "style": "solid" },
+    { "id": "BC", "a": "B", "b": "C", "style": "solid" },
+    { "id": "CA", "a": "C", "b": "A", "style": "solid" }
+  ],
+  "labels": [
+    { "id": "lA", "pointId": "A", "text": "A", "ox": -12, "oy": 14, "size": 16 },
+    { "id": "lB", "pointId": "B", "text": "B", "ox": 12, "oy": 14, "size": 16 },
+    { "id": "lC", "pointId": "C", "text": "C", "ox": -12, "oy": -12, "size": 16 }
+  ],
+  "rightAngles": [
+    { "id": "ra1", "vertex": "A", "arm1": "B", "arm2": "C", "size": 10 }
+  ],
+  "angleArcs": [],
+  "midTicks": [],
+  "parallelMarks": [],
+  "equalMarks": [],
+  "lengthLabels": [
+    { "id": "ll1", "segmentId": "AB", "text": "4", "side": 1 },
+    { "id": "ll2", "segmentId": "CA", "text": "3", "side": -1 },
+    { "id": "ll3", "segmentId": "BC", "text": "5", "side": 1 }
+  ],
+  "circles": [],
+  "ellipses": [],
+  "sectors": [],
+  "coordPlots": [],
+  "exportCrop": null,
+  "sectorMode": "arc",
+  "nextLetter": "D",
+  "labelFontSize": 16,
+  "rightAngleSize": 10,
+  "activeParallelGroup": 0,
+  "activeEqualGroup": 0,
+  "activeArcGroup": 0,
+  "gridSnap": true,
+  "gridMode": "triangle",
+  "hideExportPoints": true,
+  "view": { "x": 180, "y": 140, "scale": 2 }
+}

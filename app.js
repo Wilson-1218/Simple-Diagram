@@ -7428,9 +7428,13 @@ ${body}</svg>`;
   }
 
   // ——— Save / Load / Recent / Autosave ———
+  /** Schema version for JSON documents (independent of app UI version). */
+  const FORMAT_VERSION = 1;
+
   function buildProjectData() {
     return {
-      version: 13.1,
+      formatVersion: FORMAT_VERSION,
+      version: 13.2,
       app: "simple-diagram",
       points,
       segments,
@@ -7460,6 +7464,81 @@ ${body}</svg>`;
       savedAt: Date.now(),
       name: currentDocName,
     };
+  }
+
+  /**
+   * Light validation for load path: reject clearly corrupt files;
+   * missing formatVersion = v1 (legacy OK). Does not break good old saves.
+   * @returns {{ ok: boolean, errors: string[], warnings: string[] }}
+   */
+  function lightValidateProject(data) {
+    const errors = [];
+    const warnings = [];
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      return { ok: false, errors: ["檔案不是有效的 JSON 物件"], warnings };
+    }
+    if (data.formatVersion == null || data.formatVersion === "") {
+      warnings.push("formatVersion 缺省（視為 v1）");
+    } else {
+      const fv = Number(data.formatVersion);
+      if (!Number.isFinite(fv) || fv < 1) {
+        errors.push("formatVersion 無效");
+      } else if (fv > FORMAT_VERSION) {
+        errors.push("不支援的 formatVersion " + fv + "（目前支援 ≤ " + FORMAT_VERSION + "）");
+      }
+    }
+    const arrayKeys = [
+      "points",
+      "segments",
+      "labels",
+      "rightAngles",
+      "angleArcs",
+      "midTicks",
+      "parallelMarks",
+      "equalMarks",
+      "lengthLabels",
+      "circles",
+      "ellipses",
+      "sectors",
+      "coordPlots",
+    ];
+    for (const k of arrayKeys) {
+      if (data[k] != null && !Array.isArray(data[k])) {
+        errors.push(k + " 必須是陣列");
+      }
+    }
+    if (Array.isArray(data.points)) {
+      for (let i = 0; i < data.points.length; i++) {
+        const p = data.points[i];
+        if (!p || typeof p !== "object" || typeof p.id !== "string") {
+          errors.push("points[" + i + "] 缺少 id");
+          break;
+        }
+        if (!Number.isFinite(Number(p.x)) || !Number.isFinite(Number(p.y))) {
+          errors.push("points[" + i + "] 座標無效");
+          break;
+        }
+      }
+    }
+    if (Array.isArray(data.segments) && Array.isArray(data.points)) {
+      const ids = new Set(data.points.map((p) => p && p.id).filter(Boolean));
+      for (let i = 0; i < Math.min(data.segments.length, 50); i++) {
+        const s = data.segments[i];
+        if (!s || typeof s !== "object") {
+          errors.push("segments[" + i + "] 無效");
+          break;
+        }
+        if (s.a && !ids.has(s.a)) {
+          errors.push("線段參照不存在的點：" + s.a);
+          break;
+        }
+        if (s.b && !ids.has(s.b)) {
+          errors.push("線段參照不存在的點：" + s.b);
+          break;
+        }
+      }
+    }
+    return { ok: errors.length === 0, errors, warnings };
   }
 
   function readRecentList() {
@@ -7659,10 +7738,18 @@ ${body}</svg>`;
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
+        const check = lightValidateProject(data);
+        if (!check.ok) {
+          alert("無法開啟：檔案格式損壞或不支援。\n" + check.errors.join("\n"));
+          return;
+        }
         const name = (file && file.name) || data.name || "simple-diagram.json";
         applyProjectData(data, { name });
         pushRecentEntry(name, buildProjectData());
-        statusHint.textContent = "已開啟：" + name;
+        let msg = "已開啟：" + name;
+        if (data.formatVersion != null) msg += " · format v" + data.formatVersion;
+        else if (check.warnings.length) msg += " · 舊檔（視為 v1）";
+        statusHint.textContent = msg;
       } catch (err) {
         alert("無法讀取專案檔：" + err.message);
       }

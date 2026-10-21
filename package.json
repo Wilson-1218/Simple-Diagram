@@ -1,0 +1,16 @@
+{
+  "name": "simple-diagram",
+  "version": "13.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Simple Diagram — hand-drawn math figures + AI JSON/ops layer",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "apply-ops": "node tools/apply-ops.mjs",
+    "validate": "node tools/validate-diagram.mjs",
+    "mcp": "node mcp/server.mjs"
+  }
+}
