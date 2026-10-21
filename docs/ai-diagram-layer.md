@@ -3,6 +3,8 @@
 **狀態：** 已實作（v13.2）· 產品名 **Simple Diagram**  
 **原則：** AI 只走 **JSON document + ops**，不模擬人手 UI；現有畫布／快捷鍵／存檔／Pages 不變。
 
+**PR：** https://github.com/Wilson-1218/Simple-Diagram/pull/1 · `cursor/ai-diagram-layer-037e` → `main`
+
 ---
 
 ## A — Schema
