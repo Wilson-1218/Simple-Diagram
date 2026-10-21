@@ -1163,6 +1163,8 @@
   }
 
   function drawActiveGrid(viewW, viewH) {
+    // Visibility is layers.gridShow only (snap uses gridSnap independently).
+    if (!layers.gridShow) return;
     if (gridMode === "triangle") drawTriangleGrid(viewW, viewH);
     else drawSquareGrid(viewW, viewH);
   }
@@ -9160,7 +9162,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.4.0",
+      version: "13.4.1",
       app: "simple-diagram",
       points,
       segments,
@@ -10966,9 +10968,10 @@ ${body}</svg>`;
   }
   if (chkGridSnap) {
     chkGridSnap.addEventListener("change", () => {
+      // Primary「網格」control: snap + visibility (matches tip_grid / pre-v13.4 UX).
+      // Layers「顯示」can still hide without touching snap.
       gridSnap = !!chkGridSnap.checked;
-      draw();
-      updateStatus();
+      applyLayersPatch({ gridShow: gridSnap });
     });
   }
   if (gridModeSelect) {
