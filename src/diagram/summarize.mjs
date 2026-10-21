@@ -84,4 +84,12 @@ export const OP_CATALOG = {
   setLayers: { args: "gridShow?, coordsShow?, helpersShow?, *Lock?" },
   movePoint: { args: "id, x, y" },
   remove: { args: "type, id", note: "type point|segment|fill|circle|…" },
+  insertTemplate: {
+    args: "id, dx?, dy?, scale?",
+    note: "Builtin geometry: rightTri|isoTri|genTri|…|frustum|cuboid|cylinder|cone; alias addTemplate",
+  },
+  addTemplate: {
+    args: "id, dx?, dy?, scale?",
+    note: "Alias of insertTemplate",
+  },
 };
