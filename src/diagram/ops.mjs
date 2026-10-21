@@ -1,5 +1,6 @@
 import { emptyDiagram, cloneDoc } from "./empty-doc.mjs";
 import { createIdFactory } from "./ids.mjs";
+import { applyBuiltinTemplate, BUILTIN_TEMPLATE_IDS } from "./templates.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -824,6 +825,29 @@ const HANDLERS = {
     if (doc[key].length === before) throw new Error(`remove: ${type} ${id} not found`);
     return doc;
   },
+
+  /**
+   * Insert a built-in geometry template (rightTri, frustum, cuboid, …).
+   * Cells → world via TEMPLATE_CELL_SIZE; optional dx/dy/scale.
+   */
+  insertTemplate(doc, op, nextId) {
+    const tid = op.id || op.templateId || op.template;
+    if (!tid || typeof tid !== "string") {
+      throw new Error(
+        `insertTemplate: id required (one of ${BUILTIN_TEMPLATE_IDS.join(", ")})`
+      );
+    }
+    applyBuiltinTemplate(doc, tid, {
+      dx: op.dx,
+      dy: op.dy,
+      scale: op.scale,
+      cellSize: op.cellSize,
+      nextId,
+      labelSize: op.labelSize,
+      rightAngleSize: op.rightAngleSize,
+    });
+    return doc;
+  },
 };
 
 /** Aliases for AI-friendly names */
@@ -831,6 +855,7 @@ HANDLERS.addParallel = HANDLERS.addParallelMark;
 HANDLERS.addEqual = HANDLERS.addEqualMark;
 HANDLERS.addLength = HANDLERS.addLengthLabel;
 HANDLERS.addArc = HANDLERS.addAngleArc;
+HANDLERS.addTemplate = HANDLERS.insertTemplate;
 
 export const OP_NAMES = Object.keys(HANDLERS).sort();
 

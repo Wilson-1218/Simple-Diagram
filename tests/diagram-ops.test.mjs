@@ -236,3 +236,54 @@ test("OP_NAMES includes v13.4 AI helpers", () => {
     assert.ok(OP_NAMES.includes(name), name);
   }
 });
+
+test("insertTemplate rightTri / frustum / circleGeom / genTri", async () => {
+  const {
+    BUILTIN_TEMPLATE_IDS,
+    listBuiltinTemplates,
+    MACRO_NAMES,
+    runMacro,
+  } = await import("../src/diagram/index.mjs");
+
+  for (const id of ["rightTri", "frustum", "circleGeom", "genTri"]) {
+    assert.ok(BUILTIN_TEMPLATE_IDS.includes(id), id);
+  }
+
+  const right = applyOps(null, [{ op: "insertTemplate", id: "rightTri" }]);
+  assert.equal(right.points.length, 3);
+  assert.equal(right.segments.length, 3);
+  assert.equal(right.rightAngles.length, 1);
+  assert.equal(right.labels.length, 3);
+  assert.equal(validateDiagram(right).ok, true, validateDiagram(right).errors.join("; "));
+
+  const fru = applyOps(null, [{ op: "addTemplate", id: "frustum", dx: 10, dy: -5 }]);
+  assert.equal(fru.points.length, 8);
+  assert.equal(fru.segments.length, 12);
+  assert.ok(fru.points.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y)));
+  assert.equal(validateDiagram(fru).ok, true, validateDiagram(fru).errors.join("; "));
+
+  const circ = applyOps(null, [{ op: "insertTemplate", id: "circleGeom", scale: 1.5 }]);
+  assert.equal(circ.points.length, 5);
+  assert.equal(circ.circles.length, 1);
+  assert.equal(circ.segments.length, 3);
+  assert.equal(validateDiagram(circ).ok, true, validateDiagram(circ).errors.join("; "));
+
+  const gen = applyOps(null, [{ op: "insertTemplate", id: "genTri" }]);
+  assert.equal(gen.points.length, 3);
+  assert.equal(gen.segments.length, 3);
+  assert.equal(validateDiagram(gen).ok, true, validateDiagram(gen).errors.join("; "));
+
+  const listed = listBuiltinTemplates();
+  assert.ok(listed.some((t) => t.id === "rightTri" && t.group === "plane"));
+  assert.ok(listed.some((t) => t.id === "frustum" && t.group === "solid"));
+
+  assert.ok(OP_NAMES.includes("insertTemplate"));
+  assert.ok(OP_NAMES.includes("addTemplate"));
+
+  const { ops, doc } = runMacro("drawRightTriangle", { a: 50, b: 40, apply: true });
+  assert.ok(ops.length >= 7);
+  assert.equal(doc.points.length, 3);
+  assert.equal(doc.rightAngles.length, 1);
+  assert.ok(MACRO_NAMES.includes("drawFrustum"));
+  assert.ok(MACRO_NAMES.includes("drawCube"));
+});

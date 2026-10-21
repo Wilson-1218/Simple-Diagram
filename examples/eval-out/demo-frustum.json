@@ -1,0 +1,226 @@
+{
+  "formatVersion": 1,
+  "version": "13.5.0",
+  "app": "simple-diagram",
+  "points": [
+    {
+      "id": "p_0001",
+      "x": -100,
+      "y": 60
+    },
+    {
+      "id": "p_0003",
+      "x": 100,
+      "y": 60
+    },
+    {
+      "id": "p_0005",
+      "x": 60,
+      "y": -20
+    },
+    {
+      "id": "p_0007",
+      "x": -60,
+      "y": -20
+    },
+    {
+      "id": "p_0009",
+      "x": -60,
+      "y": -60
+    },
+    {
+      "id": "p_0011",
+      "x": 60,
+      "y": -60
+    },
+    {
+      "id": "p_0013",
+      "x": 40,
+      "y": -100
+    },
+    {
+      "id": "p_0015",
+      "x": -40,
+      "y": -100
+    }
+  ],
+  "segments": [
+    {
+      "id": "s_0017",
+      "a": "p_0001",
+      "b": "p_0003",
+      "style": "solid"
+    },
+    {
+      "id": "s_0018",
+      "a": "p_0003",
+      "b": "p_0005",
+      "style": "solid"
+    },
+    {
+      "id": "s_0019",
+      "a": "p_0005",
+      "b": "p_0007",
+      "style": "dashed"
+    },
+    {
+      "id": "s_0020",
+      "a": "p_0007",
+      "b": "p_0001",
+      "style": "solid"
+    },
+    {
+      "id": "s_0021",
+      "a": "p_0009",
+      "b": "p_0011",
+      "style": "solid"
+    },
+    {
+      "id": "s_0022",
+      "a": "p_0011",
+      "b": "p_0013",
+      "style": "solid"
+    },
+    {
+      "id": "s_0023",
+      "a": "p_0013",
+      "b": "p_0015",
+      "style": "dashed"
+    },
+    {
+      "id": "s_0024",
+      "a": "p_0015",
+      "b": "p_0009",
+      "style": "solid"
+    },
+    {
+      "id": "s_0025",
+      "a": "p_0001",
+      "b": "p_0009",
+      "style": "solid"
+    },
+    {
+      "id": "s_0026",
+      "a": "p_0003",
+      "b": "p_0011",
+      "style": "solid"
+    },
+    {
+      "id": "s_0027",
+      "a": "p_0005",
+      "b": "p_0013",
+      "style": "solid"
+    },
+    {
+      "id": "s_0028",
+      "a": "p_0007",
+      "b": "p_0015",
+      "style": "dashed"
+    }
+  ],
+  "labels": [
+    {
+      "id": "lab_0002",
+      "pointId": "p_0001",
+      "text": "A",
+      "ox": -16,
+      "oy": 10,
+      "size": 16
+    },
+    {
+      "id": "lab_0004",
+      "pointId": "p_0003",
+      "text": "B",
+      "ox": 16,
+      "oy": 10,
+      "size": 16
+    },
+    {
+      "id": "lab_0006",
+      "pointId": "p_0005",
+      "text": "C",
+      "ox": 14,
+      "oy": -6,
+      "size": 16
+    },
+    {
+      "id": "lab_0008",
+      "pointId": "p_0007",
+      "text": "D",
+      "ox": -14,
+      "oy": -6,
+      "size": 16
+    },
+    {
+      "id": "lab_0010",
+      "pointId": "p_0009",
+      "text": "E",
+      "ox": -14,
+      "oy": -14,
+      "size": 16
+    },
+    {
+      "id": "lab_0012",
+      "pointId": "p_0011",
+      "text": "F",
+      "ox": 14,
+      "oy": -14,
+      "size": 16
+    },
+    {
+      "id": "lab_0014",
+      "pointId": "p_0013",
+      "text": "G",
+      "ox": 12,
+      "oy": -18,
+      "size": 16
+    },
+    {
+      "id": "lab_0016",
+      "pointId": "p_0015",
+      "text": "H",
+      "ox": -12,
+      "oy": -18,
+      "size": 16
+    }
+  ],
+  "rightAngles": [],
+  "angleArcs": [],
+  "midTicks": [],
+  "parallelMarks": [],
+  "equalMarks": [],
+  "lengthLabels": [],
+  "circles": [],
+  "ellipses": [],
+  "sectors": [],
+  "fills": [],
+  "coordPlots": [],
+  "exportCrop": null,
+  "sectorMode": "arc",
+  "fillMode": "polygon",
+  "shapeMode": "square",
+  "circlePartMode": "chord",
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "nextLetter": "I",
+  "labelFontSize": 16,
+  "rightAngleSize": 10,
+  "activeParallelGroup": 0,
+  "activeEqualGroup": 0,
+  "activeArcGroup": 0,
+  "gridSnap": true,
+  "gridMode": "triangle",
+  "hideExportPoints": true,
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "name": "simple-diagram.json"
+}

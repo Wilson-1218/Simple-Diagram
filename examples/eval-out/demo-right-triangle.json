@@ -1,0 +1,115 @@
+{
+  "formatVersion": 1,
+  "version": "13.5.0",
+  "app": "simple-diagram",
+  "points": [
+    {
+      "id": "A",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "B",
+      "x": 160,
+      "y": 0
+    },
+    {
+      "id": "C",
+      "x": 0,
+      "y": -120
+    }
+  ],
+  "segments": [
+    {
+      "id": "AB",
+      "a": "A",
+      "b": "B",
+      "style": "solid"
+    },
+    {
+      "id": "BC",
+      "a": "B",
+      "b": "C",
+      "style": "solid"
+    },
+    {
+      "id": "CA",
+      "a": "C",
+      "b": "A",
+      "style": "solid"
+    }
+  ],
+  "labels": [
+    {
+      "id": "lab_0002",
+      "pointId": "A",
+      "text": "A",
+      "ox": -14,
+      "oy": 10,
+      "size": 16
+    },
+    {
+      "id": "lab_0003",
+      "pointId": "B",
+      "text": "B",
+      "ox": 14,
+      "oy": 10,
+      "size": 16
+    },
+    {
+      "id": "lab_0004",
+      "pointId": "C",
+      "text": "C",
+      "ox": -14,
+      "oy": -14,
+      "size": 16
+    }
+  ],
+  "rightAngles": [
+    {
+      "id": "ra_0001",
+      "vertex": "A",
+      "arm1": "B",
+      "arm2": "C",
+      "size": 10
+    }
+  ],
+  "angleArcs": [],
+  "midTicks": [],
+  "parallelMarks": [],
+  "equalMarks": [],
+  "lengthLabels": [],
+  "circles": [],
+  "ellipses": [],
+  "sectors": [],
+  "fills": [],
+  "coordPlots": [],
+  "exportCrop": null,
+  "sectorMode": "arc",
+  "fillMode": "polygon",
+  "shapeMode": "square",
+  "circlePartMode": "chord",
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "nextLetter": "A",
+  "labelFontSize": 16,
+  "rightAngleSize": 10,
+  "activeParallelGroup": 0,
+  "activeEqualGroup": 0,
+  "activeArcGroup": 0,
+  "gridSnap": true,
+  "gridMode": "triangle",
+  "hideExportPoints": true,
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "name": "simple-diagram.json"
+}
