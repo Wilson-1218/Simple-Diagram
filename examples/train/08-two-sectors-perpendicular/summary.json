@@ -1,0 +1,54 @@
+{
+  "name": "08-two-sectors-perpendicular",
+  "formatVersion": 1,
+  "version": "13.5.1",
+  "counts": {
+    "points": 4,
+    "segments": 4,
+    "labels": 4,
+    "circles": 2,
+    "ellipses": 0,
+    "sectors": 2,
+    "fills": 2,
+    "fillKinds": {
+      "segment": 2
+    },
+    "rightAngles": 2,
+    "angleArcs": 0,
+    "coordPlots": 0,
+    "lengthLabels": 0,
+    "parallelMarks": 0,
+    "equalMarks": 0
+  },
+  "pointIds": [
+    "O",
+    "A",
+    "C",
+    "B"
+  ],
+  "segmentIds": [
+    "OA",
+    "AC",
+    "CB",
+    "BO"
+  ],
+  "circleIds": [
+    "cO",
+    "cB"
+  ],
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "gridSnap": true,
+  "gridMode": "triangle"
+}

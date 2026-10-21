@@ -1,0 +1,52 @@
+{
+  "name": "09-semicircle-acb-shaded",
+  "formatVersion": 1,
+  "version": "13.5.1",
+  "counts": {
+    "points": 4,
+    "segments": 3,
+    "labels": 4,
+    "circles": 1,
+    "ellipses": 0,
+    "sectors": 1,
+    "fills": 1,
+    "fillKinds": {
+      "sector": 1
+    },
+    "rightAngles": 0,
+    "angleArcs": 0,
+    "coordPlots": 0,
+    "lengthLabels": 2,
+    "parallelMarks": 0,
+    "equalMarks": 0
+  },
+  "pointIds": [
+    "A",
+    "O",
+    "B",
+    "C"
+  ],
+  "segmentIds": [
+    "AB",
+    "AC",
+    "OC"
+  ],
+  "circleIds": [
+    "c1"
+  ],
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "gridSnap": true,
+  "gridMode": "triangle"
+}

@@ -1,0 +1,209 @@
+{
+  "formatVersion": 1,
+  "version": "13.5.1",
+  "app": "simple-diagram",
+  "points": [
+    {
+      "id": "A",
+      "x": 80,
+      "y": 220
+    },
+    {
+      "id": "B",
+      "x": 120,
+      "y": 100
+    },
+    {
+      "id": "C",
+      "x": 240,
+      "y": -260
+    },
+    {
+      "id": "D",
+      "x": 243.3684210526316,
+      "y": -68
+    },
+    {
+      "id": "E",
+      "x": 248.42105263157896,
+      "y": 220
+    },
+    {
+      "id": "F",
+      "x": 250,
+      "y": 310
+    },
+    {
+      "id": "G",
+      "x": 280,
+      "y": 220
+    },
+    {
+      "id": "H",
+      "x": 320,
+      "y": 100
+    }
+  ],
+  "segments": [
+    {
+      "id": "AB",
+      "a": "A",
+      "b": "B",
+      "style": "solid"
+    },
+    {
+      "id": "BC",
+      "a": "B",
+      "b": "C",
+      "style": "solid"
+    },
+    {
+      "id": "BH",
+      "a": "B",
+      "b": "H",
+      "style": "solid"
+    },
+    {
+      "id": "AG",
+      "a": "A",
+      "b": "G",
+      "style": "solid"
+    },
+    {
+      "id": "CF",
+      "a": "C",
+      "b": "F",
+      "style": "solid"
+    },
+    {
+      "id": "FH",
+      "a": "F",
+      "b": "H",
+      "style": "solid"
+    },
+    {
+      "id": "GH",
+      "a": "G",
+      "b": "H",
+      "style": "solid"
+    }
+  ],
+  "labels": [
+    {
+      "id": "lab_0003",
+      "pointId": "A",
+      "text": "A",
+      "ox": -14,
+      "oy": 12,
+      "size": 16
+    },
+    {
+      "id": "lab_0004",
+      "pointId": "B",
+      "text": "B",
+      "ox": -14,
+      "oy": -8,
+      "size": 16
+    },
+    {
+      "id": "lab_0005",
+      "pointId": "C",
+      "text": "C",
+      "ox": 0,
+      "oy": -16,
+      "size": 16
+    },
+    {
+      "id": "lab_0006",
+      "pointId": "D",
+      "text": "D",
+      "ox": 12,
+      "oy": -8,
+      "size": 16
+    },
+    {
+      "id": "lab_0007",
+      "pointId": "E",
+      "text": "E",
+      "ox": -14,
+      "oy": 4,
+      "size": 16
+    },
+    {
+      "id": "lab_0008",
+      "pointId": "F",
+      "text": "F",
+      "ox": 0,
+      "oy": 16,
+      "size": 16
+    },
+    {
+      "id": "lab_0009",
+      "pointId": "G",
+      "text": "G",
+      "ox": 14,
+      "oy": 12,
+      "size": 16
+    },
+    {
+      "id": "lab_0010",
+      "pointId": "H",
+      "text": "H",
+      "ox": 14,
+      "oy": -8,
+      "size": 16
+    }
+  ],
+  "rightAngles": [],
+  "angleArcs": [],
+  "midTicks": [],
+  "parallelMarks": [
+    {
+      "id": "pm_0001",
+      "segmentId": "AB",
+      "group": 0,
+      "side": 1
+    },
+    {
+      "id": "pm_0002",
+      "segmentId": "GH",
+      "group": 0,
+      "side": 1
+    }
+  ],
+  "equalMarks": [],
+  "lengthLabels": [],
+  "circles": [],
+  "ellipses": [],
+  "sectors": [],
+  "fills": [],
+  "coordPlots": [],
+  "exportCrop": null,
+  "sectorMode": "arc",
+  "fillMode": "polygon",
+  "shapeMode": "square",
+  "circlePartMode": "chord",
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "nextLetter": "A",
+  "labelFontSize": 16,
+  "rightAngleSize": 10,
+  "activeParallelGroup": 0,
+  "activeEqualGroup": 0,
+  "activeArcGroup": 0,
+  "gridSnap": true,
+  "gridMode": "triangle",
+  "hideExportPoints": true,
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "name": "03-parallelogram-abhg-lines"
+}

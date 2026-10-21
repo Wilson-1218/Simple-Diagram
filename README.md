@@ -76,7 +76,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.5.1）
+## 目前版本 / Current version（v13.5.2）
 
 **左側兩欄網格**（頂部品牌＋繪製／構造／記號）｜**頂部 overlay**（不佔畫布高度）｜**左側情境浮層**｜**匯出 ▾**
 
@@ -93,7 +93,8 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 **v13.4.1**：修復關閉網格層／頂欄「網格」後格線仍顯示（`layers.gridShow` 控制繪製；頂欄同步顯示＋吸附）。  
 **v13.4.2**：AI 層優化 — sector/segment `addFill`、圖形／切線／弦徑便利 op、對齊／圖層 ops、MCP summarize、[`docs/agent-draw-playbook.md`](docs/agent-draw-playbook.md)。
 **v13.5.0**：AI 模板 `insertTemplate`、HKDSE macros（`run_macro`）、eval 套件、headless SVG／PNG 匯出 CLI／MCP。  
-**v13.5.1**：MIT 授權＋雙語轉載聲明（README／網頁／`?` 面板）；`package.json` `"license": "MIT"`。
+**v13.5.1**：MIT 授權＋雙語轉載聲明（README／網頁／`?` 面板）；`package.json` `"license": "MIT"`。  
+**v13.5.2**：Mensuration AI train pack（`examples/train/`，10 題 seed `20261021`）＋ eval。
 
 | 位置 | 內容 |
 |---|---|
@@ -111,6 +112,12 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 快捷鍵（預設，可於 `?` 改）：選取 V、點 P、線 L、水平 H、圓 C、橢圓 E、扇弧 A、填色 I、圖形 B、圓件 T、中點 M、比例 R；Ctrl+Z／Y 復原重做、Ctrl+D 複製。
 
 更多說明：[`docs/simple-diagram-features.md`](docs/simple-diagram-features.md) · 視覺風格：[`docs/simple-diagram-style.md`](docs/simple-diagram-style.md) · JSON 格式：[`docs/diagram-format.md`](docs/diagram-format.md)
+
+---
+
+## AI train pack / 「對著畫」評測
+
+來源：`Mensuration-clean.pdf`（隨機 10 題，seed **20261021**）。每題含 `prompt.md`、`ops.json`、`target.svg`。說明見 [`examples/train/README.md`](examples/train/README.md)。重建：`node tools/gen-mensuration-train.mjs`。
 
 ---
 

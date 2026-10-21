@@ -1,0 +1,56 @@
+{
+  "name": "05-parallelogram-bef-edf",
+  "formatVersion": 1,
+  "version": "13.5.1",
+  "counts": {
+    "points": 6,
+    "segments": 9,
+    "labels": 6,
+    "circles": 0,
+    "ellipses": 0,
+    "sectors": 0,
+    "fills": 0,
+    "fillKinds": {},
+    "rightAngles": 0,
+    "angleArcs": 0,
+    "coordPlots": 0,
+    "lengthLabels": 0,
+    "parallelMarks": 2,
+    "equalMarks": 2
+  },
+  "pointIds": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+  ],
+  "segmentIds": [
+    "AB",
+    "BC",
+    "CD",
+    "DA",
+    "AE",
+    "EB",
+    "EF",
+    "ED",
+    "DF"
+  ],
+  "circleIds": [],
+  "layers": {
+    "gridShow": true,
+    "gridLock": false,
+    "coordsShow": true,
+    "coordsLock": false,
+    "helpersShow": true,
+    "helpersLock": false
+  },
+  "view": {
+    "x": 400,
+    "y": 300,
+    "scale": 2
+  },
+  "gridSnap": true,
+  "gridMode": "triangle"
+}

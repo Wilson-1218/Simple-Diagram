@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="628" height="512" viewBox="0 0 628.00 512.00">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="56.00" y1="56.00" x2="56.00" y2="456.00" stroke="#111" stroke-width="2.40" stroke-linecap="round" />
+<line x1="56.00" y1="456.00" x2="576.00" y2="456.00" stroke="#111" stroke-width="2.40" stroke-linecap="round" />
+<line x1="576.00" y1="456.00" x2="56.00" y2="56.00" stroke="#111" stroke-width="2.40" stroke-linecap="round" />
+<line x1="56.00" y1="56.00" x2="264.00" y2="456.00" stroke="#111" stroke-width="2.40" stroke-linecap="round" />
+<line x1="56.00" y1="356.00" x2="264.00" y2="456.00" stroke="#111" stroke-width="2.40" stroke-linecap="round" />
+<polyline points="56.00,441.00 71.00,441.00 71.00,456.00" fill="none" stroke="#111" stroke-width="2.10" />
+<text x="56.00" y="24.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linejoin="round">A</text>
+<text x="56.00" y="24.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="#111">A</text>
+<text x="24.00" y="480.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linejoin="round">B</text>
+<text x="24.00" y="480.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="#111">B</text>
+<text x="604.00" y="480.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linejoin="round">C</text>
+<text x="604.00" y="480.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="#111">C</text>
+<text x="24.00" y="356.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linejoin="round">D</text>
+<text x="24.00" y="356.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="#111">D</text>
+<text x="264.00" y="488.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="none" stroke="#ffffff" stroke-width="6.72" stroke-linejoin="round">E</text>
+<text x="264.00" y="488.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="24.0" text-anchor="middle" dominant-baseline="middle" fill="#111">E</text>
+</svg>
