@@ -67,7 +67,7 @@
       "id": "DA",
       "a": "D",
       "b": "A",
-      "style": "solid"
+      "style": "dashed"
     },
     {
       "id": "EF",
@@ -91,13 +91,13 @@
       "id": "HE",
       "a": "H",
       "b": "E",
-      "style": "dashed"
+      "style": "solid"
     },
     {
       "id": "AE",
       "a": "A",
       "b": "E",
-      "style": "dashed"
+      "style": "solid"
     },
     {
       "id": "BF",

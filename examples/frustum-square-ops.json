@@ -11,14 +11,14 @@
   { "op": "addSegment", "id": "AB", "a": "A", "b": "B", "style": "solid" },
   { "op": "addSegment", "id": "BC", "a": "B", "b": "C", "style": "solid" },
   { "op": "addSegment", "id": "CD", "a": "C", "b": "D", "style": "dashed" },
-  { "op": "addSegment", "id": "DA", "a": "D", "b": "A", "style": "solid" },
+  { "op": "addSegment", "id": "DA", "a": "D", "b": "A", "style": "dashed" },
 
   { "op": "addSegment", "id": "EF", "a": "E", "b": "F", "style": "solid" },
   { "op": "addSegment", "id": "FG", "a": "F", "b": "G", "style": "solid" },
   { "op": "addSegment", "id": "GH", "a": "G", "b": "H", "style": "solid" },
-  { "op": "addSegment", "id": "HE", "a": "H", "b": "E", "style": "dashed" },
+  { "op": "addSegment", "id": "HE", "a": "H", "b": "E", "style": "solid" },
 
-  { "op": "addSegment", "id": "AE", "a": "A", "b": "E", "style": "dashed" },
+  { "op": "addSegment", "id": "AE", "a": "A", "b": "E", "style": "solid" },
   { "op": "addSegment", "id": "BF", "a": "B", "b": "F", "style": "solid" },
   { "op": "addSegment", "id": "CG", "a": "C", "b": "G", "style": "solid" },
   { "op": "addSegment", "id": "DH", "a": "D", "b": "H", "style": "dashed" },
