@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.2.2" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.3" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.2.2" />
+  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.3" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -20,7 +20,7 @@
         <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
         <div class="brand-text">
           <span class="brand-name">Simple Diagram</span>
-          <span class="brand-sub">v13.2.2</span>
+          <span class="brand-sub">v13.3</span>
         </div>
       </div>
       <div class="tool-group" data-group="lang">
@@ -62,6 +62,13 @@
         <button type="button" class="style-btn" data-style="dashed" title="虛線（隱藏邊）" data-i18n-title="tip_style_dashed">┈┈</button>
         <button type="button" class="style-btn" data-style="dotted" title="點線（構造）" data-i18n-title="tip_style_dotted">····</button>
         <button type="button" class="style-btn" data-style="dashdot" title="點劃線" data-i18n-title="tip_style_dashdot">─·─</button>
+        <span class="fill-swatch-bar is-dim" id="fillPresetBar" title="填色陰影透明度" data-i18n-title="tip_fill_bar">
+          <button type="button" class="fill-swatch" data-fill-key="g10" title="灰影 10%" data-i18n-title="tip_fill_g10" style="--swatch:rgba(102,102,102,0.10)" aria-label="10%"></button>
+          <button type="button" class="fill-swatch active" data-fill-key="g20" title="灰影 20%" data-i18n-title="tip_fill_g20" style="--swatch:rgba(102,102,102,0.20)" aria-label="20%"></button>
+          <button type="button" class="fill-swatch" data-fill-key="g35" title="灰影 35%" data-i18n-title="tip_fill_g35" style="--swatch:rgba(102,102,102,0.35)" aria-label="35%"></button>
+          <button type="button" class="fill-swatch" data-fill-key="g50" title="灰影 50%" data-i18n-title="tip_fill_g50" style="--swatch:rgba(102,102,102,0.50)" aria-label="50%"></button>
+          <button type="button" class="fill-swatch" data-fill-key="bg22" title="藍灰影 22%" data-i18n-title="tip_fill_bg" style="--swatch:rgba(107,135,153,0.22)" aria-label="blue-gray"></button>
+        </span>
         <select id="labelSizeSelect" title="標籤字級" data-i18n-title="tip_label_size" data-i18n-aria="aria_label_size" aria-label="標籤字級"></select>
         <select id="rightAngleSizeSelect" title="直角／角弧大小" data-i18n-title="tip_mark_size" data-i18n-aria="aria_mark_size" aria-label="記號大小">
           <option value="7">小</option>
@@ -142,6 +149,9 @@
           </button>
           <button type="button" class="tool" data-tool="sector" title="扇形／弧段：圓心 → 起點 → 終點；工具列切換弧／扇形 (A)" data-i18n-title="tip_tool_sector">
             <span class="icon">◔</span><span class="label" data-i18n="tool_sector">扇弧</span>
+          </button>
+          <button type="button" class="tool" data-tool="fill" title="填色：依序點頂點圍封閉區（考試陰影）" data-i18n-title="tip_tool_fill">
+            <span class="icon">▣</span><span class="label" data-i18n="tool_fill">填色</span>
           </button>
           <button type="button" class="tool" data-tool="label" title="標籤：左鍵自訂／右鍵直接套預設" data-i18n-title="tip_tool_label">
             <span class="icon">A</span><span class="label" data-i18n="tool_label">標籤</span>
@@ -404,6 +414,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261021-release-v13.2.2"></script>
+  <script src="app.js?v=20261021-release-v13.3"></script>
 </body>
 </html>

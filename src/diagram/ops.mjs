@@ -17,12 +17,37 @@ function ensureArrays(doc) {
     "circles",
     "ellipses",
     "sectors",
+    "fills",
     "coordPlots",
   ];
   for (const k of keys) {
     if (!Array.isArray(doc[k])) doc[k] = [];
   }
   return doc;
+}
+
+function clampOpacity(n, fallback = 0.2) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return fallback;
+  return Math.min(1, Math.max(0, v));
+}
+
+function normalizeFillColor(c, fallback = "#666666") {
+  if (c == null || c === "") return fallback;
+  const s = String(c).trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+  if (/^#[0-9a-fA-F]{3}$/.test(s)) {
+    return (
+      "#" +
+      s[1] +
+      s[1] +
+      s[2] +
+      s[2] +
+      s[3] +
+      s[3]
+    ).toLowerCase();
+  }
+  throw new Error(`invalid fill color: ${c}`);
 }
 
 function requirePoint(doc, id, ctx) {
@@ -266,6 +291,28 @@ const HANDLERS = {
     return doc;
   },
 
+  /** Region fill: closed polygon by existing point ids (≥3), translucent solid. */
+  addFill(doc, op, nextId) {
+    const id = resolveId(op, nextId, "fill");
+    if (doc.fills.some((f) => f.id === id)) throw new Error(`addFill: duplicate id ${id}`);
+    const raw = op.pointIds != null ? op.pointIds : op.points;
+    if (!Array.isArray(raw) || raw.length < 3) {
+      throw new Error("addFill: pointIds must be an array of ≥3 point ids");
+    }
+    const pointIds = raw.map((x) => String(x));
+    for (const pid of pointIds) requirePoint(doc, pid, "addFill");
+    if (new Set(pointIds).size < 3) {
+      throw new Error("addFill: need at least 3 distinct point ids");
+    }
+    doc.fills.push({
+      id,
+      pointIds,
+      color: normalizeFillColor(op.color, "#666666"),
+      opacity: clampOpacity(op.opacity, 0.2),
+    });
+    return doc;
+  },
+
   addCoordPlot(doc, op, nextId) {
     const id = resolveId(op, nextId, "plot");
     const ox = Number(op.ox);
@@ -389,6 +436,7 @@ const HANDLERS = {
       circle: "circles",
       ellipse: "ellipses",
       sector: "sectors",
+      fill: "fills",
       coordPlot: "coordPlots",
     };
     const key = map[type];

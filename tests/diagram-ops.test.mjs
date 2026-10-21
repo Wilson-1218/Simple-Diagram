@@ -95,6 +95,22 @@ test("legacy missing formatVersion warns but ok", () => {
   assert.ok(v.warnings.some((w) => w.includes("formatVersion")));
 });
 
+test("addFill + remove fill", () => {
+  const doc = applyOps(null, [
+    { op: "addPoint", id: "A", x: 0, y: 0 },
+    { op: "addPoint", id: "B", x: 40, y: 0 },
+    { op: "addPoint", id: "C", x: 20, y: -30 },
+    { op: "addFill", id: "f1", pointIds: ["A", "B", "C"], color: "#666666", opacity: 0.2 },
+  ]);
+  assert.equal(doc.fills.length, 1);
+  assert.deepEqual(doc.fills[0].pointIds, ["A", "B", "C"]);
+  assert.equal(doc.fills[0].opacity, 0.2);
+  assert.equal(validateDiagram(doc).ok, true);
+  const removed = applyOps(doc, [{ op: "remove", type: "fill", id: "f1" }]);
+  assert.equal(removed.fills.length, 0);
+  assert.ok(OP_NAMES.includes("addFill"));
+});
+
 test("unknown formatVersion rejected", () => {
   const doc = emptyDiagram({ formatVersion: 99 });
   const v = validateDiagram(doc);
@@ -113,7 +129,9 @@ test("OP_NAMES covers core MVP ops", () => {
     "addEqualMark",
     "addCoordPlot",
     "addCurve",
+    "addFill",
     "setView",
+    "remove",
   ]) {
     assert.ok(OP_NAMES.includes(name), name);
   }

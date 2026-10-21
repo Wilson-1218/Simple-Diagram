@@ -13,6 +13,7 @@ const ARRAY_KEYS = [
   "circles",
   "ellipses",
   "sectors",
+  "fills",
   "coordPlots",
 ];
 

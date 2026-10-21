@@ -24,7 +24,7 @@
 | 確定性 ID | 自動 `p_0001`…；或 op 內顯式 `id` |
 
 **已覆蓋（HKDSE 立體＋座標 MVP）：**  
-`addPoint` · `addSegment` · `addLabel` · `addRightAngle` · `addAngleArc`／`addReflex` · `addParallelMark`／`addEqualMark` · `addLengthLabel` · `addMidTick` · `addCircle` · `addEllipse` · `addSector` · `addCoordPlot` · `addCurve` · `setView` · `setMeta` · `movePoint` · `remove`
+`addPoint` · `addSegment` · `addLabel` · `addRightAngle` · `addAngleArc`／`addReflex` · `addParallelMark`／`addEqualMark` · `addLengthLabel` · `addMidTick` · `addCircle` · `addEllipse` · `addSector` · `addFill` · `addCoordPlot` · `addCurve` · `setView` · `setMeta` · `movePoint` · `remove`（含 `type: "fill"`）
 
 ## C — AI 介面
 

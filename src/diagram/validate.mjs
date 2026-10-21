@@ -67,6 +67,7 @@ export function validateDiagram(doc) {
     "circles",
     "ellipses",
     "sectors",
+    "fills",
     "coordPlots",
   ];
 
@@ -241,6 +242,34 @@ export function validateDiagram(doc) {
       needPoint(s.endId, `${path}.endId`);
       if (s.mode != null && s.mode !== "arc" && s.mode !== "sector") {
         errors.push(`${path}.mode must be "arc" or "sector"`);
+      }
+    }
+  }
+
+  if (Array.isArray(d.fills)) {
+    for (let i = 0; i < d.fills.length; i++) {
+      const f = d.fills[i];
+      const path = `fills[${i}]`;
+      if (!f || typeof f !== "object") {
+        errors.push(`${path} must be an object`);
+        continue;
+      }
+      if (typeof f.id !== "string" || !f.id) errors.push(`${path}.id required`);
+      if (!Array.isArray(f.pointIds) || f.pointIds.length < 3) {
+        errors.push(`${path}.pointIds must be an array of ≥3 ids`);
+      } else {
+        for (let j = 0; j < f.pointIds.length; j++) {
+          needPoint(f.pointIds[j], `${path}.pointIds[${j}]`);
+        }
+      }
+      if (f.opacity != null && !Number.isFinite(Number(f.opacity))) {
+        errors.push(`${path}.opacity must be finite`);
+      } else if (f.opacity != null) {
+        const o = Number(f.opacity);
+        if (o < 0 || o > 1) errors.push(`${path}.opacity must be in [0,1]`);
+      }
+      if (f.color != null && typeof f.color !== "string") {
+        errors.push(`${path}.color must be a string`);
       }
     }
   }

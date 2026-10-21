@@ -499,6 +499,54 @@ button:disabled {
   opacity: 0.55;
 }
 
+/* Fill shade swatches (top props bar) */
+.fill-swatch-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(3px * var(--tb, 1));
+  margin-left: calc(4px * var(--tb, 1));
+  padding: calc(2px * var(--tb, 1)) calc(4px * var(--tb, 1));
+  border: 1px solid var(--bar-border);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.fill-swatch-bar.is-dim {
+  opacity: 0.5;
+}
+
+.fill-swatch {
+  width: calc(18px * var(--tb, 1));
+  height: calc(18px * var(--tb, 1));
+  min-width: calc(18px * var(--tb, 1));
+  min-height: calc(18px * var(--tb, 1));
+  padding: 0;
+  border: 1px solid #9a9a9a;
+  border-radius: 3px;
+  background:
+    linear-gradient(var(--swatch, rgba(102, 102, 102, 0.2)), var(--swatch, rgba(102, 102, 102, 0.2))),
+    repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 0 0 / 8px 8px;
+  cursor: pointer;
+}
+
+.fill-swatch:hover {
+  border-color: var(--accent);
+}
+
+.fill-swatch.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+body.dark-canvas .fill-swatch-bar {
+  background: #323842;
+}
+
+body.dark-canvas .fill-swatch {
+  border-color: #6a7280;
+}
+
 .tool-rail .rail-mini-btn {
   flex: 1 1 0;
   min-width: 0;

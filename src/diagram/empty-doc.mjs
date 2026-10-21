@@ -1,7 +1,7 @@
 /** Empty Simple Diagram document (formatVersion 1). */
 
 export const CURRENT_FORMAT_VERSION = 1;
-export const APP_VERSION = 13.2;
+export const APP_VERSION = 13.3;
 
 /**
  * @param {Record<string, unknown>} [overrides]
@@ -23,6 +23,7 @@ export function emptyDiagram(overrides = {}) {
     circles: [],
     ellipses: [],
     sectors: [],
+    fills: [],
     coordPlots: [],
     exportCrop: null,
     sectorMode: "arc",

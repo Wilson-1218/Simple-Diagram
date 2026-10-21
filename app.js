@@ -91,6 +91,7 @@
     circle: "圓／弧",
     ellipse: "橢圓",
     sector: "扇形／弧",
+    fill: "填色",
     exportCrop: "框選匯出",
     label: "標籤",
     intersect: "交點",
@@ -164,6 +165,18 @@
   /** Circular arc / sector pie: startId defines radius+start angle; endId end angle (on same r). */
   /** @type {{id:string,centerId:string,startId:string,endId:string,style?:string,mode?:string}[]} */
   let sectors = [];
+  /** Region shade fills: closed polygon of existing point ids (≥3). */
+  /** @type {{id:string,pointIds:string[],color:string,opacity:number}[]} */
+  let fills = [];
+  /** Active fill preset key (see FILL_PRESETS). */
+  let activeFillKey = "g20";
+  const FILL_PRESETS = [
+    { key: "g10", color: "#666666", opacity: 0.1 },
+    { key: "g20", color: "#666666", opacity: 0.2 },
+    { key: "g35", color: "#666666", opacity: 0.35 },
+    { key: "g50", color: "#666666", opacity: 0.5 },
+    { key: "bg22", color: "#6b8799", opacity: 0.22 },
+  ];
   /** @type {"arc"|"sector"} */
   let sectorMode = "arc";
   /** Optional world-space crop for export/preview: {minX,minY,maxX,maxY} */
@@ -248,7 +261,7 @@
       tool_exportCrop: "框選", tool_label: "標籤", tool_intersect: "交點",
       tool_rightAngle: "直角", tool_angleArc: "角弧", tool_midTick: "中點", tool_ratio: "比例",
       tool_parallel: "平行", tool_equal: "等長", tool_length: "長度", tool_perpendicular: "垂線",
-      tool_reflex: "優角", tool_coord: "座標",
+      tool_reflex: "優角", tool_coord: "座標", tool_fill: "填色",
       group_templates: "模板", group_props: "屬性", group_view: "檢視／匯出",
       rail_draw: "繪", rail_construct: "構", rail_marks: "記",
       rail_draw_title: "繪製", rail_construct_title: "構造", rail_marks_title: "記號",
@@ -317,6 +330,16 @@
       hint_perpendicular: "點選既有點後向下拖曳定長（點線；放開完成）",
       hint_parallel: "點線段：左鍵＝單箭 · 右鍵＝雙箭（工具列「單／雙」或 G 可預設）",
       hint_equal: "點線段：左鍵＝單劃 · 右鍵＝雙劃（工具列「單／雙」或 G 可預設）",
+      hint_fill: "依序點既有頂點 ≥3；Enter／雙擊／再點起點關閉 · 頂欄選透明度",
+      fill_need_point: "請點選既有頂點",
+      fill_need_more: "再點頂點（≥3）後 Enter／雙擊／起點關閉",
+      fill_closed: "已填色",
+      tip_fill_g10: "灰影 10%",
+      tip_fill_g20: "灰影 20%",
+      tip_fill_g35: "灰影 35%",
+      tip_fill_g50: "灰影 50%",
+      tip_fill_bg: "藍灰影 22%",
+      tip_fill_bar: "填色陰影透明度",
       btn_template: "模板 ▾", btn_save_tpl: "存為模板", btn_recent: "最近 ▾",
       btn_copy: "複製", btn_delete: "刪除", btn_clear: "清除", btn_save: "儲存", btn_load: "開啟",
       btn_export_menu: "匯出 ▾", btn_export_crop: "框選匯出", btn_clear_crop: "清除裁切", btn_preview: "預覽匯出",
@@ -381,6 +404,7 @@
       tip_mark_double: "雙箭／雙劃（G）",
       tip_mark_flip: "記號翻面（選取平行／等長記號後）",
       tip_tool_length: "線段長度標註（例：6）",
+      tip_tool_fill: "填色：依序點頂點圍封閉區（考試陰影）",
       tip_preview_crop: "關閉後拖曳框選匯出範圍",
       tip_preview_clear_crop: "改回自動裁切整圖",
       tip_preview_png: "儲存 PNG（Chrome／Edge 可選資料夾與檔名）",
@@ -404,7 +428,7 @@
       tool_exportCrop: "Crop", tool_label: "Label", tool_intersect: "Xsect",
       tool_rightAngle: "Right", tool_angleArc: "Angle", tool_midTick: "Mid", tool_ratio: "Ratio",
       tool_parallel: "Par", tool_equal: "Equal", tool_length: "Len", tool_perpendicular: "Perp",
-      tool_reflex: "Reflex", tool_coord: "Axes",
+      tool_reflex: "Reflex", tool_coord: "Axes", tool_fill: "Fill",
       group_templates: "Templates", group_props: "Props", group_view: "View / Export",
       rail_draw: "Draw", rail_construct: "Build", rail_marks: "Mark",
       rail_draw_title: "Draw", rail_construct_title: "Construct", rail_marks_title: "Marks",
@@ -473,6 +497,16 @@
       hint_perpendicular: "Pick a point, drag down for length (dotted)",
       hint_parallel: "Click segment: LMB single · RMB double chevron",
       hint_equal: "Click segment: LMB single · RMB double tick",
+      hint_fill: "Click existing vertices ≥3; Enter / double-click / first point to close",
+      fill_need_point: "Click an existing vertex",
+      fill_need_more: "Add vertices (≥3), then Enter / double-click / first point",
+      fill_closed: "Fill added",
+      tip_fill_g10: "Gray shade 10%",
+      tip_fill_g20: "Gray shade 20%",
+      tip_fill_g35: "Gray shade 35%",
+      tip_fill_g50: "Gray shade 50%",
+      tip_fill_bg: "Blue-gray shade 22%",
+      tip_fill_bar: "Fill shade opacity",
       btn_template: "Templates ▾", btn_save_tpl: "Save tpl", btn_recent: "Recent ▾",
       btn_copy: "Copy", btn_delete: "Delete", btn_clear: "Clear", btn_save: "Save", btn_load: "Open",
       btn_export_menu: "Export ▾", btn_export_crop: "Crop export", btn_clear_crop: "Clear crop", btn_preview: "Preview",
@@ -537,6 +571,7 @@
       tip_mark_double: "Double chevron/tick (G)",
       tip_mark_flip: "Flip mark (select parallel/equal mark first)",
       tip_tool_length: "Segment length label (e.g. 6)",
+      tip_tool_fill: "Fill: click vertices in order to shade a closed region",
       tip_preview_crop: "Close, then drag a crop box",
       tip_preview_clear_crop: "Back to auto crop of whole figure",
       tip_preview_png: "Save PNG (Chrome/Edge: pick folder & name)",
@@ -764,6 +799,7 @@
     selection = items ? items.filter(Boolean) : [];
     selected = selection.length ? selection[selection.length - 1] : null;
     syncToolbarFromSelection();
+    syncFillPresetUI();
   }
   function isSelected(type, id) {
     return selection.some((s) => s.type === type && s.id === id);
@@ -852,6 +888,15 @@
         activeEqualGroup = m.group ? 1 : 0;
         syncMarkGroupUI();
       }
+    } else if (selected.type === "fill") {
+      const f = fills.find((x) => x.id === selected.id);
+      if (f) {
+        const match = FILL_PRESETS.find(
+          (p) => p.color === f.color && Math.abs(p.opacity - f.opacity) < 0.001
+        );
+        if (match) activeFillKey = match.key;
+        syncFillPresetUI();
+      }
     }
   }
 
@@ -891,6 +936,9 @@
     for (const sec of sectors) {
       if (!before.sectors.has(sec.id)) items.push({ type: "sector", id: sec.id });
     }
+    for (const f of fills) {
+      if (!before.fills.has(f.id)) items.push({ type: "fill", id: f.id });
+    }
     setSelection(items);
   }
 
@@ -907,6 +955,7 @@
       circles: new Set(circles.map((c) => c.id)),
       ellipses: new Set(ellipses.map((e) => e.id)),
       sectors: new Set(sectors.map((s) => s.id)),
+      fills: new Set(fills.map((f) => f.id)),
     };
   }
 
@@ -1235,6 +1284,177 @@
     if (tool === "sector") updateStatus();
   }
 
+  function fillPresetByKey(key) {
+    return FILL_PRESETS.find((p) => p.key === key) || FILL_PRESETS[1];
+  }
+
+  function activeFillStyle() {
+    const p = fillPresetByKey(activeFillKey);
+    return { color: p.color, opacity: p.opacity };
+  }
+
+  function hexToRgba(hex, opacity) {
+    const h = String(hex || "#666666").replace("#", "");
+    const full =
+      h.length === 3 ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2] : h.padEnd(6, "0").slice(0, 6);
+    const r = parseInt(full.slice(0, 2), 16) || 0;
+    const g = parseInt(full.slice(2, 4), 16) || 0;
+    const b = parseInt(full.slice(4, 6), 16) || 0;
+    const a = Number.isFinite(Number(opacity)) ? Math.min(1, Math.max(0, Number(opacity))) : 0.2;
+    return "rgba(" + r + "," + g + "," + b + "," + a + ")";
+  }
+
+  function syncFillPresetUI() {
+    document.querySelectorAll("[data-fill-key]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.fillKey === activeFillKey);
+    });
+    const bar = document.getElementById("fillPresetBar");
+    if (bar) {
+      const selFill = selection.some((s) => s.type === "fill");
+      bar.classList.toggle("is-dim", tool !== "fill" && !selFill);
+    }
+  }
+
+  function setFillPreset(key, applyToSelection) {
+    const preset = fillPresetByKey(key);
+    activeFillKey = preset.key;
+    syncFillPresetUI();
+    if (applyToSelection) {
+      const targets = selection.filter((s) => s.type === "fill");
+      if (targets.length) {
+        pushHistory();
+        for (const t of targets) {
+          const f = fills.find((x) => x.id === t.id);
+          if (f) {
+            f.color = preset.color;
+            f.opacity = preset.opacity;
+          }
+        }
+        draw();
+      }
+    }
+    if (tool === "fill") updateStatus();
+  }
+
+  function fillWorldPoints(fill) {
+    if (!fill || !Array.isArray(fill.pointIds)) return null;
+    const pts = [];
+    for (const id of fill.pointIds) {
+      const p = pointById(id);
+      if (!p) return null;
+      pts.push(p);
+    }
+    return pts.length >= 3 ? pts : null;
+  }
+
+  function pointInPolygon(wx, wy, pts) {
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const xi = pts[i].x;
+      const yi = pts[i].y;
+      const xj = pts[j].x;
+      const yj = pts[j].y;
+      const intersect =
+        yi > wy !== yj > wy && wx < ((xj - xi) * (wy - yi)) / (yj - yi + 0) + xi;
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  function nearestFillHit(wx, wy) {
+    // Topmost fill wins (last in array drawn later among fills)
+    for (let i = fills.length - 1; i >= 0; i--) {
+      const f = fills[i];
+      const pts = fillWorldPoints(f);
+      if (pts && pointInPolygon(wx, wy, pts)) return f;
+    }
+    return null;
+  }
+
+  function drawFillShape(fill, selected, toScreenFn) {
+    const pts = fillWorldPoints(fill);
+    if (!pts) return;
+    const toS = toScreenFn || ((x, y) => worldToScreen(x, y));
+    const s0 = toS(pts[0].x, pts[0].y);
+    ctx.beginPath();
+    ctx.moveTo(s0.x, s0.y);
+    for (let i = 1; i < pts.length; i++) {
+      const s = toS(pts[i].x, pts[i].y);
+      ctx.lineTo(s.x, s.y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = hexToRgba(fill.color, fill.opacity);
+    ctx.fill();
+    if (selected) {
+      ctx.strokeStyle = darkCanvas ? "rgba(126,200,240,0.95)" : "rgba(42,122,176,0.9)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function addFillFromPointIds(pointIds, color, opacity, skipHist) {
+    if (!pointIds || pointIds.length < 3) return null;
+    if (!skipHist) pushHistory();
+    const f = {
+      id: uid(),
+      pointIds: [...pointIds],
+      color: color || activeFillStyle().color,
+      opacity: opacity != null ? opacity : activeFillStyle().opacity,
+    };
+    fills.push(f);
+    return f;
+  }
+
+  function commitFillDraft() {
+    if (!draft || draft.kind !== "fill") return false;
+    if (!draft.pointIds || draft.pointIds.length < 3) {
+      statusHint.textContent = t("fill_need_more");
+      return false;
+    }
+    const style = activeFillStyle();
+    const created = addFillFromPointIds(draft.pointIds, style.color, style.opacity);
+    draft = null;
+    if (created) {
+      setSelection([{ type: "fill", id: created.id }]);
+      statusHint.textContent = t("fill_closed");
+    }
+    updateStatus();
+    draw();
+    return !!created;
+  }
+
+  function handleFillClick(world) {
+    // MVP: only existing vertices (exam solids already have corners)
+    const sn = nearestPointHit(world.x, world.y);
+    if (!sn || !sn.id) {
+      statusHint.textContent = t("fill_need_point");
+      return;
+    }
+    const pid = sn.id;
+    if (!draft || draft.kind !== "fill") {
+      draft = { kind: "fill", pointIds: [pid], cursor: { x: world.x, y: world.y } };
+      statusHint.textContent = t("fill_need_more");
+      draw();
+      return;
+    }
+    // Close by clicking first point again
+    if (draft.pointIds.length >= 3 && pid === draft.pointIds[0]) {
+      commitFillDraft();
+      return;
+    }
+    if (pid === draft.pointIds[draft.pointIds.length - 1]) return;
+    // Avoid immediate revisit of non-first points mid-chain (allow if closing)
+    draft.pointIds.push(pid);
+    draft.cursor = { x: world.x, y: world.y };
+    statusHint.textContent =
+      draft.pointIds.length >= 3
+        ? t("hint_fill")
+        : t("fill_need_more");
+    draw();
+  }
+
   /** Geometry for a sector/arc: radius from center→start; end angle from endId. */
   function sectorGeom(sec) {
     const c = pointById(sec.centerId);
@@ -1354,6 +1574,7 @@
       ratio: t("hint_ratio"),
       length: t("hint_length"),
       perpendicular: t("hint_perpendicular"),
+      fill: t("hint_fill"),
     };
     statusHint.textContent = hints[tool] || "";
   }
@@ -1376,6 +1597,7 @@
     syncCanvasPanCursor();
     syncMarkGroupUI();
     syncSectorModeUI();
+    syncFillPresetUI();
     updateStatus();
     draw();
   }
@@ -1465,6 +1687,7 @@
       circles,
       ellipses,
       sectors,
+      fills,
       coordPlots,
       nextLetter,
       labelFontSize,
@@ -1514,6 +1737,12 @@
     circles = data.circles || [];
     ellipses = data.ellipses || [];
     sectors = data.sectors || [];
+    fills = (data.fills || []).map((f) => ({
+      id: f.id,
+      pointIds: Array.isArray(f.pointIds) ? [...f.pointIds] : [],
+      color: f.color || "#666666",
+      opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+    }));
     if (data.activeParallelGroup != null) activeParallelGroup = data.activeParallelGroup ? 1 : 0;
     if (data.activeEqualGroup != null) activeEqualGroup = data.activeEqualGroup ? 1 : 0;
     if (data.activeArcGroup != null) activeArcGroup = data.activeArcGroup ? 1 : 0;
@@ -1718,6 +1947,8 @@
     if (sec) return { type: "sector", id: sec.id };
     const seg = nearestSegmentHit(wx, wy);
     if (seg) return { type: "segment", id: seg.id };
+    const fillHit = nearestFillHit(wx, wy);
+    if (fillHit) return { type: "fill", id: fillHit.id };
     const clab = nearestCoordCurveLabelHit(wx, wy);
     if (clab) return { type: "coordPlot", id: clab.plotId, curveId: clab.curveId, label: true };
     const cp = nearestCoordPlotHit(wx, wy);
@@ -2157,6 +2388,7 @@
       !circles.length &&
       !ellipses.length &&
       !sectors.length &&
+      !fills.length &&
       !coordPlots.length;
     if (empty) {
       statusHint.textContent = "畫布已是空白";
@@ -2176,6 +2408,7 @@
     circles = [];
     ellipses = [];
     sectors = [];
+    fills = [];
     coordPlots = [];
     setSelection([]);
     draft = null;
@@ -2213,6 +2446,7 @@
       sectors = sectors.filter(
         (s) => s.centerId !== id && s.startId !== id && s.endId !== id
       );
+      fills = fills.filter((f) => !(f.pointIds || []).includes(id));
       midTicks = midTicks.filter((m) => m.pointId !== id);
       const segIds = new Set(segments.map((s) => s.id));
       midTicks = midTicks.filter((m) => segIds.has(m.segmentId));
@@ -2245,6 +2479,8 @@
       ellipses = ellipses.filter((e) => e.id !== id);
     } else if (type === "sector") {
       sectors = sectors.filter((s) => s.id !== id);
+    } else if (type === "fill") {
+      fills = fills.filter((f) => f.id !== id);
     } else if (type === "coordPlot") {
       coordPlots = coordPlots.filter((p) => p.id !== id);
     }
@@ -5484,6 +5720,44 @@
         ctx.setLineDash([]);
       }
     }
+    if (draft.kind === "fill" && draft.pointIds && draft.pointIds.length) {
+      const style = activeFillStyle();
+      const pts = [];
+      for (const id of draft.pointIds) {
+        const p = pointById(id);
+        if (p) pts.push(p);
+      }
+      if (pts.length) {
+        ctx.beginPath();
+        const s0 = worldToScreen(pts[0].x, pts[0].y);
+        ctx.moveTo(s0.x, s0.y);
+        for (let i = 1; i < pts.length; i++) {
+          const s = worldToScreen(pts[i].x, pts[i].y);
+          ctx.lineTo(s.x, s.y);
+        }
+        if (draft.cursor) {
+          const sc = worldToScreen(draft.cursor.x, draft.cursor.y);
+          ctx.lineTo(sc.x, sc.y);
+        }
+        if (pts.length >= 3) {
+          ctx.closePath();
+          ctx.fillStyle = hexToRgba(style.color, Math.min(0.35, style.opacity));
+          ctx.fill();
+        }
+        ctx.strokeStyle = "rgba(42,122,176,0.7)";
+        ctx.lineWidth = 1.25;
+        ctx.setLineDash([5, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        for (const p of pts) {
+          const s = worldToScreen(p.x, p.y);
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(42,122,176,0.9)";
+          ctx.fill();
+        }
+      }
+    }
     if ((draft.kind === "rightAngle" || draft.kind === "angleArc") && draft.vertex) {
       const v = pointById(draft.vertex);
       if (v) {
@@ -5646,6 +5920,10 @@
       ctx.stroke();
     }
 
+    for (const f of fills) {
+      drawFillShape(f, isSelected("fill", f.id));
+    }
+
     for (const cir of circles) {
       drawCircle(cir, isSelected("circle", cir.id));
     }
@@ -5781,6 +6059,13 @@
       return;
     }
 
+    // Fill: click existing vertices to define a closed polygon
+    if (tool === "fill" && e.button === 0) {
+      e.preventDefault();
+      handleFillClick(world);
+      return;
+    }
+
     if (e.button !== 0) return;
 
     if (tool === "exportCrop") {
@@ -5886,6 +6171,11 @@
           } else if (s.type === "label") {
             const lab = labels.find((l) => l.id === s.id);
             if (lab) pointIds.add(lab.pointId);
+          } else if (s.type === "fill") {
+            const f = fills.find((x) => x.id === s.id);
+            if (f && Array.isArray(f.pointIds)) {
+              for (const pid of f.pointIds) pointIds.add(pid);
+            }
           }
         }
         if (pointIds.size) {
@@ -6310,6 +6600,16 @@
         hits.push({ type: "sector", id: sec.id });
       }
     }
+    for (const f of fills) {
+      const pts = fillWorldPoints(f);
+      if (!pts) continue;
+      let sx = 0, sy = 0;
+      for (const p of pts) { sx += p.x; sy += p.y; }
+      const mx = sx / pts.length, my = sy / pts.length;
+      if (mx >= x0 && mx <= x1 && my >= y0 && my <= y1) {
+        hits.push({ type: "fill", id: f.id });
+      }
+    }
     if (additive) {
       const map = new Map(selection.map((s) => [s.type + ":" + s.id, s]));
       for (const h of hits) map.set(h.type + ":" + h.id, h);
@@ -6497,6 +6797,13 @@
       return;
     }
 
+    if (draft && draft.kind === "fill") {
+      const sn = snapWorld(world.x, world.y) || nearestPointHit(world.x, world.y);
+      draft.cursor = sn ? { x: sn.x, y: sn.y } : { x: world.x, y: world.y };
+      draw();
+      return;
+    }
+
     if (
       draft &&
       (draft.kind === "line" ||
@@ -6637,6 +6944,7 @@
       !circles.length &&
       !ellipses.length &&
       !sectors.length &&
+      !fills.length &&
       !segments.length &&
       !coordPlots.length;
     if (empty) return { minX: -100, minY: -100, maxX: 100, maxY: 100 };
@@ -6675,6 +6983,11 @@
       // Conservative AABB of the circle (covers any minor arc/sector)
       expandBounds(b, g.c.x - g.r, g.c.y - g.r);
       expandBounds(b, g.c.x + g.r, g.c.y + g.r);
+    }
+    for (const f of fills) {
+      const pts = fillWorldPoints(f);
+      if (!pts) continue;
+      for (const p of pts) expandBounds(b, p.x, p.y);
     }
     for (const cp of coordPlots) {
       const bb = coordPlotBounds(cp);
@@ -6766,6 +7079,21 @@
     darkCanvas = false; // export always light paper / black ink
     c.fillStyle = "#ffffff";
     c.fillRect(0, 0, off.width, off.height);
+
+    for (const f of fills) {
+      const pts = fillWorldPoints(f);
+      if (!pts) continue;
+      const s0 = toS(pts[0].x, pts[0].y);
+      c.beginPath();
+      c.moveTo(s0.x, s0.y);
+      for (let i = 1; i < pts.length; i++) {
+        const s = toS(pts[i].x, pts[i].y);
+        c.lineTo(s.x, s.y);
+      }
+      c.closePath();
+      c.fillStyle = hexToRgba(f.color, f.opacity);
+      c.fill();
+    }
 
     for (const seg of segments) {
       const a = pointById(seg.a);
@@ -7151,6 +7479,17 @@
     };
 
     let body = "";
+    for (const f of fills) {
+      const pts = fillWorldPoints(f);
+      if (!pts) continue;
+      const d = pts
+        .map((p, i) => {
+          const s = toS(p.x, p.y);
+          return (i === 0 ? "M" : "L") + s.x.toFixed(2) + " " + s.y.toFixed(2);
+        })
+        .join(" ") + " Z";
+      body += `<path d="${d}" fill="${hexToRgba(f.color, f.opacity)}" stroke="none" />\n`;
+    }
     for (const seg of segments) {
       const a = pointById(seg.a);
       const bp = pointById(seg.b);
@@ -7434,7 +7773,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: 13.22,
+      version: 13.3,
       app: "simple-diagram",
       points,
       segments,
@@ -7448,6 +7787,7 @@ ${body}</svg>`;
       circles,
       ellipses,
       sectors,
+      fills,
       coordPlots,
       exportCrop,
       sectorMode,
@@ -7500,6 +7840,7 @@ ${body}</svg>`;
       "circles",
       "ellipses",
       "sectors",
+      "fills",
       "coordPlots",
     ];
     for (const k of arrayKeys) {
@@ -7598,6 +7939,7 @@ ${body}</svg>`;
       !circles.length &&
       !ellipses.length &&
       !sectors.length &&
+      !fills.length &&
       !coordPlots.length &&
       !angleArcs.length
     );
@@ -7685,6 +8027,12 @@ ${body}</svg>`;
     circles = data.circles || [];
     ellipses = data.ellipses || [];
     sectors = data.sectors || [];
+    fills = (data.fills || []).map((f) => ({
+      id: f.id,
+      pointIds: Array.isArray(f.pointIds) ? [...f.pointIds] : [],
+      color: f.color || "#666666",
+      opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+    }));
     exportCrop = data.exportCrop || null;
     if (data.sectorMode === "sector" || data.sectorMode === "arc") sectorMode = data.sectorMode;
     nextLetter = data.nextLetter || "A";
@@ -7713,6 +8061,7 @@ ${body}</svg>`;
     pendingLengthSeg = null;
     history[histIndex] = snapshot();
     syncSectorModeUI();
+    syncFillPresetUI();
     syncExportCropUI();
     syncMarkGroupUI();
     updateStatus();
@@ -8482,6 +8831,7 @@ ${body}</svg>`;
     const circleIds = new Set();
     const ellipseIds = new Set();
     const sectorIds = new Set();
+    const fillIds = new Set();
     for (const s of selection) {
       if (s.type === "point") pointIds.add(s.id);
       else if (s.type === "segment") {
@@ -8508,13 +8858,19 @@ ${body}</svg>`;
           pointIds.add(sec.startId);
           pointIds.add(sec.endId);
         }
+      } else if (s.type === "fill") {
+        fillIds.add(s.id);
+        const f = fills.find((c) => c.id === s.id);
+        if (f && Array.isArray(f.pointIds)) {
+          for (const pid of f.pointIds) pointIds.add(pid);
+        }
       } else if (s.type === "label") {
         const lab = labels.find((l) => l.id === s.id);
         if (lab) pointIds.add(lab.pointId);
       }
     }
-    if (!pointIds.size && !segIds.size && !circleIds.size && !ellipseIds.size && !sectorIds.size) {
-      statusHint.textContent = "目前選取無法複製（請選點／線／圓／橢圓／弧）";
+    if (!pointIds.size && !segIds.size && !circleIds.size && !ellipseIds.size && !sectorIds.size && !fillIds.size) {
+      statusHint.textContent = "目前選取無法複製（請選點／線／圓／橢圓／弧／填色）";
       return;
     }
     pushHistory();
@@ -8583,6 +8939,20 @@ ${body}</svg>`;
       };
       sectors.push(ns);
       newSel.push({ type: "sector", id: ns.id });
+    }
+    for (const id of fillIds) {
+      const f = fills.find((c) => c.id === id);
+      if (!f) continue;
+      const mapped = (f.pointIds || []).map((pid) => idMap[pid]).filter(Boolean);
+      if (mapped.length < 3) continue;
+      const nf = {
+        id: uid(),
+        pointIds: mapped,
+        color: f.color || "#666666",
+        opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+      };
+      fills.push(nf);
+      newSel.push({ type: "fill", id: nf.id });
     }
     for (const id of pointIds) {
       const lab = labels.find((l) => l.pointId === id);
@@ -8729,6 +9099,13 @@ ${body}</svg>`;
       canvas.classList.add("space-pan", "panning");
       e.preventDefault();
       return;
+    }
+    if (e.key === "Enter") {
+      if (draft && draft.kind === "fill") {
+        e.preventDefault();
+        commitFillDraft();
+        return;
+      }
     }
     if (e.key === "Escape") {
       const openDlg = document.querySelector("dialog[open]");
@@ -9223,6 +9600,11 @@ ${body}</svg>`;
 
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("dblclick", (e) => {
+    if (tool === "fill" && draft && draft.kind === "fill") {
+      e.preventDefault();
+      commitFillDraft();
+      return;
+    }
     const pos = canvasPos(e);
     const world = screenToWorld(pos.x, pos.y);
     const hit = hitTest(world.x, world.y);
@@ -9336,6 +9718,12 @@ ${body}</svg>`;
   initHistory();
   syncMarkGroupUI();
   syncSectorModeUI();
+  syncFillPresetUI();
+  document.querySelectorAll("[data-fill-key]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setFillPreset(btn.dataset.fillKey, true);
+    });
+  });
   syncExportCropUI();
   renderRecentMenu();
   applyDarkCanvasClass();

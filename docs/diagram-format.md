@@ -35,6 +35,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `circles` | array | 圓（中心＋圓周上一點） |
 | `ellipses` | array | 軸對齊橢圓 |
 | `sectors` | array | 圓弧／扇形 |
+| `fills` | array | 區域填色（封閉多邊形陰影） |
 | `coordPlots` | array | 簡易座標圖 |
 | `exportCrop` | object\|null | 匯出裁切 `{minX,minY,maxX,maxY}` |
 | `sectorMode` | `"arc"`\|`"sector"` | UI 扇弧模式 |
@@ -132,6 +133,15 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 
 - `mode`：`"arc"`｜`"sector"`
 
+### fills
+
+```json
+{ "id": "f1", "pointIds": ["A", "B", "C", "D"], "color": "#666666", "opacity": 0.2 }
+```
+
+- 依既有頂點順序圍成封閉多邊形（≥3）；`opacity` 0–1；繪於線段／標籤之下
+- UI 色票：灰 10／20／35／50% 與藍灰約 22%（`#6b8799`）
+
 ### coordPlots
 
 ```json
@@ -188,7 +198,7 @@ node tools/validate-diagram.mjs examples/cube-sketch.json
 
 純函式：`applyOps(doc, ops[]) → doc`（見 `src/diagram/`）。
 
-常用 op：`addPoint`、`addSegment`、`addLabel`、`addRightAngle`、`addAngleArc`／`addReflex`、`addParallelMark`、`addEqualMark`、`addLengthLabel`、`addCircle`、`addEllipse`、`addSector`、`addCoordPlot`、`addCurve`、`setView`、`setMeta`、`movePoint`、`remove`。
+常用 op：`addPoint`、`addSegment`、`addLabel`、`addRightAngle`、`addAngleArc`／`addReflex`、`addParallelMark`、`addEqualMark`、`addLengthLabel`、`addCircle`、`addEllipse`、`addSector`、`addFill`、`addCoordPlot`、`addCurve`、`setView`、`setMeta`、`movePoint`、`remove`（`type: "fill"`）。
 
 CLI：
 

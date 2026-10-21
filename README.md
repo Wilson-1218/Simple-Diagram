@@ -61,7 +61,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.2.2）
+## 目前版本 / Current version（v13.3）
 
 **左側兩欄網格**（繪製／構造／記號）｜**上方屬性／檔案列**｜**匯出 ▾**
 
@@ -69,15 +69,16 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 長度沿邊傾斜；標籤避線；對齊輔助（不進匯出）；離開警告僅未儲存時。  
 **v13.2**：新增 AI／自動化 JSON＋ops 層（`formatVersion`、CLI、MCP、驗證）；人手畫布流程不變。  
 **v13.2.1**：修復關閉的 `<dialog>`（含座標圖對話框）因 CSS `display` 而出現在頁面底部。  
-**v13.2.2**：上線品牌 logo（等距立方體＋粗體 SD）與 favicon。
+**v13.2.2**：上線品牌 logo（等距立方體＋粗體 SD）與 favicon。  
+**v13.3**：填色／Fill — 多透明度陰影，依序點既有頂點圍封閉區；PNG／SVG／JSON（`fills`）／ops `addFill`。
 
 | 位置 | 內容 |
 |---|---|
-| **左：繪製** | 選取、手掌、點、線段、圓弧、橢圓、扇弧（旁：**弧｜扇**）、標籤 |
+| **左：繪製** | 選取、手掌、點、線段、圓弧、橢圓、扇弧（旁：**弧｜扇**）、**填色**、標籤 |
 | **左：構造** | 交點、中點、比例、水平、垂線、座標 |
 | **左：記號** | 直角、角弧、優角、平行、等長（旁：**單｜雙｜翻面**）、長度 |
 | **上：模板** | 模板 ▾、「存為模板」 |
-| **上：屬性** | 線型、字級 |
+| **上：屬性** | 線型、**填色色票**、字級 |
 | **上：檢視** | 網格、深色、最近、複製／復原、「匯出 ▾」、`?` |
 
 更多說明：[`docs/simple-diagram-features.md`](docs/simple-diagram-features.md) · 視覺風格：[`docs/simple-diagram-style.md`](docs/simple-diagram-style.md) · JSON 格式：[`docs/diagram-format.md`](docs/diagram-format.md)
