@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.1" />
+  <title>Simple Diagram · Wilson</title>
+  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600&family=STIX+Two+Text:ital@0;1&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+    <header class="top-bar toolbar" role="toolbar" aria-label="屬性與檔案" data-i18n-aria="aria_toolbar_props">
+      <div class="brand">
+        <span class="brand-name">Simple Diagram</span>
+        <span class="brand-sub">v13.1</span>
+      </div>
+      <div class="tool-group" data-group="lang">
+        <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
+        <button type="button" id="btnLangEn" class="lang-btn" data-lang="en" title="English UI" data-i18n-title="tip_lang_en">EN</button>
+      </div>
+
+      <div class="tool-group" data-group="templates">
+        <span class="group-title" data-i18n="group_templates">模板</span>
+        <div class="menu-wrap">
+          <button type="button" id="btnTemplateMenu" class="menu-btn" title="常用平面／立體模板" data-i18n-title="tip_templates" aria-haspopup="true" aria-expanded="false">模板 ▾</button>
+          <div class="menu-panel menu-panel-wide" id="templateMenu" hidden>
+            <div class="menu-section-title">平面</div>
+            <button type="button" data-tpl="rightTri">直角三角形</button>
+            <button type="button" data-tpl="isoTri">等腰三角形</button>
+            <button type="button" data-tpl="parallelogram">平行四邊形</button>
+            <button type="button" data-tpl="trapezoid">梯形</button>
+            <button type="button" data-tpl="pentagon">正五邊形</button>
+            <button type="button" data-tpl="circleCenter">圓＋圓心</button>
+            <div class="menu-section-title">立體</div>
+            <button type="button" data-tpl="tetra">四面體</button>
+            <button type="button" data-tpl="pyramid">正方錐</button>
+            <button type="button" data-tpl="altBase">高到底</button>
+            <button type="button" data-tpl="triPrism">三棱柱</button>
+            <button type="button" data-tpl="cuboid">長方體</button>
+            <button type="button" data-tpl="cylinder">圓柱</button>
+            <button type="button" data-tpl="cone">圓錐</button>
+            <div class="menu-section-title">自訂</div>
+            <div id="customTplList" class="custom-tpl-list"></div>
+            <p class="menu-empty" id="customTplEmpty">尚無自訂模板</p>
+          </div>
+        </div>
+        <button type="button" id="btnSaveTemplate" title="將目前選取存為自訂模板" data-i18n-title="tip_save_tpl">存為模板</button>
+      </div>
+
+      <div class="tool-group" data-group="props">
+        <span class="group-title" data-i18n="group_props">屬性</span>
+        <button type="button" class="style-btn active" data-style="solid" title="實線" data-i18n-title="tip_style_solid">━━</button>
+        <button type="button" class="style-btn" data-style="dashed" title="虛線（隱藏邊）" data-i18n-title="tip_style_dashed">┈┈</button>
+        <button type="button" class="style-btn" data-style="dotted" title="點線（構造）" data-i18n-title="tip_style_dotted">····</button>
+        <button type="button" class="style-btn" data-style="dashdot" title="點劃線" data-i18n-title="tip_style_dashdot">─·─</button>
+        <select id="labelSizeSelect" title="標籤字級" data-i18n-title="tip_label_size" data-i18n-aria="aria_label_size" aria-label="標籤字級"></select>
+        <select id="rightAngleSizeSelect" title="直角／角弧大小" data-i18n-title="tip_mark_size" data-i18n-aria="aria_mark_size" aria-label="記號大小">
+          <option value="7">小</option>
+          <option value="10" selected>中</option>
+          <option value="14">大</option>
+          <option value="18">特大</option>
+        </select>
+      </div>
+
+      <div class="tool-group" data-group="view">
+        <span class="group-title" data-i18n="group_view">檢視／匯出</span>
+        <label class="check-opt" title="開啟網格顯示與格點吸附（預設開啟）" data-i18n-title="tip_grid">
+          <input type="checkbox" id="chkGridSnap" checked /> <span data-i18n="chk_grid">網格</span>
+        </label>
+        <select id="gridModeSelect" title="網格樣式" data-i18n-title="tip_grid_mode" data-i18n-aria="aria_grid_mode" aria-label="網格樣式">
+          <option value="square" data-i18n="grid_square">方格</option>
+          <option value="triangle" selected data-i18n="grid_triangle">三角格</option>
+        </select>
+        <label class="check-opt" title="深色畫布（僅編輯；匯出仍為白底黑線）" data-i18n-title="tip_dark">
+          <input type="checkbox" id="chkDarkCanvas" /> <span data-i18n="chk_dark">深色畫布</span>
+        </label>
+        <div class="menu-wrap">
+          <button type="button" id="btnRecentMenu" class="menu-btn" title="最近開啟的專案" data-i18n-title="tip_recent" aria-haspopup="true" aria-expanded="false">最近 ▾</button>
+          <div class="menu-panel menu-panel-wide" id="recentMenu" hidden>
+            <div class="menu-section-title">最近開啟</div>
+            <div id="recentList" class="custom-tpl-list"></div>
+            <p class="menu-empty" id="recentEmpty">尚無記錄</p>
+            <div class="menu-section-title">備份</div>
+            <button type="button" id="btnRestoreBackup">還原自動備份</button>
+          </div>
+        </div>
+        <button type="button" id="btnCopy" title="複製選取 (Ctrl+D)" data-i18n-title="tip_copy">複製</button>
+        <button type="button" id="btnUndo" title="復原 (Ctrl+Z)" data-i18n-title="tip_undo">↩</button>
+        <button type="button" id="btnRedo" title="重做 (Ctrl+Y)" data-i18n-title="tip_redo">↪</button>
+        <button type="button" id="btnDelete" title="刪除 (Delete)" data-i18n-title="tip_delete">刪除</button>
+        <button type="button" id="btnClearAll" title="清除整個圖形" data-i18n-title="tip_clear">清除</button>
+        <button type="button" id="btnSave" title="儲存 JSON" data-i18n-title="tip_save">儲存</button>
+        <button type="button" id="btnLoad" title="開啟 JSON" data-i18n-title="tip_load">開啟</button>
+        <div class="menu-wrap">
+          <button type="button" id="btnExportMenu" class="menu-btn" title="匯出選項" data-i18n-title="tip_export_menu" aria-haspopup="true" aria-expanded="false" data-i18n="btn_export_menu">匯出 ▾</button>
+          <div class="menu-panel" id="exportMenu" hidden>
+            <button type="button" id="btnExportCrop" title="自選範圍匯出：拖曳框選裁切範圍" data-i18n-title="tip_export_crop" data-tool="exportCrop" data-i18n="btn_export_crop">框選匯出</button>
+            <button type="button" id="btnClearExportCrop" title="清除自選匯出範圍" data-i18n-title="tip_clear_crop" hidden data-i18n="btn_clear_crop">清除裁切</button>
+            <button type="button" id="btnExportPreview" title="預覽匯出效果（若有裁切則只預覽該區）" data-i18n-title="tip_preview" data-i18n="btn_preview">預覽匯出</button>
+            <button type="button" id="btnExportPng" title="匯出 PNG（Chrome／Edge 可選資料夾與檔名）" data-i18n-title="tip_export_png">PNG</button>
+            <button type="button" id="btnExportSvg" title="匯出 SVG（Chrome／Edge 可選資料夾與檔名）" data-i18n-title="tip_export_svg">SVG</button>
+            <label class="check-opt menu-check" title="匯出 PNG／SVG 時隱藏頂點圓點（預設開啟）" data-i18n-title="tip_hide_pts">
+              <input type="checkbox" id="chkHideExportPoints" checked /> <span data-i18n="chk_hide_pts">匯出隱藏點</span>
+            </label>
+          </div>
+        </div>
+        <button type="button" id="btnShortcuts" title="快捷鍵一覽 (?)" data-i18n-title="tip_shortcuts">?</button>
+        <input type="file" id="fileInput" accept="application/json,.json" hidden />
+      </div>
+    </header>
+
+    <div class="body-row">
+      <aside class="tool-rail" role="toolbar" aria-label="繪圖工具" data-i18n-aria="aria_toolbar_tools">
+        <div class="rail-section" data-group="draw">
+          <span class="rail-title" title="繪製" data-i18n="rail_draw" data-i18n-title="rail_draw_title">繪</span>
+          <button type="button" class="tool active" data-tool="select" title="選取／移動 (V)" data-i18n-title="tip_tool_select">
+            <span class="icon">↖</span><span class="label" data-i18n="tool_select">選取</span>
+          </button>
+          <button type="button" class="tool" data-tool="hand" title="手掌：拖曳平移畫布（空白鍵亦可暫用）" data-i18n-title="tip_tool_hand">
+            <span class="icon">✋</span><span class="label" data-i18n="tool_hand">手掌</span>
+          </button>
+          <button type="button" class="tool" data-tool="point" title="點 (P)" data-i18n-title="tip_tool_point">
+            <span class="icon">·</span><span class="label" data-i18n="tool_point">點</span>
+          </button>
+          <button type="button" class="tool" data-tool="line" title="線段 (L)" data-i18n-title="tip_tool_line">
+            <span class="icon">／</span><span class="label" data-i18n="tool_line">線段</span>
+          </button>
+          <button type="button" class="tool" data-tool="circle" title="圓／作圖弧：圓心 → 半徑點 (C)" data-i18n-title="tip_tool_circle">
+            <span class="icon">○</span><span class="label" data-i18n="tool_circle">圓弧</span>
+          </button>
+          <button type="button" class="tool" data-tool="ellipse" title="橢圓：圓心 → 水平半徑 → 鉛垂半徑；左鍵實線／右鍵虛線 (E)" data-i18n-title="tip_tool_ellipse">
+            <span class="icon">⬭</span><span class="label" data-i18n="tool_ellipse">橢圓</span>
+          </button>
+          <button type="button" class="tool" data-tool="sector" title="扇形／弧段：圓心 → 起點 → 終點；工具列切換弧／扇形 (A)" data-i18n-title="tip_tool_sector">
+            <span class="icon">◔</span><span class="label" data-i18n="tool_sector">扇弧</span>
+          </button>
+          <button type="button" class="tool" data-tool="label" title="標籤：左鍵自訂／右鍵直接套預設" data-i18n-title="tip_tool_label">
+            <span class="icon">A</span><span class="label" data-i18n="tool_label">標籤</span>
+          </button>
+          <span class="rail-mini-opts" id="sectorModeBar" title="弧段僅畫弧；扇形含兩條半徑" data-i18n-title="tip_sector_bar">
+            <button type="button" class="mark-group-btn rail-mini-btn active" data-sector-mode="arc" title="只畫圓弧" data-i18n-title="tip_sector_arc">弧</button>
+            <button type="button" class="mark-group-btn rail-mini-btn" data-sector-mode="sector" title="扇形（弧＋兩半徑）" data-i18n-title="tip_sector_pie">扇</button>
+          </span>
+        </div>
+
+        <div class="rail-section" data-group="construct">
+          <span class="rail-title" title="構造" data-i18n="rail_construct" data-i18n-title="rail_construct_title">構</span>
+          <button type="button" class="tool" data-tool="intersect" title="兩線交點" data-i18n-title="tip_tool_intersect">
+            <span class="icon">✕</span><span class="label" data-i18n="tool_intersect">交點</span>
+          </button>
+          <button type="button" class="tool" data-tool="midTick" title="中點：建立中點並加標籤 (M)" data-i18n-title="tip_tool_midTick">
+            <span class="icon">M</span><span class="label" data-i18n="tool_midTick">中點</span>
+          </button>
+          <button type="button" class="tool" data-tool="ratio" title="比例分點 (R)" data-i18n-title="tip_tool_ratio">
+            <span class="icon">∶</span><span class="label" data-i18n="tool_ratio">比例</span>
+          </button>
+          <button type="button" class="tool" data-tool="horizontal" title="水平線：點選一點後左右拖曳定長 (H)" data-i18n-title="tip_tool_horizontal">
+            <span class="icon">─</span><span class="label" data-i18n="tool_horizontal">水平</span>
+          </button>
+          <button type="button" class="tool" data-tool="perpendicular" title="垂線：點選一點後向下拖曳定長" data-i18n-title="tip_tool_perpendicular">
+            <span class="icon">↓</span><span class="label" data-i18n="tool_perpendicular">垂線</span>
+          </button>
+          <button type="button" class="tool" data-tool="coord" title="座標軸：點選原點位置；可加曲線" data-i18n-title="tip_tool_coord">
+            <span class="icon">⊥</span><span class="label" data-i18n="tool_coord">座標</span>
+          </button>
+        </div>
+
+        <div class="rail-section" data-group="marks">
+          <span class="rail-title" title="記號" data-i18n="rail_marks" data-i18n-title="rail_marks_title">記</span>
+          <button type="button" class="tool" data-tool="rightAngle" title="直角記號" data-i18n-title="tip_tool_rightAngle">
+            <span class="icon">∟</span><span class="label" data-i18n="tool_rightAngle">直角</span>
+          </button>
+          <button type="button" class="tool" data-tool="angleArc" title="角弧：非直角的弧線記號" data-i18n-title="tip_tool_angleArc">
+            <span class="icon">⌒</span><span class="label" data-i18n="tool_angleArc">角弧</span>
+          </button>
+          <button type="button" class="tool" data-tool="reflex" title="優角：大於 180° 的角弧記號" data-i18n-title="tip_tool_reflex">
+            <span class="icon">◡</span><span class="label" data-i18n="tool_reflex">優角</span>
+          </button>
+          <button type="button" class="tool" data-tool="parallel" title="平行記號：左鍵單箭／右鍵雙箭" data-i18n-title="tip_tool_parallel">
+            <span class="icon">≫</span><span class="label" data-i18n="tool_parallel">平行</span>
+          </button>
+          <button type="button" class="tool" data-tool="equal" title="等長記號：左鍵單劃／右鍵雙劃" data-i18n-title="tip_tool_equal">
+            <span class="icon">⫽</span><span class="label" data-i18n="tool_equal">等長</span>
+          </button>
+          <span class="rail-mini-opts" id="markGroupBar" title="單／雙記號與翻面" data-i18n-title="tip_mark_bar">
+            <button type="button" class="mark-group-btn rail-mini-btn active" data-mark-group="0" title="單箭／單劃（G）" data-i18n-title="tip_mark_single">單</button>
+            <button type="button" class="mark-group-btn rail-mini-btn" data-mark-group="1" title="雙箭／雙劃（G）" data-i18n-title="tip_mark_double">雙</button>
+            <button type="button" class="rail-mini-btn" id="btnFlipMark" title="記號翻面（選取平行／等長記號後）" data-i18n-title="tip_mark_flip">翻面</button>
+          </span>
+          <button type="button" class="tool" data-tool="length" title="線段長度標註（例：6）" data-i18n-title="tip_tool_length">
+            <span class="icon">6</span><span class="label" data-i18n="tool_length">長度</span>
+          </button>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <canvas id="canvas" tabindex="0" aria-label="繪圖畫布" data-i18n-aria="aria_canvas"></canvas>
+        <div id="status" class="status" role="status">
+          <span id="statusTool">工具：選取</span>
+          <span id="statusSnap">吸附：—</span>
+          <span id="statusHint" data-i18n="hint_idle">空白鍵＋拖曳平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵</span>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="labelDialog">
+    <form method="dialog" id="labelForm">
+      <label for="labelInput">標籤文字（數學斜體）</label>
+      <input id="labelInput" type="text" maxlength="8" value="A" autofocus />
+      <label for="labelSizeInput">字級</label>
+      <select id="labelSizeInput" aria-label="此標籤字級"></select>
+      <div class="dialog-actions">
+        <button type="submit" value="ok">確定</button>
+        <button type="button" id="labelCancel" value="cancel">取消</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="ratioDialog">
+    <form method="dialog" id="ratioForm">
+      <p class="dialog-lead">線段比例（由<strong>第一端點 → 第二端點</strong>）</p>
+      <label for="ratioInput">比例（例：1:2 或 1/3）</label>
+      <input id="ratioInput" type="text" value="1:1" autofocus />
+      <p class="dialog-note">1:2＝距起點 1/(1+2)；1/3＝距起點 1/3。會建立分點、短劃與標籤。</p>
+      <label for="ratioLabelInput">標籤</label>
+      <input id="ratioLabelInput" type="text" maxlength="8" value="M" />
+      <div class="dialog-actions">
+        <button type="submit" value="ok">確定</button>
+        <button type="button" id="ratioCancel" value="cancel">取消</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="lengthDialog">
+    <form method="dialog" id="lengthForm">
+      <p class="dialog-lead">線段長度標註</p>
+      <label for="lengthInput">長度文字（例：6、6 cm）</label>
+      <input id="lengthInput" type="text" maxlength="12" value="6" autofocus />
+      <div class="dialog-actions">
+        <button type="submit" value="ok">確定</button>
+        <button type="button" id="lengthCancel" value="cancel">取消</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="arcLabelDialog">
+    <form method="dialog" id="arcLabelForm">
+      <p class="dialog-lead">角弧標籤（可留空）</p>
+      <div class="greek-picks" id="greekPicks" role="group" aria-label="希臘字母快速選">
+        <button type="button" class="greek-btn" data-greek="α">α</button>
+        <button type="button" class="greek-btn" data-greek="β">β</button>
+        <button type="button" class="greek-btn" data-greek="γ">γ</button>
+        <button type="button" class="greek-btn" data-greek="θ">θ</button>
+        <button type="button" class="greek-btn" data-greek="δ">δ</button>
+        <button type="button" class="greek-btn" data-greek="φ">φ</button>
+      </div>
+      <label for="arcLabelInput">文字（例：72°、x°、∠ABC）</label>
+      <input id="arcLabelInput" type="text" maxlength="16" value="" autofocus placeholder="α 或 72° …" />
+      <div class="dialog-actions">
+        <button type="button" id="arcLabelSkip" value="skip">留空</button>
+        <button type="submit" value="ok">確定</button>
+        <button type="button" id="arcLabelCancel" value="cancel">取消</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="exportPreviewDialog">
+    <div class="export-preview-panel">
+      <h2>匯出預覽</h2>
+      <p class="dialog-note" id="exportPreviewNote">預覽＝實際匯出效果（白底、無選取框）</p>
+      <div class="export-preview-frame">
+        <img id="exportPreviewImg" alt="匯出預覽" />
+      </div>
+      <p class="export-preview-size" id="exportPreviewSize" aria-live="polite"></p>
+      <div class="dialog-actions">
+        <button type="button" id="btnPreviewSetCrop" title="關閉後拖曳框選匯出範圍" data-i18n-title="tip_preview_crop">框選範圍</button>
+        <button type="button" id="btnPreviewClearCrop" title="改回自動裁切整圖" data-i18n-title="tip_preview_clear_crop">清除裁切</button>
+        <button type="button" id="btnPreviewDownloadPng" title="儲存 PNG（Chrome／Edge 可選資料夾與檔名）" data-i18n-title="tip_preview_png">下載 PNG</button>
+        <button type="button" id="btnPreviewDownloadSvg" title="儲存 SVG（Chrome／Edge 可選資料夾與檔名）" data-i18n-title="tip_preview_svg">下載 SVG</button>
+        <button type="button" id="btnPreviewClose">關閉</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="templateNameDialog">
+    <form method="dialog" id="templateNameForm">
+      <p class="dialog-lead">將選取存為自訂模板</p>
+      <label for="templateNameInput">模板名稱</label>
+      <input id="templateNameInput" type="text" maxlength="32" value="我的模板" autofocus />
+      <p class="dialog-note">儲存於本機瀏覽器；插入時置於畫面中央。可含點、線、圓、橢圓與常見記號。</p>
+      <div class="dialog-actions">
+        <button type="submit" value="ok">儲存</button>
+        <button type="button" id="templateNameCancel" value="cancel">取消</button>
+      </div>
+    </form>
+  </dialog>
+
+  
+  <dialog id="coordDialog" class="coord-dialog">
+    <form method="dialog" id="coordForm" class="coord-form">
+      <p class="dialog-lead" data-i18n="coord_title">座標圖／曲線</p>
+
+      <div class="coord-form-body">
+        <div class="coord-col-left">
+          <section class="coord-card" aria-labelledby="coordSecWindow">
+            <h3 class="coord-card-title" id="coordSecWindow" data-i18n="coord_sec_window">視窗</h3>
+            <div class="coord-field">
+              <label for="coordWindow" data-i18n="coord_window">視窗（軸單位）xmin,xmax,ymin,ymax</label>
+              <input id="coordWindow" type="text" value="-2,6,-2,6" autocomplete="off" />
+            </div>
+            <div class="coord-field">
+              <label for="coordAxisLabels" data-i18n="coord_axis_labels">軸標籤 x,y</label>
+              <input id="coordAxisLabels" type="text" value="x,y" autocomplete="off" />
+            </div>
+          </section>
+
+          <section class="coord-card" aria-labelledby="coordSecDisplay">
+            <h3 class="coord-card-title" id="coordSecDisplay" data-i18n="coord_sec_display">顯示</h3>
+            <label class="check-opt coord-check">
+              <input type="checkbox" id="coordShowTickLabels" checked />
+              <span data-i18n="coord_show_tick_labels">顯示軸上數值</span>
+            </label>
+            <label class="check-opt coord-check">
+              <input type="checkbox" id="coordAngleAxis" />
+              <span data-i18n="coord_angle_axis">角度軸刻度</span>
+            </label>
+            <p class="dialog-note" data-i18n="coord_angle_axis_note">開啟後 x 軸改為 π（弧度）或 °（角度）刻度，並可暫用三角視窗；關閉後還原原本視窗與數字刻度。</p>
+          </section>
+
+          <section class="coord-card" aria-labelledby="coordSecTrig">
+            <h3 class="coord-card-title" id="coordSecTrig" data-i18n="coord_sec_trig">三角</h3>
+            <div class="coord-field">
+              <label for="coordXAngleUnit" data-i18n="coord_x_unit">三角參數單位</label>
+              <select id="coordXAngleUnit">
+                <option value="rad" data-i18n="coord_x_unit_rad">弧度 rad</option>
+                <option value="deg" data-i18n="coord_x_unit_deg">角度 °</option>
+              </select>
+              <p class="dialog-note coord-unit-note" data-i18n="coord_x_unit_note">只影響 sin／cos／tan：角度模式下 Bx、C 以「度」計（內部轉弧度）。與「角度軸刻度」分開。</p>
+            </div>
+          </section>
+        </div>
+
+        <div class="coord-col-right">
+          <section class="coord-card coord-card-curves" aria-labelledby="coordSecCurves">
+            <h3 class="coord-card-title" id="coordSecCurves" data-i18n="coord_sec_curves">曲線</h3>
+            <p class="dialog-note" data-i18n="coord_curves_note">可加多條曲線；對數可改底數（例 10、2、e）。</p>
+            <div id="coordCurvesList" class="coord-curves-list"></div>
+            <div class="coord-add-row">
+              <select id="coordAddCurveType" aria-label="新增曲線類型" data-i18n-aria="aria_add_curve">
+                <option value="line">y = mx + c</option>
+                <option value="quad">y = ax² + bx + c</option>
+                <option value="log">y = a·log_b(x)</option>
+                <option value="ln">y = a·ln(x)</option>
+                <option value="exp">y = a·bˣ</option>
+                <option value="sin">y = A sin(Bx+C)+D</option>
+                <option value="cos">y = A cos(Bx+C)+D</option>
+                <option value="tan">y = A tan(Bx)</option>
+                <option value="circle">(x−h)²+(y−k)²=r²</option>
+              </select>
+              <button type="button" id="coordAddCurve" data-i18n="coord_add_curve">＋曲線</button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div class="dialog-actions coord-form-actions">
+        <button type="submit" value="ok" data-i18n="btn_ok">確定</button>
+        <button type="button" id="coordCancel" value="cancel" data-i18n="btn_cancel">取消</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="shortcutsDialog">
+    <div class="shortcuts-panel shortcuts-panel-wide">
+      <h2>快捷鍵（可自訂）</h2>
+      <p class="dialog-note">點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。</p>
+      <p class="shortcut-conflict" id="shortcutConflict" hidden></p>
+      <div id="shortcutMapList" class="shortcut-map-list"></div>
+      <div class="dialog-actions">
+        <button type="button" id="shortcutsReset">還原預設</button>
+        <button type="button" id="shortcutsClose">關閉</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="backupRestoreDialog">
+    <form method="dialog" id="backupRestoreForm">
+      <p class="dialog-lead">發現自動備份</p>
+      <p class="dialog-note" id="backupRestoreNote">是否還原上次編輯內容？</p>
+      <div class="dialog-actions">
+        <button type="submit" value="ok">還原</button>
+        <button type="button" id="backupRestoreCancel" value="cancel">略過</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js?v=20261021-release-v13.1"></script>
+</body>
+</html>
