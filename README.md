@@ -111,13 +111,17 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ## AI / Automation（JSON + ops）
 
+**路徑（Pages）**：開啟 [`ai.html`](https://wilson-1218.github.io/Simple-Diagram/ai.html)（或本機 `ai.html`）→ 在 Chrome **分享分頁給 Gemini** → AI 產出 ops／圖檔 JSON → App **Json ▾ → 貼上 JSON**。頁內**沒有**原生聊天；只作說明與 schema。
+
+**Path**: [`ai.html`](https://wilson-1218.github.io/Simple-Diagram/ai.html) → share tab with Gemini → paste JSON in the app. No in-page chat.
+
 > **Training packs**（考試「對著畫」評測等）留在 Agent Store／Context，**不上 GitHub**。Core AI layer（ops、MCP、macros、shared catalog）仍在本 repo。
 
 | 中文 | English |
 |---|---|
 | AI **不**模擬滑鼠／DOM；只產生或修改 **JSON 圖檔** | AI does **not** click the UI; it edits the **JSON document** |
 | Templates 選單與 MCP `list_templates` 同源目錄 | Shared `TEMPLATE_CATALOG` in `src/diagram/templates.mjs` |
-| 人手「開啟」可直接載入 AI 產出的 JSON | Human **Open** loads AI-produced JSON as usual |
+| 人手「開啟」／「貼上 JSON」可載入 AI 產出 | Human **Open**／**Paste JSON** loads AI output |
 | Schema：`formatVersion: 1`（缺省視為 v1） | Schema: `formatVersion: 1` (missing ⇒ v1) |
 
 ### CLI

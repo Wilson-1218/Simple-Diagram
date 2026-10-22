@@ -310,11 +310,11 @@
         <tr><td><code>alignPoints</code></td><td><code>pointIds</code> ≥2；<code>axis</code>：<code>left</code>｜<code>center</code>｜<code>right</code>｜<code>top</code>｜<code>middle</code>｜<code>bottom</code></td></tr>
         <tr><td><code>distributePoints</code></td><td><code>pointIds</code> ≥3；<code>axis</code>：<code>x</code>｜<code>y</code></td></tr>
         <tr><td><code>equalizeSegments</code></td><td><code>segmentIds</code> ≥2；可選 <code>length</code>（否則用中位長）</td></tr>
-        <tr><td><code>setLayers</code></td><td><code>gridShow</code> <code>gridLock</code> <code>coordsShow</code> <code>coordsLock</code> <code>helpersShow</code> <code>helpersLock</code>（bool）；或包在 <code>layers</code></td></tr>
+        <tr><td><code>setLayers</code></td><td><code>gridShow</code>, <code>coordsShow</code>, <code>coordsLock</code>, <code>helpersShow</code>, <code>helpersLock</code>（bool）；或包在 <code>layers</code>。<code>gridLock</code> 仍可寫入檔案但 UI 不再暴露（無畫布行為）</td></tr>
         <tr><td><code>setMeta</code></td><td><code>gridSnap</code>, <code>gridMode</code>（<code>square</code>｜<code>triangle</code>）, <code>name</code>, <code>labelFontSize</code>, <code>rightAngleSize</code>, <code>hideExportPoints</code>, <code>layers</code>, <code>nextLetter</code>, …</td></tr>
       </tbody>
     </table>
-    <p class="note">helpers＝記號／標籤層；預設 <code>helpersLock:true</code>（跟著幾何，解鎖後可拖）。</p>
+    <p class="note">App「圖層 ▾」：網格＝開關＋格種（聯動 <code>gridSnap</code>/<code>gridShow</code>）；下列僅<strong>座標</strong>／<strong>記號</strong>顯示＋鎖定。helpers＝記號／標籤層，預設 <code>helpersLock:true</code>；座標鎖定＝不可選取／拖移座標圖。</p>
 
     <h2>12. 模板與 macros</h2>
     <h3>12.1 <code>insertTemplate</code>＝<code>addTemplate</code></h3>
