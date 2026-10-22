@@ -3,163 +3,337 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Simple Diagram · AI JSON guide</title>
-  <meta name="description" content="How AI (Gemini, etc.) should output ops JSON for Simple Diagram — paste into the app. No repo access needed." />
+  <title>Simple Diagram · AI JSON guide (full ops)</title>
+  <meta name="description" content="Complete ops JSON guide for Simple Diagram — coordinate plots, construction, fills, shapes, macros. Paste into the app. Pages-only." />
   <style>
     :root {
-      --ink: #1a1a1a;
-      --muted: #555;
-      --line: #ddd;
-      --bg: #faf9f7;
-      --code: #f0eeea;
-      --accent: #0b5f6b;
-      --tip: #e8f2f3;
+      --ink: #1a1a1a; --muted: #555; --line: #ddd; --code: #f0eeea;
+      --accent: #0b5f6b; --tip: #e8f2f3;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font: 16px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      font: 15px/1.45 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
       color: var(--ink);
       background: linear-gradient(165deg, #f7f3ec 0%, #eef2f4 55%, #faf9f7 100%);
       min-height: 100vh;
     }
-    main {
-      max-width: 44rem;
-      margin: 0 auto;
-      padding: 2rem 1.25rem 3rem;
-    }
-    h1 {
-      font-size: 1.65rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin: 0 0 0.35rem;
-    }
-    .lede { color: var(--muted); margin: 0 0 1rem; font-size: 0.98rem; }
-    .share-tip {
-      margin: 0 0 1.25rem;
-      padding: 0.85rem 1rem;
-      background: var(--tip);
-      border: 1px solid #b7d4d8;
-      border-radius: 6px;
-      font-size: 0.95rem;
-    }
-    .share-tip p { margin: 0 0 0.45rem; }
-    .share-tip p:last-child { margin: 0; }
+    main { max-width: 48rem; margin: 0 auto; padding: 1.75rem 1.15rem 3rem; }
+    h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 0.3rem; }
     h2 {
-      font-size: 1.05rem;
-      margin: 1.5rem 0 0.5rem;
-      border-top: 1px solid var(--line);
-      padding-top: 1rem;
+      font-size: 1.02rem; margin: 1.35rem 0 0.45rem;
+      border-top: 1px solid var(--line); padding-top: 0.85rem;
     }
-    p, li { margin: 0 0 0.55rem; }
-    ul, ol { padding-left: 1.2em; margin: 0 0 0.75rem; }
-    code, pre {
-      font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
-      font-size: 0.82rem;
+    h3 { font-size: 0.95rem; margin: 0.85rem 0 0.35rem; }
+    .lede { color: var(--muted); margin: 0 0 0.85rem; font-size: 0.95rem; }
+    .share-tip {
+      margin: 0 0 1rem; padding: 0.75rem 0.9rem; background: var(--tip);
+      border: 1px solid #b7d4d8; border-radius: 6px; font-size: 0.92rem;
     }
-    code {
-      background: var(--code);
-      padding: 0.1em 0.35em;
-      border-radius: 3px;
-    }
+    .share-tip p { margin: 0 0 0.4rem; }
+    .share-tip p:last-child { margin: 0; }
+    p, li { margin: 0 0 0.45rem; }
+    ul, ol { padding-left: 1.15em; margin: 0 0 0.65rem; }
+    code, pre { font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace; font-size: 0.78rem; }
+    code { background: var(--code); padding: 0.08em 0.3em; border-radius: 3px; }
     pre {
-      background: var(--code);
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 0.75rem 0.9rem;
-      overflow-x: auto;
-      margin: 0.45rem 0 0.9rem;
+      background: var(--code); border: 1px solid var(--line); border-radius: 6px;
+      padding: 0.65rem 0.8rem; overflow-x: auto; margin: 0.35rem 0 0.75rem;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.88rem;
-      margin: 0.4rem 0 0.9rem;
-    }
-    th, td {
-      border: 1px solid var(--line);
-      padding: 0.35rem 0.5rem;
-      text-align: left;
-      vertical-align: top;
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 0.3rem 0 0.75rem; }
+    th, td { border: 1px solid var(--line); padding: 0.3rem 0.45rem; text-align: left; vertical-align: top; }
     th { background: var(--code); font-weight: 600; }
     a { color: var(--accent); }
-    .links { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin: 1rem 0 0.5rem; align-items: center; }
+    .links { display: flex; flex-wrap: wrap; gap: 0.65rem 1.1rem; margin: 0.85rem 0 0.45rem; }
     .links a { font-weight: 600; }
-    .note { font-size: 0.9rem; color: var(--muted); }
-    .en { font-size: 0.92rem; color: var(--muted); }
+    .note { font-size: 0.86rem; color: var(--muted); }
+    .en { font-size: 0.88rem; color: var(--muted); }
+    .toc { font-size: 0.88rem; columns: 2; gap: 1.5rem; margin: 0.5rem 0 1rem; }
+    .toc li { break-inside: avoid; }
+    .warn { font-size: 0.86rem; color: #6a3a1a; }
   </style>
 </head>
 <body>
   <main>
-    <h1>Simple Diagram · AI JSON</h1>
-    <p class="lede">給 Gemini／其他 AI：只需讀本頁，輸出 JSON，讓使用者在 App 裡「貼上 JSON」。<br />
-      <span class="en">For Gemini etc.: read this page only → output JSON → user pastes in the app.</span>
+    <h1>Simple Diagram · AI JSON（完整 ops）</h1>
+    <p class="lede">給 Gemini／其他 AI：只需讀本頁，輸出 ops JSON（或完整圖檔），使用者在 App「貼上 JSON」。<br />
+      <span class="en">Pages-only guide: read this → output JSON → user pastes. Covers all JSON-reachable ops.</span>
     </p>
 
     <div class="share-tip">
-      <p><strong>ZH</strong>：請在 Chrome 把<strong>本頁分享給 Gemini</strong>（分享分頁，或對話裡用 @ 加入此頁），讓它學會 ops／JSON 格式，再產出 JSON；回到 App 按「貼上 JSON」。</p>
-      <p class="en"><strong>EN</strong>: In Chrome, <strong>share this page with Gemini</strong> (share tab, or @-add this page in the chat) so it can learn the JSON/ops format, then produce JSON — paste it in the app with <strong>Paste JSON</strong>.</p>
+      <p><strong>ZH</strong>：請在 Chrome 把<strong>本頁分享給 Gemini</strong>（分享分頁，或對話裡用 @ 加入此頁），讓它學會 ops／JSON，再產出 JSON；回到 App 按「貼上 JSON」。</p>
+      <p class="en"><strong>EN</strong>: In Chrome, <strong>share this page with Gemini</strong> (share tab / @-add page), then produce JSON — paste with <strong>Paste JSON</strong>.</p>
     </div>
 
     <p class="links">
       <a href="./">← Open app</a>
-      <a href="./#paste-json">Paste JSON in app</a>
+      <a href="./#paste-json">Paste JSON</a>
     </p>
+
+    <h2>0. 目錄 / Contents</h2>
+    <ol class="toc">
+      <li>產出什麼</li>
+      <li>座標與視窗</li>
+      <li>標籤 ox/oy</li>
+      <li>基本幾何</li>
+      <li>構造（含 UI-only）</li>
+      <li>圓件／切線</li>
+      <li>記號</li>
+      <li>填色 addFill</li>
+      <li>addShape</li>
+      <li><strong>座標圖 addCoordPlot</strong></li>
+      <li>對齊／圖層／視圖</li>
+      <li>模板／macros</li>
+      <li>範例</li>
+      <li>規則</li>
+    </ol>
 
     <h2>1. 產出什麼 / What to output</h2>
     <ul>
       <li><strong>Ops 陣列</strong>（推薦）：<code>[{ "op": "addPoint", … }, …]</code></li>
-      <li>或<strong>完整圖檔</strong>：含 <code>formatVersion</code>、<code>points</code>、<code>segments</code>… 的物件</li>
-      <li>也可 <code>{ "ops": [ … ] }</code></li>
+      <li>或 <code>{ "ops": [ … ] }</code></li>
+      <li>或完整圖檔（含 <code>formatVersion</code>、<code>points</code>…）</li>
     </ul>
-    <p class="note">不要模擬滑鼠／UI。順序：先點／線／圓，再記號與填色。之後的 op 只能引用已有 id。<br />
-      <span class="en">Do not click the UI. Points → edges → circles → marks/fills. Later ops may only reference existing ids.</span>
-    </p>
+    <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
+      <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
+    <p class="note">已知 ops（36，含別名）：<code>addPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
 
     <h2>2. 座標與視窗 / Coordinates &amp; view</h2>
     <ul>
       <li>世界座標；<strong>+y 向下</strong></li>
-      <li>建議落在畫面內：<strong>x ≈ 100–600</strong>，<strong>y ≈ 100–500</strong>（預設視窗中心約 <code>view {x:400,y:300,scale:2}</code>）。避免大／負座標除非刻意。</li>
-      <li>點請給穩定 <code>id</code>（如 <code>A</code>、<code>B</code>、<code>O</code>）</li>
-      <li>線段 <code>style</code>：<code>solid</code>（預設）｜<code>dashed</code>（隱藏邊）｜<code>dotted</code>（構造）｜<code>dashdot</code></li>
+      <li>建議圖形落在 <strong>x ≈ 100–600</strong>，<strong>y ≈ 100–500</strong>（預設 <code>view {x:400,y:300,scale:2}</code>）</li>
+      <li>線段 <code>style</code>：<code>solid</code>｜<code>dashed</code>（隱藏邊）｜<code>dotted</code>（構造）｜<code>dashdot</code></li>
+      <li><code>setView</code>：<code>x</code>, <code>y</code>（視窗中心世界座標）, <code>scale</code> &gt; 0</li>
     </ul>
-    <p class="en note">Prefer x≈100–600, y≈100–500 so pasted figures land on-screen. Default empty view centers near (400,300) at scale 2.</p>
 
-    <h2>3. 標籤偏移 / Label offsets</h2>
-    <p><code>addLabel</code>：<code>pointId</code>、<code>text</code>；可選 <code>ox</code>、<code>oy</code>、<code>size</code>。</p>
+    <h2>3. 標籤 / Labels</h2>
+    <p><code>addLabel</code>：必填 <code>pointId</code>, <code>text</code>；可選 <code>ox</code>, <code>oy</code>, <code>size</code>, <code>id</code>。</p>
     <ul>
-      <li><code>ox</code> / <code>oy</code> = 相對該點的<strong>世界座標偏移</strong>（與點的 x/y 同一單位；<strong>+y 向下</strong>）</li>
-      <li>預設 <code>ox: 0</code>、<code>oy: -14</code>（標籤略在點上方）</li>
-      <li>每點一個標籤（後寫覆蓋）</li>
+      <li><code>ox</code>/<code>oy</code> = 相對該點的<strong>世界座標偏移</strong>（與 x/y 同單位；+y 向下）</li>
+      <li>預設 <code>ox:0</code>, <code>oy:-14</code>；每點一個標籤（後寫覆蓋）</li>
     </ul>
 
-    <h2>4. 角記號 / Angle marks</h2>
+    <h2>4. 基本幾何 / Core geometry</h2>
     <table>
-      <thead>
-        <tr><th>op</th><th>必填 / required</th><th>可選 / optional</th></tr>
-      </thead>
+      <thead><tr><th>op</th><th>必填</th><th>可選 / tip</th></tr></thead>
+      <tbody>
+        <tr><td><code>addPoint</code></td><td><code>x</code>, <code>y</code></td><td><code>id</code>, <code>marker</code>（<code>"x"</code>｜<code>"foot"</code>）</td></tr>
+        <tr><td><code>addSegment</code></td><td><code>a</code>, <code>b</code>（點 id）</td><td><code>id</code>, <code>style</code></td></tr>
+        <tr><td><code>addCircle</code></td><td><code>centerId</code>, <code>throughId</code></td><td><code>id</code>, <code>style</code> — 半徑＝兩點距離</td></tr>
+        <tr><td><code>addEllipse</code></td><td><code>centerId</code>, <code>rxId</code>, <code>ryId</code></td><td><code>style</code>, <code>backDashed</code>（3D 背弧）— 軸對齊</td></tr>
+        <tr><td><code>addSector</code></td><td><code>centerId</code>, <code>startId</code>, <code>endId</code></td><td><code>mode</code>：<code>"arc"</code>（預設）｜<code>"sector"</code>（含兩半徑）</td></tr>
+        <tr><td><code>movePoint</code></td><td><code>id</code>, <code>x</code>, <code>y</code></td><td><code>marker</code></td></tr>
+        <tr><td><code>remove</code></td><td><code>type</code>, <code>id</code></td><td>type：<code>point</code>｜<code>segment</code>｜<code>label</code>｜<code>circle</code>｜<code>ellipse</code>｜<code>sector</code>｜<code>fill</code>｜<code>coordPlot</code>｜<code>rightAngle</code>｜<code>angleArc</code>｜<code>midTick</code>｜<code>parallelMark</code>｜<code>equalMark</code>｜<code>lengthLabel</code></td></tr>
+      </tbody>
+    </table>
+
+    <h2>5. 構造 / Construction</h2>
+    <table>
+      <thead><tr><th>需求</th><th>JSON 做法</th></tr></thead>
       <tbody>
         <tr>
-          <td><code>addRightAngle</code></td>
-          <td><code>vertex</code>, <code>arm1</code>, <code>arm2</code>（點 id）</td>
-          <td><code>size</code></td>
+          <td><strong>垂足 foot</strong></td>
+          <td><code>addFoot</code>：必填 <code>pointId</code> +（<code>segmentId</code> <em>或</em> 線兩端 <code>a</code>/<code>b</code>）。可選 <code>footId</code>, <code>drawSegment</code>（預設 true＝畫高）, <code>style</code>, <code>label</code>/<code>labelText</code>, <code>marker</code>（預設 <code>"foot"</code>；<code>false</code> 關閉）</td>
         </tr>
         <tr>
-          <td><code>addAngleArc</code></td>
-          <td><code>vertex</code>, <code>arm1</code>, <code>arm2</code></td>
-          <td><code>size</code>, <code>group</code> (0/1), <code>text</code>, <code>reflex</code> (bool)</td>
+          <td>中點／比例分點</td>
+          <td><strong>無專用 op</strong>。自行算座標 <code>addPoint</code> + <code>addLabel</code>。比例記號：先建點，再 <code>addMidTick</code> <code>{segmentId, pointId}</code>（短劃；中點工具本身不畫劃）</td>
         </tr>
         <tr>
-          <td><code>addReflex</code></td>
-          <td>同 <code>addAngleArc</code></td>
-          <td>強制 <code>reflex: true</code>（優角 &gt;180°）</td>
+          <td>兩線交點／水平線／鉛垂線</td>
+          <td><strong>無專用 op</strong>（UI only）。交點：算交點座標後 <code>addPoint</code>。水平／鉛垂：<code>addPoint</code> + <code>addSegment</code>（同 y 或同 x）</td>
         </tr>
       </tbody>
     </table>
-    <p class="note"><code>arm1</code>/<code>arm2</code> 是角兩邊上的點 id（不是線段 id）。</p>
+    <p class="warn">UI tools <code>intersect</code> / <code>midTick</code>（建中點）/ <code>ratio</code> / <code>horizontal</code> / <code>perpendicular</code> 沒有同名 JSON op — 用座標算出後 <code>addPoint</code>/<code>addSegment</code>。</p>
 
-    <h2>5. 最小直角三角形例 / Minimal right △</h2>
+    <h2>6. 圓件／切線 / Circle parts</h2>
+    <p>皆需已有 <code>circleId</code>。方向可用點 id，或 <code>angle</code>（弧度）／<code>deg</code>（度）；預設角 0＝正 x。</p>
+    <table>
+      <thead><tr><th>op</th><th>必填</th><th>方向／尺寸</th></tr></thead>
+      <tbody>
+        <tr><td><code>addTangent</code></td><td><code>circleId</code></td><td><code>touchId</code>｜<code>pointId</code>｜<code>angle</code>｜<code>deg</code>；長度 <code>halfLen</code>（半長，預設 40）或 <code>length</code>（全長）；可選 <code>aId</code>, <code>bId</code>, <code>style</code></td></tr>
+        <tr><td><code>addRadius</code></td><td><code>circleId</code></td><td><code>throughId</code> 或 <code>angle</code>/<code>deg</code>（缺則建圓周點）</td></tr>
+        <tr><td><code>addDiameter</code></td><td><code>circleId</code></td><td>方向 <code>angle</code>/<code>deg</code>/<code>throughId</code>；建兩端點</td></tr>
+        <tr><td><code>addChord</code></td><td><code>circleId</code></td><td>兩端：<code>startId</code>+<code>endId</code>（或 <code>a</code>/<code>b</code>），或 <code>angle0</code>/<code>angle1</code>，或 <code>deg0</code>/<code>deg1</code></td></tr>
+      </tbody>
+    </table>
+
+    <h2>7. 記號 / Marks</h2>
+    <table>
+      <thead><tr><th>op</th><th>必填</th><th>可選</th></tr></thead>
+      <tbody>
+        <tr><td><code>addRightAngle</code></td><td><code>vertex</code>, <code>arm1</code>, <code>arm2</code>（點 id）</td><td><code>size</code></td></tr>
+        <tr><td><code>addAngleArc</code>＝<code>addArc</code></td><td>同上</td><td><code>size</code>, <code>group</code>（0 單／1 雙）, <code>text</code>, <code>reflex</code></td></tr>
+        <tr><td><code>addReflex</code></td><td>同角弧</td><td>強制 <code>reflex:true</code>（優角）</td></tr>
+        <tr><td><code>addParallelMark</code>＝<code>addParallel</code></td><td><code>segmentId</code></td><td><code>group</code> 0/1, <code>side</code> ±1</td></tr>
+        <tr><td><code>addEqualMark</code>＝<code>addEqual</code></td><td><code>segmentId</code></td><td><code>group</code>, <code>side</code></td></tr>
+        <tr><td><code>addLengthLabel</code>＝<code>addLength</code></td><td><code>segmentId</code></td><td><code>text</code>, <code>side</code></td></tr>
+        <tr><td><code>addMidTick</code></td><td><code>segmentId</code></td><td><code>pointId</code>（比例分點短劃）</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><code>arm1</code>/<code>arm2</code> 是角兩邊上的<strong>點</strong> id，不是線段 id。</p>
+
+    <h2>8. 填色 / <code>addFill</code></h2>
+    <p>可選：<code>color</code>（預設 <code>#666666</code>）, <code>opacity</code>（預設 0.2）。白色挖空：<code>color:"#ffffff", opacity:1</code>。</p>
+    <table>
+      <thead><tr><th>kind</th><th>必填</th><th>tip</th></tr></thead>
+      <tbody>
+        <tr><td><code>polygon</code>（預設）</td><td><code>pointIds</code> ≥3</td><td>亦接受 <code>points</code></td></tr>
+        <tr><td><code>sector</code></td><td><code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>可選 <code>circleId</code></td></tr>
+        <tr><td><code>segment</code></td><td><code>startId</code>, <code>endId</code> + (<code>circleId</code>|<code>centerId</code>)</td><td>弓形</td></tr>
+        <tr><td><code>polyArc</code></td><td><code>pointIds</code> ≥2 + <code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>折線＋弧閉合</td></tr>
+        <tr><td><code>pathFill</code></td><td><code>edges</code> ≥2</td><td><code>{type:"line",a,b}</code> 或 <code>{type:"arc",centerId,from,to,circleId?}</code></td></tr>
+      </tbody>
+    </table>
+
+    <h2>9. <code>addShape</code></h2>
+    <p>一次放平面／立體圖形（UI「圖形」拖放的 JSON 版）。</p>
+    <table>
+      <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr><td><code>kind</code></td><td>見下</td></tr>
+        <tr><td><code>x</code>, <code>y</code></td><td>必填。平面＝第一角／原點；立體＝放置偏移</td></tr>
+        <tr><td><code>w</code> 或 <code>size</code></td><td>必填 &gt;0。平面＝寬；立體＝縮放寬度</td></tr>
+        <tr><td><code>h</code></td><td>平面高（可選＝w）。<strong>立體忽略 h</strong></td></tr>
+        <tr><td><code>style</code>, <code>label</code>/<code>labels</code>, <code>idPrefix</code></td><td>可選</td></tr>
+      </tbody>
+    </table>
+    <p><strong>平面</strong>：<code>square</code> <code>rect</code> <code>rhombus</code> <code>parallelogram</code> <code>trapezoid</code> <code>kite</code> <code>equilateral</code> <code>iso</code> <code>rightTri</code> <code>isoRight</code> <code>pentagon</code> <code>hexagon</code> <code>circle</code> <code>semicircle</code></p>
+    <p><strong>立體</strong>：<code>cube</code> <code>cuboid</code> <code>rectPrism</code> <code>frustum</code> <code>tetra</code> <code>pyramid</code> <code>triPrism</code> <code>cylinder</code> <code>cone</code></p>
+    <ul>
+      <li><code>rightTri</code>：直角在 <code>(x,y)</code>，水平腿 <code>w</code>、向下腿 <code>h</code></li>
+      <li><code>circle</code>：心 <code>(x,y)</code>，半徑點 <code>(x+w,y)</code></li>
+      <li>別名：<code>prism</code>→<code>rectPrism</code>；<code>right</code>/<code>rightTriangle</code>→<code>rightTri</code></li>
+    </ul>
+
+    <h2>10. 座標圖 / Coordinate plots ★</h2>
+    <p><strong>When</strong>：畫函數／圓／三角曲線。先 <code>addCoordPlot</code>，再可 <code>addCurve</code> 追加。</p>
+
+    <h3>10.1 <code>addCoordPlot</code></h3>
+    <table>
+      <thead><tr><th>欄位</th><th>必填？</th><th>預設 / 說明</th></tr></thead>
+      <tbody>
+        <tr><td><code>ox</code>, <code>oy</code></td><td>必填</td><td>原點在<strong>世界座標</strong>的位置（建議落在畫面內，如 280, 320）</td></tr>
+        <tr><td><code>unitPx</code></td><td>可選</td><td>每單位像素，預設 <code>40</code></td></tr>
+        <tr><td><code>xmin</code> <code>xmax</code> <code>ymin</code> <code>ymax</code></td><td>可選</td><td>預設 −2…6 / −2…6（數學座標；y 向上為正於軸上）</td></tr>
+        <tr><td><code>axisLabelX</code> <code>axisLabelY</code></td><td>可選</td><td>預設 <code>"x"</code> / <code>"y"</code></td></tr>
+        <tr><td><code>showOrigin</code></td><td>可選</td><td>預設 true</td></tr>
+        <tr><td><code>showTicks</code></td><td>可選</td><td>預設 true — 刻度線</td></tr>
+        <tr><td><code>showTickLabels</code></td><td>可選</td><td>預設 true — 數字刻度；設 <code>false</code> 隱藏數字</td></tr>
+        <tr><td><code>xAngleUnit</code></td><td>可選</td><td><code>"rad"</code>（預設）｜<code>"deg"</code> — 影響 sin/cos/tan 的 x</td></tr>
+        <tr><td><code>angleAxisOn</code></td><td>可選</td><td>預設 false — 角度軸刻度模式</td></tr>
+        <tr><td><code>curves</code></td><td>可選</td><td>建立時一併加入的曲線陣列</td></tr>
+        <tr><td><code>id</code></td><td>可選</td><td>之後 <code>addCurve.plotId</code> 用</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Plot 數學 y 向上；世界畫布仍 +y 向下 — 引擎會轉換。把 <code>ox,oy</code> 放在建議世界範圍內。</p>
+
+    <h3>10.2 曲線 <code>type</code> 與 <code>params</code></h3>
+    <table>
+      <thead><tr><th>type</th><th>params（預設）</th><th>公式意涵</th></tr></thead>
+      <tbody>
+        <tr><td><code>line</code></td><td><code>m:-1</code>, <code>c:4</code></td><td>y = mx + c</td></tr>
+        <tr><td><code>quad</code></td><td><code>a:1</code>, <code>b:0</code>, <code>c:0</code></td><td>y = ax² + bx + c</td></tr>
+        <tr><td><code>log</code>（別名 <code>log10</code>）</td><td><code>a:1</code>, <code>base:10</code></td><td>y = a·log_base(x)</td></tr>
+        <tr><td><code>ln</code></td><td><code>a:1</code></td><td>y = a·ln(x)</td></tr>
+        <tr><td><code>exp</code></td><td><code>a:1</code>, <code>b:e</code></td><td>y = a·bˣ</td></tr>
+        <tr><td><code>circle</code></td><td>見下</td><td>圓</td></tr>
+        <tr><td><code>sin</code> <code>cos</code> <code>tan</code></td><td><code>A:1</code>, <code>B:1</code>, <code>C:0</code>, <code>D:0</code></td><td>y = A·f(Bx+C)+D；x 單位見 <code>xAngleUnit</code></td></tr>
+      </tbody>
+    </table>
+    <p><strong>circle params</strong>：</p>
+    <ul>
+      <li><code>circleForm</code>：<code>"general"</code>（預設）｜<code>"standard"</code>｜<code>"center"</code></li>
+      <li>general：<code>D</code>, <code>E</code>, <code>F</code>（x²+y²+Dx+Ey+F=0）；預設 D0 E0 F−4</li>
+      <li>center／standard：<code>h</code>, <code>k</code>, <code>r</code>（或 <code>r2</code>）</li>
+    </ul>
+
+    <h3>10.3 曲線標籤 <code>label</code></h3>
+    <table>
+      <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr><td><code>show</code></td><td>bool，預設 false</td></tr>
+        <tr><td><code>kind</code></td><td><code>"formula"</code>（預設）｜<code>"custom"</code></td></tr>
+        <tr><td><code>formulaMode</code></td><td><code>"algebraic"</code>｜<code>"numeric"</code></td></tr>
+        <tr><td><code>customText</code></td><td>kind=custom 時文字</td></tr>
+        <tr><td><code>t</code>, <code>n</code></td><td>沿曲線位置／法向偏移（t∈[0,1]，n∈[−6,6]）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>10.4 <code>addCurve</code></h3>
+    <p>必填 <code>plotId</code>；可選 <code>type</code>（預設 <code>line</code>）, <code>params</code>, <code>label</code>, <code>id</code>。</p>
+
+    <h3>10.5 最小座標例</h3>
+<pre>[
+  {
+    "op": "addCoordPlot",
+    "id": "plot1",
+    "ox": 280, "oy": 340, "unitPx": 36,
+    "xmin": -1, "xmax": 6, "ymin": -2, "ymax": 4,
+    "showTickLabels": true,
+    "xAngleUnit": "rad",
+    "curves": [
+      { "type": "line", "params": { "m": -0.5, "c": 3 },
+        "label": { "show": true, "kind": "formula", "formulaMode": "algebraic" } },
+      { "type": "quad", "params": { "a": 0.2, "b": -1, "c": 1 } }
+    ]
+  },
+  { "op": "addCurve", "plotId": "plot1", "type": "sin",
+    "params": { "A": 1, "B": 1, "C": 0, "D": 0 } },
+  { "op": "setView", "x": 200, "y": 160, "scale": 1.6 }
+]</pre>
+<pre>[
+  {
+    "op": "addCoordPlot",
+    "id": "pAng",
+    "ox": 300, "oy": 320, "unitPx": 28,
+    "xmin": -1, "xmax": 7, "ymin": -2, "ymax": 2,
+    "xAngleUnit": "deg",
+    "angleAxisOn": true,
+    "showTickLabels": false,
+    "curves": [
+      { "type": "sin", "params": { "A": 1, "B": 1, "C": 0, "D": 0 },
+        "label": { "show": true, "kind": "custom", "customText": "y=sin x" } }
+    ]
+  }
+]</pre>
+
+    <h2>11. 對齊／圖層／meta</h2>
+    <table>
+      <thead><tr><th>op</th><th>參數</th></tr></thead>
+      <tbody>
+        <tr><td><code>alignPoints</code></td><td><code>pointIds</code> ≥2；<code>axis</code>：<code>left</code>｜<code>center</code>｜<code>right</code>｜<code>top</code>｜<code>middle</code>｜<code>bottom</code></td></tr>
+        <tr><td><code>distributePoints</code></td><td><code>pointIds</code> ≥3；<code>axis</code>：<code>x</code>｜<code>y</code></td></tr>
+        <tr><td><code>equalizeSegments</code></td><td><code>segmentIds</code> ≥2；可選 <code>length</code>（否則用中位長）</td></tr>
+        <tr><td><code>setLayers</code></td><td><code>gridShow</code> <code>gridLock</code> <code>coordsShow</code> <code>coordsLock</code> <code>helpersShow</code> <code>helpersLock</code>（bool）；或包在 <code>layers</code></td></tr>
+        <tr><td><code>setMeta</code></td><td><code>gridSnap</code>, <code>gridMode</code>（<code>square</code>｜<code>triangle</code>）, <code>name</code>, <code>labelFontSize</code>, <code>rightAngleSize</code>, <code>hideExportPoints</code>, <code>layers</code>, <code>nextLetter</code>, …</td></tr>
+      </tbody>
+    </table>
+    <p class="note">helpers＝記號／標籤層；預設 <code>helpersLock:true</code>（跟著幾何，解鎖後可拖）。</p>
+
+    <h2>12. 模板與 macros</h2>
+    <h3>12.1 <code>insertTemplate</code>＝<code>addTemplate</code></h3>
+    <p>必填 <code>id</code>；可選 <code>dx</code>, <code>dy</code>, <code>scale</code>, <code>cellSize</code>。</p>
+    <ul>
+      <li><strong>UI 組合</strong>（Templates 選單）：<code>circleGeom</code>, <code>circleCenter</code>, <code>altBase</code></li>
+      <li><strong>亦可用</strong>（AI／完整目錄）：<code>rightTri</code> <code>isoTri</code> <code>genTri</code> <code>parallelogram</code> <code>trapezoid</code> <code>pentagon</code> + 全部固體 id（同 addShape 立體）</li>
+    </ul>
+
+    <h3>12.2 Macros（MCP <code>run_macro</code>／CLI；回傳 ops 可貼上）</h3>
+    <table>
+      <thead><tr><th>macro</th><th>主要 params</th></tr></thead>
+      <tbody>
+        <tr><td><code>drawRightTriangle</code></td><td><code>a</code>, <code>b</code>（腿長）, <code>origin:{x,y}</code>, <code>labels</code>, <code>style</code></td></tr>
+        <tr><td><code>drawFrustum</code></td><td><code>dx</code>, <code>dy</code>, <code>scale</code></td></tr>
+        <tr><td><code>drawCircleWithTangent</code></td><td><code>r</code>, <code>cx</code>/<code>cy</code> 或 <code>origin</code>, <code>halfLen</code></td></tr>
+        <tr><td><code>drawCuboid</code> / <code>drawCube</code></td><td><code>size</code> 或 <code>scale</code>, <code>dx</code>, <code>dy</code></td></tr>
+      </tbody>
+    </table>
+    <p class="note">瀏覽器「貼上 JSON」吃的是 <strong>ops 陣列</strong>，不是 macro 名。本機 MCP 可用 <code>run_macro</code>；或把 macro 展開後的 ops 貼上。</p>
+
+    <h2>13. 範例 / Examples</h2>
+    <h3>13.1 最小直角三角形</h3>
 <pre>[
   { "op": "addPoint", "id": "A", "x": 180, "y": 360 },
   { "op": "addPoint", "id": "B", "x": 380, "y": 360 },
@@ -174,119 +348,41 @@
   { "op": "addFill", "kind": "polygon", "pointIds": ["A","B","C"], "opacity": 0.15 }
 ]</pre>
 
-    <h2>6. <code>addShape</code>（平面／立體）</h2>
-    <p>相當於 UI「圖形」拖放：用原點 + 尺寸一次建立多點／線（或固體模板）。</p>
-    <table>
-      <thead>
-        <tr><th>欄位</th><th>說明</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><code>kind</code></td><td>見下表</td></tr>
-        <tr><td><code>x</code>, <code>y</code></td><td><strong>必填</strong>。平面：第一角／原點；立體：放置偏移 (<code>dx</code>/<code>dy</code>)</td></tr>
-        <tr><td><code>w</code> 或 <code>size</code></td><td><strong>必填</strong> &gt; 0。平面＝寬；立體＝整體縮放寬度</td></tr>
-        <tr><td><code>h</code></td><td>平面高（可選；預設＝<code>w</code>）。<strong>立體忽略 h</strong></td></tr>
-        <tr><td><code>style</code></td><td>線段樣式（平面邊）</td></tr>
-        <tr><td><code>label</code> / <code>labels</code></td><td>平面：自動標 A,B,… 或自訂字串陣列</td></tr>
-        <tr><td><code>idPrefix</code></td><td>可選點／線 id 前綴</td></tr>
-      </tbody>
-    </table>
-    <p><strong>平面 kinds</strong>：<code>square</code>｜<code>rect</code>｜<code>rhombus</code>｜<code>parallelogram</code>｜<code>trapezoid</code>｜<code>kite</code>｜<code>equilateral</code>｜<code>iso</code>｜<code>rightTri</code>｜<code>isoRight</code>｜<code>pentagon</code>｜<code>hexagon</code>｜<code>circle</code>｜<code>semicircle</code></p>
-    <ul>
-      <li><code>circle</code>：中心 <code>(x,y)</code>，半徑點 <code>(x+w,y)</code></li>
-      <li><code>semicircle</code>：直徑端點 <code>(x,y)</code>→<code>(x+w,y)</code>，中點為圓心</li>
-      <li><code>rightTri</code>：直角在 <code>(x,y)</code>，直角邊 <code>w</code>（水平）與 <code>h</code>（向下）</li>
-      <li><code>square</code>/<code>rect</code>：角 <code>(x,y)</code> 起向右／下</li>
-    </ul>
-    <p><strong>立體 kinds</strong>（內建投影模板；只用 <code>x,y,w</code>）：<code>cube</code>｜<code>cuboid</code>｜<code>rectPrism</code>｜<code>frustum</code>｜<code>tetra</code>｜<code>pyramid</code>｜<code>triPrism</code>｜<code>cylinder</code>｜<code>cone</code></p>
-    <p class="note">別名：<code>rectPrism</code>≡<code>prism</code>；<code>iso</code>≡isosceles；<code>rightTri</code>≡right／rightTriangle。</p>
-<pre>[
-  { "op": "addShape", "kind": "rightTri", "x": 160, "y": 320, "w": 140, "h": 100, "label": true }
-]</pre>
-
-    <h2>7. <code>addFill</code></h2>
-    <p>可選共通：<code>color</code>（預設 <code>#666666</code>）、<code>opacity</code>（預設 0.2）。白色挖空：<code>color:"#ffffff", opacity:1</code>。</p>
-    <table>
-      <thead>
-        <tr><th>kind</th><th>必填</th><th>備註</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>polygon</code>（預設）</td>
-          <td><code>pointIds</code> ≥3 點 id</td>
-          <td>亦接受 <code>points</code></td>
-        </tr>
-        <tr>
-          <td><code>sector</code></td>
-          <td><code>centerId</code>, <code>startId</code>, <code>endId</code></td>
-          <td>可選 <code>circleId</code>；扇形（兩半徑＋弧）</td>
-        </tr>
-        <tr>
-          <td><code>segment</code></td>
-          <td><code>startId</code>, <code>endId</code> + (<code>circleId</code> 或 <code>centerId</code>)</td>
-          <td>弓形（弦＋弧）</td>
-        </tr>
-        <tr>
-          <td><code>polyArc</code></td>
-          <td><code>pointIds</code> ≥2 + <code>centerId</code>, <code>startId</code>, <code>endId</code></td>
-          <td>折線再以弧閉合；可選 <code>circleId</code></td>
-        </tr>
-        <tr>
-          <td><code>pathFill</code></td>
-          <td><code>edges</code> ≥2</td>
-          <td>邊：<code>{type:"line",a,b}</code> 或 <code>{type:"arc",centerId,from,to,circleId?}</code></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h2>8. 扇形填色＋角弧例 / Sector fill + angle arc</h2>
+    <h3>13.2 扇形填色＋角弧</h3>
 <pre>[
   { "op": "addPoint", "id": "O", "x": 320, "y": 300 },
   { "op": "addPoint", "id": "A", "x": 460, "y": 300 },
   { "op": "addPoint", "id": "B", "x": 400, "y": 180 },
   { "op": "addCircle", "id": "c1", "centerId": "O", "throughId": "A" },
-  { "op": "addSegment", "id": "OA", "a": "O", "b": "A" },
-  { "op": "addSegment", "id": "OB", "a": "O", "b": "B" },
+  { "op": "addSegment", "a": "O", "b": "A" },
+  { "op": "addSegment", "a": "O", "b": "B" },
   { "op": "addAngleArc", "vertex": "O", "arm1": "A", "arm2": "B", "text": "θ" },
   { "op": "addFill", "kind": "sector", "centerId": "O", "startId": "A", "endId": "B", "opacity": 0.2 },
-  { "op": "addLabel", "pointId": "O", "text": "O", "ox": -14, "oy": 12 },
-  { "op": "addLabel", "pointId": "A", "text": "A", "ox": 12, "oy": 10 },
-  { "op": "addLabel", "pointId": "B", "text": "B", "ox": 8, "oy": -14 }
+  { "op": "addLabel", "pointId": "O", "text": "O", "ox": -14, "oy": 12 }
 ]</pre>
 
-    <h2>9. 其他常用 ops</h2>
-    <table>
-      <thead>
-        <tr><th>op</th><th>必填參數</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><code>addPoint</code></td><td><code>x</code>, <code>y</code>（可選 <code>id</code>, <code>marker</code>）</td></tr>
-        <tr><td><code>addSegment</code></td><td><code>a</code>, <code>b</code> 點 id</td></tr>
-        <tr><td><code>addCircle</code></td><td><code>centerId</code>, <code>throughId</code></td></tr>
-        <tr><td><code>addFoot</code></td><td><code>pointId</code> + <code>segmentId</code>（或線上兩點 <code>a</code>/<code>b</code>）</td></tr>
-        <tr><td><code>insertTemplate</code></td><td><code>id</code>：<code>circleGeom</code>｜<code>circleCenter</code>｜<code>altBase</code>…；可選 <code>dx</code>, <code>dy</code>, <code>scale</code></td></tr>
-        <tr><td><code>setView</code></td><td><code>x</code>, <code>y</code>, <code>scale</code>（視窗中心／縮放）</td></tr>
-      </tbody>
-    </table>
+    <h3>13.3 垂足</h3>
+<pre>[
+  { "op": "addPoint", "id": "A", "x": 200, "y": 360 },
+  { "op": "addPoint", "id": "B", "x": 420, "y": 360 },
+  { "op": "addPoint", "id": "P", "x": 300, "y": 200 },
+  { "op": "addSegment", "id": "AB", "a": "A", "b": "B" },
+  { "op": "addFoot", "pointId": "P", "segmentId": "AB", "footId": "H", "label": true }
+]</pre>
 
-    <h2>10. 使用者怎麼貼 / How to paste</h2>
-    <ol>
-      <li>開啟 <a href="./">Simple Diagram</a></li>
-      <li>頂欄 <strong>貼上 JSON</strong></li>
-      <li>貼上 → <strong>套用</strong>（可 Ctrl+Z）</li>
-    </ol>
-
-    <h2>11. 規則 / Rules</h2>
+    <h2>14. 規則 / Rules</h2>
     <ul>
       <li>只輸出 JSON（可包 markdown 程式碼塊；App 會剝掉）</li>
-      <li>id 唯一；數字座標用有限數字（勿字串）</li>
-      <li>完整圖檔需含 <code>points</code> 等陣列（同 App「儲存」）</li>
+      <li>id 唯一；數字用有限 number（勿字串）</li>
+      <li>無 stroke-width 欄位 — 只用 <code>style</code> 虛實</li>
+      <li>完整圖檔需含 <code>points</code> 等陣列（同「儲存」）</li>
     </ul>
 
-    <p class="links" style="margin-top:2rem">
+    <p class="links" style="margin-top:1.5rem">
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.16</p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.17 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>
