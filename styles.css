@@ -21,8 +21,9 @@
   --radius: 6px;
   --font-ui: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   --font-math: "STIX Two Text", "Times New Roman", "Noto Serif TC", serif;
-  /* Two-column tool rail (~2× tool width + gaps) */
-  --rail-width: calc(108px * var(--tb, 1.2));
+  /* Tool rail: default 3 columns; user can drag-resize (2-col when narrow) */
+  --rail-cols: 3;
+  --rail-width: calc(156px * var(--tb, 1.2));
   --canvas-paper: #ffffff;
   --canvas-ink: #111111;
   --canvas-grid: rgba(0, 0, 0, 0.08);
@@ -356,12 +357,15 @@ button:disabled {
 
 .tool-rail {
   --tb: 1.2;
+  --rail-cols: 3;
   position: relative;
   z-index: 30;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   width: var(--rail-width);
+  min-width: calc(108px * var(--tb));
+  max-width: calc(240px * var(--tb));
   padding: calc(4px * var(--tb)) calc(3px * var(--tb));
   gap: calc(4px * var(--tb));
   background: var(--bar);
@@ -372,9 +376,35 @@ button:disabled {
   user-select: none;
 }
 
+.rail-resize {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 7px;
+  height: 100%;
+  z-index: 35;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+}
+
+.rail-resize:hover,
+.rail-resize.is-dragging {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+body.is-rail-resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+body.is-rail-resizing * {
+  cursor: col-resize !important;
+}
+
 .rail-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(var(--rail-cols, 3), minmax(0, 1fr));
   align-items: stretch;
   justify-items: stretch;
   gap: calc(2px * var(--tb));
@@ -406,22 +436,29 @@ button:disabled {
   justify-content: center;
   width: 100%;
   min-width: 0;
-  min-height: calc(34px * var(--tb));
+  min-height: calc(32px * var(--tb));
   gap: calc(1px * var(--tb));
-  padding: calc(2px * var(--tb)) calc(2px * var(--tb));
+  padding: calc(2px * var(--tb)) calc(1px * var(--tb));
   pointer-events: auto;
 }
 
 .tool-rail .tool .label {
   display: block;
-  font-size: calc(10px * var(--tb));
+  font-size: calc(9.5px * var(--tb));
   font-family: var(--font-ui);
   font-style: normal;
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: 0;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
   color: var(--muted);
+}
+
+.tool-rail[data-rail-cols="2"] .tool .label {
+  font-size: calc(10px * var(--tb));
 }
 
 .tool .icon,
