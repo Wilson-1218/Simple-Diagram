@@ -94,15 +94,6 @@ export const BUILTIN_TEMPLATES = {
     ];
     return { nextLetter: "F", pts, segs };
   })(),
-  circleCenter: {
-    nextLetter: "C",
-    pts: [
-      [0, 0, "O", 12, -12],
-      [4, 0, "A", 14, 0],
-    ],
-    segs: [],
-    circles: [[0, 1, "solid"]],
-  },
   genTri: {
     nextLetter: "D",
     pts: [
@@ -115,22 +106,6 @@ export const BUILTIN_TEMPLATES = {
       [1, 2],
       [2, 0],
     ],
-  },
-  circleGeom: {
-    nextLetter: "D",
-    pts: [
-      [0, 0, "O", 12, -12],
-      [4, 0, "A", 14, 0],
-      [-4, 0, "B", -14, 0],
-      [2, 3.464, "C", 12, 12],
-      [-2, 3.464, "D", -12, 12],
-    ],
-    segs: [
-      [0, 1],
-      [1, 2],
-      [3, 4],
-    ],
-    circles: [[0, 1, "solid"]],
   },
   rectPrism: {
     nextLetter: "G",
@@ -217,26 +192,6 @@ export const BUILTIN_TEMPLATES = {
       [4, 2],
       [4, 3, "dashed"],
     ],
-  },
-  altBase: {
-    nextLetter: "E",
-    pts: [
-      [0, -4, "A", 0, -18],
-      [-4, 1, "B", -16, 4],
-      [0, 4, "C", 0, 18],
-      [4, 1, "D", 16, 4],
-      [0, 2, "H", 12, 8, "foot"],
-    ],
-    segs: [
-      [0, 1],
-      [0, 2],
-      [0, 3],
-      [1, 2],
-      [2, 3],
-      [1, 3, "dashed"],
-      [0, 4, "dotted"],
-    ],
-    rightAngles: [[4, 0, 2]],
   },
   triPrism: {
     nextLetter: "G",
@@ -360,7 +315,7 @@ export const BUILTIN_TEMPLATE_IDS = Object.keys(BUILTIN_TEMPLATES);
 
 /**
  * Shared catalog: Templates UI (ui:true) + AI insertTemplate (all ids with specs).
- * Combos appear in the human menu; plane/solid singles stay Shape / addShape (ui:false).
+ * Human Templates ▾ is saved-only (no ui:true combos); plane/solid stay Shape / addShape (ui:false).
  *
  * @typedef {{
  *   id: string,
@@ -374,30 +329,6 @@ export const BUILTIN_TEMPLATE_IDS = Object.keys(BUILTIN_TEMPLATES);
 
 /** @type {TemplateCatalogEntry[]} */
 export const TEMPLATE_CATALOG = [
-  {
-    id: "circleGeom",
-    group: "combo",
-    ui: true,
-    labelZh: "圓＋弦徑",
-    labelEn: "Circle + chord/diameter",
-    preview: "O, diameter AB, chord CD",
-  },
-  {
-    id: "circleCenter",
-    group: "combo",
-    ui: true,
-    labelZh: "圓＋圓心",
-    labelEn: "Circle + center",
-    preview: "O + radius point A",
-  },
-  {
-    id: "altBase",
-    group: "combo",
-    ui: true,
-    labelZh: "高到底",
-    labelEn: "Altitude to base",
-    preview: "ΔABC with altitude from A to BC",
-  },
   // Plane singles — Shape float / addShape; still insertTemplate for macros/AI
   {
     id: "rightTri",
@@ -507,7 +438,7 @@ export const TEMPLATE_CATALOG = [
   },
 ];
 
-/** Solids promoted into the Shape float (altBase stays a Templates combo). */
+/** Solids promoted into the Shape float. */
 export const SHAPE_SOLID_TEMPLATE_IDS = TEMPLATE_CATALOG.filter(
   (e) => e.group === "solid"
 ).map((e) => e.id);
@@ -551,9 +482,7 @@ export function assertTemplateCatalogIntegrity() {
       throw new Error(`BUILTIN_TEMPLATES id "${id}" missing from TEMPLATE_CATALOG`);
     }
   }
-  if (!TEMPLATE_UI_IDS.length) {
-    throw new Error("TEMPLATE_CATALOG has no ui:true entries");
-  }
+  // Empty ui:true is OK — Templates ▾ may be saved-only.
 }
 
 /**

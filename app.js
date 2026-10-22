@@ -454,6 +454,7 @@
       shape_too_small: "圖形太小，已取消",
       btn_template: "模板 ▾", btn_save_tpl: "存成模板", btn_recent: "最近 ▾",
       btn_copy: "複製", btn_delete: "刪除", btn_clear: "清除",
+      btn_json_menu: "Json ▾", tip_json_menu: "貼上／儲存／開啟 JSON",
       btn_paste_json: "貼上 JSON", btn_save: "儲存", btn_load: "開啟",
       tip_paste_json: "貼上 AI／ops JSON 或完整圖檔",
       link_ai_guide: "AI 說明頁 ai.html",
@@ -474,7 +475,6 @@
       btn_restore_backup: "還原自動備份", menu_recent: "最近開啟", menu_backup: "備份",
       menu_plane: "平面", menu_solid: "立體", menu_combo: "組合起點", menu_custom: "自訂",
       menu_saved: "我的／Saved",
-      tpl_circleGeom: "圓＋弦徑", tpl_circleCenter: "圓＋圓心", tpl_altBase: "高到底",
       tpl_ai_summary: "如何接入 AI / Connect AI",
       tpl_dialog_lead: "將目前圖形存成模板",
       tpl_dialog_lead_rename: "重新命名模板",
@@ -493,7 +493,7 @@
       empty_custom_tpl: "尚無已存模板", empty_recent: "尚無記錄",
       tip_lang_zh: "中文介面",
       tip_lang_en: "English UI",
-      tip_templates: "組合起點／我的模板／接入 AI（平面與立體見「圖形」）",
+      tip_templates: "我的模板／接入 AI（平面與立體見「圖形」）",
       tip_save_tpl: "將目前整圖存成模板（本機）",
       tip_style_solid: "實線",
       tip_style_dashed: "虛線（隱藏邊）",
@@ -582,8 +582,8 @@
       attr_credit_tip: "授權與轉載聲明（開啟 ? 看完整說明）",
       attr_help: "可自由使用、複製及二次開發；轉載或再發佈時請保留來源聲明：Simple Diagram（Wilson Li）及 GitHub 連結。",
       tpl_ai_body:
-        "<p><strong>ZH</strong>：開啟 <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>，在 Chrome 把該頁分享給 Gemini（分享分頁／@ 加頁），再按「貼上 JSON」。</p>" +
-        "<p><strong>EN</strong>: Open <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>, share that tab with Gemini, then <strong>Paste JSON</strong>.</p>",
+        "<p><strong>ZH</strong>：開啟 <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>，在 Chrome 把該頁分享給 Gemini（分享分頁／@ 加頁），再按 <strong>Json ▾ → 貼上 JSON</strong>。</p>" +
+        "<p><strong>EN</strong>: Open <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>, share that tab with Gemini, then <strong>Json ▾ → Paste JSON</strong>.</p>",
     },
     en: {
       tool_select: "Select", tool_hand: "Pan", tool_point: "Point", tool_line: "Line",
@@ -724,6 +724,7 @@
       shape_too_small: "Shape too small — cancelled",
       btn_template: "Templates ▾", btn_save_tpl: "Save as template", btn_recent: "Recent ▾",
       btn_copy: "Copy", btn_delete: "Delete", btn_clear: "Clear",
+      btn_json_menu: "Json ▾", tip_json_menu: "Paste / save / open JSON",
       btn_paste_json: "Paste JSON", btn_save: "Save", btn_load: "Open",
       tip_paste_json: "Paste AI / ops JSON or a full diagram document",
       link_ai_guide: "AI guide ai.html",
@@ -744,7 +745,6 @@
       btn_restore_backup: "Restore backup", menu_recent: "Recent", menu_backup: "Backup",
       menu_plane: "Plane", menu_solid: "Solid", menu_combo: "Combo starters", menu_custom: "Custom",
       menu_saved: "Saved",
-      tpl_circleGeom: "Circle + chord/diameter", tpl_circleCenter: "Circle + center", tpl_altBase: "Altitude to base",
       tpl_ai_summary: "How to connect AI",
       tpl_dialog_lead: "Save current diagram as template",
       tpl_dialog_lead_rename: "Rename template",
@@ -763,7 +763,7 @@
       empty_custom_tpl: "No saved templates", empty_recent: "No recent files",
       tip_lang_zh: "Chinese UI",
       tip_lang_en: "English UI",
-      tip_templates: "Combos / saved templates / connect AI (plane & solids: Shape)",
+      tip_templates: "Saved templates / connect AI (plane & solids: Shape)",
       tip_save_tpl: "Save the whole diagram as a local template",
       tip_style_solid: "Solid",
       tip_style_dashed: "Dashed (hidden edge)",
@@ -852,8 +852,8 @@
       attr_credit_tip: "License & attribution (open ? for details)",
       attr_help: "Free to use, copy, and modify. Please keep attribution: “Simple Diagram” by Wilson Li — and the GitHub link.",
       tpl_ai_body:
-        "<p><strong>EN</strong>: Open <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>, share that tab with Gemini in Chrome, then <strong>Paste JSON</strong>.</p>" +
-        "<p><strong>ZH</strong>：開啟 <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>，分享給 Gemini，再「貼上 JSON」。</p>",
+        "<p><strong>EN</strong>: Open <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>, share that tab with Gemini in Chrome, then <strong>Json ▾ → Paste JSON</strong>.</p>" +
+        "<p><strong>ZH</strong>：開啟 <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>，分享給 Gemini，再按 <strong>Json ▾ → 貼上 JSON</strong>。</p>",
     },
   };
 
@@ -903,6 +903,7 @@
       btnCopy: "btn_copy",
       btnDelete: "btn_delete",
       btnClearAll: "btn_clear",
+      btnJsonMenu: "btn_json_menu",
       btnPasteJson: "btn_paste_json",
       btnSave: "btn_save",
       btnLoad: "btn_load",
@@ -9913,7 +9914,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.18",
+      version: "13.5.19",
       app: "simple-diagram",
       points,
       segments,
@@ -10525,30 +10526,6 @@ ${body}</svg>`;
   /* @@TEMPLATE_CATALOG_BEGIN@@ */
   const TEMPLATE_CATALOG = [
     {
-      "id": "circleGeom",
-      "group": "combo",
-      "ui": true,
-      "labelZh": "圓＋弦徑",
-      "labelEn": "Circle + chord/diameter",
-      "preview": "O, diameter AB, chord CD"
-    },
-    {
-      "id": "circleCenter",
-      "group": "combo",
-      "ui": true,
-      "labelZh": "圓＋圓心",
-      "labelEn": "Circle + center",
-      "preview": "O + radius point A"
-    },
-    {
-      "id": "altBase",
-      "group": "combo",
-      "ui": true,
-      "labelZh": "高到底",
-      "labelEn": "Altitude to base",
-      "preview": "ΔABC with altitude from A to BC"
-    },
-    {
       "id": "rightTri",
       "group": "plane",
       "ui": false,
@@ -10915,33 +10892,6 @@ ${body}</svg>`;
         ]
       ]
     },
-    "circleCenter": {
-      "nextLetter": "C",
-      "pts": [
-        [
-          0,
-          0,
-          "O",
-          12,
-          -12
-        ],
-        [
-          4,
-          0,
-          "A",
-          14,
-          0
-        ]
-      ],
-      "segs": [],
-      "circles": [
-        [
-          0,
-          1,
-          "solid"
-        ]
-      ]
-    },
     "genTri": {
       "nextLetter": "D",
       "pts": [
@@ -10979,67 +10929,6 @@ ${body}</svg>`;
         [
           2,
           0
-        ]
-      ]
-    },
-    "circleGeom": {
-      "nextLetter": "D",
-      "pts": [
-        [
-          0,
-          0,
-          "O",
-          12,
-          -12
-        ],
-        [
-          4,
-          0,
-          "A",
-          14,
-          0
-        ],
-        [
-          -4,
-          0,
-          "B",
-          -14,
-          0
-        ],
-        [
-          2,
-          3.464,
-          "C",
-          12,
-          12
-        ],
-        [
-          -2,
-          3.464,
-          "D",
-          -12,
-          12
-        ]
-      ],
-      "segs": [
-        [
-          0,
-          1
-        ],
-        [
-          1,
-          2
-        ],
-        [
-          3,
-          4
-        ]
-      ],
-      "circles": [
-        [
-          0,
-          1,
-          "solid"
         ]
       ]
     },
@@ -11377,86 +11266,6 @@ ${body}</svg>`;
           4,
           3,
           "dashed"
-        ]
-      ]
-    },
-    "altBase": {
-      "nextLetter": "E",
-      "pts": [
-        [
-          0,
-          -4,
-          "A",
-          0,
-          -18
-        ],
-        [
-          -4,
-          1,
-          "B",
-          -16,
-          4
-        ],
-        [
-          0,
-          4,
-          "C",
-          0,
-          18
-        ],
-        [
-          4,
-          1,
-          "D",
-          16,
-          4
-        ],
-        [
-          0,
-          2,
-          "H",
-          12,
-          8,
-          "foot"
-        ]
-      ],
-      "segs": [
-        [
-          0,
-          1
-        ],
-        [
-          0,
-          2
-        ],
-        [
-          0,
-          3
-        ],
-        [
-          1,
-          2
-        ],
-        [
-          2,
-          3
-        ],
-        [
-          1,
-          3,
-          "dashed"
-        ],
-        [
-          0,
-          4,
-          "dotted"
-        ]
-      ],
-      "rightAngles": [
-        [
-          4,
-          0,
-          2
         ]
       ]
     },
@@ -11935,12 +11744,14 @@ ${body}</svg>`;
     }
   }
 
-  /** Build Templates ▾ combo list from shared TEMPLATE_CATALOG (ui:true). */
+  /** Build Templates ▾ combo list from shared TEMPLATE_CATALOG (ui:true). Empty = saved-only. */
   function refreshBuiltinTemplateMenu() {
     if (!builtinTplList || typeof TEMPLATE_CATALOG === "undefined") return;
     builtinTplList.innerHTML = "";
+    let n = 0;
     for (const entry of TEMPLATE_CATALOG) {
       if (!entry || !entry.ui) continue;
+      n += 1;
       const btn = document.createElement("button");
       btn.type = "button";
       btn.dataset.tpl = entry.id;
@@ -11956,6 +11767,11 @@ ${body}</svg>`;
         insertBuiltinById(entry.id);
       });
       builtinTplList.appendChild(btn);
+    }
+    const title = document.getElementById("builtinTplTitle");
+    if (title) {
+      if (n) title.removeAttribute("hidden");
+      else title.setAttribute("hidden", "");
     }
   }
 
@@ -12058,6 +11874,7 @@ ${body}</svg>`;
   function openTemplateMenu() {
     if (!templateMenu || !btnTemplateMenu) return;
     if (typeof closeExportMenu === "function") closeExportMenu();
+    if (typeof closeJsonMenu === "function") closeJsonMenu();
     closeRecentMenu();
     const layersMenuEl = document.getElementById("layersMenu");
     const btnLayers = document.getElementById("btnLayersMenu");
@@ -12067,6 +11884,28 @@ ${body}</svg>`;
     refreshCustomTemplateMenu();
     templateMenu.removeAttribute("hidden");
     btnTemplateMenu.setAttribute("aria-expanded", "true");
+  }
+
+  const btnJsonMenu = document.getElementById("btnJsonMenu");
+  const jsonMenu = document.getElementById("jsonMenu");
+
+  function closeJsonMenu() {
+    if (!jsonMenu || !btnJsonMenu) return;
+    jsonMenu.setAttribute("hidden", "");
+    btnJsonMenu.setAttribute("aria-expanded", "false");
+  }
+
+  function openJsonMenu() {
+    if (!jsonMenu || !btnJsonMenu) return;
+    closeTemplateMenu();
+    if (typeof closeExportMenu === "function") closeExportMenu();
+    closeRecentMenu();
+    const layersMenuEl = document.getElementById("layersMenu");
+    const btnLayers = document.getElementById("btnLayersMenu");
+    if (layersMenuEl) layersMenuEl.setAttribute("hidden", "");
+    if (btnLayers) btnLayers.setAttribute("aria-expanded", "false");
+    jsonMenu.removeAttribute("hidden");
+    btnJsonMenu.setAttribute("aria-expanded", "true");
   }
 
   const btnExportMenu = document.getElementById("btnExportMenu");
@@ -12081,6 +11920,7 @@ ${body}</svg>`;
   function openExportMenu() {
     if (!exportMenu || !btnExportMenu) return;
     closeTemplateMenu();
+    if (typeof closeJsonMenu === "function") closeJsonMenu();
     const recentMenuEl = document.getElementById("recentMenu");
     const btnRecent = document.getElementById("btnRecentMenu");
     if (recentMenuEl) recentMenuEl.setAttribute("hidden", "");
@@ -12782,6 +12622,7 @@ ${body}</svg>`;
    * Newest first; last item may be an “earlier…” summary.
    */
   const WHATS_NEW = [
+    { v: "v13.5.19", zh: "Json ▾；語系在左欄；模板改僅「我的」", en: "Json ▾; lang under logo; Templates = saved only" },
     { v: "v13.5.18", zh: "AI 說明：⊥座標對應、cube／函數填色例", en: "AI guide: Axes op map, cube & plot+fill examples" },
     { v: "v13.5.17", zh: "AI 說明頁涵蓋全部 ops（含座標圖）", en: "AI guide covers all ops (incl. coord plots)" },
     { v: "v13.5.16", zh: "AI 說明頁補齊 addShape／fill／角弧參數", en: "AI guide: addShape / fill / angle-arc params" },
@@ -13015,6 +12856,15 @@ ${body}</svg>`;
       setActiveMarkGroup(Number(btn.dataset.markGroup) || 0);
     });
   });
+  if (btnJsonMenu && jsonMenu) {
+    btnJsonMenu.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (jsonMenu.hasAttribute("hidden")) openJsonMenu();
+      else closeJsonMenu();
+    });
+    jsonMenu.addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", () => closeJsonMenu());
+  }
   if (btnExportMenu && exportMenu) {
     btnExportMenu.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -13061,8 +12911,14 @@ ${body}</svg>`;
   document.getElementById("btnRedo").addEventListener("click", redo);
   document.getElementById("btnDelete").addEventListener("click", deleteSelected);
   document.getElementById("btnClearAll").addEventListener("click", clearAll);
-  document.getElementById("btnSave").addEventListener("click", saveProject);
-  document.getElementById("btnLoad").addEventListener("click", () => fileInput.click());
+  document.getElementById("btnSave").addEventListener("click", () => {
+    closeJsonMenu();
+    saveProject();
+  });
+  document.getElementById("btnLoad").addEventListener("click", () => {
+    closeJsonMenu();
+    fileInput.click();
+  });
   const btnPasteJson = document.getElementById("btnPasteJson");
   const pasteJsonDialog = document.getElementById("pasteJsonDialog");
   const pasteJsonForm = document.getElementById("pasteJsonForm");
@@ -13070,7 +12926,10 @@ ${body}</svg>`;
   const pasteJsonCancel = document.getElementById("pasteJsonCancel");
   const pasteJsonMerge = document.getElementById("pasteJsonMerge");
   if (btnPasteJson) {
-    btnPasteJson.addEventListener("click", () => openPasteJsonDialog());
+    btnPasteJson.addEventListener("click", () => {
+      closeJsonMenu();
+      openPasteJsonDialog();
+    });
   }
   if (pasteJsonCancel) {
     pasteJsonCancel.addEventListener("click", () => {
@@ -13231,6 +13090,7 @@ ${body}</svg>`;
   }
   function openRecentMenu() {
     if (typeof closeExportMenu === "function") closeExportMenu();
+    if (typeof closeJsonMenu === "function") closeJsonMenu();
     closeTemplateMenu();
     renderRecentMenu();
     if (recentMenu) recentMenu.hidden = false;
@@ -13635,6 +13495,7 @@ ${body}</svg>`;
   function openLayersMenu() {
     if (!layersMenu || !btnLayersMenu) return;
     if (typeof closeExportMenu === "function") closeExportMenu();
+    if (typeof closeJsonMenu === "function") closeJsonMenu();
     if (typeof closeTemplateMenu === "function") closeTemplateMenu();
     if (typeof closeRecentMenu === "function") closeRecentMenu();
     syncLayersUI();

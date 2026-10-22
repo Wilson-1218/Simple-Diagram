@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261022-release-v13.5.18" />
+  <meta name="simple-diagram-build" content="20261022-release-v13.5.19" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261022-release-v13.5.18" />
+  <link rel="stylesheet" href="styles.css?v=20261022-release-v13.5.19" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,11 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.18</span>
+            <span class="brand-sub">v13.5.19</span>
+          </div>
+          <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
+            <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
+            <button type="button" id="btnLangEn" class="lang-btn" data-lang="en" title="English UI" data-i18n-title="tip_lang_en">EN</button>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -117,19 +121,12 @@
 
         <!-- Overlay chrome: does not reserve layout height -->
         <header class="chrome-overlay toolbar" role="toolbar" aria-label="屬性與檔案" data-i18n-aria="aria_toolbar_props">
-          <div class="chrome-cluster chrome-lang">
-            <div class="tool-group" data-group="lang">
-              <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
-              <button type="button" id="btnLangEn" class="lang-btn" data-lang="en" title="English UI" data-i18n-title="tip_lang_en">EN</button>
-            </div>
-          </div>
-
           <div class="chrome-cluster chrome-actions">
             <div class="tool-group" data-group="templates">
               <div class="menu-wrap">
-                <button type="button" id="btnTemplateMenu" class="menu-btn" title="組合起點／自訂模板" data-i18n-title="tip_templates" aria-haspopup="true" aria-expanded="false">模板 ▾</button>
+                <button type="button" id="btnTemplateMenu" class="menu-btn" title="我的模板／接入 AI" data-i18n-title="tip_templates" aria-haspopup="true" aria-expanded="false">模板 ▾</button>
                 <div class="menu-panel menu-panel-wide" id="templateMenu" hidden>
-                  <div class="menu-section-title" data-i18n="menu_combo">組合起點</div>
+                  <div class="menu-section-title" id="builtinTplTitle" data-i18n="menu_combo" hidden>組合起點</div>
                   <div id="builtinTplList" class="builtin-tpl-list"></div>
                   <div class="menu-section-title" data-i18n="menu_saved">我的／Saved</div>
                   <button type="button" id="btnSaveTemplateMenu" class="tpl-menu-action" data-i18n="btn_save_tpl">存成模板</button>
@@ -138,8 +135,8 @@
                   <details class="tpl-ai-help">
                     <summary data-i18n="tpl_ai_summary">如何接入 AI / Connect AI</summary>
                     <div class="tpl-ai-body" data-i18n-html="tpl_ai_body">
-                      <p><strong>ZH</strong>：開啟 <a href="ai.html" target="_blank" rel="noopener">ai.html</a>，在 Chrome 把該頁分享給 Gemini（分享分頁／@ 加頁），讓它學 JSON 格式後產出 ops，再按頂欄「貼上 JSON」。</p>
-                      <p><strong>EN</strong>: Open <a href="ai.html" target="_blank" rel="noopener">ai.html</a>, share that tab with Gemini in Chrome, then <strong>Paste JSON</strong> in the app.</p>
+                      <p><strong>ZH</strong>：開啟 <a href="ai.html" target="_blank" rel="noopener">ai.html</a>，在 Chrome 把該頁分享給 Gemini（分享分頁／@ 加頁），讓它學 JSON 格式後產出 ops，再按頂欄 <strong>Json ▾ → 貼上 JSON</strong>。</p>
+                      <p><strong>EN</strong>: Open <a href="ai.html" target="_blank" rel="noopener">ai.html</a>, share that tab with Gemini in Chrome, then <strong>Json ▾ → Paste JSON</strong>.</p>
                     </div>
                     <p class="tpl-ai-link"><a href="ai.html" target="_blank" rel="noopener" data-i18n="link_ai_guide">AI 說明頁 ai.html</a></p>
                   </details>
@@ -201,9 +198,14 @@
             </div>
 
             <div class="tool-group" data-group="file">
-              <button type="button" id="btnPasteJson" title="貼上 AI／ops JSON" data-i18n-title="tip_paste_json" data-i18n="btn_paste_json">貼上 JSON</button>
-              <button type="button" id="btnSave" title="儲存 JSON" data-i18n-title="tip_save">儲存</button>
-              <button type="button" id="btnLoad" title="開啟 JSON" data-i18n-title="tip_load">開啟</button>
+              <div class="menu-wrap">
+                <button type="button" id="btnJsonMenu" class="menu-btn" title="貼上／儲存／開啟 JSON" data-i18n-title="tip_json_menu" aria-haspopup="true" aria-expanded="false" data-i18n="btn_json_menu">Json ▾</button>
+                <div class="menu-panel" id="jsonMenu" hidden>
+                  <button type="button" id="btnPasteJson" title="貼上 AI／ops JSON" data-i18n-title="tip_paste_json" data-i18n="btn_paste_json">貼上 JSON</button>
+                  <button type="button" id="btnSave" title="儲存 JSON" data-i18n-title="tip_save" data-i18n="btn_save">儲存</button>
+                  <button type="button" id="btnLoad" title="開啟 JSON" data-i18n-title="tip_load" data-i18n="btn_load">開啟</button>
+                </div>
+              </div>
               <div class="menu-wrap">
                 <button type="button" id="btnExportMenu" class="menu-btn" title="匯出選項" data-i18n-title="tip_export_menu" aria-haspopup="true" aria-expanded="false" data-i18n="btn_export_menu">匯出 ▾</button>
                 <div class="menu-panel" id="exportMenu" hidden>
@@ -556,6 +558,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261022-release-v13.5.18"></script>
+  <script src="app.js?v=20261022-release-v13.5.19"></script>
 </body>
 </html>

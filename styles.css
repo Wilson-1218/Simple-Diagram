@@ -184,14 +184,6 @@ body {
   max-width: 100%;
 }
 
-.chrome-lang {
-  background: var(--chrome-bg);
-  border: 1px solid var(--bar-border);
-  border-radius: var(--radius);
-  padding: calc(3px * var(--tb)) calc(5px * var(--tb));
-  backdrop-filter: blur(4px);
-}
-
 .chrome-actions {
   background: var(--chrome-bg);
   border: 1px solid var(--bar-border);
@@ -245,6 +237,28 @@ body {
 .rail-brand .brand-sub {
   font-size: calc(9px * var(--tb));
   color: var(--muted);
+}
+
+/* Compact 中｜EN under logo — must not widen the 2-col tool rail */
+.rail-lang {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 1px;
+  padding: 2px;
+  background: var(--chrome-bg, rgba(255, 255, 255, 0.92));
+  border: 1px solid var(--bar-border);
+  border-radius: var(--radius);
+  max-width: 100%;
+}
+
+.rail-lang .lang-btn {
+  min-width: calc(22px * var(--tb, 1.2));
+  min-height: calc(22px * var(--tb, 1.2));
+  padding: 2px 4px;
+  font-size: calc(10px * var(--tb, 1.2));
+  line-height: 1;
 }
 
 .tool-group {

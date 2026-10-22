@@ -270,7 +270,7 @@ test("addFoot projects onto line and draws altitude", () => {
   assert.equal(validateDiagram(doc).ok, true, validateDiagram(doc).errors.join("; "));
 });
 
-test("insertTemplate rightTri / frustum / circleGeom / genTri", async () => {
+test("insertTemplate rightTri / frustum / genTri", async () => {
   const {
     BUILTIN_TEMPLATE_IDS,
     listBuiltinTemplates,
@@ -278,9 +278,12 @@ test("insertTemplate rightTri / frustum / circleGeom / genTri", async () => {
     runMacro,
   } = await import("../src/diagram/index.mjs");
 
-  for (const id of ["rightTri", "frustum", "circleGeom", "genTri"]) {
+  for (const id of ["rightTri", "frustum", "genTri"]) {
     assert.ok(BUILTIN_TEMPLATE_IDS.includes(id), id);
   }
+  assert.ok(!BUILTIN_TEMPLATE_IDS.includes("circleGeom"));
+  assert.ok(!BUILTIN_TEMPLATE_IDS.includes("circleCenter"));
+  assert.ok(!BUILTIN_TEMPLATE_IDS.includes("altBase"));
 
   const right = applyOps(null, [{ op: "insertTemplate", id: "rightTri" }]);
   assert.equal(right.points.length, 3);
@@ -295,21 +298,13 @@ test("insertTemplate rightTri / frustum / circleGeom / genTri", async () => {
   assert.ok(fru.points.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y)));
   assert.equal(validateDiagram(fru).ok, true, validateDiagram(fru).errors.join("; "));
 
-  const circ = applyOps(null, [{ op: "insertTemplate", id: "circleGeom", scale: 1.5 }]);
-  assert.equal(circ.points.length, 5);
-  assert.equal(circ.circles.length, 1);
-  assert.equal(circ.segments.length, 3);
-  assert.equal(validateDiagram(circ).ok, true, validateDiagram(circ).errors.join("; "));
-
   const gen = applyOps(null, [{ op: "insertTemplate", id: "genTri" }]);
   assert.equal(gen.points.length, 3);
   assert.equal(gen.segments.length, 3);
   assert.equal(validateDiagram(gen).ok, true, validateDiagram(gen).errors.join("; "));
 
   const listed = listBuiltinTemplates();
-  assert.ok(listed.every((t) => t.ui === true));
-  assert.ok(listed.some((t) => t.id === "circleGeom" && t.group === "combo"));
-  assert.ok(listed.some((t) => t.id === "altBase"));
+  assert.equal(listed.length, 0, "Templates ▾ has no builtin combos");
   assert.ok(!listed.some((t) => t.id === "frustum"), "solids not in default list_templates");
   const all = listBuiltinTemplates({ uiOnly: false });
   assert.ok(all.some((t) => t.id === "rightTri" && t.group === "plane" && t.ui === false));
