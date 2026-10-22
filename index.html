@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.5.8" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.5.9" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.5.8" />
+  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.5.9" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.8</span>
+            <span class="brand-sub">v13.5.9</span>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -131,12 +131,20 @@
                 <div class="menu-panel menu-panel-wide" id="templateMenu" hidden>
                   <div class="menu-section-title" data-i18n="menu_combo">組合起點</div>
                   <div id="builtinTplList" class="builtin-tpl-list"></div>
-                  <div class="menu-section-title" data-i18n="menu_custom">自訂</div>
+                  <div class="menu-section-title" data-i18n="menu_saved">我的／Saved</div>
+                  <button type="button" id="btnSaveTemplateMenu" class="tpl-menu-action" data-i18n="btn_save_tpl">存成模板</button>
                   <div id="customTplList" class="custom-tpl-list"></div>
-                  <p class="menu-empty" id="customTplEmpty">尚無自訂模板</p>
+                  <p class="menu-empty" id="customTplEmpty" data-i18n="empty_custom_tpl">尚無已存模板</p>
+                  <details class="tpl-ai-help">
+                    <summary data-i18n="tpl_ai_summary">如何接入 AI / Connect AI</summary>
+                    <div class="tpl-ai-body" data-i18n-html="tpl_ai_body">
+                      <p><strong>ZH</strong>：在 Cursor 用 MCP 跑 <code>npm run mcp</code>（見 README）。常用：<code>list_templates</code> → <code>insertTemplate</code>／<code>apply_ops</code>。組合 id 與上方「組合起點」相同（tooltip 可複製）。本機「我的」模板只在瀏覽器；給 AI 請用「匯出」或另存 JSON。</p>
+                      <p><strong>EN</strong>: Run MCP via <code>npm run mcp</code> (README). Use <code>list_templates</code> then <code>insertTemplate</code> / <code>apply_ops</code>. Combo ids match the menu (see tooltips). Saved templates are browser-local — export JSON for agents. Playbook: <code>docs/agent-draw-playbook.md</code>.</p>
+                    </div>
+                  </details>
                 </div>
               </div>
-              <button type="button" id="btnSaveTemplate" title="將目前選取存為自訂模板" data-i18n-title="tip_save_tpl">存為模板</button>
+              <button type="button" id="btnSaveTemplate" title="將目前整圖存成模板" data-i18n-title="tip_save_tpl">存成模板</button>
             </div>
 
             <div class="tool-group" data-group="view">
@@ -401,13 +409,16 @@
 
   <dialog id="templateNameDialog">
     <form method="dialog" id="templateNameForm">
-      <p class="dialog-lead">將選取存為自訂模板</p>
-      <label for="templateNameInput">模板名稱</label>
-      <input id="templateNameInput" type="text" maxlength="32" value="我的模板" autofocus />
-      <p class="dialog-note">儲存於本機瀏覽器；插入時置於畫面中央。可含點、線、圓、橢圓與常見記號。</p>
+      <p class="dialog-lead" id="templateNameLead" data-i18n="tpl_dialog_lead">將目前圖形存成模板</p>
+      <input type="hidden" id="templateEditId" value="" />
+      <label for="templateNameInput" data-i18n="tpl_name_zh">名稱（中文）</label>
+      <input id="templateNameInput" type="text" maxlength="40" value="我的模板" autofocus />
+      <label for="templateNameEnInput" data-i18n="tpl_name_en">Name (English)</label>
+      <input id="templateNameEnInput" type="text" maxlength="40" value="" placeholder="My template" />
+      <p class="dialog-note" data-i18n="tpl_dialog_note">儲存於本機瀏覽器（localStorage）。插入時置於畫面中央。給 AI 用請按模板列「匯出」。</p>
       <div class="dialog-actions">
-        <button type="submit" value="ok">儲存</button>
-        <button type="button" id="templateNameCancel" value="cancel">取消</button>
+        <button type="submit" value="ok" data-i18n="tpl_dialog_save">儲存</button>
+        <button type="button" id="templateNameCancel" value="cancel" data-i18n="tpl_dialog_cancel">取消</button>
       </div>
     </form>
   </dialog>
@@ -518,6 +529,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261021-release-v13.5.8"></script>
+  <script src="app.js?v=20261021-release-v13.5.9"></script>
 </body>
 </html>
