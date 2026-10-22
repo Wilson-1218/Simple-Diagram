@@ -11,7 +11,7 @@
 
 Schema: [`diagram-format.md`](diagram-format.md) · Module: `src/diagram/` · MCP: `mcp/server.mjs`
 
-**Pages-only AI guide (Gemini):** [`ai.html`](../ai.html) — open it, share the tab with Gemini in Chrome; then user **Paste JSON**.
+**Pages-only AI guide (Gemini):** [`ai.html`](../ai.html) — **full ops catalog** (coord plots, fills, shapes, macros…). Share the tab with Gemini in Chrome; then user **Paste JSON**. Schema detail: [`diagram-format.md`](diagram-format.md).
 
 ---
 
