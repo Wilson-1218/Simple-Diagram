@@ -22,6 +22,15 @@ export {
   assertTemplateCatalogIntegrity,
 } from "./templates.mjs";
 export {
+  normalizeLengthStyle,
+  normalizeLengthOrient,
+  readableEdgeAngle,
+  lengthOffsetFrame,
+  dimMarkParts,
+  arcsMarkParts,
+  approxTextWidth,
+} from "./length-mark.mjs";
+export {
   MACRO_NAMES,
   runMacro,
   drawRightTriangle,

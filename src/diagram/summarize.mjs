@@ -57,7 +57,9 @@ export const OP_CATALOG = {
   addReflex: { args: "same as addAngleArc", note: "Forces reflex:true" },
   addParallelMark: { args: "segmentId, group?, side?" },
   addEqualMark: { args: "segmentId, group?, side?" },
-  addLengthLabel: { args: "segmentId, text, side?" },
+  addLengthLabel: {
+    args: "segmentId, text?, side?, style?(text|dim|arcs), orient?(tilt|horizontal), size?",
+  },
   addMidTick: { args: "segmentId, pointId?" },
   addFoot: {
     args: "pointId, segmentId | a+b, footId?, drawSegment?, style?, label?, marker?",

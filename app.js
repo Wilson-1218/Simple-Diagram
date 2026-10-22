@@ -50,7 +50,9 @@
   const templateNameEnInput = document.getElementById("templateNameEnInput");
   const templateEditId = document.getElementById("templateEditId");
   const templateNameCancel = document.getElementById("templateNameCancel");
-  const chkDarkCanvas = document.getElementById("chkDarkCanvas");
+  const btnThemeDay = document.getElementById("btnThemeDay");
+  const btnThemeNight = document.getElementById("btnThemeNight");
+  const lengthSizeSelect = document.getElementById("lengthSizeSelect");
   const btnRecentMenu = document.getElementById("btnRecentMenu");
   const recentMenu = document.getElementById("recentMenu");
   const recentList = document.getElementById("recentList");
@@ -136,6 +138,7 @@
   }
   fillSizeSelect(labelSizeSelect, DEFAULT_LABEL_SIZE);
   fillSizeSelect(labelSizeInput, DEFAULT_LABEL_SIZE);
+  fillSizeSelect(lengthSizeSelect, DEFAULT_LABEL_SIZE);
 
   // ——— State ———
   const DEFAULT_VIEW_SCALE = 2;
@@ -253,6 +256,12 @@
   let nextLetter = "A";
   let labelFontSize = DEFAULT_LABEL_SIZE;
   let rightAngleSize = DEFAULT_RA_SIZE;
+  /** Length-mark tool defaults (copied onto new lengthLabels). */
+  let lengthMarkSize = DEFAULT_LABEL_SIZE;
+  /** @type {"tilt"|"horizontal"} */
+  let lengthMarkOrient = "tilt";
+  /** @type {"text"|"dim"|"arcs"} */
+  let lengthMarkStyle = "text";
   let activeParallelGroup = 0; // 0 or 1
   let activeEqualGroup = 0;
   let activeArcGroup = 0; // 0 = single, 1 = double arc
@@ -329,6 +338,24 @@
       rail_draw: "繪", rail_construct: "構", rail_marks: "記",
       rail_draw_title: "繪製", rail_construct_title: "構造", rail_marks_title: "記號",
       chk_grid: "網格", chk_hide_pts: "匯出隱藏點", chk_dark: "深色畫布",
+      tip_theme_day: "淺色畫布（編輯）",
+      tip_theme_night: "深色畫布（僅編輯；匯出仍白底）",
+      aria_theme: "畫布明暗",
+      length_float_title: "長度",
+      tip_length_size: "長度文字大小",
+      aria_length_size: "長度文字大小",
+      tip_length_orient: "文字方向",
+      tip_length_tilt: "隨線段傾斜",
+      tip_length_horizontal: "固定水平",
+      length_orient_tilt: "隨線",
+      length_orient_horizontal: "水平",
+      tip_length_style: "長度標註樣式",
+      tip_length_style_text: "純文字",
+      tip_length_style_dim: "尺寸線（兩端箭頭）",
+      tip_length_style_arcs: "弧括號",
+      length_style_text: "1 文字",
+      length_style_dim: "2 尺寸",
+      length_style_arcs: "3 弧括",
       btn_layers: "圖層 ▾", layers_title: "圖層", layers_grid: "網格", layers_coords: "座標",
       layers_helpers: "記號", layers_show: "顯示", layers_lock: "鎖定",
       tip_layers: "圖層顯示／鎖定（網格／座標／記號；記號預設鎖定，解鎖後可拖標籤／記號）",
@@ -598,6 +625,24 @@
       rail_draw: "Draw", rail_construct: "Build", rail_marks: "Mark",
       rail_draw_title: "Draw", rail_construct_title: "Construct", rail_marks_title: "Marks",
       chk_grid: "Grid", chk_hide_pts: "Hide pts", chk_dark: "Dark",
+      tip_theme_day: "Light canvas (edit)",
+      tip_theme_night: "Dark canvas (edit only; export stays white)",
+      aria_theme: "Canvas theme",
+      length_float_title: "Length",
+      tip_length_size: "Length text size",
+      aria_length_size: "Length text size",
+      tip_length_orient: "Text orientation",
+      tip_length_tilt: "Follow segment tilt",
+      tip_length_horizontal: "Fixed horizontal",
+      length_orient_tilt: "Tilt",
+      length_orient_horizontal: "Horiz",
+      tip_length_style: "Length mark style",
+      tip_length_style_text: "Text only",
+      tip_length_style_dim: "Dimension line (arrows both ends)",
+      tip_length_style_arcs: "Arc brackets",
+      length_style_text: "1 Text",
+      length_style_dim: "2 Dim",
+      length_style_arcs: "3 Arcs",
       btn_layers: "Layers ▾", layers_title: "Layers", layers_grid: "Grid", layers_coords: "Axes",
       layers_helpers: "Marks", layers_show: "Show", layers_lock: "Lock",
       tip_layers: "Layer show/lock (grid / axes / marks; marks default locked — unlock to drag)",
@@ -944,7 +989,6 @@
     renderRecentMenu();
     refreshBuiltinTemplateMenu();
     refreshCustomTemplateMenu();
-    renderWhatsNewList();
     updateStatus();
   }
 
@@ -1029,9 +1073,25 @@
   }
   function applyDarkCanvasClass() {
     document.body.classList.toggle("dark-canvas", !!darkCanvas);
-    if (chkDarkCanvas) chkDarkCanvas.checked = !!darkCanvas;
+    if (btnThemeDay) {
+      btnThemeDay.classList.toggle("active", !darkCanvas);
+      btnThemeDay.setAttribute("aria-pressed", darkCanvas ? "false" : "true");
+    }
+    if (btnThemeNight) {
+      btnThemeNight.classList.toggle("active", !!darkCanvas);
+      btnThemeNight.setAttribute("aria-pressed", darkCanvas ? "true" : "false");
+    }
   }
   applyDarkCanvasClass();
+
+  function setDarkCanvas(on) {
+    darkCanvas = !!on;
+    try {
+      lsSet(LS_DARK, darkCanvas ? "1" : "0");
+    } catch (_) {}
+    applyDarkCanvasClass();
+    draw();
+  }
 
   function readGridModePref() {
     try {
@@ -1170,6 +1230,8 @@
         activeEqualGroup = m.group ? 1 : 0;
         syncMarkGroupUI();
       }
+    } else if (selected.type === "lengthLabel") {
+      syncLengthFloatUI();
     } else if (selected.type === "fill") {
       const f = fills.find((x) => x.id === selected.id);
       if (f) {
@@ -1640,6 +1702,7 @@
     const fillFloat = document.getElementById("fillFloat");
     const sectorFloat = document.getElementById("sectorFloat");
     const markFloat = document.getElementById("markFloat");
+    const lengthFloat = document.getElementById("lengthFloat");
     const shapeFloat = document.getElementById("shapeFloat");
     const circlePartFloat = document.getElementById("circlePartFloat");
     const alignFloat = document.getElementById("alignFloat");
@@ -1662,6 +1725,11 @@
     if (markFloat) {
       const selMark = selection.some((s) => MARK_SEL_TYPES.has(s.type));
       markFloat.hidden = !(MARK_MODE_TOOLS.has(tool) || (tool === "select" && selMark));
+    }
+    if (lengthFloat) {
+      const selLen = selection.some((s) => s.type === "lengthLabel");
+      lengthFloat.hidden = !(tool === "length" || (tool === "select" && selLen));
+      if (!lengthFloat.hidden) syncLengthFloatUI();
     }
     if (shapeFloat) {
       shapeFloat.hidden = tool !== "shape";
@@ -2589,10 +2657,7 @@
       ...m,
       side: m.side === -1 ? -1 : 1,
     }));
-    lengthLabels = (data.lengthLabels || []).map((m) => ({
-      ...m,
-      side: m.side === -1 ? -1 : 1,
-    }));
+    lengthLabels = (data.lengthLabels || []).map((m) => normalizeLengthLabelRecord(m));
     circles = data.circles || [];
     ellipses = data.ellipses || [];
     sectors = data.sectors || [];
@@ -6257,23 +6322,324 @@
     draw();
   }
 
-  function drawLengthLabel(ll, highlight) {
+  function normalizeLengthStyle(v) {
+    if (v === "dim" || v === 2 || v === "2") return "dim";
+    if (v === "arcs" || v === 3 || v === "3") return "arcs";
+    return "text";
+  }
+  function normalizeLengthOrient(v) {
+    if (v === "horizontal" || v === "h" || v === "fixed") return "horizontal";
+    return "tilt";
+  }
+  function normalizeLengthLabelRecord(m) {
+    if (!m) return m;
+    return {
+      ...m,
+      side: m.side === -1 ? -1 : 1,
+      text: m.text != null ? String(m.text) : "",
+      size: clampLabelSize(m.size != null ? m.size : DEFAULT_LABEL_SIZE),
+      orient: normalizeLengthOrient(m.orient),
+      style: normalizeLengthStyle(m.style),
+    };
+  }
+  function lengthLabelFontPx(ll, scaleMul) {
+    const base = clampLabelSize(ll && ll.size != null ? ll.size : lengthMarkSize);
+    return base * scaleMul;
+  }
+  function lengthOffsetPx(ll, scaleMul) {
+    const style = normalizeLengthStyle(ll && ll.style);
+    const base = style === "text" ? 14 : 18;
+    return base * scaleMul;
+  }
+  function approxLengthTextWidth(text, fontPx) {
+    const t = String(text || "");
+    let w = 0;
+    for (const ch of t) {
+      w += /[ijlI1|.,:;'!]/.test(ch) ? 0.35 : /[mwMW]/.test(ch) ? 0.85 : 0.55;
+    }
+    return Math.max(fontPx * 0.6, w * fontPx);
+  }
+  function paintArrowHead(c, tipX, tipY, dirX, dirY, size, fill) {
+    const len = Math.hypot(dirX, dirY) || 1;
+    const ux = dirX / len;
+    const uy = dirY / len;
+    const px = -uy;
+    const py = ux;
+    const back = size;
+    const half = size * 0.45;
+    c.beginPath();
+    c.moveTo(tipX, tipY);
+    c.lineTo(tipX - ux * back + px * half, tipY - uy * back + py * half);
+    c.lineTo(tipX - ux * back - px * half, tipY - uy * back - py * half);
+    c.closePath();
+    c.fillStyle = fill;
+    c.fill();
+  }
+  function lengthLabelAngle(ll, place) {
+    return normalizeLengthOrient(ll.orient) === "horizontal" ? 0 : place.angle;
+  }
+  /** Unified length mark paint for edit canvas + PNG export. */
+  function paintLengthLabelOn(c, ll, toS, scaleMul, ink, withHalo) {
     const seg = segmentById(ll.segmentId);
     if (!seg) return;
-    const off = 14 * Math.min(Math.max(view.scale, 0.6), 1.4);
-    const place = lengthLabelPlacement(seg, ll.side, worldToScreen, off);
+    const a = pointById(seg.a);
+    const b = pointById(seg.b);
+    if (!a || !b) return;
+    const off = lengthOffsetPx(ll, scaleMul);
+    const place = lengthLabelPlacement(seg, ll.side, toS, off);
     if (!place) return;
-    const fontPx = clampLabelSize(labelFontSize) * Math.min(Math.max(view.scale, 0.7), 1.5);
-    paintLabelText(
-      ctx,
-      ll.text,
-      place.x,
-      place.y,
-      fontPx,
-      edInk(highlight),
-      true,
-      place.angle
-    );
+    const fontPx = lengthLabelFontPx(ll, scaleMul);
+    const style = normalizeLengthStyle(ll.style);
+    const ang = lengthLabelAngle(ll, place);
+    const sa = toS(a.x, a.y);
+    const sb = toS(b.x, b.y);
+    const side = ll.side === -1 ? -1 : 1;
+    let dx = sb.x - sa.x;
+    let dy = sb.y - sa.y;
+    const seglen = Math.hypot(dx, dy) || 1;
+    dx /= seglen;
+    dy /= seglen;
+    const nx = -dy * side;
+    const ny = dx * side;
+    const p0 = { x: sa.x + nx * off, y: sa.y + ny * off };
+    const p1 = { x: sb.x + nx * off, y: sb.y + ny * off };
+    const mx = (p0.x + p1.x) / 2;
+    const my = (p0.y + p1.y) / 2;
+    const lw = Math.max(1.1, LINE_WIDTH * 0.85 * Math.min(scaleMul, 1.2));
+
+    if (style === "dim") {
+      const tick = Math.max(6, 8 * scaleMul);
+      const arrow = Math.max(5, 7 * scaleMul);
+      const pad = Math.max(4, fontPx * 0.35);
+      const gap = approxLengthTextWidth(ll.text, fontPx) + pad * 2;
+      const halfGap = gap / 2;
+      const px = -dy;
+      const py = dx;
+      c.save();
+      c.strokeStyle = ink;
+      c.fillStyle = ink;
+      c.lineWidth = lw;
+      c.lineCap = "butt";
+      c.setLineDash([]);
+      // extension ticks
+      c.beginPath();
+      c.moveTo(p0.x - px * tick, p0.y - py * tick);
+      c.lineTo(p0.x + px * tick, p0.y + py * tick);
+      c.moveTo(p1.x - px * tick, p1.y - py * tick);
+      c.lineTo(p1.x + px * tick, p1.y + py * tick);
+      c.stroke();
+      const along0 = { x: p0.x + dx * arrow, y: p0.y + dy * arrow };
+      const along1 = { x: p1.x - dx * arrow, y: p1.y - dy * arrow };
+      const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
+      const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
+      c.beginPath();
+      c.moveTo(along0.x, along0.y);
+      c.lineTo(g0.x, g0.y);
+      c.moveTo(g1.x, g1.y);
+      c.lineTo(along1.x, along1.y);
+      c.stroke();
+      paintArrowHead(c, p0.x, p0.y, -dx, -dy, arrow, ink);
+      paintArrowHead(c, p1.x, p1.y, dx, dy, arrow, ink);
+      c.restore();
+      paintLabelText(c, ll.text, mx, my, fontPx, ink, withHalo, ang);
+      return;
+    }
+
+    if (style === "arcs") {
+      const pad = Math.max(4, fontPx * 0.35);
+      const gap = approxLengthTextWidth(ll.text, fontPx) + pad * 2;
+      const halfGap = gap / 2;
+      const bulge = Math.max(8, 11 * scaleMul);
+      const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
+      const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
+      const mA = {
+        x: (p0.x + g0.x) / 2 + nx * bulge,
+        y: (p0.y + g0.y) / 2 + ny * bulge,
+      };
+      const mB = {
+        x: (g1.x + p1.x) / 2 + nx * bulge,
+        y: (g1.y + p1.y) / 2 + ny * bulge,
+      };
+      c.save();
+      c.strokeStyle = ink;
+      c.lineWidth = lw;
+      c.lineCap = "round";
+      c.setLineDash([]);
+      c.beginPath();
+      c.moveTo(p0.x, p0.y);
+      c.quadraticCurveTo(mA.x, mA.y, g0.x, g0.y);
+      c.moveTo(g1.x, g1.y);
+      c.quadraticCurveTo(mB.x, mB.y, p1.x, p1.y);
+      c.stroke();
+      c.restore();
+      paintLabelText(c, ll.text, mx, my, fontPx, ink, withHalo, ang);
+      return;
+    }
+
+    // style text
+    paintLabelText(c, ll.text, place.x, place.y, fontPx, ink, withHalo, ang);
+  }
+
+  function svgArrowHead(tipX, tipY, dirX, dirY, size) {
+    const len = Math.hypot(dirX, dirY) || 1;
+    const ux = dirX / len;
+    const uy = dirY / len;
+    const px = -uy;
+    const py = ux;
+    const back = size;
+    const half = size * 0.45;
+    const x1 = tipX - ux * back + px * half;
+    const y1 = tipY - uy * back + py * half;
+    const x2 = tipX - ux * back - px * half;
+    const y2 = tipY - uy * back - py * half;
+    return `<path d="M${tipX.toFixed(2)},${tipY.toFixed(2)} L${x1.toFixed(2)},${y1.toFixed(2)} L${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="#111" stroke="none"/>\n`;
+  }
+
+  function svgLengthLabel(ll, toS, scaleMul) {
+    const seg = segmentById(ll.segmentId);
+    if (!seg) return "";
+    const a = pointById(seg.a);
+    const b = pointById(seg.b);
+    if (!a || !b) return "";
+    const off = lengthOffsetPx(ll, scaleMul);
+    const place = lengthLabelPlacement(seg, ll.side, toS, off);
+    if (!place) return "";
+    const fontPx = lengthLabelFontPx(ll, scaleMul);
+    const style = normalizeLengthStyle(ll.style);
+    const ang = lengthLabelAngle(ll, place);
+    const sa = toS(a.x, a.y);
+    const sb = toS(b.x, b.y);
+    const side = ll.side === -1 ? -1 : 1;
+    let dx = sb.x - sa.x;
+    let dy = sb.y - sa.y;
+    const seglen = Math.hypot(dx, dy) || 1;
+    dx /= seglen;
+    dy /= seglen;
+    const nx = -dy * side;
+    const ny = dx * side;
+    const p0 = { x: sa.x + nx * off, y: sa.y + ny * off };
+    const p1 = { x: sb.x + nx * off, y: sb.y + ny * off };
+    const mx = (p0.x + p1.x) / 2;
+    const my = (p0.y + p1.y) / 2;
+    const lw = Math.max(1.1, LINE_WIDTH * 0.85 * Math.min(scaleMul, 1.2)).toFixed(2);
+    let out = "";
+    const labelX = style === "text" ? place.x : mx;
+    const labelY = style === "text" ? place.y : my;
+    if (style === "dim") {
+      const tick = Math.max(6, 8 * scaleMul);
+      const arrow = Math.max(5, 7 * scaleMul);
+      const pad = Math.max(4, fontPx * 0.35);
+      const gap = approxLengthTextWidth(ll.text, fontPx) + pad * 2;
+      const halfGap = gap / 2;
+      const px = -dy;
+      const py = dx;
+      out += `<line x1="${(p0.x - px * tick).toFixed(2)}" y1="${(p0.y - py * tick).toFixed(2)}" x2="${(p0.x + px * tick).toFixed(2)}" y2="${(p0.y + py * tick).toFixed(2)}" stroke="#111" stroke-width="${lw}"/>\n`;
+      out += `<line x1="${(p1.x - px * tick).toFixed(2)}" y1="${(p1.y - py * tick).toFixed(2)}" x2="${(p1.x + px * tick).toFixed(2)}" y2="${(p1.y + py * tick).toFixed(2)}" stroke="#111" stroke-width="${lw}"/>\n`;
+      const along0 = { x: p0.x + dx * arrow, y: p0.y + dy * arrow };
+      const along1 = { x: p1.x - dx * arrow, y: p1.y - dy * arrow };
+      const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
+      const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
+      out += `<line x1="${along0.x.toFixed(2)}" y1="${along0.y.toFixed(2)}" x2="${g0.x.toFixed(2)}" y2="${g0.y.toFixed(2)}" stroke="#111" stroke-width="${lw}"/>\n`;
+      out += `<line x1="${g1.x.toFixed(2)}" y1="${g1.y.toFixed(2)}" x2="${along1.x.toFixed(2)}" y2="${along1.y.toFixed(2)}" stroke="#111" stroke-width="${lw}"/>\n`;
+      out += svgArrowHead(p0.x, p0.y, -dx, -dy, arrow);
+      out += svgArrowHead(p1.x, p1.y, dx, dy, arrow);
+    } else if (style === "arcs") {
+      const pad = Math.max(4, fontPx * 0.35);
+      const gap = approxLengthTextWidth(ll.text, fontPx) + pad * 2;
+      const halfGap = gap / 2;
+      const bulge = Math.max(8, 11 * scaleMul);
+      const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
+      const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
+      const mA = { x: (p0.x + g0.x) / 2 + nx * bulge, y: (p0.y + g0.y) / 2 + ny * bulge };
+      const mB = { x: (g1.x + p1.x) / 2 + nx * bulge, y: (g1.y + p1.y) / 2 + ny * bulge };
+      out += `<path d="M${p0.x.toFixed(2)},${p0.y.toFixed(2)} Q${mA.x.toFixed(2)},${mA.y.toFixed(2)} ${g0.x.toFixed(2)},${g0.y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"/>\n`;
+      out += `<path d="M${g1.x.toFixed(2)},${g1.y.toFixed(2)} Q${mB.x.toFixed(2)},${mB.y.toFixed(2)} ${p1.x.toFixed(2)},${p1.y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"/>\n`;
+    }
+    const deg = (ang * 180) / Math.PI;
+    const halo = Math.max(3, fontPx * 0.28);
+    const tf = `translate(${labelX.toFixed(2)} ${labelY.toFixed(2)}) rotate(${deg.toFixed(2)})`;
+    const common =
+      `transform="${tf}" text-anchor="middle" dominant-baseline="middle" ` +
+      `font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx.toFixed(1)}"`;
+    out += `<text ${common} fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round">${escapeXml(ll.text || "")}</text>\n`;
+    out += `<text ${common} fill="#111">${escapeXml(ll.text || "")}</text>\n`;
+    return out;
+  }
+
+  function drawLengthLabel(ll, highlight) {
+    const scaleMul = Math.min(Math.max(view.scale, 0.6), 1.4);
+    paintLengthLabelOn(ctx, ll, worldToScreen, scaleMul, edInk(highlight), true);
+  }
+
+  function syncLengthFloatUI() {
+    const sel = selection
+      .filter((s) => s.type === "lengthLabel")
+      .map((s) => lengthLabels.find((l) => l.id === s.id))
+      .filter(Boolean);
+    const src = sel[0] || {
+      size: lengthMarkSize,
+      orient: lengthMarkOrient,
+      style: lengthMarkStyle,
+    };
+    if (lengthSizeSelect) {
+      lengthSizeSelect.value = String(clampLabelSize(src.size != null ? src.size : lengthMarkSize));
+    }
+    document.querySelectorAll("[data-length-orient]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.lengthOrient === normalizeLengthOrient(src.orient));
+    });
+    document.querySelectorAll("[data-length-style]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.lengthStyle === normalizeLengthStyle(src.style));
+    });
+  }
+
+  function selectedLengthLabels() {
+    return selection
+      .filter((s) => s.type === "lengthLabel")
+      .map((s) => lengthLabels.find((l) => l.id === s.id))
+      .filter(Boolean);
+  }
+
+  function setLengthMarkSize(size) {
+    const n = clampLabelSize(size);
+    lengthMarkSize = n;
+    if (lengthSizeSelect) lengthSizeSelect.value = String(n);
+    const labs = selectedLengthLabels();
+    if (!labs.length) return;
+    if (labs.some((l) => clampLabelSize(l.size) !== n)) {
+      pushHistory();
+      for (const l of labs) l.size = n;
+      draw();
+    }
+  }
+
+  function setLengthMarkOrient(orient) {
+    const o = normalizeLengthOrient(orient);
+    lengthMarkOrient = o;
+    document.querySelectorAll("[data-length-orient]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.lengthOrient === o);
+    });
+    const labs = selectedLengthLabels();
+    if (!labs.length) return;
+    if (labs.some((l) => normalizeLengthOrient(l.orient) !== o)) {
+      pushHistory();
+      for (const l of labs) l.orient = o;
+      draw();
+    }
+  }
+
+  function setLengthMarkStyle(style) {
+    const st = normalizeLengthStyle(style);
+    lengthMarkStyle = st;
+    document.querySelectorAll("[data-length-style]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.lengthStyle === st);
+    });
+    const labs = selectedLengthLabels();
+    if (!labs.length) return;
+    if (labs.some((l) => normalizeLengthStyle(l.style) !== st)) {
+      pushHistory();
+      for (const l of labs) l.style = st;
+      draw();
+    }
   }
 
   function circleStyle(cir) {
@@ -9520,12 +9886,7 @@
 
     if (layers.helpersShow) {
       for (const ll of lengthLabels) {
-        const seg = segmentById(ll.segmentId);
-        if (!seg) continue;
-        const place = lengthLabelPlacement(seg, ll.side, toS, 14 * scale * 0.75);
-        if (!place) continue;
-        const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
-        paintLabelText(c, ll.text, place.x, place.y, fontPx, "#111", true, place.angle);
+        paintLengthLabelOn(c, ll, toS, scale * 0.75, "#111", true);
       }
       for (const lab of labels) {
         const p = pointById(lab.pointId);
@@ -9859,19 +10220,7 @@
     }
 
     if (layers.helpersShow) for (const ll of lengthLabels) {
-      const seg = segmentById(ll.segmentId);
-      if (!seg) continue;
-      const place = lengthLabelPlacement(seg, ll.side, toS, 14 * scale * 0.75);
-      if (!place) continue;
-      const fs = clampLabelSize(labelFontSize) * scale * 0.75;
-      const halo = Math.max(3, fs * 0.28);
-      const deg = (place.angle * 180) / Math.PI;
-      const tf = `translate(${place.x.toFixed(2)} ${place.y.toFixed(2)}) rotate(${deg.toFixed(2)})`;
-      const common =
-        `transform="${tf}" text-anchor="middle" dominant-baseline="middle" ` +
-        `font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}"`;
-      body += `<text ${common} fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round">${escapeXml(ll.text)}</text>\n`;
-      body += `<text ${common} fill="#111">${escapeXml(ll.text)}</text>\n`;
+      body += svgLengthLabel(ll, toS, scale * 0.75);
     }
 
     if (!hideExportPoints) {
@@ -9914,7 +10263,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.19",
+      version: "13.5.20",
       app: "simple-diagram",
       points,
       segments,
@@ -10165,10 +10514,7 @@ ${body}</svg>`;
       ...m,
       side: m.side === -1 ? -1 : 1,
     }));
-    lengthLabels = (data.lengthLabels || []).map((m) => ({
-      ...m,
-      side: m.side === -1 ? -1 : 1,
-    }));
+    lengthLabels = (data.lengthLabels || []).map((m) => normalizeLengthLabelRecord(m));
     circles = data.circles || [];
     ellipses = data.ellipses || [];
     sectors = data.sectors || [];
@@ -12142,6 +12488,9 @@ ${body}</svg>`;
         segment: segIndex[ll.segmentId],
         text: ll.text || "6",
         side: ll.side === -1 ? -1 : 1,
+        size: clampLabelSize(ll.size != null ? ll.size : DEFAULT_LABEL_SIZE),
+        orient: normalizeLengthOrient(ll.orient),
+        style: normalizeLengthStyle(ll.style),
       });
     }
 
@@ -12328,12 +12677,17 @@ ${body}</svg>`;
     for (const ll of tpl.lengthLabels || []) {
       const sid = segIds[ll.segment];
       if (!sid) continue;
-      lengthLabels.push({
-        id: uid(),
-        segmentId: sid,
-        text: ll.text || "6",
-        side: ll.side === -1 ? -1 : 1,
-      });
+      lengthLabels.push(
+        normalizeLengthLabelRecord({
+          id: uid(),
+          segmentId: sid,
+          text: ll.text || "6",
+          side: ll.side === -1 ? -1 : 1,
+          size: ll.size,
+          orient: ll.orient,
+          style: ll.style,
+        })
+      );
     }
     finishTemplateInsert(before, null);
   }
@@ -12617,44 +12971,9 @@ ${body}</svg>`;
     }
   }
 
-  /**
-   * User-facing release notes — keep SHORT (one line each). Detail → store internal/.
-   * Newest first; last item may be an “earlier…” summary.
-   */
-  const WHATS_NEW = [
-    { v: "v13.5.19", zh: "Json ▾；語系在左欄；模板改僅「我的」", en: "Json ▾; lang under logo; Templates = saved only" },
-    { v: "v13.5.18", zh: "AI 說明：⊥座標對應、cube／函數填色例", en: "AI guide: Axes op map, cube & plot+fill examples" },
-    { v: "v13.5.17", zh: "AI 說明頁涵蓋全部 ops（含座標圖）", en: "AI guide covers all ops (incl. coord plots)" },
-    { v: "v13.5.16", zh: "AI 說明頁補齊 addShape／fill／角弧參數", en: "AI guide: addShape / fill / angle-arc params" },
-    { v: "v13.5.15", zh: "改為連到 ai.html；請用 Chrome 分享分頁給 Gemini", en: "Link to ai.html; share that tab with Gemini in Chrome" },
-    { v: "v13.5.14", zh: "深色介面對比改善（填色色票等）", en: "Dark chrome contrast (fill swatches, etc.)" },
-    { v: "v13.5.12", zh: "可貼上 JSON；AI 說明頁 ai.html（Pages）", en: "Paste JSON; AI guide page ai.html on Pages" },
-    { v: "v13.5.11", zh: "更新說明改精簡", en: "Shorter release notes" },
-    { v: "v13.5.10", zh: "記號／標籤預設鎖定，解鎖後可拖移", en: "Marks/labels locked by default; unlock to drag" },
-    { v: "v13.5.9", zh: "可存成模板；模板內有 AI 接入說明", en: "Save as template; AI setup tip in Templates" },
-    { v: "v13.5.8", zh: "模板選單與 AI 模板目錄一致", en: "Templates menu matches AI template list" },
-    { v: "v13.5.7", zh: "清除只清圖形，保留網格設定", en: "Clear keeps grid settings" },
-    { v: "v13.5.6", zh: "修復圖形浮層底列無法點擊", en: "Shape float bottom row clickable again" },
-    { v: "v13.5.5", zh: "立體進圖形浮層；模板改為組合起點", en: "Solids in Shape float; Templates = combos" },
-    { v: "", zh: "更早版本… 填色、圖層、切線、AI 繪圖／匯出、MIT 等", en: "Earlier… fill, layers, tangent, AI draw/export, MIT, …" },
-  ];
-
-  function renderWhatsNewList() {
-    const el = document.getElementById("whatsNewList");
-    if (!el) return;
-    el.innerHTML = "";
-    for (const row of WHATS_NEW) {
-      const li = document.createElement("li");
-      const text = uiLang === "en" ? row.en : row.zh;
-      li.textContent = row.v ? row.v + " — " + text : text;
-      el.appendChild(li);
-    }
-  }
-
   function openShortcuts() {
     shortcutListenId = null;
     renderShortcutMap();
-    renderWhatsNewList();
     if (shortcutsDialog && typeof shortcutsDialog.showModal === "function") {
       shortcutsDialog.showModal();
     }
@@ -13074,15 +13393,11 @@ ${body}</svg>`;
       renderShortcutMap();
     });
   }
-  if (chkDarkCanvas) {
-    chkDarkCanvas.addEventListener("change", () => {
-      darkCanvas = !!chkDarkCanvas.checked;
-      try {
-        lsSet(LS_DARK, darkCanvas ? "1" : "0");
-      } catch (_) {}
-      applyDarkCanvasClass();
-      draw();
-    });
+  if (btnThemeDay) {
+    btnThemeDay.addEventListener("click", () => setDarkCanvas(false));
+  }
+  if (btnThemeNight) {
+    btnThemeNight.addEventListener("click", () => setDarkCanvas(true));
   }
   function closeRecentMenu() {
     if (recentMenu) recentMenu.hidden = true;
@@ -13165,14 +13480,23 @@ ${body}</svg>`;
       if (!segId) return;
       pushHistory();
       const existing = lengthLabels.find((l) => l.segmentId === segId);
-      if (existing) existing.text = text;
-      else
-        lengthLabels.push({
-          id: uid(),
-          segmentId: segId,
-          text,
-          side: preferLengthSide(segId),
-        });
+      if (existing) {
+        existing.text = text;
+        existing.size = clampLabelSize(existing.size != null ? existing.size : lengthMarkSize);
+        existing.orient = normalizeLengthOrient(existing.orient || lengthMarkOrient);
+        existing.style = normalizeLengthStyle(existing.style || lengthMarkStyle);
+      } else
+        lengthLabels.push(
+          normalizeLengthLabelRecord({
+            id: uid(),
+            segmentId: segId,
+            text,
+            side: preferLengthSide(segId),
+            size: lengthMarkSize,
+            orient: lengthMarkOrient,
+            style: lengthMarkStyle,
+          })
+        );
       history[histIndex] = snapshot();
       const ll = lengthLabels.find((l) => l.segmentId === segId);
       if (ll) setSelection([{ type: "lengthLabel", id: ll.id }]);
@@ -13311,6 +13635,15 @@ ${body}</svg>`;
       setRightAngleSize(rightAngleSizeSelect.value)
     );
   }
+  if (lengthSizeSelect) {
+    lengthSizeSelect.addEventListener("change", () => setLengthMarkSize(lengthSizeSelect.value));
+  }
+  document.querySelectorAll("[data-length-orient]").forEach((btn) => {
+    btn.addEventListener("click", () => setLengthMarkOrient(btn.dataset.lengthOrient));
+  });
+  document.querySelectorAll("[data-length-style]").forEach((btn) => {
+    btn.addEventListener("click", () => setLengthMarkStyle(btn.dataset.lengthStyle));
+  });
 
   /* Keep wheel zoom off scrollable floats so bottom icon rows stay reachable */
   const floatStackEl = document.getElementById("floatStack");
@@ -13582,10 +13915,7 @@ ${body}</svg>`;
         ...m,
         side: m.side === -1 ? -1 : 1,
       }));
-      lengthLabels = (data.lengthLabels || []).map((m) => ({
-        ...m,
-        side: m.side === -1 ? -1 : 1,
-      }));
+      lengthLabels = (data.lengthLabels || []).map((m) => normalizeLengthLabelRecord(m));
       circles = data.circles || [];
       ellipses = data.ellipses || [];
       sectors = data.sectors || [];

@@ -105,8 +105,12 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 ### lengthLabels
 
 ```json
-{ "id": "ll1", "segmentId": "AB", "text": "5", "side": 1 }
+{ "id": "ll1", "segmentId": "AB", "text": "5", "side": 1, "style": "text", "orient": "tilt", "size": 16 }
 ```
+
+- `style`：`text`（純文字）｜`dim`（尺寸線＋雙箭）｜`arcs`（弧括號）；缺省 `text`
+- `orient`：`tilt`（隨線）｜`horizontal`；缺省 `tilt`
+- `size`：字級（約 12–48）
 
 ### midTicks
 
