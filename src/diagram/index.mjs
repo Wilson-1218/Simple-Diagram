@@ -28,6 +28,7 @@ export {
   lengthOffsetFrame,
   dimMarkParts,
   arcsMarkParts,
+  arcsEndMark,
   approxTextWidth,
 } from "./length-mark.mjs";
 export {
