@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261022-release-v13.5.25" />
+  <meta name="simple-diagram-build" content="20261022-release-v13.5.26" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261022-release-v13.5.25" />
+  <link rel="stylesheet" href="styles.css?v=20261022-release-v13.5.26" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.25</span>
+            <span class="brand-sub">v13.5.26</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -166,7 +166,7 @@
 
             <div class="tool-group" data-group="view">
               <div class="menu-wrap">
-                <button type="button" id="btnLayersMenu" class="menu-btn" title="圖層顯示／鎖定" data-i18n-title="tip_layers" aria-haspopup="true" aria-expanded="false" data-i18n="btn_layers">圖層 ▾</button>
+                <button type="button" id="btnLayersMenu" class="menu-btn" title="圖層：網格開關＋格種；座標／記號顯示與鎖定" data-i18n-title="tip_layers" aria-haspopup="true" aria-expanded="false" data-i18n="btn_layers">圖層 ▾</button>
                 <div class="menu-panel menu-panel-layers" id="layersMenu" hidden>
                   <div class="menu-section-title" data-i18n="layers_title">圖層</div>
                   <div class="layers-grid-bar" title="開啟網格顯示與格點吸附（預設開啟）" data-i18n-title="tip_grid">
@@ -177,11 +177,6 @@
                       <option value="square" data-i18n="grid_square">方格</option>
                       <option value="triangle" selected data-i18n="grid_triangle">三角格</option>
                     </select>
-                  </div>
-                  <div class="layers-row" data-layer="grid">
-                    <span class="layers-name" data-i18n="layers_grid">網格</span>
-                    <label class="layers-opt"><input type="checkbox" data-layer-show="grid" checked /> <span data-i18n="layers_show">顯示</span></label>
-                    <label class="layers-opt"><input type="checkbox" data-layer-lock="grid" /> <span data-i18n="layers_lock">鎖定</span></label>
                   </div>
                   <div class="layers-row" data-layer="coords">
                     <span class="layers-name" data-i18n="layers_coords">座標</span>
@@ -592,6 +587,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261022-release-v13.5.25"></script>
+  <script src="app.js?v=20261022-release-v13.5.26"></script>
 </body>
 </html>

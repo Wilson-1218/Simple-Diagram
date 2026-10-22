@@ -1,7 +1,7 @@
 # Simple Diagram 功能清單
 
 手繪風格立體圖編輯器。應用位於儲存庫根目錄（`index.html` / `app.js` / `styles.css`）。  
-目前版本：**v13.5.25**。
+目前版本：**v13.5.26**。
 
 > **給維護者：** 使用者向更新說明（README「更新說明」）保持**精簡**——每版一行；`?` 面板不再列版本清單；細節只寫 Agent Store `internal/`。
 
@@ -36,7 +36,7 @@
 | 20 | **常用圖形／立體** | 繪製 → 圖形 (B)；浮層**圖示網格**（無文字）：平面形＋立體投影（立方體／長方體／直棱柱／圓台／四面體／正方錐／三棱柱／圓柱／圓錐）；外接框拖曳；浮層限制在視窗內並可內捲（底列可點）；ZH／EN tooltip；`addShape` 亦可放立體 |
 | 21 | **弦／直徑／半徑** | 構造 → 圓件 (T)；浮層弦｜直徑｜半徑；在圓上拖曳；線型跟線段樣式 |
 | 22 | **多選對齊／等距** | 選取≥2 可動物件時浮層：L/C/R/T/M/B、橫距／縱距、等長（≥2 線段） |
-| 23 | **圖層顯示／鎖定** | 頂欄「圖層 ▾」：上方網格開關＋格種；列：網格／座標／**記號**。記號**預設鎖定**；格線由 `layers.gridShow` 控制 |
+| 23 | **圖層顯示／鎖定** | 頂欄「圖層 ▾」：上方網格開關＋格種（單一控制）；列：座標／**記號**（顯示＋鎖定）。記號**預設鎖定**；座標鎖定＝不可選取／拖移座標圖 |
 | 24 | **範本（我的）** | 模板選單僅使用者自存；單形立體／平面由圖形浮層；AI 仍可用 `insertTemplate`（plane/solid ids） |
 
 ### 座標對話框（摘要）
@@ -50,7 +50,7 @@
 
 ## 簡短操作流程
 
-1. 開啟 `index.html` 或 `simple-diagram-standalone.html`（標題應見 **Simple Diagram · v13.5.25**）。
+1. 開啟 `index.html` 或 `simple-diagram-standalone.html`（標題應見 **Simple Diagram · v13.5.26**）。
 2. 左側選工具；頂部 overlay「匯出 ▾」預覽或存檔。
 3. Chrome／Edge 存檔可選資料夾；匯出不受深色畫布影響。
 4. AI／自動化（v13.5：`insertTemplate`、macros、`export-diagram` SVG）：見 [`diagram-format.md`](diagram-format.md)、[`agent-draw-playbook.md`](agent-draw-playbook.md) 與 README「AI / Automation」（JSON＋ops，不模擬 UI；v13.5.0 起含扇／弓形填色與圖形／圓件／對齊 ops）。
