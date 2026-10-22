@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "version": "13.5.9",
+  "version": "13.5.10",
   "app": "simple-diagram",
   "points": [
     {
@@ -95,7 +95,7 @@
     "coordsShow": true,
     "coordsLock": false,
     "helpersShow": true,
-    "helpersLock": false
+    "helpersLock": true
   },
   "nextLetter": "A",
   "labelFontSize": 16,

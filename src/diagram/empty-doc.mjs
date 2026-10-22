@@ -1,7 +1,7 @@
 /** Empty Simple Diagram document (formatVersion 1). */
 
 export const CURRENT_FORMAT_VERSION = 1;
-export const APP_VERSION = "13.5.9";
+export const APP_VERSION = "13.5.10";
 
 export const DEFAULT_LAYERS = {
   gridShow: true,
@@ -9,7 +9,8 @@ export const DEFAULT_LAYERS = {
   coordsShow: true,
   coordsLock: false,
   helpersShow: true,
-  helpersLock: false,
+  /** Marks/labels layer defaults locked: follow geometry until unlocked. */
+  helpersLock: true,
 };
 
 /**

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.5.9" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.5.10" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -1673,7 +1673,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.9</span>
+            <span class="brand-sub">v13.5.10</span>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -1827,7 +1827,7 @@ body.dark-canvas .coord-curve-row {
                   <div class="layers-row" data-layer="helpers">
                     <span class="layers-name" data-i18n="layers_helpers">記號</span>
                     <label class="layers-opt"><input type="checkbox" data-layer-show="helpers" checked /> <span data-i18n="layers_show">顯示</span></label>
-                    <label class="layers-opt"><input type="checkbox" data-layer-lock="helpers" /> <span data-i18n="layers_lock">鎖定</span></label>
+                    <label class="layers-opt"><input type="checkbox" data-layer-lock="helpers" checked /> <span data-i18n="layers_lock">鎖定</span></label>
                   </div>
                 </div>
               </div>
@@ -2419,7 +2419,8 @@ body.dark-canvas .coord-curve-row {
     coordsShow: true,
     coordsLock: false,
     helpersShow: true,
-    helpersLock: false,
+    /** 記號圖層預設鎖定：標籤／記號隨點線走；解鎖後才可單獨拖移 */
+    helpersLock: true,
   };
   /** @type {"arc"|"sector"} */
   let sectorMode = "arc";
@@ -2514,7 +2515,7 @@ body.dark-canvas .coord-curve-row {
       chk_grid: "網格", chk_hide_pts: "匯出隱藏點", chk_dark: "深色畫布",
       btn_layers: "圖層 ▾", layers_title: "圖層", layers_grid: "網格", layers_coords: "座標",
       layers_helpers: "記號", layers_show: "顯示", layers_lock: "鎖定",
-      tip_layers: "圖層顯示／鎖定（網格／座標／記號）",
+      tip_layers: "圖層顯示／鎖定（網格／座標／記號；記號預設鎖定，解鎖後可拖標籤／記號）",
       tip_shape_bar: "常用圖形",
       tip_shape_square: "正方形：對角拖曳",
       tip_shape_rect: "長方形：自由寬高",
@@ -2766,7 +2767,7 @@ body.dark-canvas .coord-curve-row {
       chk_grid: "Grid", chk_hide_pts: "Hide pts", chk_dark: "Dark",
       btn_layers: "Layers ▾", layers_title: "Layers", layers_grid: "Grid", layers_coords: "Axes",
       layers_helpers: "Marks", layers_show: "Show", layers_lock: "Lock",
-      tip_layers: "Layer show/lock (grid / axes / marks)",
+      tip_layers: "Layer show/lock (grid / axes / marks; marks default locked — unlock to drag)",
       tip_shape_bar: "Common shapes",
       tip_shape_square: "Square: drag from corner",
       tip_shape_rect: "Rectangle: free w×h",
@@ -3880,6 +3881,11 @@ body.dark-canvas .coord-curve-row {
 
   function applyLayersPatch(patch) {
     layers = { ...layers, ...patch };
+    // Locking 記號：取消已選標籤／記號（只能隨點線走，不可單獨拖）
+    if (layers.helpersLock || !layers.helpersShow) {
+      const kept = selection.filter((s) => !isHelpersLayerItem(s.type));
+      if (kept.length !== selection.length) setSelection(kept);
+    }
     syncLayersUI();
     draw();
     updateStatus();
@@ -4760,7 +4766,7 @@ body.dark-canvas .coord-curve-row {
         coordsShow: data.layers.coordsShow != null ? !!data.layers.coordsShow : true,
         coordsLock: !!data.layers.coordsLock,
         helpersShow: data.layers.helpersShow != null ? !!data.layers.helpersShow : true,
-        helpersLock: !!data.layers.helpersLock,
+        helpersLock: data.layers.helpersLock != null ? !!data.layers.helpersLock : true,
       };
       syncLayersUI();
     }
@@ -4946,14 +4952,35 @@ body.dark-canvas .coord-curve-row {
     return best;
   }
 
+  function isHelpersLayerItem(type) {
+    return (
+      type === "label" ||
+      type === "lengthLabel" ||
+      type === "rightAngle" ||
+      type === "angleArc" ||
+      type === "parallelMark" ||
+      type === "equalMark" ||
+      type === "midTick"
+    );
+  }
+
+  /** Side of segment AB containing world point (+1 / -1). */
+  function segmentSideOfPoint(seg, wx, wy) {
+    const a = pointById(seg.a);
+    const b = pointById(seg.b);
+    if (!a || !b) return 1;
+    const cross = (b.x - a.x) * (wy - a.y) - (b.y - a.y) * (wx - a.x);
+    return cross < 0 ? -1 : 1;
+  }
+
   function hitTest(wx, wy) {
     const helpersOk = !!layers.helpersShow && !layers.helpersLock;
     const coordsOk = !!layers.coordsShow && !layers.coordsLock;
     const p = nearestPointHit(wx, wy);
     if (p) return { type: "point", id: p.id };
-    const lab = nearestLabelHit(wx, wy);
-    if (lab) return { type: "label", id: lab.id };
     if (helpersOk) {
+      const lab = nearestLabelHit(wx, wy);
+      if (lab) return { type: "label", id: lab.id };
       const ll = nearestLengthHit(wx, wy);
       if (ll) return { type: "lengthLabel", id: ll.id };
       const ra = nearestRightHit(wx, wy);
@@ -9217,8 +9244,10 @@ body.dark-canvas .coord-curve-row {
     for (const p of points) {
       drawPoint(p, isSelected("point", p.id));
     }
-    for (const lab of labels) {
-      drawLabel(lab, isSelected("label", lab.id));
+    if (layers.helpersShow) {
+      for (const lab of labels) {
+        drawLabel(lab, isSelected("label", lab.id));
+      }
     }
 
     drawGuides();
@@ -9401,9 +9430,11 @@ body.dark-canvas .coord-curve-row {
             rightAngleSizeSelect.value = String(arc.size || DEFAULT_RA_SIZE);
           }
         }
-        // Multi-drag: move all selected points (and label offsets for label-only)
+        // Multi-drag points / geometry. Labels & marks are helpers-layer:
+        // when unlocked, drag their own offsets/sides — do not drag host points.
         const pointIds = new Set();
         for (const s of selection) {
+          if (isHelpersLayerItem(s.type)) continue;
           if (s.type === "point") pointIds.add(s.id);
           else if (s.type === "segment") {
             const seg = segmentById(s.id);
@@ -9425,9 +9456,6 @@ body.dark-canvas .coord-curve-row {
               pointIds.add(sec.startId);
               pointIds.add(sec.endId);
             }
-          } else if (s.type === "label") {
-            const lab = labels.find((l) => l.id === s.id);
-            if (lab) pointIds.add(lab.pointId);
           } else if (s.type === "fill") {
             const f = fills.find((x) => x.id === s.id);
             if (f) {
@@ -9449,14 +9477,42 @@ body.dark-canvas .coord-curve-row {
             moved: false,
           };
         } else if (hit.type === "label") {
-          const lab = labels.find((l) => l.id === hit.id);
+          const items = selection
+            .filter((s) => s.type === "label")
+            .map((s) => {
+              const lab = labels.find((l) => l.id === s.id);
+              return lab
+                ? { id: lab.id, ox0: lab.ox || 0, oy0: lab.oy || 0 }
+                : null;
+            })
+            .filter(Boolean);
+          if (!items.length) {
+            const lab = labels.find((l) => l.id === hit.id);
+            if (lab) items.push({ id: lab.id, ox0: lab.ox || 0, oy0: lab.oy || 0 });
+          }
           drag = {
-            kind: "label",
-            id: hit.id,
+            kind: "labels",
+            items,
             startWx: world.x,
             startWy: world.y,
-            ox0: lab.ox,
-            oy0: lab.oy,
+            moved: false,
+          };
+        } else if (
+          hit.type === "lengthLabel" ||
+          hit.type === "parallelMark" ||
+          hit.type === "equalMark"
+        ) {
+          drag = {
+            kind: "markSide",
+            type: hit.type,
+            id: hit.id,
+            moved: false,
+          };
+        } else if (hit.type === "rightAngle" || hit.type === "angleArc") {
+          drag = {
+            kind: "markSize",
+            type: hit.type,
+            id: hit.id,
             moved: false,
           };
         } else if (hit.type === "coordPlot") {
@@ -10762,15 +10818,67 @@ body.dark-canvas .coord-curve-row {
       return;
     }
 
-    if (drag && drag.kind === "label") {
+    if (drag && drag.kind === "labels") {
       if (!drag.moved) {
         pushHistory();
         drag.moved = true;
       }
-      const lab = labels.find((l) => l.id === drag.id);
-      if (lab) {
-        lab.ox = drag.ox0 + (world.x - drag.startWx);
-        lab.oy = drag.oy0 + (world.y - drag.startWy);
+      const dx = world.x - drag.startWx;
+      const dy = world.y - drag.startWy;
+      for (const item of drag.items || []) {
+        const lab = labels.find((l) => l.id === item.id);
+        if (lab) {
+          lab.ox = item.ox0 + dx;
+          lab.oy = item.oy0 + dy;
+        }
+      }
+      draw();
+      return;
+    }
+
+    if (drag && drag.kind === "markSide") {
+      if (!drag.moved) {
+        pushHistory();
+        drag.moved = true;
+      }
+      let mark = null;
+      let seg = null;
+      if (drag.type === "lengthLabel") {
+        mark = lengthLabels.find((x) => x.id === drag.id);
+        if (mark) seg = segmentById(mark.segmentId);
+      } else if (drag.type === "parallelMark") {
+        mark = parallelMarks.find((x) => x.id === drag.id);
+        if (mark) seg = segmentById(mark.segmentId);
+      } else if (drag.type === "equalMark") {
+        mark = equalMarks.find((x) => x.id === drag.id);
+        if (mark) seg = segmentById(mark.segmentId);
+      }
+      if (mark && seg) {
+        mark.side = segmentSideOfPoint(seg, world.x, world.y);
+      }
+      draw();
+      return;
+    }
+
+    if (drag && drag.kind === "markSize") {
+      if (!drag.moved) {
+        pushHistory();
+        drag.moved = true;
+      }
+      const mark =
+        drag.type === "rightAngle"
+          ? rightAngles.find((x) => x.id === drag.id)
+          : angleArcs.find((x) => x.id === drag.id);
+      if (mark) {
+        const v = pointById(mark.vertex);
+        if (v) {
+          const dScreen = dist(worldToScreen(v.x, v.y), worldToScreen(world.x, world.y));
+          const next = Math.round(
+            Math.max(6, Math.min(36, dScreen / Math.min(Math.max(view.scale, 0.6), 1.4)))
+          );
+          mark.size = next;
+          if (rightAngleSizeSelect) rightAngleSizeSelect.value = String(next);
+        }
       }
       draw();
       return;
@@ -11566,14 +11674,13 @@ body.dark-canvas .coord-curve-row {
         const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
         paintLabelText(c, ll.text, place.x, place.y, fontPx, "#111", true, place.angle);
       }
-    }
-
-    for (const lab of labels) {
-      const p = pointById(lab.pointId);
-      if (!p) continue;
-      const s = toS(p.x + lab.ox, p.y + lab.oy);
-      const fontPx = clampLabelSize(lab.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
-      paintLabelText(c, lab.text, s.x, s.y, fontPx, "#111", true);
+      for (const lab of labels) {
+        const p = pointById(lab.pointId);
+        if (!p) continue;
+        const s = toS(p.x + lab.ox, p.y + lab.oy);
+        const fontPx = clampLabelSize(lab.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
+        paintLabelText(c, lab.text, s.x, s.y, fontPx, "#111", true);
+      }
     }
 
     darkCanvas = prevDark;
@@ -11926,14 +12033,16 @@ body.dark-canvas .coord-curve-row {
       }
     }
 
-    for (const lab of labels) {
-      const p = pointById(lab.pointId);
-      if (!p) continue;
-      const s = toS(p.x + lab.ox, p.y + lab.oy);
-      const fs = clampLabelSize(lab.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
-      const halo = Math.max(3, fs * 0.28);
-      body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(lab.text)}</text>\n`;
-      body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(lab.text)}</text>\n`;
+    if (layers.helpersShow) {
+      for (const lab of labels) {
+        const p = pointById(lab.pointId);
+        if (!p) continue;
+        const s = toS(p.x + lab.ox, p.y + lab.oy);
+        const fs = clampLabelSize(lab.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
+        const halo = Math.max(3, fs * 0.28);
+        body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(lab.text)}</text>\n`;
+        body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(lab.text)}</text>\n`;
+      }
     }
 
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -11952,7 +12061,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.9",
+      version: "13.5.10",
       app: "simple-diagram",
       points,
       segments,
@@ -12233,7 +12342,7 @@ ${body}</svg>`;
         coordsShow: data.layers.coordsShow != null ? !!data.layers.coordsShow : true,
         coordsLock: !!data.layers.coordsLock,
         helpersShow: data.layers.helpersShow != null ? !!data.layers.helpersShow : true,
-        helpersLock: !!data.layers.helpersLock,
+        helpersLock: data.layers.helpersLock != null ? !!data.layers.helpersLock : true,
       };
     }
     nextLetter = data.nextLetter || "A";
