@@ -9913,7 +9913,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.17",
+      version: "13.5.18",
       app: "simple-diagram",
       points,
       segments,
@@ -12782,6 +12782,7 @@ ${body}</svg>`;
    * Newest first; last item may be an “earlier…” summary.
    */
   const WHATS_NEW = [
+    { v: "v13.5.18", zh: "AI 說明：⊥座標對應、cube／函數填色例", en: "AI guide: Axes op map, cube & plot+fill examples" },
     { v: "v13.5.17", zh: "AI 說明頁涵蓋全部 ops（含座標圖）", en: "AI guide covers all ops (incl. coord plots)" },
     { v: "v13.5.16", zh: "AI 說明頁補齊 addShape／fill／角弧參數", en: "AI guide: addShape / fill / angle-arc params" },
     { v: "v13.5.15", zh: "改為連到 ai.html；請用 Chrome 分享分頁給 Gemini", en: "Link to ai.html; share that tab with Gemini in Chrome" },

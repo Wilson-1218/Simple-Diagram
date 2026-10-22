@@ -97,6 +97,8 @@
     <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
       <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
     <p class="note">已知 ops（36，含別名）：<code>addPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
+    <p class="note"><strong>UI ↔ op</strong>：工具列 <strong>⊥ 座標</strong>＝<code>addCoordPlot</code>（＋<code>addCurve</code>）。沒有 <code>addCoordMark</code> 這類 op 名。<br />
+      <span class="en">Rail tool <strong>⊥ 座標 / Axes</strong> maps to <code>addCoordPlot</code> (+ <code>addCurve</code>). There is no <code>addCoordMark</code>.</span></p>
 
     <h2>2. 座標與視窗 / Coordinates &amp; view</h2>
     <ul>
@@ -145,7 +147,8 @@
         </tr>
       </tbody>
     </table>
-    <p class="warn">UI tools <code>intersect</code> / <code>midTick</code>（建中點）/ <code>ratio</code> / <code>horizontal</code> / <code>perpendicular</code> 沒有同名 JSON op — 用座標算出後 <code>addPoint</code>/<code>addSegment</code>。</p>
+    <p class="warn">UI-only（無同名 JSON op）：交點 <code>intersect</code>、中點工具 <code>midTick</code>、比例 <code>ratio</code>、水平 <code>horizontal</code>、鉛垂 <code>perpendicular</code> — 用座標算出後 <code>addPoint</code>/<code>addSegment</code>。<br />
+      <strong>不是</strong> UI-only：<strong>⊥ 座標</strong> → 用 <code>addCoordPlot</code> / <code>addCurve</code>（見 §10）。勿臆造 <code>addCoord</code>／<code>addCoordMark</code>。</p>
 
     <h2>6. 圓件／切線 / Circle parts</h2>
     <p>皆需已有 <code>circleId</code>。方向可用點 id，或 <code>angle</code>（弧度）／<code>deg</code>（度）；預設角 0＝正 x。</p>
@@ -208,7 +211,8 @@
     </ul>
 
     <h2>10. 座標圖 / Coordinate plots ★</h2>
-    <p><strong>When</strong>：畫函數／圓／三角曲線。先 <code>addCoordPlot</code>，再可 <code>addCurve</code> 追加。</p>
+    <p><strong>When</strong>：畫函數／圓／三角曲線。先 <code>addCoordPlot</code>，再可 <code>addCurve</code> 追加。<br />
+      UI 工具列 <strong>⊥ 座標</strong> 開的就是這組 op（不是獨立的「座標記號」op）。</p>
 
     <h3>10.1 <code>addCoordPlot</code></h3>
     <table>
@@ -333,6 +337,12 @@
     <p class="note">瀏覽器「貼上 JSON」吃的是 <strong>ops 陣列</strong>，不是 macro 名。本機 MCP 可用 <code>run_macro</code>；或把 macro 展開後的 ops 貼上。</p>
 
     <h2>13. 範例 / Examples</h2>
+    <h3>13.0 最小 <code>addShape</code>（立體）</h3>
+    <p class="note">一筆建立方體線框：<code>x,y</code>＝放置偏移，<code>w</code>＝縮放寬（固體忽略 <code>h</code>）。</p>
+<pre>[
+  { "op": "addShape", "kind": "cube", "x": 200, "y": 200, "w": 100 }
+]</pre>
+
     <h3>13.1 最小直角三角形</h3>
 <pre>[
   { "op": "addPoint", "id": "A", "x": 180, "y": 360 },
@@ -370,6 +380,31 @@
   { "op": "addFoot", "pointId": "P", "segmentId": "AB", "footId": "H", "label": true }
 ]</pre>
 
+    <h3>13.4 函數圖＋幾何填色 / Plot + filled region</h3>
+    <p class="note">拋物線 <code>y=0.25x²−x+2</code>；內接矩形數學座標 (1,0)–(3,1.25)。世界點：<code>worldX = ox + u·unitPx</code>，<code>worldY = oy − v·unitPx</code>。</p>
+<pre>[
+  {
+    "op": "addCoordPlot",
+    "id": "plot1",
+    "ox": 300, "oy": 360, "unitPx": 40,
+    "xmin": -1, "xmax": 5, "ymin": -1, "ymax": 5,
+    "curves": [
+      { "type": "quad", "params": { "a": 0.25, "b": -1, "c": 2 },
+        "label": { "show": true, "kind": "formula", "formulaMode": "algebraic" } }
+    ]
+  },
+  { "op": "addPoint", "id": "A", "x": 340, "y": 360 },
+  { "op": "addPoint", "id": "B", "x": 420, "y": 360 },
+  { "op": "addPoint", "id": "C", "x": 420, "y": 310 },
+  { "op": "addPoint", "id": "D", "x": 340, "y": 310 },
+  { "op": "addSegment", "a": "A", "b": "B" },
+  { "op": "addSegment", "a": "B", "b": "C" },
+  { "op": "addSegment", "a": "C", "b": "D" },
+  { "op": "addSegment", "a": "D", "b": "A" },
+  { "op": "addFill", "kind": "polygon", "pointIds": ["A","B","C","D"], "opacity": 0.2 },
+  { "op": "setView", "x": 220, "y": 180, "scale": 1.5 }
+]</pre>
+
     <h2>14. 規則 / Rules</h2>
     <ul>
       <li>只輸出 JSON（可包 markdown 程式碼塊；App 會剝掉）</li>
@@ -382,7 +417,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.17 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.18 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>
