@@ -11,7 +11,7 @@
 
 Schema: [`diagram-format.md`](diagram-format.md) · Module: `src/diagram/` · MCP: `mcp/server.mjs`
 
-**Pages-only AI guide (Gemini):** [`ai.html`](../ai.html) — then user **Paste JSON** in the app.
+**Pages-only AI guide (Gemini):** [`ai.html`](../ai.html) — **Share with Gemini** button opens `gemini.google.com/app?q=…` with the guide URL; then user **Paste JSON**.
 
 ---
 

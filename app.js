@@ -456,6 +456,11 @@
       btn_copy: "複製", btn_delete: "刪除", btn_clear: "清除",
       btn_paste_json: "貼上 JSON", btn_save: "儲存", btn_load: "開啟",
       tip_paste_json: "貼上 AI／ops JSON 或完整圖檔",
+      btn_share_gemini: "分享給 Gemini",
+      tip_share_gemini: "開啟 Gemini 並帶入說明頁網址（可能需按傳送；無法自動附加分頁）",
+      gemini_share_ok: "已開啟 Gemini；說明頁網址已複製。若未預填請貼上，再按傳送。",
+      gemini_share_ok_nocopy: "已開啟 Gemini。請貼上說明頁網址後按傳送（無法自動附加分頁）。",
+      gemini_share_note: "會開啟 gemini.google.com 並盡量預填提示。無法自動附加分頁；若未預填請貼上已複製的網址，再按傳送。",
       paste_json_lead: "貼上 JSON",
       paste_json_note: "接受 ops 陣列或完整圖檔。AI 說明：ai.html（本站）",
       paste_json_merge: "加到目前圖形（不勾＝以貼上內容取代）",
@@ -580,8 +585,8 @@
       attr_credit_tip: "授權與轉載聲明（開啟 ? 看完整說明）",
       attr_help: "可自由使用、複製及二次開發；轉載或再發佈時請保留來源聲明：Simple Diagram（Wilson Li）及 GitHub 連結。",
       tpl_ai_body:
-        "<p><strong>ZH</strong>：給 Gemini 開 <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>（本站即可），產出 ops JSON，再按「貼上 JSON」。亦可本機 MCP。</p>" +
-        "<p><strong>EN</strong>: Point Gemini at <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>, then <strong>Paste JSON</strong>.</p>",
+        "<p><strong>ZH</strong>：按「分享給 Gemini」開啟並帶入說明頁網址；產出 ops JSON 後按「貼上 JSON」。亦可開 <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>／本機 MCP。</p>" +
+        "<p><strong>EN</strong>: Use <strong>Share with Gemini</strong>, then <strong>Paste JSON</strong>. Or open <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>.</p>",
     },
     en: {
       tool_select: "Select", tool_hand: "Pan", tool_point: "Point", tool_line: "Line",
@@ -724,6 +729,11 @@
       btn_copy: "Copy", btn_delete: "Delete", btn_clear: "Clear",
       btn_paste_json: "Paste JSON", btn_save: "Save", btn_load: "Open",
       tip_paste_json: "Paste AI / ops JSON or a full diagram document",
+      btn_share_gemini: "Share with Gemini",
+      tip_share_gemini: "Open Gemini with the guide URL prefilled (you may need to press Send; tabs cannot be auto-attached)",
+      gemini_share_ok: "Opened Gemini; guide URL copied. If not prefilled, paste it, then Send.",
+      gemini_share_ok_nocopy: "Opened Gemini. Paste the guide URL, then Send (tabs cannot be auto-attached).",
+      gemini_share_note: "Opens gemini.google.com with a prefilled prompt when possible. Cannot auto-attach a tab; if empty, paste the copied URL and press Send.",
       paste_json_lead: "Paste JSON",
       paste_json_note: "Ops array or full document. AI guide: ai.html on this site",
       paste_json_merge: "Merge onto current figure (off = replace)",
@@ -848,8 +858,8 @@
       attr_credit_tip: "License & attribution (open ? for details)",
       attr_help: "Free to use, copy, and modify. Please keep attribution: “Simple Diagram” by Wilson Li — and the GitHub link.",
       tpl_ai_body:
-        "<p><strong>EN</strong>: Point Gemini at <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a> on this site, then use <strong>Paste JSON</strong>. Optional: local MCP.</p>" +
-        "<p><strong>ZH</strong>：給 Gemini 看 <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>，再「貼上 JSON」。</p>",
+        "<p><strong>EN</strong>: Use <strong>Share with Gemini</strong> (prefilled guide URL), then <strong>Paste JSON</strong>. Or open <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>.</p>" +
+        "<p><strong>ZH</strong>：按「分享給 Gemini」，再「貼上 JSON」。亦可開 <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>。</p>",
     },
   };
 
@@ -900,6 +910,8 @@
       btnDelete: "btn_delete",
       btnClearAll: "btn_clear",
       btnPasteJson: "btn_paste_json",
+      btnShareGeminiTpl: "btn_share_gemini",
+      btnShareGeminiHelp: "btn_share_gemini",
       btnSave: "btn_save",
       btnLoad: "btn_load",
       btnExportMenu: "btn_export_menu",
@@ -9909,7 +9921,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.12",
+      version: "13.5.13",
       app: "simple-diagram",
       points,
       segments,
@@ -10266,6 +10278,68 @@ ${body}</svg>`;
       }
     };
     reader.readAsText(file);
+  }
+
+  /** Canonical Pages URLs — Gemini should read these without the GitHub repo. */
+  const PAGES_AI_GUIDE_URL = "https://wilson-1218.github.io/Simple-Diagram/ai.html";
+  const PAGES_APP_URL = "https://wilson-1218.github.io/Simple-Diagram/";
+  const GEMINI_APP_BASE = "https://gemini.google.com/app";
+
+  function buildGeminiSharePrompt() {
+    if (uiLang === "en") {
+      return (
+        "Read this Simple Diagram AI guide, then produce ops JSON " +
+        '(an array of {"op":...} steps, or a full diagram document). Output JSON only.\n\n' +
+        PAGES_AI_GUIDE_URL +
+        "\n\nThe user will paste your JSON in the app (Paste JSON): " +
+        PAGES_APP_URL +
+        "#paste-json"
+      );
+    }
+    return (
+      "請閱讀以下 Simple Diagram AI 說明頁，然後產出 ops JSON" +
+      '（[{ "op": … }, …] 陣列，或完整圖檔物件）。只需輸出 JSON。\n\n' +
+      PAGES_AI_GUIDE_URL +
+      "\n\n使用者會在 App「貼上 JSON」貼上：" +
+      PAGES_APP_URL +
+      "#paste-json"
+    );
+  }
+
+  function geminiPrefillUrl(prompt) {
+    return GEMINI_APP_BASE + "?q=" + encodeURIComponent(prompt);
+  }
+
+  /**
+   * Closest one-click share: open Gemini with ?q= prefilled prompt that includes
+   * the Pages ai.html URL, and copy that URL to the clipboard. There is no public
+   * Chrome API to auto-attach the current tab to Gemini.
+   */
+  async function shareWithGemini() {
+    const prompt = buildGeminiSharePrompt();
+    const openUrl = geminiPrefillUrl(prompt);
+    let copied = false;
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(PAGES_AI_GUIDE_URL);
+        copied = true;
+      }
+    } catch (_) {
+      copied = false;
+    }
+    const win = window.open(openUrl, "_blank", "noopener,noreferrer");
+    if (!win) {
+      try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+          await navigator.clipboard.writeText(prompt);
+          copied = true;
+        }
+      } catch (_) {}
+      window.open(GEMINI_APP_BASE, "_blank", "noopener,noreferrer");
+    }
+    if (statusHint) {
+      statusHint.textContent = copied ? t("gemini_share_ok") : t("gemini_share_ok_nocopy");
+    }
   }
 
   /** Strip optional markdown fences from AI paste. */
@@ -12778,6 +12852,7 @@ ${body}</svg>`;
    * Newest first; last item may be an “earlier…” summary.
    */
   const WHATS_NEW = [
+    { v: "v13.5.13", zh: "可一鍵分享給 Gemini（預填說明頁）", en: "Share with Gemini (prefilled guide URL)" },
     { v: "v13.5.12", zh: "可貼上 JSON；AI 說明頁 ai.html（Pages）", en: "Paste JSON; AI guide page ai.html on Pages" },
     { v: "v13.5.11", zh: "更新說明改精簡", en: "Shorter release notes" },
     { v: "v13.5.10", zh: "記號／標籤預設鎖定，解鎖後可拖移", en: "Marks/labels locked by default; unlock to drag" },
@@ -13062,6 +13137,17 @@ ${body}</svg>`;
   const pasteJsonMerge = document.getElementById("pasteJsonMerge");
   if (btnPasteJson) {
     btnPasteJson.addEventListener("click", () => openPasteJsonDialog());
+  }
+  const btnShareGeminiTpl = document.getElementById("btnShareGeminiTpl");
+  const btnShareGeminiHelp = document.getElementById("btnShareGeminiHelp");
+  if (btnShareGeminiTpl) {
+    btnShareGeminiTpl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      shareWithGemini();
+    });
+  }
+  if (btnShareGeminiHelp) {
+    btnShareGeminiHelp.addEventListener("click", () => shareWithGemini());
   }
   if (pasteJsonCancel) {
     pasteJsonCancel.addEventListener("click", () => {

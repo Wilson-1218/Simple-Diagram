@@ -60,10 +60,33 @@
       margin: 0.5rem 0 1rem;
     }
     a { color: var(--accent); }
-    .links { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin: 1rem 0 0.5rem; }
+    .links { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin: 1rem 0 0.5rem; align-items: center; }
     .links a { font-weight: 600; }
     .note { font-size: 0.9rem; color: var(--muted); }
     .en { font-size: 0.92rem; color: var(--muted); }
+    .cta-gemini {
+      display: inline-block;
+      margin: 0.25rem 0 0.5rem;
+      padding: 0.55rem 1rem;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .cta-gemini:hover { filter: brightness(1.06); }
+    .cta-note { font-size: 0.85rem; color: var(--muted); margin: 0 0 1rem; max-width: 36rem; }
+    #shareToast {
+      position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%);
+      background: #1a1a1a; color: #fff; padding: 0.55rem 0.9rem; border-radius: 6px;
+      font-size: 0.85rem; max-width: 90vw; opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    #shareToast.show { opacity: 1; }
   </style>
 </head>
 <body>
@@ -73,8 +96,12 @@
       <span class="en">For Gemini etc.: read this page only → output JSON → user pastes in the app.</span>
     </p>
     <p class="links">
+      <button type="button" class="cta-gemini" id="btnShareGemini">分享給 Gemini / Share with Gemini</button>
       <a href="./">← Open app</a>
       <a href="./#paste-json">Paste JSON in app</a>
+    </p>
+    <p class="cta-note">開啟 <code>gemini.google.com</code> 並盡量預填含本頁網址的提示。Chrome 無法自動附加分頁；若未預填請貼上已複製的網址，再按傳送。<br />
+      <span class="en">Opens Gemini with a prefilled prompt (this page’s URL). No public API to auto-attach tabs — paste the copied URL if needed, then Send.</span>
     </p>
 
     <h2>1. 產出什麼 / What to output</h2>
@@ -142,5 +169,60 @@
     </p>
     <p class="note">Simple Diagram · Wilson Li · MIT</p>
   </main>
+  <div id="shareToast" role="status" aria-live="polite"></div>
+  <script>
+    (function () {
+      var AI_URL = "https://wilson-1218.github.io/Simple-Diagram/ai.html";
+      var APP_URL = "https://wilson-1218.github.io/Simple-Diagram/";
+      var GEMINI = "https://gemini.google.com/app";
+      var btn = document.getElementById("btnShareGemini");
+      var toast = document.getElementById("shareToast");
+      function showToast(msg) {
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(function () { toast.classList.remove("show"); }, 4500);
+      }
+      function promptText() {
+        return (
+          "請閱讀以下 Simple Diagram AI 說明頁，然後產出 ops JSON" +
+          '（[{ "op": … }, …] 陣列，或完整圖檔物件）。只需輸出 JSON。\n\n' +
+          AI_URL +
+          "\n\n使用者會在 App「貼上 JSON」貼上：" +
+          APP_URL +
+          "#paste-json\n\n" +
+          "Read the Simple Diagram AI guide above, then produce ops JSON only."
+        );
+      }
+      if (!btn) return;
+      btn.addEventListener("click", async function () {
+        var q = promptText();
+        var url = GEMINI + "?q=" + encodeURIComponent(q);
+        var copied = false;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(AI_URL);
+            copied = true;
+          }
+        } catch (e) {}
+        var win = window.open(url, "_blank", "noopener,noreferrer");
+        if (!win) {
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(q);
+              copied = true;
+            }
+          } catch (e2) {}
+          window.open(GEMINI, "_blank", "noopener,noreferrer");
+        }
+        showToast(
+          copied
+            ? "已開啟 Gemini；本頁網址已複製。若未預填請貼上，再按傳送。 / Opened Gemini; URL copied."
+            : "已開啟 Gemini。請貼上本頁網址後按傳送。 / Opened Gemini — paste this page’s URL, then Send."
+        );
+      });
+    })();
+  </script>
 </body>
 </html>
