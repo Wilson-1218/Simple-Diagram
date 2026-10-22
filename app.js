@@ -186,7 +186,7 @@
   ];
   /** @type {"polygon"|"sector"|"segment"} */
   let fillMode = "polygon";
-  const SHAPE_MODES = [
+  const SHAPE_PLANE_MODES = [
     "square",
     "rect",
     "rhombus",
@@ -202,9 +202,25 @@
     "circle",
     "semicircle",
   ];
+  /** Shape-float solids → builtin template id (same key). */
+  const SHAPE_SOLID_MODES = [
+    "cube",
+    "cuboid",
+    "rectPrism",
+    "frustum",
+    "tetra",
+    "pyramid",
+    "triPrism",
+    "cylinder",
+    "cone",
+  ];
+  const SHAPE_MODES = SHAPE_PLANE_MODES.concat(SHAPE_SOLID_MODES);
   let shapeMode = "square";
   function isShapeMode(mode) {
     return SHAPE_MODES.indexOf(mode) >= 0;
+  }
+  function isSolidShapeMode(mode) {
+    return SHAPE_SOLID_MODES.indexOf(mode) >= 0;
   }
   /** @type {"chord"|"diameter"|"radius"} */
   let circlePartMode = "chord";
@@ -326,6 +342,15 @@
       tip_shape_hexagon: "正六邊形：外接框拖曳",
       tip_shape_circle: "圓：圓心拖至圓周",
       tip_shape_semicircle: "半圓：直徑拖曳，弧向拖曳側",
+      tip_shape_cube: "立方體：外接框拖曳",
+      tip_shape_cuboid: "長方體：外接框拖曳",
+      tip_shape_rectPrism: "直棱柱：外接框拖曳",
+      tip_shape_frustum: "圓台／截錐：外接框拖曳",
+      tip_shape_tetra: "四面體：外接框拖曳",
+      tip_shape_pyramid: "正方錐：外接框拖曳",
+      tip_shape_triPrism: "三棱柱：外接框拖曳",
+      tip_shape_cylinder: "圓柱：外接框拖曳",
+      tip_shape_cone: "圓錐：外接框拖曳",
       circlePart_chord: "弦", circlePart_diameter: "直徑", circlePart_radius: "半徑",
       tip_circlePart_bar: "弦／直徑／半徑", tip_circlePart_chord: "弦：圓上兩點",
       tip_circlePart_diameter: "直徑：過圓心", tip_circlePart_radius: "半徑：圓心到圓周",
@@ -417,7 +442,7 @@
       tip_fill_bg: "藍灰影 22%",
       tip_fill_white: "白色（蓋住下方陰影）",
       tip_fill_bar: "填色陰影／白色挖空",
-      tip_tool_shape: "常用圖形：圖示選形後拖曳放置 (B)",
+      tip_tool_shape: "常用圖形／立體：圖示選形後拖曳放置 (B)",
       tip_tool_circlePart: "弦／直徑／半徑：在圓上拖曳建立 (T)",
       circlePart_need_circle: "請點選圓或圓周上的點",
       circlePart_too_short: "拖曳太短，已取消",
@@ -426,13 +451,14 @@
       btn_copy: "複製", btn_delete: "刪除", btn_clear: "清除", btn_save: "儲存", btn_load: "開啟",
       btn_export_menu: "匯出 ▾", btn_export_crop: "框選匯出", btn_clear_crop: "清除裁切", btn_preview: "預覽匯出",
       btn_restore_backup: "還原自動備份", menu_recent: "最近開啟", menu_backup: "備份",
-      menu_plane: "平面", menu_solid: "立體", menu_custom: "自訂",
+      menu_plane: "平面", menu_solid: "立體", menu_combo: "組合起點", menu_custom: "自訂",
+      tpl_circleGeom: "圓＋弦徑", tpl_circleCenter: "圓＋圓心", tpl_altBase: "高到底",
       size_s: "小", size_m: "中", size_l: "大", size_xl: "特大",
       mark_single: "單", mark_double: "雙", mark_flip: "翻面", sector_arc: "弧", sector_pie: "扇",
       empty_custom_tpl: "尚無自訂模板", empty_recent: "尚無記錄",
       tip_lang_zh: "中文介面",
       tip_lang_en: "English UI",
-      tip_templates: "常用平面／立體模板",
+      tip_templates: "組合起點／自訂模板（平面與立體圖形見「圖形」工具）",
       tip_save_tpl: "將目前選取存為自訂模板",
       tip_style_solid: "實線",
       tip_style_dashed: "虛線（隱藏邊）",
@@ -551,6 +577,15 @@
       tip_shape_hexagon: "Regular hexagon: drag bounds",
       tip_shape_circle: "Circle: center to rim",
       tip_shape_semicircle: "Semicircle: drag diameter; arc toward drag side",
+      tip_shape_cube: "Cube: drag bounds",
+      tip_shape_cuboid: "Cuboid: drag bounds",
+      tip_shape_rectPrism: "Right prism: drag bounds",
+      tip_shape_frustum: "Frustum: drag bounds",
+      tip_shape_tetra: "Tetrahedron: drag bounds",
+      tip_shape_pyramid: "Square pyramid: drag bounds",
+      tip_shape_triPrism: "Triangular prism: drag bounds",
+      tip_shape_cylinder: "Cylinder: drag bounds",
+      tip_shape_cone: "Cone: drag bounds",
       circlePart_chord: "Chord", circlePart_diameter: "Diam", circlePart_radius: "Rad",
       tip_circlePart_bar: "Chord / diameter / radius", tip_circlePart_chord: "Chord: two points on circle",
       tip_circlePart_diameter: "Diameter through center", tip_circlePart_radius: "Radius: center to rim",
@@ -643,7 +678,7 @@
       tip_fill_bg: "Blue-gray shade 22%",
       tip_fill_white: "White (covers shade below)",
       tip_fill_bar: "Fill shade / white punch-out",
-      tip_tool_shape: "Shapes: pick icon, then drag to place (B)",
+      tip_tool_shape: "Shapes / solids: pick icon, then drag to place (B)",
       tip_tool_circlePart: "Chord / diameter / radius: drag on a circle (T)",
       circlePart_need_circle: "Click a circle or a point on a circle",
       circlePart_too_short: "Drag too short — cancelled",
@@ -652,13 +687,14 @@
       btn_copy: "Copy", btn_delete: "Delete", btn_clear: "Clear", btn_save: "Save", btn_load: "Open",
       btn_export_menu: "Export ▾", btn_export_crop: "Crop export", btn_clear_crop: "Clear crop", btn_preview: "Preview",
       btn_restore_backup: "Restore backup", menu_recent: "Recent", menu_backup: "Backup",
-      menu_plane: "Plane", menu_solid: "Solid", menu_custom: "Custom",
+      menu_plane: "Plane", menu_solid: "Solid", menu_combo: "Combo starters", menu_custom: "Custom",
+      tpl_circleGeom: "Circle + chord/diameter", tpl_circleCenter: "Circle + center", tpl_altBase: "Altitude to base",
       size_s: "S", size_m: "M", size_l: "L", size_xl: "XL",
       mark_single: "1×", mark_double: "2×", mark_flip: "Flip", sector_arc: "Arc", sector_pie: "Pie",
       empty_custom_tpl: "No custom templates", empty_recent: "No recent files",
       tip_lang_zh: "Chinese UI",
       tip_lang_en: "English UI",
-      tip_templates: "Plane / solid templates",
+      tip_templates: "Combo starters / custom (plane & solids are in Shape tool)",
       tip_save_tpl: "Save selection as a custom template",
       tip_style_solid: "Solid",
       tip_style_dashed: "Dashed (hidden edge)",
@@ -799,10 +835,6 @@
       const el = document.getElementById(id);
       if (el) el.textContent = t(key);
     }
-    const secTitles = document.querySelectorAll("#templateMenu .menu-section-title");
-    if (secTitles[0]) secTitles[0].textContent = t("menu_plane");
-    if (secTitles[1]) secTitles[1].textContent = t("menu_solid");
-    if (secTitles[2]) secTitles[2].textContent = t("menu_custom");
     const recentTitles = document.querySelectorAll("#recentMenu .menu-section-title");
     if (recentTitles[0]) recentTitles[0].textContent = t("menu_recent");
     if (recentTitles[1]) recentTitles[1].textContent = t("menu_backup");
@@ -6550,6 +6582,32 @@
           ctx.beginPath();
           ctx.arc(sc.x, sc.y, r, a0, a1, delta < 0);
           ctx.stroke();
+        } else if (geom.type === "solid" && geom.pts && geom.spec) {
+          for (const row of geom.spec.segs || []) {
+            const a = geom.pts[row[0]];
+            const b = geom.pts[row[1]];
+            if (!a || !b) continue;
+            const s0 = worldToScreen(a.x, a.y);
+            const s1 = worldToScreen(b.x, b.y);
+            ctx.beginPath();
+            ctx.moveTo(s0.x, s0.y);
+            ctx.lineTo(s1.x, s1.y);
+            ctx.stroke();
+          }
+          for (const row of geom.spec.ellipses || []) {
+            const c = geom.pts[row[0]];
+            const rx = geom.pts[row[1]];
+            const ry = geom.pts[row[2]];
+            if (!c || !rx || !ry) continue;
+            const sc = worldToScreen(c.x, c.y);
+            const srx = worldToScreen(rx.x, rx.y);
+            const sry = worldToScreen(ry.x, ry.y);
+            const rxLen = Math.hypot(srx.x - sc.x, srx.y - sc.y);
+            const ryLen = Math.hypot(sry.x - sc.x, sry.y - sc.y);
+            ctx.beginPath();
+            ctx.ellipse(sc.x, sc.y, Math.max(1, rxLen), Math.max(1, ryLen), 0, 0, Math.PI * 2);
+            ctx.stroke();
+          }
         } else if (geom.corners && geom.corners.length) {
           ctx.beginPath();
           const s0 = worldToScreen(geom.corners[0].x, geom.corners[0].y);
@@ -7696,9 +7754,55 @@
     return pts;
   }
 
-  /** @returns {null|{type:"poly",corners:Array}|{type:"circle",center,through}|{type:"semicircle",a,b,center}} */
+  /** Fit a builtin template cell-spec into a world drag rect (uniform scale, centered). */
+  function solidTemplateLayout(spec, x0, y0, x1, y1) {
+    if (!spec || !spec.pts || !spec.pts.length) return null;
+    const minSize = 8 / view.scale;
+    if (Math.abs(x1 - x0) < minSize || Math.abs(y1 - y0) < minSize) return null;
+    let minC = Infinity;
+    let maxC = -Infinity;
+    let minR = Infinity;
+    let maxR = -Infinity;
+    for (const row of spec.pts) {
+      minC = Math.min(minC, row[0]);
+      maxC = Math.max(maxC, row[0]);
+      minR = Math.min(minR, row[1]);
+      maxR = Math.max(maxR, row[1]);
+    }
+    const cellW = Math.max(1e-6, maxC - minC);
+    const cellH = Math.max(1e-6, maxR - minR);
+    const left = Math.min(x0, x1);
+    const right = Math.max(x0, x1);
+    const top = Math.min(y0, y1);
+    const bot = Math.max(y0, y1);
+    const boxW = right - left;
+    const boxH = bot - top;
+    const scale = Math.min(boxW / (cellW * GRID_SIZE), boxH / (cellH * GRID_SIZE));
+    if (!(scale > 1e-9)) return null;
+    const worldW = cellW * GRID_SIZE * scale;
+    const worldH = cellH * GRID_SIZE * scale;
+    const ox = left + (boxW - worldW) / 2 - minC * GRID_SIZE * scale;
+    const oy = top + (boxH - worldH) / 2 - minR * GRID_SIZE * scale;
+    const pts = spec.pts.map((row) => {
+      let x = row[0] * GRID_SIZE * scale + ox;
+      let y = row[1] * GRID_SIZE * scale + oy;
+      if (gridSnap) {
+        const g = latticeSnap(x, y);
+        x = g.x;
+        y = g.y;
+      }
+      return { x, y, lab: row[2], ox: row[3], oy: row[4], marker: row[5] };
+    });
+    return { type: "solid", spec, pts, scale };
+  }
+
+  /** @returns {null|{type:"poly",corners:Array}|{type:"circle",center,through}|{type:"semicircle",a,b,center}|{type:"solid",spec,pts}} */
   function shapeGeometryFromDrag(mode, x0, y0, x1, y1) {
     const minSize = 8 / view.scale;
+    if (isSolidShapeMode(mode)) {
+      const spec = BUILTIN_TEMPLATES[mode];
+      return solidTemplateLayout(spec, x0, y0, x1, y1);
+    }
     if (mode === "circle") {
       const r = Math.hypot(x1 - x0, y1 - y0);
       if (r < minSize) return null;
@@ -7877,6 +7981,69 @@
     return g && g.type === "poly" ? g.corners : null;
   }
 
+  /** Commit a solid template layout from the shape tool (stay on shape tool). */
+  function commitSolidShapeLayout(geom) {
+    const spec = geom.spec;
+    const before = snapshotIdSets();
+    const pts = geom.pts.map((row) => {
+      const p = addPoint(row.x, row.y, true, row.marker || null, true);
+      if (row.lab) {
+        addLabel(
+          p.id,
+          row.lab,
+          row.ox != null ? row.ox : 0,
+          row.oy != null ? row.oy : -14,
+          labelFontSize,
+          true
+        );
+      }
+      return p;
+    });
+    for (const row of spec.segs || []) {
+      const [i, j, st] = row;
+      if (!pts[i] || !pts[j]) continue;
+      addSegment(pts[i].id, pts[j].id, st || "solid", true);
+    }
+    for (const row of spec.circles || []) {
+      const [ci, ti, st] = row;
+      if (!pts[ci] || !pts[ti]) continue;
+      circles.push({
+        id: uid(),
+        centerId: pts[ci].id,
+        throughId: pts[ti].id,
+        style: st || "solid",
+      });
+    }
+    for (const row of spec.ellipses || []) {
+      const [ci, rxi, ryi, st, back] = row;
+      if (!pts[ci] || !pts[rxi] || !pts[ryi]) continue;
+      ellipses.push({
+        id: uid(),
+        centerId: pts[ci].id,
+        rxId: pts[rxi].id,
+        ryId: pts[ryi].id,
+        style: st || "solid",
+        backDashed: !!back,
+      });
+    }
+    for (const row of spec.rightAngles || []) {
+      const [v, a1, a2] = row;
+      if (!pts[v] || !pts[a1] || !pts[a2]) continue;
+      rightAngles.push({
+        id: uid(),
+        vertex: pts[v].id,
+        arm1: pts[a1].id,
+        arm2: pts[a2].id,
+        size: rightAngleSize,
+      });
+    }
+    if (spec.nextLetter) nextLetter = spec.nextLetter;
+    history[histIndex] = snapshot();
+    selectCreatedSince(before);
+    updateStatus();
+    draw();
+  }
+
   function finishShape() {
     if (!draft || draft.kind !== "shape") return;
     const mode = draft.mode || shapeMode;
@@ -7894,6 +8061,10 @@
       return;
     }
     pushHistory();
+    if (geom.type === "solid") {
+      commitSolidShapeLayout(geom);
+      return;
+    }
     if (geom.type === "circle") {
       const cId = addPoint(geom.center.x, geom.center.y, true, null, true).id;
       const tId = addPoint(geom.through.x, geom.through.y, true, null, true).id;
@@ -9551,7 +9722,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.4",
+      version: "13.5.5",
       app: "simple-diagram",
       points,
       segments,
@@ -10242,6 +10413,33 @@ ${body}</svg>`;
         [1, 0, "F", 14, -10],
         [4, -2, "G", 16, -12],
         [-1, -3, "H", -16, -14],
+      ],
+      segs: [
+        [0, 1],
+        [1, 2],
+        [2, 3, "dashed"],
+        [3, 0],
+        [4, 5],
+        [5, 6],
+        [6, 7, "dashed"],
+        [7, 4],
+        [0, 4],
+        [1, 5],
+        [2, 6],
+        [3, 7, "dashed"],
+      ],
+    },
+    cube: {
+      nextLetter: "I",
+      pts: [
+        [-3, 2, "A", -14, 10],
+        [2, 3, "B", 14, 10],
+        [4, 0, "C", 16, 0],
+        [-1, -1, "D", -16, -6],
+        [-3, -2, "E", -14, -12],
+        [2, -1, "F", 14, -12],
+        [4, -4, "G", 16, -14],
+        [-1, -5, "H", -16, -16],
       ],
       segs: [
         [0, 1],

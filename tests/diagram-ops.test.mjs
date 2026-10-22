@@ -239,6 +239,20 @@ test("OP_NAMES includes v13.4 AI helpers", () => {
   }
 });
 
+test("addShape solid kinds reuse insertTemplate geometry", () => {
+  const cube = applyOps(null, [
+    { op: "addShape", kind: "cube", x: 100, y: 80, w: 120 },
+  ]);
+  assert.ok(cube.points.length >= 8, "cube has 8 vertices");
+  assert.ok(cube.segments.length >= 8);
+  assert.equal(validateDiagram(cube).ok, true, validateDiagram(cube).errors.join("; "));
+  const fr = applyOps(null, [
+    { op: "addShape", kind: "frustum", x: 0, y: 0, w: 100 },
+  ]);
+  assert.ok(fr.points.length >= 8);
+  assert.equal(validateDiagram(fr).ok, true);
+});
+
 test("addFoot projects onto line and draws altitude", () => {
   const doc = applyOps(null, [
     { op: "addPoint", id: "A", x: 0, y: 0 },

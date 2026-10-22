@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.5.4" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.5.5" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.5.4" />
+  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.5.5" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.4</span>
+            <span class="brand-sub">v13.5.5</span>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -127,28 +127,13 @@
           <div class="chrome-cluster chrome-actions">
             <div class="tool-group" data-group="templates">
               <div class="menu-wrap">
-                <button type="button" id="btnTemplateMenu" class="menu-btn" title="常用平面／立體模板" data-i18n-title="tip_templates" aria-haspopup="true" aria-expanded="false">模板 ▾</button>
+                <button type="button" id="btnTemplateMenu" class="menu-btn" title="組合起點／自訂模板" data-i18n-title="tip_templates" aria-haspopup="true" aria-expanded="false">模板 ▾</button>
                 <div class="menu-panel menu-panel-wide" id="templateMenu" hidden>
-                  <div class="menu-section-title">平面</div>
-                  <button type="button" data-tpl="rightTri">直角三角形</button>
-                  <button type="button" data-tpl="isoTri">等腰三角形</button>
-                  <button type="button" data-tpl="genTri">一般三角形</button>
-                  <button type="button" data-tpl="parallelogram">平行四邊形</button>
-                  <button type="button" data-tpl="trapezoid">梯形</button>
-                  <button type="button" data-tpl="pentagon">正五邊形</button>
-                  <button type="button" data-tpl="circleCenter">圓＋圓心</button>
-                  <button type="button" data-tpl="circleGeom">圓＋弦徑</button>
-                  <div class="menu-section-title">立體</div>
-                  <button type="button" data-tpl="tetra">四面體</button>
-                  <button type="button" data-tpl="pyramid">正方錐</button>
-                  <button type="button" data-tpl="altBase">高到底</button>
-                  <button type="button" data-tpl="triPrism">三棱柱</button>
-                  <button type="button" data-tpl="rectPrism">直棱柱</button>
-                  <button type="button" data-tpl="cuboid">長方體</button>
-                  <button type="button" data-tpl="frustum">圓台／截錐</button>
-                  <button type="button" data-tpl="cylinder">圓柱</button>
-                  <button type="button" data-tpl="cone">圓錐</button>
-                  <div class="menu-section-title">自訂</div>
+                  <div class="menu-section-title" data-i18n="menu_combo">組合起點</div>
+                  <button type="button" data-tpl="circleGeom" data-i18n="tpl_circleGeom">圓＋弦徑</button>
+                  <button type="button" data-tpl="circleCenter" data-i18n="tpl_circleCenter">圓＋圓心</button>
+                  <button type="button" data-tpl="altBase" data-i18n="tpl_altBase">高到底</button>
+                  <div class="menu-section-title" data-i18n="menu_custom">自訂</div>
                   <div id="customTplList" class="custom-tpl-list"></div>
                   <p class="menu-empty" id="customTplEmpty">尚無自訂模板</p>
                 </div>
@@ -290,6 +275,16 @@
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="hexagon" title="正六邊形：外接框拖曳" data-i18n-title="tip_shape_hexagon" data-i18n-aria="tip_shape_hexagon" aria-label="正六邊形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7,4 17,4 22,12 17,20 7,20 2,12"/></svg></button>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="circle" title="圓：圓心拖至圓周" data-i18n-title="tip_shape_circle" data-i18n-aria="tip_shape_circle" aria-label="圓"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg></button>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="semicircle" title="半圓：直徑拖曳，弧向拖曳側" data-i18n-title="tip_shape_semicircle" data-i18n-aria="tip_shape_semicircle" aria-label="半圓"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14 A8 8 0 0 1 20 14"/><line x1="4" y1="14" x2="20" y2="14"/></svg></button>
+              <span class="shape-icon-sep" aria-hidden="true"></span>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cube" title="立方體：外接框拖曳" data-i18n-title="tip_shape_cube" data-i18n-aria="tip_shape_cube" aria-label="立方體"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8 L12 4 L20 8 L20 16 L12 20 L4 16 Z"/><path d="M4 8 L12 12 L20 8"/><path d="M12 12 L12 20"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cuboid" title="長方體：外接框拖曳" data-i18n-title="tip_shape_cuboid" data-i18n-aria="tip_shape_cuboid" aria-label="長方體"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9 L14 5 L21 9 L21 16 L10 20 L3 16 Z"/><path d="M3 9 L10 13 L21 9"/><path d="M10 13 L10 20"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="rectPrism" title="直棱柱：外接框拖曳" data-i18n-title="tip_shape_rectPrism" data-i18n-aria="tip_shape_rectPrism" aria-label="直棱柱"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7 L16 5 L20 9 L20 17 L8 19 L4 15 Z"/><path d="M4 7 L8 11"/><path d="M16 5 L8 11 L8 19"/><path d="M20 9 L8 11"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="frustum" title="圓台／截錐：外接框拖曳" data-i18n-title="tip_shape_frustum" data-i18n-aria="tip_shape_frustum" aria-label="圓台"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 L18 6 L20 10 L4 10 Z"/><path d="M8 14 L16 14 L18 19 L6 19 Z"/><path d="M6 6 L8 14"/><path d="M18 6 L16 14"/><path d="M4 10 L6 19"/><path d="M20 10 L18 19"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="tetra" title="四面體：外接框拖曳" data-i18n-title="tip_shape_tetra" data-i18n-aria="tip_shape_tetra" aria-label="四面體"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 L21 18 L3 18 Z"/><path d="M12 3 L12 14"/><path d="M3 18 L12 14 L21 18"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="pyramid" title="正方錐：外接框拖曳" data-i18n-title="tip_shape_pyramid" data-i18n-aria="tip_shape_pyramid" aria-label="正方錐"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 L20 18 L4 18 Z"/><path d="M7 12 L17 12"/><path d="M12 3 L7 12 L4 18"/><path d="M12 3 L17 12 L20 18"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="triPrism" title="三棱柱：外接框拖曳" data-i18n-title="tip_shape_triPrism" data-i18n-aria="tip_shape_triPrism" aria-label="三棱柱"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8 L12 4 L10 14 Z"/><path d="M10 10 L20 7 L18 17 L8 20 Z"/><path d="M12 4 L20 7"/><path d="M10 14 L18 17"/><path d="M4 8 L8 20"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cylinder" title="圓柱：外接框拖曳" data-i18n-title="tip_shape_cylinder" data-i18n-aria="tip_shape_cylinder" aria-label="圓柱"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6 L5 17"/><path d="M19 6 L19 17"/><ellipse cx="12" cy="17" rx="7" ry="3"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cone" title="圓錐：外接框拖曳" data-i18n-title="tip_shape_cone" data-i18n-aria="tip_shape_cone" aria-label="圓錐"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="17" rx="7" ry="3"/><path d="M5 17 L12 4 L19 17"/></svg></button>
             </span>
           </div>
           <div class="float-panel float-circle-part" id="circlePartFloat" hidden>
@@ -525,6 +520,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261021-release-v13.5.4"></script>
+  <script src="app.js?v=20261021-release-v13.5.5"></script>
 </body>
 </html>
