@@ -1,7 +1,8 @@
 /**
- * Built-in geometry template specs for the AI / ops layer.
+ * Built-in geometry template specs + shared catalog (UI Templates menu + MCP).
  *
- * KEEP IN SYNC with app.js BUILTIN_TEMPLATES (browser IIFE — no ESM import).
+ * Single source of truth. Browser `app.js` embeds a copy via:
+ *   node tools/embed-templates.mjs
  * Spec: { nextLetter, pts: [[x,y,label?,ox?,oy?,marker?],...], segs: [[i,j,style?],...],
  *         circles?, ellipses?, rightAngles? }
  * pts use GRID CELL offsets; world = (ci|cj) × CELL_SIZE × scale + (dx|dy).
@@ -357,54 +358,202 @@ export const BUILTIN_TEMPLATES = {
 /** @type {string[]} */
 export const BUILTIN_TEMPLATE_IDS = Object.keys(BUILTIN_TEMPLATES);
 
-const PLANE_IDS = new Set([
-  "rightTri",
-  "isoTri",
-  "genTri",
-  "parallelogram",
-  "trapezoid",
-  "pentagon",
-  "circleCenter",
-  "circleGeom",
-]);
+/**
+ * Shared catalog: Templates UI (ui:true) + AI insertTemplate (all ids with specs).
+ * Combos appear in the human menu; plane/solid singles stay Shape / addShape (ui:false).
+ *
+ * @typedef {{
+ *   id: string,
+ *   group: 'combo'|'plane'|'solid',
+ *   ui: boolean,
+ *   labelZh: string,
+ *   labelEn: string,
+ *   preview?: string,
+ * }} TemplateCatalogEntry
+ */
 
-const SOLID_IDS = new Set([
-  "tetra",
-  "pyramid",
-  "altBase",
-  "triPrism",
-  "rectPrism",
-  "cuboid",
-  "cube",
-  "frustum",
-  "cylinder",
-  "cone",
-]);
-
-/** Solids promoted into the Shape float (altBase stays a Templates combo). */
-export const SHAPE_SOLID_TEMPLATE_IDS = [
-  "cube",
-  "cuboid",
-  "rectPrism",
-  "frustum",
-  "tetra",
-  "pyramid",
-  "triPrism",
-  "cylinder",
-  "cone",
+/** @type {TemplateCatalogEntry[]} */
+export const TEMPLATE_CATALOG = [
+  {
+    id: "circleGeom",
+    group: "combo",
+    ui: true,
+    labelZh: "圓＋弦徑",
+    labelEn: "Circle + chord/diameter",
+    preview: "O, diameter AB, chord CD",
+  },
+  {
+    id: "circleCenter",
+    group: "combo",
+    ui: true,
+    labelZh: "圓＋圓心",
+    labelEn: "Circle + center",
+    preview: "O + radius point A",
+  },
+  {
+    id: "altBase",
+    group: "combo",
+    ui: true,
+    labelZh: "高到底",
+    labelEn: "Altitude to base",
+    preview: "ΔABC with altitude from A to BC",
+  },
+  // Plane singles — Shape float / addShape; still insertTemplate for macros/AI
+  {
+    id: "rightTri",
+    group: "plane",
+    ui: false,
+    labelZh: "直角三角形",
+    labelEn: "Right triangle",
+  },
+  {
+    id: "isoTri",
+    group: "plane",
+    ui: false,
+    labelZh: "等腰三角形",
+    labelEn: "Isosceles triangle",
+  },
+  {
+    id: "genTri",
+    group: "plane",
+    ui: false,
+    labelZh: "一般三角形",
+    labelEn: "Scalene triangle",
+  },
+  {
+    id: "parallelogram",
+    group: "plane",
+    ui: false,
+    labelZh: "平行四邊形",
+    labelEn: "Parallelogram",
+  },
+  {
+    id: "trapezoid",
+    group: "plane",
+    ui: false,
+    labelZh: "梯形",
+    labelEn: "Trapezoid",
+  },
+  {
+    id: "pentagon",
+    group: "plane",
+    ui: false,
+    labelZh: "五邊形",
+    labelEn: "Pentagon",
+  },
+  // Solids — Shape float / addShape
+  {
+    id: "cube",
+    group: "solid",
+    ui: false,
+    labelZh: "立方體",
+    labelEn: "Cube",
+  },
+  {
+    id: "cuboid",
+    group: "solid",
+    ui: false,
+    labelZh: "長方體",
+    labelEn: "Cuboid",
+  },
+  {
+    id: "rectPrism",
+    group: "solid",
+    ui: false,
+    labelZh: "直方體",
+    labelEn: "Rectangular prism",
+  },
+  {
+    id: "frustum",
+    group: "solid",
+    ui: false,
+    labelZh: "棱台",
+    labelEn: "Frustum",
+  },
+  {
+    id: "tetra",
+    group: "solid",
+    ui: false,
+    labelZh: "四面體",
+    labelEn: "Tetrahedron",
+  },
+  {
+    id: "pyramid",
+    group: "solid",
+    ui: false,
+    labelZh: "角錐",
+    labelEn: "Pyramid",
+  },
+  {
+    id: "triPrism",
+    group: "solid",
+    ui: false,
+    labelZh: "三棱柱",
+    labelEn: "Triangular prism",
+  },
+  {
+    id: "cylinder",
+    group: "solid",
+    ui: false,
+    labelZh: "圓柱",
+    labelEn: "Cylinder",
+  },
+  {
+    id: "cone",
+    group: "solid",
+    ui: false,
+    labelZh: "圓錐",
+    labelEn: "Cone",
+  },
 ];
 
+/** Solids promoted into the Shape float (altBase stays a Templates combo). */
+export const SHAPE_SOLID_TEMPLATE_IDS = TEMPLATE_CATALOG.filter(
+  (e) => e.group === "solid"
+).map((e) => e.id);
+
+/** Catalog ids shown in the Templates ▾ menu (and default MCP list_templates). */
+export const TEMPLATE_UI_IDS = TEMPLATE_CATALOG.filter((e) => e.ui).map((e) => e.id);
+
 /**
- * @returns {{ id: string, group?: 'plane'|'solid' }[]}
+ * @param {{ uiOnly?: boolean }} [opts]
+ *   uiOnly (default true): same entries as Templates menu.
+ *   uiOnly:false: full catalog including AI-only plane/solid ids.
+ * @returns {Array<{ id: string, group: string, ui: boolean, labelZh: string, labelEn: string, preview?: string }>}
  */
-export function listBuiltinTemplates() {
-  return BUILTIN_TEMPLATE_IDS.map((id) => {
-    /** @type {{ id: string, group?: 'plane'|'solid' }} */
-    const row = { id };
-    if (PLANE_IDS.has(id)) row.group = "plane";
-    else if (SOLID_IDS.has(id)) row.group = "solid";
+export function listBuiltinTemplates(opts = {}) {
+  const uiOnly = opts.uiOnly !== false;
+  return TEMPLATE_CATALOG.filter((e) => (uiOnly ? e.ui : true)).map((e) => {
+    /** @type {{ id: string, group: string, ui: boolean, labelZh: string, labelEn: string, preview?: string }} */
+    const row = {
+      id: e.id,
+      group: e.group,
+      ui: !!e.ui,
+      labelZh: e.labelZh,
+      labelEn: e.labelEn,
+    };
+    if (e.preview) row.preview = e.preview;
     return row;
   });
+}
+
+/** Assert catalog ids ⊆ specs and every ui entry has a spec (call from tests / embed). */
+export function assertTemplateCatalogIntegrity() {
+  const specIds = new Set(BUILTIN_TEMPLATE_IDS);
+  const catIds = new Set(TEMPLATE_CATALOG.map((e) => e.id));
+  for (const e of TEMPLATE_CATALOG) {
+    if (!specIds.has(e.id)) {
+      throw new Error(`TEMPLATE_CATALOG id "${e.id}" missing from BUILTIN_TEMPLATES`);
+    }
+  }
+  for (const id of BUILTIN_TEMPLATE_IDS) {
+    if (!catIds.has(id)) {
+      throw new Error(`BUILTIN_TEMPLATES id "${id}" missing from TEMPLATE_CATALOG`);
+    }
+  }
+  if (!TEMPLATE_UI_IDS.length) {
+    throw new Error("TEMPLATE_CATALOG has no ui:true entries");
+  }
 }
 
 /**

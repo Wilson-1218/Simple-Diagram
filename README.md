@@ -76,7 +76,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.5.7）
+## 目前版本 / Current version（v13.5.8）
 
 **左側兩欄網格**（頂部品牌＋繪製／構造／記號）｜**頂部 overlay**（不佔畫布高度）｜**左側情境浮層**｜**匯出 ▾**
 
@@ -100,6 +100,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 **v13.5.5**：立體投影進「圖形」浮層（立方體／長方體／棱柱／圓台／錐／柱等）；模板選單收斂為組合起點（圓＋弦徑／圓＋圓心／高到底）＋自訂。
 **v13.5.6**：修復圖形浮層底列圖示無法點擊（viewport 內捲動＋z-index／pointer-events）。
 **v13.5.7**：清除只清空圖形，保留網格顯示／吸附／方格｜三角格設定。
+**v13.5.8**：Templates／MCP 共用 `TEMPLATE_CATALOG`（`src/diagram/templates.mjs`；`npm run embed-templates` 同步 app.js）。
 
 | 位置 | 內容 |
 |---|---|
@@ -131,6 +132,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 | 中文 | English |
 |---|---|
 | AI **不**模擬滑鼠／DOM；只產生或修改 **JSON 圖檔** | AI does **not** click the UI; it edits the **JSON document** |
+| Templates 選單與 MCP `list_templates` 同源目錄 | Shared `TEMPLATE_CATALOG` in `src/diagram/templates.mjs` |
 | 人手「開啟」可直接載入 AI 產出的 JSON | Human **Open** loads AI-produced JSON as usual |
 | Schema：`formatVersion: 1`（缺省視為 v1） | Schema: `formatVersion: 1` (missing ⇒ v1) |
 
@@ -181,6 +183,8 @@ Agent 手冊：[`docs/agent-draw-playbook.md`](docs/agent-draw-playbook.md)。
 | `validate_diagram` | 驗證文件 |
 | `load_example` | 載入 `examples/` 內建範例 |
 | `list_ops` | 列出支援的 op 名稱 |
+| `list_templates` | 列出 Templates ▾ 組合目錄（與 UI 同源；`includeAll` 含 AI-only） |
+| `run_macro` / `export_svg` | 高階繪圖巨集／匯出 SVG |
 
 啟動：`npm run mcp` 或 `node mcp/server.mjs`（stdio）。
 

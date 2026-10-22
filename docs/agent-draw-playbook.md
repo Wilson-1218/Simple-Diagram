@@ -95,11 +95,13 @@ Later fills paint on top. Opaque white (`#ffffff`, `opacity: 1`) punches out sha
 
 | Need | How |
 |---|---|
-| Builtin Templates menu figure | `{ "op": "insertTemplate", "id": "frustum" }` (also `rightTri`, `circleGeom`, `cuboid`, …) |
+| Templates ▾ combo (shared catalog) | MCP `list_templates` → same ids as UI: `circleGeom`, `circleCenter`, `altBase`. Insert: `{ "op": "insertTemplate", "id": "circleGeom" }` |
+| Plane / solid single figures | Prefer Shape UI or `{ "op": "addShape", "kind": "frustum", … }`. AI-only template ids: `list_templates` with `includeAll:true` (still accepted by `insertTemplate`) |
 | One-shot HKDSE macro | MCP `run_macro` or `node tools/export-diagram.mjs --macro drawFrustum --out out.svg` |
 | Macros | `drawRightTriangle`, `drawFrustum`, `drawCircleWithTangent`, `drawCuboid`, `drawCube` |
 | Export SVG/PNG | `node tools/export-diagram.mjs --in doc.json --out out.svg` (PNG needs playwright) |
 | MCP | `list_templates`, `run_macro`, `export_svg` |
+| Catalog source | `src/diagram/templates.mjs` (`TEMPLATE_CATALOG` + specs). Browser embed: `node tools/embed-templates.mjs` |
 
 ```bash
 node tools/export-diagram.mjs --macro drawRightTriangle --params '{"a":160,"b":120}' --out /tmp/tri.svg --validate

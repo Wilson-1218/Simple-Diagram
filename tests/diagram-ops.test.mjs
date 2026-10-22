@@ -307,8 +307,13 @@ test("insertTemplate rightTri / frustum / circleGeom / genTri", async () => {
   assert.equal(validateDiagram(gen).ok, true, validateDiagram(gen).errors.join("; "));
 
   const listed = listBuiltinTemplates();
-  assert.ok(listed.some((t) => t.id === "rightTri" && t.group === "plane"));
-  assert.ok(listed.some((t) => t.id === "frustum" && t.group === "solid"));
+  assert.ok(listed.every((t) => t.ui === true));
+  assert.ok(listed.some((t) => t.id === "circleGeom" && t.group === "combo"));
+  assert.ok(listed.some((t) => t.id === "altBase"));
+  assert.ok(!listed.some((t) => t.id === "frustum"), "solids not in default list_templates");
+  const all = listBuiltinTemplates({ uiOnly: false });
+  assert.ok(all.some((t) => t.id === "rightTri" && t.group === "plane" && t.ui === false));
+  assert.ok(all.some((t) => t.id === "frustum" && t.group === "solid" && t.ui === false));
 
   assert.ok(OP_NAMES.includes("insertTemplate"));
   assert.ok(OP_NAMES.includes("addTemplate"));
