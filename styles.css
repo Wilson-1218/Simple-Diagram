@@ -659,8 +659,12 @@ body.is-rail-resizing * {
   grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 6px;
-  padding: 4px 2px;
+  padding: 5px 2px;
   font-size: calc(12px * var(--tb, 1));
+}
+
+.layers-row + .layers-row {
+  border-top: 1px solid var(--bar-border);
 }
 
 .layers-name {

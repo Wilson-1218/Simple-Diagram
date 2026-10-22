@@ -76,48 +76,34 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.25）
+## 目前版本 / Current version（v13.5.26 · 穩定）
 
-左側兩欄工具｜頂部選單｜情境浮層。預設：網格開、三角格、縮放 **2×**。
+靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
-### 更新說明
-- **v13.5.25** — 左欄分組標題改完整用詞（繪畫／構建／記號）
-- **v13.5.24** — 長度平行弧括＋端點弧；右鍵選取⇄上一工具；選取時 + 亦可回上一工具
-- **v13.5.23** — 畫布右鍵選取、中鍵拖曳平移
-- **v13.5.22** — 長度樣式 3 改考卷端點雙弧；座標「不顯示數值」一併隱藏刻度
-- **v13.5.21** — 存成模板進選單；左欄 3 直行／可拖寬
-- **v13.5.20** — 長度浮層；網格進圖層；日夜在 Logo 下；`?` 移除更新說明
-- **v13.5.19** — Json ▾；語系在左欄；模板改僅「我的」
-- **v13.5.18** — AI 說明：⊥座標對應、cube／函數填色例
-- **v13.5.17** — AI 說明頁涵蓋全部 ops（含座標圖）
-- **v13.5.16** — AI 說明頁補齊 addShape／fill／角弧參數
-- **v13.5.15** — 改為連到 ai.html；請用 Chrome 分享分頁給 Gemini
-- **v13.5.14** — 深色介面對比改善（填色色票等）
-- **v13.5.12** — 可貼上 JSON；AI 說明頁 ai.html（Pages）
-- **v13.5.11** — 更新說明改精簡
-- **v13.5.10** — 記號／標籤預設鎖定，解鎖後可拖移
-- **v13.5.9** — 可存成模板；模板內有 AI 接入說明
-- **v13.5.8** — 模板選單與 AI 模板目錄一致
-- **v13.5.7** — 清除只清圖形，保留網格設定
-- **v13.5.6** — 修復圖形浮層底列無法點擊
-- **v13.5.5** — 立體進圖形浮層；模板改為組合起點
-- *更早版本…* 填色、圖層、切線、AI 繪圖／匯出、MIT 等
+**Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
+
+### 更新說明（精簡）
+- **v13.5.26** — 圖層：網格僅開關＋類型；座標／記號顯示＋鎖定
+- **v13.5.25** — 左欄標題：繪畫／構建／記號
+- **v13.5.24** — 長度平行弧括（實／虛／點）＋端點弧；右鍵選取⇄上一工具；選取時 +／=
+- **v13.5.23** — 中鍵拖曳平移；右鍵進選取
+- *更早…* Json／模板／填色／座標圖／AI `ai.html`／MIT — 見 git history
 
 | 位置 | 內容 |
 |---|---|
 | **左頂：品牌** | Logo、Simple Diagram、版本號、**中｜EN**、**日／夜**（工具列預設 3 直行，可拖邊調寬） |
-| **左：繪製** | 選取、手掌、點、線段、圓弧、橢圓、扇弧、**填色**、**圖形**、標籤 |
-| **左：構造** | 交點、中點、比例、水平、垂線、**垂足**、**切線**、**圓件**、座標 |
+| **左：繪畫** | 選取、手掌、點、線段、圓弧、橢圓、扇弧、**填色**、**圖形**、標籤 |
+| **左：構建** | 交點、中點、比例、水平、垂線、**垂足**、**切線**、**圓件**、座標 |
 | **左：記號** | 直角、角弧、優角、平行、等長、長度 |
 | **浮層：線型** | 線段／弧／橢圓／扇等工具，或選取邊時顯示 |
 | **浮層：弧／扇** | 扇弧工具（或選取扇／弧）時顯示 |
 | **浮層：單／雙／翻面** | 平行／等長／角弧工具（或選取對應記號）時顯示 |
-| **浮層：長度** | 長度工具／選取時：字級、隨線｜水平、文字｜尺寸｜弧括 |
+| **浮層：長度** | 字級、隨線｜水平；樣式 1 文字／2 尺寸／3 弧括（平行弧＋實｜虛｜點）／4 端點弧 |
 | **浮層：填色** | 填色工具：模式（多邊形／扇形／弓形）＋色票 |
 | **浮層：圖形／圓件／對齊** | 圖形＝平面＋立體投影圖示；對齊於選取≥2 時 |
-| **頂 overlay** | **模板 ▾**（含存成模板）、**圖層**（含網格）／最近、複製／復原、**Json ▾**、「匯出 ▾」、`?` |
+| **頂 overlay** | **模板 ▾**、**圖層 ▾**（網格開關＋類型；座標／記號顯示＋鎖定）／最近、複製／復原、**Json ▾**、「匯出 ▾」、`?`（快捷鍵，**無**長版更新列表） |
 
-快捷鍵（預設，可於 `?` 改）：選取 V、點 P、線 L、水平 H、圓 C、橢圓 E、扇弧 A、填色 I、圖形 B、圓件 T、中點 M、比例 R；Ctrl+Z／Y 復原重做、Ctrl+D 複製。
+畫布：右鍵＝選取⇄上一工具；中鍵／空白鍵平移；選取時 `+`／`=` 亦可回上一工具。快捷鍵預設可於 `?` 改：V／P／L／H／C／E／A／I／B／T／M／R；Ctrl+Z／Y、Ctrl+D。
 
 更多說明：[`docs/simple-diagram-features.md`](docs/simple-diagram-features.md) · 視覺風格：[`docs/simple-diagram-style.md`](docs/simple-diagram-style.md) · JSON 格式：[`docs/diagram-format.md`](docs/diagram-format.md)
 
@@ -125,13 +111,17 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ## AI / Automation（JSON + ops）
 
+**路徑（Pages）**：開啟 [`ai.html`](https://wilson-1218.github.io/Simple-Diagram/ai.html)（或本機 `ai.html`）→ 在 Chrome **分享分頁給 Gemini** → AI 產出 ops／圖檔 JSON → App **Json ▾ → 貼上 JSON**。頁內**沒有**原生聊天；只作說明與 schema。
+
+**Path**: [`ai.html`](https://wilson-1218.github.io/Simple-Diagram/ai.html) → share tab with Gemini → paste JSON in the app. No in-page chat.
+
 > **Training packs**（考試「對著畫」評測等）留在 Agent Store／Context，**不上 GitHub**。Core AI layer（ops、MCP、macros、shared catalog）仍在本 repo。
 
 | 中文 | English |
 |---|---|
 | AI **不**模擬滑鼠／DOM；只產生或修改 **JSON 圖檔** | AI does **not** click the UI; it edits the **JSON document** |
 | Templates 選單與 MCP `list_templates` 同源目錄 | Shared `TEMPLATE_CATALOG` in `src/diagram/templates.mjs` |
-| 人手「開啟」可直接載入 AI 產出的 JSON | Human **Open** loads AI-produced JSON as usual |
+| 人手「開啟」／「貼上 JSON」可載入 AI 產出 | Human **Open**／**Paste JSON** loads AI output |
 | Schema：`formatVersion: 1`（缺省視為 v1） | Schema: `formatVersion: 1` (missing ⇒ v1) |
 
 ### CLI

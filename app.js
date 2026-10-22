@@ -373,7 +373,7 @@
       length_stroke_dotted: "點線",
       btn_layers: "圖層 ▾", layers_title: "圖層", layers_grid: "網格", layers_coords: "座標",
       layers_helpers: "記號", layers_show: "顯示", layers_lock: "鎖定",
-      tip_layers: "圖層顯示／鎖定（網格／座標／記號；記號預設鎖定，解鎖後可拖標籤／記號）",
+      tip_layers: "圖層：網格開關＋格種；座標／記號顯示與鎖定（記號預設鎖定）",
       tip_shape_bar: "常用圖形",
       tip_shape_square: "正方形：對角拖曳",
       tip_shape_rect: "長方形：自由寬高",
@@ -672,7 +672,7 @@
       length_stroke_dotted: "Dotted",
       btn_layers: "Layers ▾", layers_title: "Layers", layers_grid: "Grid", layers_coords: "Axes",
       layers_helpers: "Marks", layers_show: "Show", layers_lock: "Lock",
-      tip_layers: "Layer show/lock (grid / axes / marks; marks default locked — unlock to drag)",
+      tip_layers: "Layers: grid on/off + style; axes/marks show & lock (marks default locked)",
       tip_shape_bar: "Common shapes",
       tip_shape_square: "Square: drag from corner",
       tip_shape_rect: "Rectangle: free w×h",
@@ -1903,25 +1903,28 @@
   function syncLayersUI() {
     document.querySelectorAll("[data-layer-show]").forEach((el) => {
       const k = el.dataset.layerShow;
-      if (k === "grid") el.checked = !!layers.gridShow;
-      else if (k === "coords") el.checked = !!layers.coordsShow;
+      if (k === "coords") el.checked = !!layers.coordsShow;
       else if (k === "helpers") el.checked = !!layers.helpersShow;
     });
     document.querySelectorAll("[data-layer-lock]").forEach((el) => {
       const k = el.dataset.layerLock;
-      if (k === "grid") el.checked = !!layers.gridLock;
-      else if (k === "coords") el.checked = !!layers.coordsLock;
+      if (k === "coords") el.checked = !!layers.coordsLock;
       else if (k === "helpers") el.checked = !!layers.helpersLock;
     });
   }
 
   function applyLayersPatch(patch) {
     layers = { ...layers, ...patch };
-    // Locking 記號：取消已選標籤／記號（只能隨點線走，不可單獨拖）
+    // Locking／隱藏 記號：取消已選標籤／記號（只能隨點線走，不可單獨拖）
+    let nextSel = selection;
     if (layers.helpersLock || !layers.helpersShow) {
-      const kept = selection.filter((s) => !isHelpersLayerItem(s.type));
-      if (kept.length !== selection.length) setSelection(kept);
+      nextSel = nextSel.filter((s) => !isHelpersLayerItem(s.type));
     }
+    // Locking／隱藏 座標：取消已選座標圖（鎖定＝不可點選／拖移）
+    if (layers.coordsLock || !layers.coordsShow) {
+      nextSel = nextSel.filter((s) => s.type !== "coordPlot");
+    }
+    if (nextSel.length !== selection.length) setSelection(nextSel);
     syncLayersUI();
     draw();
     updateStatus();
@@ -10529,7 +10532,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.25",
+      version: "13.5.26",
       app: "simple-diagram",
       points,
       segments,
@@ -14098,16 +14101,14 @@ ${body}</svg>`;
   document.querySelectorAll("[data-layer-show]").forEach((el) => {
     el.addEventListener("change", () => {
       const k = el.dataset.layerShow;
-      if (k === "grid") applyLayersPatch({ gridShow: !!el.checked });
-      else if (k === "coords") applyLayersPatch({ coordsShow: !!el.checked });
+      if (k === "coords") applyLayersPatch({ coordsShow: !!el.checked });
       else if (k === "helpers") applyLayersPatch({ helpersShow: !!el.checked });
     });
   });
   document.querySelectorAll("[data-layer-lock]").forEach((el) => {
     el.addEventListener("change", () => {
       const k = el.dataset.layerLock;
-      if (k === "grid") applyLayersPatch({ gridLock: !!el.checked });
-      else if (k === "coords") applyLayersPatch({ coordsLock: !!el.checked });
+      if (k === "coords") applyLayersPatch({ coordsLock: !!el.checked });
       else if (k === "helpers") applyLayersPatch({ helpersLock: !!el.checked });
     });
   });

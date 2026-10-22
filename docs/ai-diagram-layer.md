@@ -1,6 +1,8 @@
 # AI Diagram Layer · AI 圖層（ABCD）
 
-**狀態：** 已實作（v13.2）· AI 優化 **v13.5.25**· 產品名 **Simple Diagram** · MIT  
+**狀態：** 已實作（v13.2）· 產品穩定版 **v13.5.26** · 產品名 **Simple Diagram** · MIT  
+
+**AI 路徑：** Pages [`ai.html`](../ai.html) →（Chrome 分享分頁給 Gemini）→ 產出 JSON → App「Json ▾ → 貼上 JSON」。頁內無原生聊天。 
 **原則：** AI 只走 **JSON document + ops**，不模擬人手 UI；現有畫布／快捷鍵／存檔／Pages 不變。
 
 **PR：** https://github.com/Wilson-1218/Simple-Diagram/pull/1 · `cursor/ai-diagram-layer-037e` → `main`

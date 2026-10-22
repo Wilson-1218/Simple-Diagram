@@ -45,7 +45,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `activeParallelGroup` | 0\|1 | UI：單／雙平行 |
 | `activeEqualGroup` | 0\|1 | UI：單／雙等長 |
 | `activeArcGroup` | 0\|1 | UI：單／雙角弧 |
-| `layers` | object | 圖層顯示／鎖定（`gridShow`/`coordsShow`/`helpersShow` + `*Lock`） |
+| `layers` | object | 圖層：`gridShow`（網格顯示，UI 與吸附開關聯動）；`coordsShow`/`coordsLock`；`helpersShow`/`helpersLock`（`gridLock` 保留於檔案相容，UI 不再暴露） |
 | `gridSnap` | boolean | 網格吸附 |
 | `gridMode` | `"square"`\|`"triangle"` | 網格種類 |
 | `hideExportPoints` | boolean | 匯出隱藏頂點 |
