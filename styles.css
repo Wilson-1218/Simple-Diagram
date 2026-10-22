@@ -658,17 +658,27 @@ button:disabled {
   font-weight: 600;
 }
 
-/* Shape float: compact 2-col icon grid (no text labels) */
+/* Shape float: compact 3-col icon grid (plane + solids; no text labels) */
 .float-panel.float-shape {
-  max-width: calc(76px * var(--tb, 1.2));
+  max-width: calc(108px * var(--tb, 1.2));
   padding: calc(5px * var(--tb, 1.2));
 }
 
 .float-shape .shape-icon-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: calc(3px * var(--tb, 1.2));
   width: 100%;
+  max-height: calc(300px * var(--tb, 1.2));
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.float-shape .shape-icon-sep {
+  grid-column: 1 / -1;
+  height: 1px;
+  margin: calc(2px * var(--tb, 1.2)) 0;
+  background: var(--bar-border);
 }
 
 .float-shape .shape-icon-btn {

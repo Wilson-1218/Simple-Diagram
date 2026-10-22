@@ -286,6 +286,34 @@ export const BUILTIN_TEMPLATES = {
       [3, 7, "dashed"],
     ],
   },
+  /** Isometric cube (more equal extents than cuboid). */
+  cube: {
+    nextLetter: "I",
+    pts: [
+      [-3, 2, "A", -14, 10],
+      [2, 3, "B", 14, 10],
+      [4, 0, "C", 16, 0],
+      [-1, -1, "D", -16, -6],
+      [-3, -2, "E", -14, -12],
+      [2, -1, "F", 14, -12],
+      [4, -4, "G", 16, -14],
+      [-1, -5, "H", -16, -16],
+    ],
+    segs: [
+      [0, 1],
+      [1, 2],
+      [2, 3, "dashed"],
+      [3, 0],
+      [4, 5],
+      [5, 6],
+      [6, 7, "dashed"],
+      [7, 4],
+      [0, 4],
+      [1, 5],
+      [2, 6],
+      [3, 7, "dashed"],
+    ],
+  },
   cylinder: {
     nextLetter: "C",
     pts: [
@@ -347,10 +375,24 @@ const SOLID_IDS = new Set([
   "triPrism",
   "rectPrism",
   "cuboid",
+  "cube",
   "frustum",
   "cylinder",
   "cone",
 ]);
+
+/** Solids promoted into the Shape float (altBase stays a Templates combo). */
+export const SHAPE_SOLID_TEMPLATE_IDS = [
+  "cube",
+  "cuboid",
+  "rectPrism",
+  "frustum",
+  "tetra",
+  "pyramid",
+  "triPrism",
+  "cylinder",
+  "cone",
+];
 
 /**
  * @returns {{ id: string, group?: 'plane'|'solid' }[]}

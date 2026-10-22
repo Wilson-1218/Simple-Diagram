@@ -1,6 +1,12 @@
 import { emptyDiagram, cloneDoc } from "./empty-doc.mjs";
 import { createIdFactory } from "./ids.mjs";
-import { applyBuiltinTemplate, BUILTIN_TEMPLATE_IDS } from "./templates.mjs";
+import {
+  applyBuiltinTemplate,
+  BUILTIN_TEMPLATE_IDS,
+  BUILTIN_TEMPLATES,
+  SHAPE_SOLID_TEMPLATE_IDS,
+  TEMPLATE_CELL_SIZE,
+} from "./templates.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -566,9 +572,8 @@ const HANDLERS = {
 
   /**
    * Place a common shape by corner/origin + size.
-   * kinds: square|rect|rhombus|parallelogram|trapezoid|kite|equilateral|iso|
-   * rightTri|isoRight|pentagon|hexagon|circle|semicircle
-   * Creates points + segments (circle/semicircle also circle/sector); optional labels.
+   * Plane kinds: square|rect|rhombus|…|circle|semicircle
+   * Solid kinds (via insertTemplate): cube|cuboid|rectPrism|frustum|tetra|…
    */
   addShape(doc, op, nextId) {
     let kind = op.kind || op.shape || "square";
@@ -580,6 +585,7 @@ const HANDLERS = {
     if (kind === "pent") kind = "pentagon";
     if (kind === "hex") kind = "hexagon";
     if (kind === "semi") kind = "semicircle";
+    if (kind === "rectPrism" || kind === "prism") kind = "rectPrism";
     const x0 = Number(op.x);
     const y0 = Number(op.y);
     if (!Number.isFinite(x0) || !Number.isFinite(y0)) {
@@ -591,6 +597,27 @@ const HANDLERS = {
     const h = Math.abs(hRaw) > 1e-6 ? Math.abs(hRaw) : w;
     const style = styleOr(op.style, "solid");
     const prefix = op.idPrefix != null ? String(op.idPrefix) : "";
+
+    if (SHAPE_SOLID_TEMPLATE_IDS.includes(kind) && BUILTIN_TEMPLATES[kind]) {
+      const spec = BUILTIN_TEMPLATES[kind];
+      let minC = Infinity;
+      let maxC = -Infinity;
+      for (const row of spec.pts || []) {
+        minC = Math.min(minC, Number(row[0]));
+        maxC = Math.max(maxC, Number(row[0]));
+      }
+      const cellW = Math.max(1, maxC - minC);
+      const scale = w / (cellW * TEMPLATE_CELL_SIZE);
+      applyBuiltinTemplate(doc, kind, {
+        dx: x0,
+        dy: y0,
+        scale,
+        nextId,
+        labelSize: doc.labelFontSize,
+        rightAngleSize: doc.rightAngleSize,
+      });
+      return doc;
+    }
 
     const labelPoint = (p, i) => {
       if (!(op.label || op.labels)) return;
@@ -676,7 +703,7 @@ const HANDLERS = {
       }
     } else {
       throw new Error(
-        `addShape: unknown kind "${kind}" (use square|rect|rhombus|parallelogram|trapezoid|kite|equilateral|iso|rightTri|isoRight|pentagon|hexagon|circle|semicircle)`
+        `addShape: unknown kind "${kind}" (plane kinds or solid: cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone)`
       );
     }
     const ids = [];

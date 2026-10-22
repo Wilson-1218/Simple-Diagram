@@ -76,7 +76,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.5.4）
+## 目前版本 / Current version（v13.5.5）
 
 **左側兩欄網格**（頂部品牌＋繪製／構造／記號）｜**頂部 overlay**（不佔畫布高度）｜**左側情境浮層**｜**匯出 ▾**
 
@@ -97,6 +97,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 **v13.5.2**：Mensuration AI train pack（`examples/train/`，10 題 seed `20261021`）＋ eval。  
 **v13.5.3**：Train case 03 — point/label D at BH∩CF（不再偏高）。
 **v13.5.4**：圖形浮層改圖示網格（無文字標籤）；擴充 HKDSE 常用形（菱形／平行四邊形／等腰梯形／鳶形／直角／等腰直角／正五／正六／圓／半圓）並接 `addShape`；填色色票新增**白色**（不透明，疊在灰影上挖空）；構造還原**垂足**（點→線段正交投影）＋ `addFoot`。
+**v13.5.5**：立體投影進「圖形」浮層（立方體／長方體／棱柱／圓台／錐／柱等）；模板選單收斂為組合起點（圓＋弦徑／圓＋圓心／高到底）＋自訂。
 
 | 位置 | 內容 |
 |---|---|
@@ -108,8 +109,8 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 | **浮層：弧／扇** | 扇弧工具（或選取扇／弧）時顯示 |
 | **浮層：單／雙／翻面** | 平行／等長／角弧工具（或選取對應記號）時顯示 |
 | **浮層：填色** | 填色工具：模式（多邊形／扇形／弓形）＋色票 |
-| **浮層：圖形／圓件／對齊** | 對應工具或（對齊）選取≥2 物件時顯示 |
-| **頂 overlay** | 中｜EN、模板、網格／深色／**圖層**／最近、複製／復原、儲存／開啟、「匯出 ▾」、`?` |
+| **浮層：圖形／圓件／對齊** | 圖形＝平面＋立體投影圖示；對齊於選取≥2 時 |
+| **頂 overlay** | 中｜EN、**模板（組合起點）**、網格／深色／**圖層**／最近、複製／復原、儲存／開啟、「匯出 ▾」、`?` |
 
 快捷鍵（預設，可於 `?` 改）：選取 V、點 P、線 L、水平 H、圓 C、橢圓 E、扇弧 A、填色 I、圖形 B、圓件 T、中點 M、比例 R；Ctrl+Z／Y 復原重做、Ctrl+D 複製。
 

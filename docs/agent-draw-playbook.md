@@ -42,7 +42,7 @@ node tools/validate-diagram.mjs /tmp/tri.json
 
 | Need | Op |
 |---|---|
-| Common exam shapes | `addShape` (`square`\|`rect`\|`rhombus`\|`parallelogram`\|`trapezoid`\|`kite`\|`equilateral`\|`iso`\|`rightTri`\|`isoRight`\|`pentagon`\|`hexagon`\|`circle`\|`semicircle`) |
+| Common exam shapes | `addShape` (plane kinds + solids `cube`\|`cuboid`\|`rectPrism`\|`frustum`\|`tetra`\|`pyramid`\|`triPrism`\|`cylinder`\|`cone`) |
 | Foot of perpendicular | `addFoot` (`pointId` + `segmentId` or `a`/`b`) |
 | Circle tangent / radius / diameter / chord | `addTangent` · `addRadius` · `addDiameter` · `addChord` |
 | Polygon / sector / segment shade | `addFill` with `kind` |
