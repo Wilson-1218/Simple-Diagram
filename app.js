@@ -9722,7 +9722,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.5",
+      version: "13.5.6",
       app: "simple-diagram",
       points,
       segments,
@@ -11727,6 +11727,22 @@ ${body}</svg>`;
   if (rightAngleSizeSelect) {
     rightAngleSizeSelect.addEventListener("change", () =>
       setRightAngleSize(rightAngleSizeSelect.value)
+    );
+  }
+
+  /* Keep wheel zoom off scrollable floats so bottom icon rows stay reachable */
+  const floatStackEl = document.getElementById("floatStack");
+  if (floatStackEl) {
+    floatStackEl.addEventListener(
+      "wheel",
+      (e) => {
+        const scrollable =
+          e.target && e.target.closest
+            ? e.target.closest(".shape-icon-grid, .float-panel")
+            : null;
+        if (scrollable) e.stopPropagation();
+      },
+      { passive: true }
     );
   }
 
