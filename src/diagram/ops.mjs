@@ -314,12 +314,29 @@ const HANDLERS = {
   addLengthLabel(doc, op, nextId) {
     const id = resolveId(op, nextId, "ll");
     requireSegment(doc, op.segmentId, "addLengthLabel");
-    doc.lengthLabels.push({
+    const style =
+      op.style === "dim" || op.style === 2 || op.style === "2"
+        ? "dim"
+        : op.style === "arcs" || op.style === 3 || op.style === "3"
+          ? "arcs"
+          : "text";
+    const orient =
+      op.orient === "horizontal" || op.orient === "h" || op.orient === "fixed"
+        ? "horizontal"
+        : "tilt";
+    /** @type {{ id: string, segmentId: string, text: string, side: 1|-1, style: string, orient: string, size?: number }} */
+    const row = {
       id,
       segmentId: op.segmentId,
       text: op.text != null ? String(op.text) : "",
       side: op.side === -1 ? -1 : 1,
-    });
+      style,
+      orient,
+    };
+    if (op.size != null && Number.isFinite(Number(op.size))) {
+      row.size = Math.min(48, Math.max(10, Math.round(Number(op.size))));
+    }
+    doc.lengthLabels.push(row);
     return doc;
   },
 

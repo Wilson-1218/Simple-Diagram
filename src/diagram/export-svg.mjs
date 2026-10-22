@@ -2,8 +2,17 @@
  * Headless SVG export for agents (no DOM). White paper, black ink.
  * Covers points, segments, circles, ellipses, sectors (arc strokes),
  * polygon/sector/segment fills, labels, rightAngles, angleArcs (+ text),
- * lengthLabels, equalMarks (ticks).
+ * lengthLabels (text|dim|arcs), equalMarks (ticks).
  */
+
+import {
+  normalizeLengthStyle,
+  normalizeLengthOrient,
+  lengthOffsetFrame,
+  dimMarkParts,
+  arcsMarkParts,
+  readableEdgeAngle,
+} from "./length-mark.mjs";
 
 const STYLE_DASH = {
   solid: [],
@@ -80,6 +89,75 @@ function hexToRgba(hex, opacity) {
   const b = parseInt(h.slice(4, 6), 16);
   const a = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.2;
   return `rgba(${r},${g},${b},${a})`;
+}
+
+function svgArrowHead(tipX, tipY, dirX, dirY, size) {
+  const len = Math.hypot(dirX, dirY) || 1;
+  const ux = dirX / len;
+  const uy = dirY / len;
+  const px = -uy;
+  const py = ux;
+  const back = size;
+  const half = size * 0.45;
+  const x1 = tipX - ux * back + px * half;
+  const y1 = tipY - uy * back + py * half;
+  const x2 = tipX - ux * back - px * half;
+  const y2 = tipY - uy * back - py * half;
+  return `<path d="M${tipX.toFixed(2)},${tipY.toFixed(2)} L${x1.toFixed(2)},${y1.toFixed(2)} L${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="#111" stroke="none"/>\n`;
+}
+
+/**
+ * @param {object} ll
+ * @param {object} doc
+ * @param {Map<string, object>} pts
+ * @param {(x:number,y:number)=>{x:number,y:number}} toS
+ * @param {number} scale
+ */
+function svgLengthLabel(ll, doc, pts, toS, scale) {
+  const seg = (doc.segments || []).find((s) => s.id === ll.segmentId);
+  if (!seg) return "";
+  const aw = pts.get(seg.a);
+  const bw = pts.get(seg.b);
+  if (!aw || !bw) return "";
+  const a = toS(aw.x, aw.y);
+  const b = toS(bw.x, bw.y);
+  const style = normalizeLengthStyle(ll.style);
+  const orient = normalizeLengthOrient(ll.orient);
+  const fontPx = Math.min(48, Math.max(10, Number(ll.size) || 16)) * scale * 0.75;
+  const side = ll.side === -1 ? -1 : 1;
+  const off = (style === "text" ? 14 : 18) * scale * 0.75;
+  const frame = lengthOffsetFrame(a, b, side, off);
+  const ang = orient === "horizontal" ? 0 : frame.angle || readableEdgeAngle(frame.dx, frame.dy);
+  const lw = Math.max(1.1, 1.35 * scale * 0.75).toFixed(2);
+  let out = "";
+  let lx = frame.mx;
+  let ly = frame.my;
+  if (style === "dim") {
+    const parts = dimMarkParts(frame, fontPx, ll.text || "", scale * 0.75);
+    const { tick0, tick1, lineA, lineB, arrow0, arrow1 } = parts;
+    out += `<line x1="${tick0.x0.toFixed(2)}" y1="${tick0.y0.toFixed(2)}" x2="${tick0.x1.toFixed(2)}" y2="${tick0.y1.toFixed(2)}" stroke="#111" stroke-width="${lw}"/>\n`;
+    out += `<line x1="${tick1.x0.toFixed(2)}" y1="${tick1.y0.toFixed(2)}" x2="${tick1.x1.toFixed(2)}" y2="${tick1.y1.toFixed(2)}" stroke="#111" stroke-width="${lw}"/>\n`;
+    out += `<line x1="${lineA.x0.toFixed(2)}" y1="${lineA.y0.toFixed(2)}" x2="${lineA.x1.toFixed(2)}" y2="${lineA.y1.toFixed(2)}" stroke="#111" stroke-width="${lw}"/>\n`;
+    out += `<line x1="${lineB.x0.toFixed(2)}" y1="${lineB.y0.toFixed(2)}" x2="${lineB.x1.toFixed(2)}" y2="${lineB.y1.toFixed(2)}" stroke="#111" stroke-width="${lw}"/>\n`;
+    out += svgArrowHead(arrow0.tip.x, arrow0.tip.y, arrow0.dir.x, arrow0.dir.y, arrow0.size);
+    out += svgArrowHead(arrow1.tip.x, arrow1.tip.y, arrow1.dir.x, arrow1.dir.y, arrow1.size);
+    lx = parts.label.x;
+    ly = parts.label.y;
+  } else if (style === "arcs") {
+    const parts = arcsMarkParts(frame, fontPx, ll.text || "", scale * 0.75);
+    const { arcA, arcB } = parts;
+    out += `<path d="M${arcA.x0.toFixed(2)},${arcA.y0.toFixed(2)} Q${arcA.cx.toFixed(2)},${arcA.cy.toFixed(2)} ${arcA.x1.toFixed(2)},${arcA.y1.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"/>\n`;
+    out += `<path d="M${arcB.x0.toFixed(2)},${arcB.y0.toFixed(2)} Q${arcB.cx.toFixed(2)},${arcB.cy.toFixed(2)} ${arcB.x1.toFixed(2)},${arcB.y1.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"/>\n`;
+    lx = parts.label.x;
+    ly = parts.label.y;
+  }
+  const deg = (ang * 180) / Math.PI;
+  const tf = `translate(${lx.toFixed(2)} ${ly.toFixed(2)}) rotate(${deg.toFixed(2)})`;
+  const common =
+    `transform="${tf}" text-anchor="middle" dominant-baseline="middle" ` +
+    `font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx.toFixed(1)}"`;
+  out += `<text ${common} fill="#111">${escapeXml(ll.text || "")}</text>\n`;
+  return out;
 }
 
 /**
@@ -421,26 +499,7 @@ export function documentToSvg(doc, opts = {}) {
       }
     }
     for (const ll of doc.lengthLabels || []) {
-      const seg = (doc.segments || []).find((s) => s.id === ll.segmentId);
-      if (!seg) continue;
-      const a = pts.get(seg.a);
-      const b = pts.get(seg.b);
-      if (!a || !b) continue;
-      const mx = (a.x + b.x) / 2;
-      const my = (a.y + b.y) / 2;
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const len = Math.hypot(dx, dy) || 1;
-      // Offset to the "below/right" side of the segment (screen-down biased)
-      let nx = -dy / len;
-      let ny = dx / len;
-      if (ny < 0) {
-        nx = -nx;
-        ny = -ny;
-      }
-      const s = toS(mx + nx * 12, my + ny * 12);
-      const fs = 14 * scale * 0.75;
-      body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(ll.text || "")}</text>\n`;
+      body += svgLengthLabel(ll, doc, pts, toS, scale);
     }
   }
 

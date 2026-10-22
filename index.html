@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261022-release-v13.5.19" />
+  <meta name="simple-diagram-build" content="20261022-release-v13.5.20" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261022-release-v13.5.19" />
+  <link rel="stylesheet" href="styles.css?v=20261022-release-v13.5.20" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,11 +21,21 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.19</span>
+            <span class="brand-sub">v13.5.20</span>
           </div>
-          <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
-            <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
-            <button type="button" id="btnLangEn" class="lang-btn" data-lang="en" title="English UI" data-i18n-title="tip_lang_en">EN</button>
+          <div class="rail-brand-controls">
+            <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
+              <button type="button" id="btnLangZh" class="lang-btn active" data-lang="zh" title="中文介面" data-i18n-title="tip_lang_zh">中</button>
+              <button type="button" id="btnLangEn" class="lang-btn" data-lang="en" title="English UI" data-i18n-title="tip_lang_en">EN</button>
+            </div>
+            <div class="theme-toggle" role="group" aria-label="畫布明暗" data-i18n-aria="aria_theme">
+              <button type="button" id="btnThemeDay" class="theme-btn active" title="淺色畫布（編輯）" data-i18n-title="tip_theme_day" aria-pressed="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+              </button>
+              <button type="button" id="btnThemeNight" class="theme-btn" title="深色畫布（僅編輯；匯出仍白底）" data-i18n-title="tip_theme_night" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 3.5a8.5 8.5 0 1 0 4 12.8A7 7 0 1 1 16.5 3.5z"/></svg>
+              </button>
+            </div>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -146,20 +156,19 @@
             </div>
 
             <div class="tool-group" data-group="view">
-              <label class="check-opt" title="開啟網格顯示與格點吸附（預設開啟）" data-i18n-title="tip_grid">
-                <input type="checkbox" id="chkGridSnap" checked /> <span data-i18n="chk_grid">網格</span>
-              </label>
-              <select id="gridModeSelect" title="網格樣式" data-i18n-title="tip_grid_mode" data-i18n-aria="aria_grid_mode" aria-label="網格樣式">
-                <option value="square" data-i18n="grid_square">方格</option>
-                <option value="triangle" selected data-i18n="grid_triangle">三角格</option>
-              </select>
-              <label class="check-opt" title="深色畫布（僅編輯；匯出仍為白底黑線）" data-i18n-title="tip_dark">
-                <input type="checkbox" id="chkDarkCanvas" /> <span data-i18n="chk_dark">深色畫布</span>
-              </label>
               <div class="menu-wrap">
                 <button type="button" id="btnLayersMenu" class="menu-btn" title="圖層顯示／鎖定" data-i18n-title="tip_layers" aria-haspopup="true" aria-expanded="false" data-i18n="btn_layers">圖層 ▾</button>
                 <div class="menu-panel menu-panel-layers" id="layersMenu" hidden>
                   <div class="menu-section-title" data-i18n="layers_title">圖層</div>
+                  <div class="layers-grid-bar" title="開啟網格顯示與格點吸附（預設開啟）" data-i18n-title="tip_grid">
+                    <label class="check-opt layers-grid-check">
+                      <input type="checkbox" id="chkGridSnap" checked /> <span data-i18n="chk_grid">網格</span>
+                    </label>
+                    <select id="gridModeSelect" title="網格樣式" data-i18n-title="tip_grid_mode" data-i18n-aria="aria_grid_mode" aria-label="網格樣式">
+                      <option value="square" data-i18n="grid_square">方格</option>
+                      <option value="triangle" selected data-i18n="grid_triangle">三角格</option>
+                    </select>
+                  </div>
                   <div class="layers-row" data-layer="grid">
                     <span class="layers-name" data-i18n="layers_grid">網格</span>
                     <label class="layers-opt"><input type="checkbox" data-layer-show="grid" checked /> <span data-i18n="layers_show">顯示</span></label>
@@ -252,6 +261,19 @@
               <button type="button" class="mark-group-btn rail-mini-btn active" data-mark-group="0" title="單箭／單劃（G）" data-i18n-title="tip_mark_single">單</button>
               <button type="button" class="mark-group-btn rail-mini-btn" data-mark-group="1" title="雙箭／雙劃（G）" data-i18n-title="tip_mark_double">雙</button>
               <button type="button" class="rail-mini-btn" id="btnFlipMark" title="記號翻面（選取平行／等長記號後）" data-i18n-title="tip_mark_flip">翻面</button>
+            </span>
+          </div>
+          <div class="float-panel float-length" id="lengthFloat" hidden>
+            <span class="float-title" data-i18n="length_float_title">長度</span>
+            <select id="lengthSizeSelect" title="長度文字大小" data-i18n-title="tip_length_size" data-i18n-aria="aria_length_size" aria-label="長度文字大小"></select>
+            <span class="float-mini-opts" id="lengthOrientBar" title="文字方向" data-i18n-title="tip_length_orient">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-length-orient="tilt" title="隨線段傾斜" data-i18n-title="tip_length_tilt" data-i18n="length_orient_tilt">隨線</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-length-orient="horizontal" title="固定水平" data-i18n-title="tip_length_horizontal" data-i18n="length_orient_horizontal">水平</button>
+            </span>
+            <span class="float-mini-opts" id="lengthStyleBar" title="長度標註樣式" data-i18n-title="tip_length_style">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-length-style="text" title="純文字" data-i18n-title="tip_length_style_text" data-i18n="length_style_text">1 文字</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-length-style="dim" title="尺寸線（兩端箭頭）" data-i18n-title="tip_length_style_dim" data-i18n="length_style_dim">2 尺寸</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-length-style="arcs" title="弧括號" data-i18n-title="tip_length_style_arcs" data-i18n="length_style_arcs">3 弧括</button>
             </span>
           </div>
           <div class="float-panel float-fill" id="fillFloat" hidden>
@@ -508,10 +530,6 @@
       <p class="dialog-note" data-i18n="shortcuts_note">點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。</p>
       <p class="shortcut-conflict" id="shortcutConflict" hidden></p>
       <div id="shortcutMapList" class="shortcut-map-list"></div>
-      <details class="whats-new" open>
-        <summary data-i18n="whats_new_title">更新說明</summary>
-        <ul class="whats-new-list" id="whatsNewList"></ul>
-      </details>
       <p class="ai-guide-row dialog-note">
         <a href="ai.html" target="_blank" rel="noopener" data-i18n="link_ai_guide">AI 說明頁 ai.html</a>
         <span data-i18n="ai_guide_hint"> — 在 Chrome 把該頁分享給 Gemini，再回來「貼上 JSON」</span>
@@ -558,6 +576,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261022-release-v13.5.19"></script>
+  <script src="app.js?v=20261022-release-v13.5.20"></script>
 </body>
 </html>
