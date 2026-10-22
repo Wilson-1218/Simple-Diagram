@@ -356,7 +356,7 @@
       tip_length_style: "長度標註樣式",
       tip_length_style_text: "純文字",
       tip_length_style_dim: "尺寸線（兩端箭頭）",
-      tip_length_style_arcs: "弧括號",
+      tip_length_style_arcs: "端點雙弧記號（考卷弧括）",
       length_style_text: "1 文字",
       length_style_dim: "2 尺寸",
       length_style_arcs: "3 弧括",
@@ -401,7 +401,7 @@
       btn_ok: "確定", btn_cancel: "取消",
       coord_title: "座標圖／曲線", coord_curve_type: "曲線類型", coord_none: "僅座標軸",
       coord_window: "視窗（軸單位）xmin,xmax,ymin,ymax", coord_axis_labels: "軸標籤 x,y",
-      coord_show_tick_labels: "顯示軸上數值",
+      coord_show_tick_labels: "顯示軸上刻度與數值",
       coord_x_unit: "三角參數單位",
       coord_x_unit_rad: "弧度 rad",
       coord_x_unit_deg: "角度 °",
@@ -645,7 +645,7 @@
       tip_length_style: "Length mark style",
       tip_length_style_text: "Text only",
       tip_length_style_dim: "Dimension line (arrows both ends)",
-      tip_length_style_arcs: "Arc brackets",
+      tip_length_style_arcs: "Dual-arc end marks (exam style)",
       length_style_text: "1 Text",
       length_style_dim: "2 Dim",
       length_style_arcs: "3 Arcs",
@@ -691,7 +691,7 @@
       btn_ok: "OK", btn_cancel: "Cancel",
       coord_title: "Axes / curves", coord_curve_type: "Curve type", coord_none: "Axes only",
       coord_window: "Window xmin,xmax,ymin,ymax", coord_axis_labels: "Axis labels x,y",
-      coord_show_tick_labels: "Show axis numbers",
+      coord_show_tick_labels: "Show axis ticks & numbers",
       coord_x_unit: "Trig argument unit",
       coord_x_unit_rad: "Radians",
       coord_x_unit_deg: "Degrees °",
@@ -4912,8 +4912,9 @@
     strokeArrowHead(c, yPos.x, yPos.y, Math.atan2(yPos.y - o.y, yPos.x - o.x), arrow);
 
     const tickLen = Math.max(4, lw * 2.2);
-    const showNums = plot.showTickLabels !== false;
-    if (plot.showTicks !== false) {
+    // 「顯示軸上數值」off → hide tick marks too (axis lines + O stay)
+    const showTickMarks = plot.showTicks !== false && plot.showTickLabels !== false;
+    if (showTickMarks) {
       for (const tick of coordXAxisTickEntries(plot)) {
         const p = toScreen(plot.ox + tick.u * plot.unitPx, plot.oy);
         c.beginPath();
@@ -4921,7 +4922,7 @@
         c.lineTo(p.x, p.y + tickLen);
         c.stroke();
         // Skip ≈0 label — origin "O" already marks the origin (avoid "O0").
-        if (showNums && !coordNearZero(tick.u)) {
+        if (!coordNearZero(tick.u)) {
           paintCoordTickLabel(c, tick.parts, p.x, p.y + tickLen + 1, fontPx, color);
         }
       }
@@ -4931,7 +4932,7 @@
         c.moveTo(p.x - tickLen, p.y);
         c.lineTo(p.x + tickLen, p.y);
         c.stroke();
-        if (showNums && !coordNearZero(v)) {
+        if (!coordNearZero(v)) {
           c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
           c.fillStyle = color;
           c.textAlign = "right";
@@ -5635,7 +5636,9 @@
     plot.angleAxisOn = wantOn;
     plot.axisLabelX = labs[0] || "x";
     plot.axisLabelY = labs[1] || "y";
-    plot.showTicks = true;
+    // One checkbox: numbers + tick marks together (axes / O unchanged)
+    plot.showTickLabels = !tickChk || !!tickChk.checked;
+    plot.showTicks = plot.showTickLabels;
     plot.curves = coordDialogCurves.map((c) => ({
       id: c.id || uid(),
       type: c.type,
@@ -5690,19 +5693,20 @@
     body += arrowPath(yPos.x, yPos.y, Math.atan2(yPos.y - o.y, yPos.x - o.x));
     const fontPx = (clampLabelSize(labelFontSize) * scale * 0.75).toFixed(1);
     const tickLen = Math.max(4, LINE_WIDTH * scale * 1.6);
-    const showNums = plot.showTickLabels !== false;
-    if (plot.showTicks !== false) {
+    // 「顯示軸上數值」off → hide tick marks too (axis lines + O stay)
+    const showTickMarks = plot.showTicks !== false && plot.showTickLabels !== false;
+    if (showTickMarks) {
       for (const tick of coordXAxisTickEntries(plot)) {
         const p = toS(plot.ox + tick.u * plot.unitPx, plot.oy);
         body += `<line x1="${p.x.toFixed(2)}" y1="${(p.y - tickLen).toFixed(2)}" x2="${p.x.toFixed(2)}" y2="${(p.y + tickLen).toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
-        if (showNums && !coordNearZero(tick.u)) {
+        if (!coordNearZero(tick.u)) {
           body += svgCoordTickLabel(tick.parts, p.x, p.y + tickLen + 1, fontPx, "#111");
         }
       }
       for (const v of coordIntegerTicks(plot.ymin, plot.ymax)) {
         const p = toS(plot.ox, plot.oy - v * plot.unitPx);
         body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
-        if (showNums && !coordNearZero(v)) {
+        if (!coordNearZero(v)) {
           body += `<text x="${(p.x - tickLen - 2).toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(String(v))}</text>\n`;
         }
       }
@@ -6439,7 +6443,8 @@
   }
   function lengthOffsetPx(ll, scaleMul) {
     const style = normalizeLengthStyle(ll && ll.style);
-    const base = style === "text" ? 14 : 18;
+    // arcs: markers on the segment; label sits just above (small lift)
+    const base = style === "text" ? 14 : style === "arcs" ? 10 : 18;
     return base * scaleMul;
   }
   function approxLengthTextWidth(text, fontPx) {
@@ -6537,33 +6542,42 @@
     }
 
     if (style === "arcs") {
-      const pad = Math.max(4, fontPx * 0.35);
-      const gap = approxLengthTextWidth(ll.text, fontPx) + pad * 2;
-      const halfGap = gap / 2;
-      const bulge = Math.max(8, 11 * scaleMul);
-      const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
-      const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
-      const mA = {
-        x: (p0.x + g0.x) / 2 + nx * bulge,
-        y: (p0.y + g0.y) / 2 + ny * bulge,
-      };
-      const mB = {
-        x: (g1.x + p1.x) / 2 + nx * bulge,
-        y: (g1.y + p1.y) / 2 + ny * bulge,
+      // Exam-style: dual-arc ticks on segment ends; value just above midline
+      const lift = Math.max(fontPx * 0.55, 8 * scaleMul);
+      const w = Math.max(4.2, 5.2 * scaleMul);
+      const h = Math.max(5.2, 6.8 * scaleMul);
+      const tip0 = sa;
+      const tip1 = sb;
+      const lx = (sa.x + sb.x) / 2 + nx * lift;
+      const ly = (sa.y + sb.y) / 2 + ny * lift;
+      const strokeEndMark = (tip) => {
+        const endL = { x: tip.x - dx * w + nx * h, y: tip.y - dy * w + ny * h };
+        const endR = { x: tip.x + dx * w + nx * h, y: tip.y + dy * w + ny * h };
+        const cL = {
+          x: tip.x - dx * w * 1.05 + nx * h * 0.22,
+          y: tip.y - dy * w * 1.05 + ny * h * 0.22,
+        };
+        const cR = {
+          x: tip.x + dx * w * 1.05 + nx * h * 0.22,
+          y: tip.y + dy * w * 1.05 + ny * h * 0.22,
+        };
+        c.moveTo(tip.x, tip.y);
+        c.quadraticCurveTo(cL.x, cL.y, endL.x, endL.y);
+        c.moveTo(tip.x, tip.y);
+        c.quadraticCurveTo(cR.x, cR.y, endR.x, endR.y);
       };
       c.save();
       c.strokeStyle = ink;
       c.lineWidth = lw;
       c.lineCap = "round";
+      c.lineJoin = "round";
       c.setLineDash([]);
       c.beginPath();
-      c.moveTo(p0.x, p0.y);
-      c.quadraticCurveTo(mA.x, mA.y, g0.x, g0.y);
-      c.moveTo(g1.x, g1.y);
-      c.quadraticCurveTo(mB.x, mB.y, p1.x, p1.y);
+      strokeEndMark(tip0);
+      strokeEndMark(tip1);
       c.stroke();
       c.restore();
-      paintLabelText(c, ll.text, mx, my, fontPx, ink, withHalo, ang);
+      paintLabelText(c, ll.text, lx, ly, fontPx, ink, withHalo, ang);
       return;
     }
 
@@ -6635,20 +6649,38 @@
       out += svgArrowHead(p0.x, p0.y, -dx, -dy, arrow);
       out += svgArrowHead(p1.x, p1.y, dx, dy, arrow);
     } else if (style === "arcs") {
-      const pad = Math.max(4, fontPx * 0.35);
-      const gap = approxLengthTextWidth(ll.text, fontPx) + pad * 2;
-      const halfGap = gap / 2;
-      const bulge = Math.max(8, 11 * scaleMul);
-      const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
-      const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
-      const mA = { x: (p0.x + g0.x) / 2 + nx * bulge, y: (p0.y + g0.y) / 2 + ny * bulge };
-      const mB = { x: (g1.x + p1.x) / 2 + nx * bulge, y: (g1.y + p1.y) / 2 + ny * bulge };
-      out += `<path d="M${p0.x.toFixed(2)},${p0.y.toFixed(2)} Q${mA.x.toFixed(2)},${mA.y.toFixed(2)} ${g0.x.toFixed(2)},${g0.y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"/>\n`;
-      out += `<path d="M${g1.x.toFixed(2)},${g1.y.toFixed(2)} Q${mB.x.toFixed(2)},${mB.y.toFixed(2)} ${p1.x.toFixed(2)},${p1.y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"/>\n`;
+      const lift = Math.max(fontPx * 0.55, 8 * scaleMul);
+      const w = Math.max(4.2, 5.2 * scaleMul);
+      const h = Math.max(5.2, 6.8 * scaleMul);
+      const markPath = (tip) => {
+        const endL = { x: tip.x - dx * w + nx * h, y: tip.y - dy * w + ny * h };
+        const endR = { x: tip.x + dx * w + nx * h, y: tip.y + dy * w + ny * h };
+        const cL = {
+          x: tip.x - dx * w * 1.05 + nx * h * 0.22,
+          y: tip.y - dy * w * 1.05 + ny * h * 0.22,
+        };
+        const cR = {
+          x: tip.x + dx * w * 1.05 + nx * h * 0.22,
+          y: tip.y + dy * w * 1.05 + ny * h * 0.22,
+        };
+        return (
+          `M${tip.x.toFixed(2)},${tip.y.toFixed(2)} Q${cL.x.toFixed(2)},${cL.y.toFixed(2)} ${endL.x.toFixed(2)},${endL.y.toFixed(2)} ` +
+          `M${tip.x.toFixed(2)},${tip.y.toFixed(2)} Q${cR.x.toFixed(2)},${cR.y.toFixed(2)} ${endR.x.toFixed(2)},${endR.y.toFixed(2)}`
+        );
+      };
+      out += `<path d="${markPath(sa)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round" stroke-linejoin="round"/>\n`;
+      out += `<path d="${markPath(sb)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round" stroke-linejoin="round"/>\n`;
     }
     const deg = (ang * 180) / Math.PI;
     const halo = Math.max(3, fontPx * 0.28);
-    const tf = `translate(${labelX.toFixed(2)} ${labelY.toFixed(2)}) rotate(${deg.toFixed(2)})`;
+    let lx = labelX;
+    let ly = labelY;
+    if (style === "arcs") {
+      const lift = Math.max(fontPx * 0.55, 8 * scaleMul);
+      lx = (sa.x + sb.x) / 2 + nx * lift;
+      ly = (sa.y + sb.y) / 2 + ny * lift;
+    }
+    const tf = `translate(${lx.toFixed(2)} ${ly.toFixed(2)}) rotate(${deg.toFixed(2)})`;
     const common =
       `transform="${tf}" text-anchor="middle" dominant-baseline="middle" ` +
       `font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx.toFixed(1)}"`;
@@ -10354,7 +10386,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.21",
+      version: "13.5.22",
       app: "simple-diagram",
       points,
       segments,

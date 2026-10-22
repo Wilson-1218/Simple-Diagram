@@ -110,34 +110,52 @@ export function dimMarkParts(frame, fontPx, text, scale = 1) {
 }
 
 /**
- * Build arc-bracket style (two outward bows + gap).
- * @param {ReturnType<typeof lengthOffsetFrame>} frame
- * @param {number} fontPx
- * @param {string} text
- * @param {number} [scale=1]
+ * One HKDSE-style end mark: two symmetrical arcs meet on the segment and
+ * flare toward the label side (curved caret / brace tick).
+ * @param {{ x: number, y: number }} tip
+ * @param {number} dx unit along segment
+ * @param {number} dy
+ * @param {number} nx unit normal toward label
+ * @param {number} ny
+ * @param {number} scale
  */
-export function arcsMarkParts(frame, fontPx, text, scale = 1) {
-  const pad = Math.max(4, fontPx * 0.35);
-  const gap = approxTextWidth(text, fontPx) + pad * 2;
-  const halfGap = gap / 2;
-  const bulge = Math.max(8, 11 * scale);
-  const { p0, p1, dx, dy, nx, ny, mx, my } = frame;
-  const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
-  const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
-  // Midpoints of each half, pushed outward
-  const mA = {
-    x: (p0.x + g0.x) / 2 + nx * bulge,
-    y: (p0.y + g0.y) / 2 + ny * bulge,
+export function arcsEndMark(tip, dx, dy, nx, ny, scale = 1) {
+  const w = Math.max(4.2, 5.2 * scale); // half-span along segment
+  const h = Math.max(5.2, 6.8 * scale); // flare height along normal
+  const endL = { x: tip.x - dx * w + nx * h, y: tip.y - dy * w + ny * h };
+  const endR = { x: tip.x + dx * w + nx * h, y: tip.y + dy * w + ny * h };
+  // Controls bulge outward so arms look like soft parentheses meeting on the line
+  const cL = {
+    x: tip.x - dx * w * 1.05 + nx * h * 0.22,
+    y: tip.y - dy * w * 1.05 + ny * h * 0.22,
   };
-  const mB = {
-    x: (g1.x + p1.x) / 2 + nx * bulge,
-    y: (g1.y + p1.y) / 2 + ny * bulge,
+  const cR = {
+    x: tip.x + dx * w * 1.05 + nx * h * 0.22,
+    y: tip.y + dy * w * 1.05 + ny * h * 0.22,
   };
   return {
-    // quadratic: start → control → end
-    arcA: { x0: p0.x, y0: p0.y, cx: mA.x, cy: mA.y, x1: g0.x, y1: g0.y },
-    arcB: { x0: g1.x, y0: g1.y, cx: mB.x, cy: mB.y, x1: p1.x, y1: p1.y },
+    left: { x0: tip.x, y0: tip.y, cx: cL.x, cy: cL.y, x1: endL.x, y1: endL.y },
+    right: { x0: tip.x, y0: tip.y, cx: cR.x, cy: cR.y, x1: endR.x, y1: endR.y },
+  };
+}
+
+/**
+ * Build exam arc-bracket style: end marks on the segment + value just above midline.
+ * Prefer `lengthOffsetFrame(a, b, side, 0)` so p0/p1 sit on the segment ends.
+ * @param {ReturnType<typeof lengthOffsetFrame>} frame
+ * @param {number} fontPx
+ * @param {string} [_text]
+ * @param {number} [scale=1]
+ */
+export function arcsMarkParts(frame, fontPx, _text, scale = 1) {
+  const { p0, p1, dx, dy, nx, ny } = frame;
+  const lift = Math.max(fontPx * 0.55, 8 * scale);
+  const mx = (p0.x + p1.x) / 2 + nx * lift;
+  const my = (p0.y + p1.y) / 2 + ny * lift;
+  return {
+    mark0: arcsEndMark(p0, dx, dy, nx, ny, scale),
+    mark1: arcsEndMark(p1, dx, dy, nx, ny, scale),
     label: { x: mx, y: my },
-    gap,
+    lift,
   };
 }

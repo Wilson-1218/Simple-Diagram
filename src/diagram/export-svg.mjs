@@ -144,10 +144,15 @@ function svgLengthLabel(ll, doc, pts, toS, scale) {
     lx = parts.label.x;
     ly = parts.label.y;
   } else if (style === "arcs") {
-    const parts = arcsMarkParts(frame, fontPx, ll.text || "", scale * 0.75);
-    const { arcA, arcB } = parts;
-    out += `<path d="M${arcA.x0.toFixed(2)},${arcA.y0.toFixed(2)} Q${arcA.cx.toFixed(2)},${arcA.cy.toFixed(2)} ${arcA.x1.toFixed(2)},${arcA.y1.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"/>\n`;
-    out += `<path d="M${arcB.x0.toFixed(2)},${arcB.y0.toFixed(2)} Q${arcB.cx.toFixed(2)},${arcB.cy.toFixed(2)} ${arcB.x1.toFixed(2)},${arcB.y1.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"/>\n`;
+    // Markers sit on the segment ends; label lifts just above the midline.
+    const onSeg = lengthOffsetFrame(a, b, side, 0);
+    const parts = arcsMarkParts(onSeg, fontPx, ll.text || "", scale * 0.75);
+    const qPath = (q) =>
+      `M${q.x0.toFixed(2)},${q.y0.toFixed(2)} Q${q.cx.toFixed(2)},${q.cy.toFixed(2)} ${q.x1.toFixed(2)},${q.y1.toFixed(2)}`;
+    for (const mark of [parts.mark0, parts.mark1]) {
+      out += `<path d="${qPath(mark.left)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"/>\n`;
+      out += `<path d="${qPath(mark.right)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"/>\n`;
+    }
     lx = parts.label.x;
     ly = parts.label.y;
   }
