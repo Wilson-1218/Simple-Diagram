@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.5.10" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.5.11" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.5.10" />
+  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.5.11" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.10</span>
+            <span class="brand-sub">v13.5.11</span>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -504,6 +504,10 @@
       <p class="dialog-note" data-i18n="shortcuts_note">點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。</p>
       <p class="shortcut-conflict" id="shortcutConflict" hidden></p>
       <div id="shortcutMapList" class="shortcut-map-list"></div>
+      <details class="whats-new" open>
+        <summary data-i18n="whats_new_title">更新說明</summary>
+        <ul class="whats-new-list" id="whatsNewList"></ul>
+      </details>
       <div class="dialog-actions">
         <button type="button" id="shortcutsReset" data-i18n="shortcuts_reset">還原預設</button>
         <button type="button" id="shortcutsClose" data-i18n="btn_close">關閉</button>
@@ -529,6 +533,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261021-release-v13.5.10"></script>
+  <script src="app.js?v=20261021-release-v13.5.11"></script>
 </body>
 </html>
