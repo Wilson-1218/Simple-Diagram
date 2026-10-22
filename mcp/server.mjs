@@ -164,8 +164,19 @@ const TOOLS = [
   {
     name: "list_templates",
     description:
-      "List builtin geometry template ids (same as Templates menu): plane + solid. Use with insertTemplate op or run_macro insert.",
-    inputSchema: { type: "object", properties: {} },
+      "List Templates ▾ combo catalog (same source as the UI: circleGeom, circleCenter, altBase). " +
+      "Pass includeAll=true for AI-only plane/solid ids (ui:false; prefer addShape for solids). " +
+      "Insert with { op: insertTemplate, id }.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        includeAll: {
+          type: "boolean",
+          description:
+            "If true, include ui:false plane/solid template ids. Default false = Templates menu only.",
+        },
+      },
+    },
   },
   {
     name: "run_macro",
@@ -296,10 +307,12 @@ function callTool(name, args) {
       });
     }
     case "list_templates": {
+      const includeAll = !!(args && args.includeAll);
       return toolResult({
-        templates: listBuiltinTemplates(),
-        ids: BUILTIN_TEMPLATE_IDS,
-        tip: 'apply_ops with { "op": "insertTemplate", "id": "frustum" }',
+        templates: listBuiltinTemplates({ uiOnly: !includeAll }),
+        tip: includeAll
+          ? "Combos: insertTemplate. Solids/planes: prefer addShape; insertTemplate still accepts ui:false ids."
+          : 'apply_ops with { "op": "insertTemplate", "id": "circleGeom" } — same ids as Templates ▾',
       });
     }
     case "run_macro": {

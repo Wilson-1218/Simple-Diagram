@@ -12,11 +12,14 @@ export { summarizeDiagram, OP_CATALOG } from "./summarize.mjs";
 export {
   BUILTIN_TEMPLATES,
   BUILTIN_TEMPLATE_IDS,
+  TEMPLATE_CATALOG,
+  TEMPLATE_UI_IDS,
   SHAPE_SOLID_TEMPLATE_IDS,
   TEMPLATE_CELL_SIZE,
   TEMPLATE_CELL_SIZE as TEMPLATE_CELL,
   listBuiltinTemplates,
   applyBuiltinTemplate,
+  assertTemplateCatalogIntegrity,
 } from "./templates.mjs";
 export {
   MACRO_NAMES,

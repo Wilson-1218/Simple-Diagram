@@ -39,6 +39,7 @@
   const gridModeSelect = document.getElementById("gridModeSelect");
   const templateMenu = document.getElementById("templateMenu");
   const btnTemplateMenu = document.getElementById("btnTemplateMenu");
+  const builtinTplList = document.getElementById("builtinTplList");
   const customTplList = document.getElementById("customTplList");
   const customTplEmpty = document.getElementById("customTplEmpty");
   const btnSaveTemplate = document.getElementById("btnSaveTemplate");
@@ -860,6 +861,7 @@
     if (zhBtn) zhBtn.classList.toggle("active", uiLang === "zh");
     if (enBtn) enBtn.classList.toggle("active", uiLang === "en");
     renderRecentMenu();
+    refreshBuiltinTemplateMenu();
     refreshCustomTemplateMenu();
     updateStatus();
   }
@@ -9722,7 +9724,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.7",
+      version: "13.5.8",
       app: "simple-diagram",
       points,
       segments,
@@ -10180,321 +10182,1391 @@ ${body}</svg>`;
     finishTemplateInsert(before, spec.nextLetter || null);
   }
 
+
+  /* @@TEMPLATE_CATALOG_BEGIN@@ */
+  const TEMPLATE_CATALOG = [
+    {
+      "id": "circleGeom",
+      "group": "combo",
+      "ui": true,
+      "labelZh": "圓＋弦徑",
+      "labelEn": "Circle + chord/diameter",
+      "preview": "O, diameter AB, chord CD"
+    },
+    {
+      "id": "circleCenter",
+      "group": "combo",
+      "ui": true,
+      "labelZh": "圓＋圓心",
+      "labelEn": "Circle + center",
+      "preview": "O + radius point A"
+    },
+    {
+      "id": "altBase",
+      "group": "combo",
+      "ui": true,
+      "labelZh": "高到底",
+      "labelEn": "Altitude to base",
+      "preview": "ΔABC with altitude from A to BC"
+    },
+    {
+      "id": "rightTri",
+      "group": "plane",
+      "ui": false,
+      "labelZh": "直角三角形",
+      "labelEn": "Right triangle"
+    },
+    {
+      "id": "isoTri",
+      "group": "plane",
+      "ui": false,
+      "labelZh": "等腰三角形",
+      "labelEn": "Isosceles triangle"
+    },
+    {
+      "id": "genTri",
+      "group": "plane",
+      "ui": false,
+      "labelZh": "一般三角形",
+      "labelEn": "Scalene triangle"
+    },
+    {
+      "id": "parallelogram",
+      "group": "plane",
+      "ui": false,
+      "labelZh": "平行四邊形",
+      "labelEn": "Parallelogram"
+    },
+    {
+      "id": "trapezoid",
+      "group": "plane",
+      "ui": false,
+      "labelZh": "梯形",
+      "labelEn": "Trapezoid"
+    },
+    {
+      "id": "pentagon",
+      "group": "plane",
+      "ui": false,
+      "labelZh": "五邊形",
+      "labelEn": "Pentagon"
+    },
+    {
+      "id": "cube",
+      "group": "solid",
+      "ui": false,
+      "labelZh": "立方體",
+      "labelEn": "Cube"
+    },
+    {
+      "id": "cuboid",
+      "group": "solid",
+      "ui": false,
+      "labelZh": "長方體",
+      "labelEn": "Cuboid"
+    },
+    {
+      "id": "rectPrism",
+      "group": "solid",
+      "ui": false,
+      "labelZh": "直方體",
+      "labelEn": "Rectangular prism"
+    },
+    {
+      "id": "frustum",
+      "group": "solid",
+      "ui": false,
+      "labelZh": "棱台",
+      "labelEn": "Frustum"
+    },
+    {
+      "id": "tetra",
+      "group": "solid",
+      "ui": false,
+      "labelZh": "四面體",
+      "labelEn": "Tetrahedron"
+    },
+    {
+      "id": "pyramid",
+      "group": "solid",
+      "ui": false,
+      "labelZh": "角錐",
+      "labelEn": "Pyramid"
+    },
+    {
+      "id": "triPrism",
+      "group": "solid",
+      "ui": false,
+      "labelZh": "三棱柱",
+      "labelEn": "Triangular prism"
+    },
+    {
+      "id": "cylinder",
+      "group": "solid",
+      "ui": false,
+      "labelZh": "圓柱",
+      "labelEn": "Cylinder"
+    },
+    {
+      "id": "cone",
+      "group": "solid",
+      "ui": false,
+      "labelZh": "圓錐",
+      "labelEn": "Cone"
+    }
+  ];
+  /* @@TEMPLATE_CATALOG_END@@ */
+
+  /* @@BUILTIN_TEMPLATES_BEGIN@@ */
   /**
    * Built-in templates in GRID CELLS (integer). Edges are 2–5 cells so both
    * 方格 and 三角格 lattice vertices line up when grid is on.
+   * Embedded from src/diagram/templates.mjs — do not edit by hand; run
+   * `node tools/embed-templates.mjs`.
    */
   const BUILTIN_TEMPLATES = {
-    rightTri: {
-      nextLetter: "D",
-      pts: [
-        [-4, 3, "A", -14, 10],
-        [4, 3, "B", 14, 10],
-        [-4, -4, "C", -14, -14],
+    "rightTri": {
+      "nextLetter": "D",
+      "pts": [
+        [
+          -4,
+          3,
+          "A",
+          -14,
+          10
+        ],
+        [
+          4,
+          3,
+          "B",
+          14,
+          10
+        ],
+        [
+          -4,
+          -4,
+          "C",
+          -14,
+          -14
+        ]
       ],
-      segs: [[0, 1], [1, 2], [2, 0]],
-      rightAngles: [[0, 1, 2]],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          0
+        ]
+      ],
+      "rightAngles": [
+        [
+          0,
+          1,
+          2
+        ]
+      ]
     },
-    isoTri: {
-      nextLetter: "D",
-      pts: [
-        [0, -4, "A", 0, -18],
-        [-4, 3, "B", -14, 10],
-        [4, 3, "C", 14, 10],
+    "isoTri": {
+      "nextLetter": "D",
+      "pts": [
+        [
+          0,
+          -4,
+          "A",
+          0,
+          -18
+        ],
+        [
+          -4,
+          3,
+          "B",
+          -14,
+          10
+        ],
+        [
+          4,
+          3,
+          "C",
+          14,
+          10
+        ]
       ],
-      segs: [[0, 1], [1, 2], [2, 0]],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          0
+        ]
+      ]
     },
-    parallelogram: {
-      nextLetter: "E",
-      pts: [
-        [-4, 2, "A", -14, 10],
-        [3, 2, "B", 14, 10],
-        [5, -2, "C", 14, -10],
-        [-2, -2, "D", -14, -10],
+    "parallelogram": {
+      "nextLetter": "E",
+      "pts": [
+        [
+          -4,
+          2,
+          "A",
+          -14,
+          10
+        ],
+        [
+          3,
+          2,
+          "B",
+          14,
+          10
+        ],
+        [
+          5,
+          -2,
+          "C",
+          14,
+          -10
+        ],
+        [
+          -2,
+          -2,
+          "D",
+          -14,
+          -10
+        ]
       ],
-      segs: [[0, 1], [1, 2], [2, 3], [3, 0]],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          0
+        ]
+      ]
     },
-    trapezoid: {
-      nextLetter: "E",
-      pts: [
-        [-5, 3, "A", -14, 10],
-        [5, 3, "B", 14, 10],
-        [3, -2, "C", 14, -10],
-        [-3, -2, "D", -14, -10],
+    "trapezoid": {
+      "nextLetter": "E",
+      "pts": [
+        [
+          -5,
+          3,
+          "A",
+          -14,
+          10
+        ],
+        [
+          5,
+          3,
+          "B",
+          14,
+          10
+        ],
+        [
+          3,
+          -2,
+          "C",
+          14,
+          -10
+        ],
+        [
+          -3,
+          -2,
+          "D",
+          -14,
+          -10
+        ]
       ],
-      segs: [[0, 1], [1, 2], [2, 3], [3, 0]],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          0
+        ]
+      ]
     },
-    pentagon: (() => {
-      // Lattice-friendly irregular pentagon (approx. regular), all on vertices
-      const pts = [
-        [0, -4, "A", 0, -18],
-        [4, -1, "B", 14, -6],
-        [2, 3, "C", 12, 10],
-        [-2, 3, "D", -12, 10],
-        [-4, -1, "E", -14, -6],
-      ];
-      const segs = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0]];
-      return { nextLetter: "F", pts, segs };
-    })(),
-    circleCenter: {
-      nextLetter: "C",
-      pts: [
-        [0, 0, "O", 12, -12],
-        [4, 0, "A", 14, 0],
+    "pentagon": {
+      "nextLetter": "F",
+      "pts": [
+        [
+          0,
+          -4,
+          "A",
+          0,
+          -18
+        ],
+        [
+          4,
+          -1,
+          "B",
+          14,
+          -6
+        ],
+        [
+          2,
+          3,
+          "C",
+          12,
+          10
+        ],
+        [
+          -2,
+          3,
+          "D",
+          -12,
+          10
+        ],
+        [
+          -4,
+          -1,
+          "E",
+          -14,
+          -6
+        ]
       ],
-      segs: [],
-      circles: [[0, 1, "solid"]],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          0
+        ]
+      ]
     },
-    genTri: {
-      nextLetter: "D",
-      pts: [
-        [-5, 3, "A", -14, 10],
-        [4, 2, "B", 14, 10],
-        [-1, -3, "C", 0, -16],
+    "circleCenter": {
+      "nextLetter": "C",
+      "pts": [
+        [
+          0,
+          0,
+          "O",
+          12,
+          -12
+        ],
+        [
+          4,
+          0,
+          "A",
+          14,
+          0
+        ]
       ],
-      segs: [
-        [0, 1],
-        [1, 2],
-        [2, 0],
-      ],
+      "segs": [],
+      "circles": [
+        [
+          0,
+          1,
+          "solid"
+        ]
+      ]
     },
-    circleGeom: {
-      nextLetter: "D",
-      pts: [
-        [0, 0, "O", 12, -12],
-        [4, 0, "A", 14, 0],
-        [-4, 0, "B", -14, 0],
-        [2, 3.464, "C", 12, 12],
-        [-2, 3.464, "D", -12, 12],
+    "genTri": {
+      "nextLetter": "D",
+      "pts": [
+        [
+          -5,
+          3,
+          "A",
+          -14,
+          10
+        ],
+        [
+          4,
+          2,
+          "B",
+          14,
+          10
+        ],
+        [
+          -1,
+          -3,
+          "C",
+          0,
+          -16
+        ]
       ],
-      segs: [
-        [0, 1], // radius OA
-        [1, 2], // diameter AB
-        [3, 4], // chord CD
-      ],
-      circles: [[0, 1, "solid"]],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          0
+        ]
+      ]
     },
-    rectPrism: {
-      nextLetter: "G",
-      pts: [
-        [-4, 2, "A", -14, 10],
-        [2, 3, "B", 14, 10],
-        [4, 0, "C", 16, 0],
-        [-2, -1, "D", -16, -6],
-        [-4, -2, "E", -14, -12],
-        [2, -1, "F", 14, -12],
+    "circleGeom": {
+      "nextLetter": "D",
+      "pts": [
+        [
+          0,
+          0,
+          "O",
+          12,
+          -12
+        ],
+        [
+          4,
+          0,
+          "A",
+          14,
+          0
+        ],
+        [
+          -4,
+          0,
+          "B",
+          -14,
+          0
+        ],
+        [
+          2,
+          3.464,
+          "C",
+          12,
+          12
+        ],
+        [
+          -2,
+          3.464,
+          "D",
+          -12,
+          12
+        ]
       ],
-      segs: [
-        [0, 1],
-        [1, 2],
-        [2, 3, "dashed"],
-        [3, 0],
-        [0, 4],
-        [1, 5],
-        [4, 5],
-        [2, 5],
-        [3, 4, "dashed"],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
       ],
+      "circles": [
+        [
+          0,
+          1,
+          "solid"
+        ]
+      ]
     },
-    frustum: {
-      nextLetter: "I",
-      pts: [
-        [-5, 3, "A", -16, 10],
-        [5, 3, "B", 16, 10],
-        [3, -1, "C", 14, -6],
-        [-3, -1, "D", -14, -6],
-        [-3, -3, "E", -14, -14],
-        [3, -3, "F", 14, -14],
-        [2, -5, "G", 12, -18],
-        [-2, -5, "H", -12, -18],
+    "rectPrism": {
+      "nextLetter": "G",
+      "pts": [
+        [
+          -4,
+          2,
+          "A",
+          -14,
+          10
+        ],
+        [
+          2,
+          3,
+          "B",
+          14,
+          10
+        ],
+        [
+          4,
+          0,
+          "C",
+          16,
+          0
+        ],
+        [
+          -2,
+          -1,
+          "D",
+          -16,
+          -6
+        ],
+        [
+          -4,
+          -2,
+          "E",
+          -14,
+          -12
+        ],
+        [
+          2,
+          -1,
+          "F",
+          14,
+          -12
+        ]
       ],
-      segs: [
-        [0, 1],
-        [1, 2],
-        [2, 3, "dashed"],
-        [3, 0],
-        [4, 5],
-        [5, 6],
-        [6, 7, "dashed"],
-        [7, 4],
-        [0, 4],
-        [1, 5],
-        [2, 6],
-        [3, 7, "dashed"],
-      ],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3,
+          "dashed"
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          3,
+          4,
+          "dashed"
+        ]
+      ]
     },
-    tetra: {
-      nextLetter: "E",
-      pts: [
-        [0, -4, "A", 0, -18],
-        [-4, 1, "B", -16, 4],
-        [0, 4, "C", 0, 18],
-        [4, 1, "D", 16, 4],
+    "frustum": {
+      "nextLetter": "I",
+      "pts": [
+        [
+          -5,
+          3,
+          "A",
+          -16,
+          10
+        ],
+        [
+          5,
+          3,
+          "B",
+          16,
+          10
+        ],
+        [
+          3,
+          -1,
+          "C",
+          14,
+          -6
+        ],
+        [
+          -3,
+          -1,
+          "D",
+          -14,
+          -6
+        ],
+        [
+          -3,
+          -3,
+          "E",
+          -14,
+          -14
+        ],
+        [
+          3,
+          -3,
+          "F",
+          14,
+          -14
+        ],
+        [
+          2,
+          -5,
+          "G",
+          12,
+          -18
+        ],
+        [
+          -2,
+          -5,
+          "H",
+          -12,
+          -18
+        ]
       ],
-      segs: [
-        [0, 1],
-        [0, 2],
-        [0, 3],
-        [1, 2],
-        [2, 3],
-        [1, 3, "dashed"],
-      ],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3,
+          "dashed"
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          6,
+          7,
+          "dashed"
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          7,
+          "dashed"
+        ]
+      ]
     },
-    pyramid: {
-      nextLetter: "E",
-      pts: [
-        [-3, 3, "A", -14, 10],
-        [2, 3, "B", 14, 10],
-        [4, 0, "C", 16, 0],
-        [-1, 0, "D", -16, -6],
-        [0, -4, "V", 0, -18],
+    "tetra": {
+      "nextLetter": "E",
+      "pts": [
+        [
+          0,
+          -4,
+          "A",
+          0,
+          -18
+        ],
+        [
+          -4,
+          1,
+          "B",
+          -16,
+          4
+        ],
+        [
+          0,
+          4,
+          "C",
+          0,
+          18
+        ],
+        [
+          4,
+          1,
+          "D",
+          16,
+          4
+        ]
       ],
-      segs: [
-        [0, 1],
-        [1, 2],
-        [2, 3, "dashed"],
-        [3, 0],
-        [4, 0],
-        [4, 1],
-        [4, 2],
-        [4, 3, "dashed"],
-      ],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3,
+          "dashed"
+        ]
+      ]
     },
-    altBase: {
-      nextLetter: "E",
-      pts: [
-        [0, -4, "A", 0, -18],
-        [-4, 1, "B", -16, 4],
-        [0, 4, "C", 0, 18],
-        [4, 1, "D", 16, 4],
-        [0, 2, "H", 12, 8, "foot"],
+    "pyramid": {
+      "nextLetter": "E",
+      "pts": [
+        [
+          -3,
+          3,
+          "A",
+          -14,
+          10
+        ],
+        [
+          2,
+          3,
+          "B",
+          14,
+          10
+        ],
+        [
+          4,
+          0,
+          "C",
+          16,
+          0
+        ],
+        [
+          -1,
+          0,
+          "D",
+          -16,
+          -6
+        ],
+        [
+          0,
+          -4,
+          "V",
+          0,
+          -18
+        ]
       ],
-      segs: [
-        [0, 1],
-        [0, 2],
-        [0, 3],
-        [1, 2],
-        [2, 3],
-        [1, 3, "dashed"],
-        [0, 4, "dotted"],
-      ],
-      rightAngles: [[4, 0, 2]],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3,
+          "dashed"
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3,
+          "dashed"
+        ]
+      ]
     },
-    triPrism: {
-      nextLetter: "G",
-      pts: [
-        [-4, 2, "A", -14, 10],
-        [2, 3, "B", 14, 10],
-        [-1, -1, "C", -10, -14],
-        [-2, 0, "D", -16, -8],
-        [4, 1, "E", 16, 0],
-        [1, -3, "F", 10, -16],
+    "altBase": {
+      "nextLetter": "E",
+      "pts": [
+        [
+          0,
+          -4,
+          "A",
+          0,
+          -18
+        ],
+        [
+          -4,
+          1,
+          "B",
+          -16,
+          4
+        ],
+        [
+          0,
+          4,
+          "C",
+          0,
+          18
+        ],
+        [
+          4,
+          1,
+          "D",
+          16,
+          4
+        ],
+        [
+          0,
+          2,
+          "H",
+          12,
+          8,
+          "foot"
+        ]
       ],
-      segs: [
-        [0, 1],
-        [1, 2],
-        [2, 0],
-        [3, 4],
-        [4, 5],
-        [5, 3, "dashed"],
-        [0, 3],
-        [1, 4],
-        [2, 5, "dashed"],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3,
+          "dashed"
+        ],
+        [
+          0,
+          4,
+          "dotted"
+        ]
       ],
+      "rightAngles": [
+        [
+          4,
+          0,
+          2
+        ]
+      ]
     },
-    cuboid: {
-      nextLetter: "I",
-      pts: [
-        [-4, 2, "A", -14, 10],
-        [1, 3, "B", 14, 10],
-        [4, 1, "C", 16, 0],
-        [-1, 0, "D", -16, -6],
-        [-4, -1, "E", -14, -10],
-        [1, 0, "F", 14, -10],
-        [4, -2, "G", 16, -12],
-        [-1, -3, "H", -16, -14],
+    "triPrism": {
+      "nextLetter": "G",
+      "pts": [
+        [
+          -4,
+          2,
+          "A",
+          -14,
+          10
+        ],
+        [
+          2,
+          3,
+          "B",
+          14,
+          10
+        ],
+        [
+          -1,
+          -1,
+          "C",
+          -10,
+          -14
+        ],
+        [
+          -2,
+          0,
+          "D",
+          -16,
+          -8
+        ],
+        [
+          4,
+          1,
+          "E",
+          16,
+          0
+        ],
+        [
+          1,
+          -3,
+          "F",
+          10,
+          -16
+        ]
       ],
-      segs: [
-        [0, 1],
-        [1, 2],
-        [2, 3, "dashed"],
-        [3, 0],
-        [4, 5],
-        [5, 6],
-        [6, 7, "dashed"],
-        [7, 4],
-        [0, 4],
-        [1, 5],
-        [2, 6],
-        [3, 7, "dashed"],
-      ],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          3,
+          "dashed"
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          2,
+          5,
+          "dashed"
+        ]
+      ]
     },
-    cube: {
-      nextLetter: "I",
-      pts: [
-        [-3, 2, "A", -14, 10],
-        [2, 3, "B", 14, 10],
-        [4, 0, "C", 16, 0],
-        [-1, -1, "D", -16, -6],
-        [-3, -2, "E", -14, -12],
-        [2, -1, "F", 14, -12],
-        [4, -4, "G", 16, -14],
-        [-1, -5, "H", -16, -16],
+    "cuboid": {
+      "nextLetter": "I",
+      "pts": [
+        [
+          -4,
+          2,
+          "A",
+          -14,
+          10
+        ],
+        [
+          1,
+          3,
+          "B",
+          14,
+          10
+        ],
+        [
+          4,
+          1,
+          "C",
+          16,
+          0
+        ],
+        [
+          -1,
+          0,
+          "D",
+          -16,
+          -6
+        ],
+        [
+          -4,
+          -1,
+          "E",
+          -14,
+          -10
+        ],
+        [
+          1,
+          0,
+          "F",
+          14,
+          -10
+        ],
+        [
+          4,
+          -2,
+          "G",
+          16,
+          -12
+        ],
+        [
+          -1,
+          -3,
+          "H",
+          -16,
+          -14
+        ]
       ],
-      segs: [
-        [0, 1],
-        [1, 2],
-        [2, 3, "dashed"],
-        [3, 0],
-        [4, 5],
-        [5, 6],
-        [6, 7, "dashed"],
-        [7, 4],
-        [0, 4],
-        [1, 5],
-        [2, 6],
-        [3, 7, "dashed"],
-      ],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3,
+          "dashed"
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          6,
+          7,
+          "dashed"
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          7,
+          "dashed"
+        ]
+      ]
     },
-    cylinder: {
-      nextLetter: "C",
-      pts: [
-        [0, 3, "O", 12, 6], // 0 top center
-        [4, 3], // 1 top right (rx)
-        [0, 4], // 2 top ry (foreshortened)
-        [-4, 3], // 3 top left
-        [0, -3, "O′", 12, -14], // 4 bottom center
-        [4, -3], // 5 bottom right
-        [0, -2], // 6 bottom ry
-        [-4, -3], // 7 bottom left
+    "cube": {
+      "nextLetter": "I",
+      "pts": [
+        [
+          -3,
+          2,
+          "A",
+          -14,
+          10
+        ],
+        [
+          2,
+          3,
+          "B",
+          14,
+          10
+        ],
+        [
+          4,
+          0,
+          "C",
+          16,
+          0
+        ],
+        [
+          -1,
+          -1,
+          "D",
+          -16,
+          -6
+        ],
+        [
+          -3,
+          -2,
+          "E",
+          -14,
+          -12
+        ],
+        [
+          2,
+          -1,
+          "F",
+          14,
+          -12
+        ],
+        [
+          4,
+          -4,
+          "G",
+          16,
+          -14
+        ],
+        [
+          -1,
+          -5,
+          "H",
+          -16,
+          -16
+        ]
       ],
-      segs: [
-        [1, 5],
-        [3, 7],
-        [0, 4, "dotted"],
-      ],
-      ellipses: [
-        [0, 1, 2, "solid", true],
-        [4, 5, 6, "solid", true],
-      ],
+      "segs": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3,
+          "dashed"
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          6,
+          7,
+          "dashed"
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          7,
+          "dashed"
+        ]
+      ]
     },
-    cone: {
-      nextLetter: "C",
-      pts: [
-        [0, 3, "O", 12, 6], // 0 base center
-        [4, 3], // 1 base right
-        [0, 4], // 2 base ry
-        [-4, 3], // 3 base left
-        [0, -4, "V", 0, -18], // 4 apex
+    "cylinder": {
+      "nextLetter": "C",
+      "pts": [
+        [
+          0,
+          3,
+          "O",
+          12,
+          6
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          -4,
+          3
+        ],
+        [
+          0,
+          -3,
+          "O′",
+          12,
+          -14
+        ],
+        [
+          4,
+          -3
+        ],
+        [
+          0,
+          -2
+        ],
+        [
+          -4,
+          -3
+        ]
       ],
-      segs: [
-        [4, 1],
-        [4, 3],
-        [4, 0, "dotted"],
+      "segs": [
+        [
+          1,
+          5
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          0,
+          4,
+          "dotted"
+        ]
       ],
-      ellipses: [[0, 1, 2, "solid", true]],
+      "ellipses": [
+        [
+          0,
+          1,
+          2,
+          "solid",
+          true
+        ],
+        [
+          4,
+          5,
+          6,
+          "solid",
+          true
+        ]
+      ]
     },
+    "cone": {
+      "nextLetter": "C",
+      "pts": [
+        [
+          0,
+          3,
+          "O",
+          12,
+          6
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          -4,
+          3
+        ],
+        [
+          0,
+          -4,
+          "V",
+          0,
+          -18
+        ]
+      ],
+      "segs": [
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          0,
+          "dotted"
+        ]
+      ],
+      "ellipses": [
+        [
+          0,
+          1,
+          2,
+          "solid",
+          true
+        ]
+      ]
+    }
   };
+  /* @@BUILTIN_TEMPLATES_END@@ */
 
   function insertBuiltinById(id) {
     const spec = BUILTIN_TEMPLATES[id];
@@ -10521,6 +11593,30 @@ ${body}</svg>`;
       lsSet(LS_CUSTOM_TPL, JSON.stringify(list));
     } catch (err) {
       alert("無法儲存自訂模板：" + (err && err.message ? err.message : err));
+    }
+  }
+
+  /** Build Templates ▾ combo list from shared TEMPLATE_CATALOG (ui:true). */
+  function refreshBuiltinTemplateMenu() {
+    if (!builtinTplList || typeof TEMPLATE_CATALOG === "undefined") return;
+    builtinTplList.innerHTML = "";
+    for (const entry of TEMPLATE_CATALOG) {
+      if (!entry || !entry.ui) continue;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.tpl = entry.id;
+      btn.textContent = uiLang === "en" ? entry.labelEn : entry.labelZh;
+      const tipBits = [
+        entry.id,
+        entry.preview || "",
+        uiLang === "en" ? "insertTemplate" : "AI：insertTemplate",
+      ].filter(Boolean);
+      btn.title = tipBits.join(" · ");
+      btn.addEventListener("click", () => {
+        closeTemplateMenu();
+        insertBuiltinById(entry.id);
+      });
+      builtinTplList.appendChild(btn);
     }
   }
 
@@ -10573,6 +11669,7 @@ ${body}</svg>`;
     const btnLayers = document.getElementById("btnLayersMenu");
     if (layersMenuEl) layersMenuEl.setAttribute("hidden", "");
     if (btnLayers) btnLayers.setAttribute("aria-expanded", "false");
+    refreshBuiltinTemplateMenu();
     refreshCustomTemplateMenu();
     templateMenu.removeAttribute("hidden");
     btnTemplateMenu.setAttribute("aria-expanded", "true");
@@ -11444,12 +12541,7 @@ ${body}</svg>`;
       else closeTemplateMenu();
     });
     templateMenu.addEventListener("click", (e) => e.stopPropagation());
-    templateMenu.querySelectorAll("[data-tpl]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        closeTemplateMenu();
-        insertBuiltinById(btn.dataset.tpl);
-      });
-    });
+    refreshBuiltinTemplateMenu();
     document.addEventListener("click", () => closeTemplateMenu());
   }
   if (btnSaveTemplate) btnSaveTemplate.addEventListener("click", openSaveTemplateDialog);
