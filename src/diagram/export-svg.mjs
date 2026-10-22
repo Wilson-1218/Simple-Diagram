@@ -451,15 +451,17 @@ export function documentToSvg(doc, opts = {}) {
     }
   }
 
-  for (const lab of doc.labels || []) {
-    const p = pts.get(lab.pointId);
-    if (!p) continue;
-    const s = toS(p.x + (lab.ox || 0), p.y + (lab.oy || 0));
-    const fs = (lab.size || 16) * scale * 0.75;
-    const halo = Math.max(3, fs * 0.28);
-    const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
-    body += `<text ${common} fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round">${escapeXml(lab.text)}</text>\n`;
-    body += `<text ${common} fill="#111">${escapeXml(lab.text)}</text>\n`;
+  if (helpersShow) {
+    for (const lab of doc.labels || []) {
+      const p = pts.get(lab.pointId);
+      if (!p) continue;
+      const s = toS(p.x + (lab.ox || 0), p.y + (lab.oy || 0));
+      const fs = (lab.size || 16) * scale * 0.75;
+      const halo = Math.max(3, fs * 0.28);
+      const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
+      body += `<text ${common} fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round">${escapeXml(lab.text)}</text>\n`;
+      body += `<text ${common} fill="#111">${escapeXml(lab.text)}</text>\n`;
+    }
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>

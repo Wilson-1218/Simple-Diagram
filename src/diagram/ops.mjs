@@ -140,7 +140,7 @@ const DEFAULT_LAYERS = {
   coordsShow: true,
   coordsLock: false,
   helpersShow: true,
-  helpersLock: false,
+  helpersLock: true,
 };
 
 function normalizeLayers(raw) {

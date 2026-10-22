@@ -76,7 +76,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.5.9）
+## 目前版本 / Current version（v13.5.10）
 
 **左側兩欄網格**（頂部品牌＋繪製／構造／記號）｜**頂部 overlay**（不佔畫布高度）｜**左側情境浮層**｜**匯出 ▾**
 
@@ -101,6 +101,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 **v13.5.7**：清除只清空圖形，保留網格顯示／吸附／方格｜三角格設定。
 **v13.5.8**：Templates／MCP 共用 `TEMPLATE_CATALOG`（`src/diagram/templates.mjs`；`npm run embed-templates` 同步 app.js）。
 **v13.5.9**：存成模板（整圖→本機「我的／Saved」＋更名／匯出）；模板選單內 AI 接入教學；**自 GitHub 移除**考試 train pack（改留 Agent Store／Context）。
+**v13.5.10**：記號圖層含標籤／記號，**預設鎖定**（隨點線走）；解鎖後可點選拖移。
 
 | 位置 | 內容 |
 |---|---|

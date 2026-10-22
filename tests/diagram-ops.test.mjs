@@ -357,3 +357,9 @@ test("addFill polyArc and pathFill", () => {
   const svg = documentToSvg(doc, { scale: 1 });
   assert.ok(svg.includes("<path"));
 });
+
+test("helpersLock defaults true (marks layer)", async () => {
+  const { emptyDiagram, DEFAULT_LAYERS } = await import("../src/diagram/index.mjs");
+  assert.equal(DEFAULT_LAYERS.helpersLock, true);
+  assert.equal(emptyDiagram().layers.helpersLock, true);
+});
