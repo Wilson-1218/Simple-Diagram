@@ -1,6 +1,6 @@
 {
   "name": "simple-diagram",
-  "version": "13.5.13",
+  "version": "13.5.14",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -13,6 +13,7 @@
     "apply-ops": "node tools/apply-ops.mjs",
     "validate": "node tools/validate-diagram.mjs",
     "mcp": "node mcp/server.mjs",
-    "embed-templates": "node tools/embed-templates.mjs"
+    "embed-templates": "node tools/embed-templates.mjs",
+    "build-standalone": "node tools/build-standalone.mjs"
   }
 }
