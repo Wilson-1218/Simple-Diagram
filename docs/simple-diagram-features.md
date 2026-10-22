@@ -1,11 +1,11 @@
 # Simple Diagram 功能清單
 
 手繪風格立體圖編輯器。應用位於儲存庫根目錄（`index.html` / `app.js` / `styles.css`）。  
-目前版本：**v13.5.20**。
+目前版本：**v13.5.21**。
 
 > **給維護者：** 使用者向更新說明（README「更新說明」）保持**精簡**——每版一行；`?` 面板不再列版本清單；細節只寫 Agent Store `internal/`。
 
-工具列：**左側兩欄網格**（頂部品牌 Logo＋名稱＋中EN＋日夜）＝繪製／構造／記號；**頂部 overlay**＝模板／圖層／最近／編輯／Json／匯出；線型、弧／扇、記號、**長度**、填色、圖形、圓件、對齊為左側情境浮層。
+工具列：**左側 3 直行網格**（可拖右緣調寬；窄時 2 直行；頂部品牌＋中EN＋日夜）＝繪製／構造／記號；**頂部 overlay**＝模板（含存成模板）／圖層／最近／編輯／Json／匯出；線型、弧／扇、記號、**長度**、填色、圖形、圓件、對齊為左側情境浮層。
 
 ---
 
@@ -20,7 +20,7 @@
 | 5 | **水平線／垂線／垂足／切線** | 構造：水平／垂線點選後拖曳定長；**垂足**先點一點再點線段（正交投影＋高線）；**切線**點圓周（或近圓周）後拖曳定長，垂直於半徑；端點可再拖調 |
 | 6 | **雙網格** | 「圖層 ▾」內：網格開關＋方格｜三角格（預設三角格＋網格開；與 `layers.gridShow`／吸附聯動） |
 | 7a | **Json ▾** | 頂欄 Json ▾：貼上／儲存／開啟 JSON（ops 陣列或完整圖檔）；AI 看本站 [`ai.html`](../ai.html) |
-| 7 | **我的模板** | 頂欄「模板 ▾」：**存成模板**（整圖→localStorage「我的／Saved」、更名／刪除／匯出 JSON）＋「如何接入 AI」；無內建組合；平面／立體見「圖形」 |
+| 7 | **我的模板** | 頂欄「模板 ▾」內含**存成模板**（整圖→localStorage「我的／Saved」、更名／刪除／匯出 JSON）＋「如何接入 AI」；無內建組合；平面／立體見「圖形」 |
 | 8 | **長度標註** | 浮層：字級、隨線｜水平、樣式 1 文字／2 尺寸線／3 弧括；存於 `lengthLabels`；PNG／SVG／`addLength` 支援 |
 | 9 | **快捷鍵可自訂** | `?`／`Ctrl+/`；可改鍵並存本機；衝突會標示；預設含填色 I、圖形 B、圓件 T |
 | 10 | **標籤避線** | 新建標籤自動偏離附近線／圓 |
@@ -50,7 +50,7 @@
 
 ## 簡短操作流程
 
-1. 開啟 `index.html` 或 `simple-diagram-standalone.html`（標題應見 **Simple Diagram · v13.5.20**）。
+1. 開啟 `index.html` 或 `simple-diagram-standalone.html`（標題應見 **Simple Diagram · v13.5.21**）。
 2. 左側選工具；頂部 overlay「匯出 ▾」預覽或存檔。
 3. Chrome／Edge 存檔可選資料夾；匯出不受深色畫布影響。
 4. AI／自動化（v13.5：`insertTemplate`、macros、`export-diagram` SVG）：見 [`diagram-format.md`](diagram-format.md)、[`agent-draw-playbook.md`](agent-draw-playbook.md) 與 README「AI / Automation」（JSON＋ops，不模擬 UI；v13.5.0 起含扇／弓形填色與圖形／圓件／對齊 ops）。

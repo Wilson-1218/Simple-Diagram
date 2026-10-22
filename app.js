@@ -42,8 +42,9 @@
   const builtinTplList = document.getElementById("builtinTplList");
   const customTplList = document.getElementById("customTplList");
   const customTplEmpty = document.getElementById("customTplEmpty");
-  const btnSaveTemplate = document.getElementById("btnSaveTemplate");
   const btnSaveTemplateMenu = document.getElementById("btnSaveTemplateMenu");
+  const toolRailEl = document.querySelector(".tool-rail");
+  const railResizeEl = document.getElementById("railResize");
   const templateNameDialog = document.getElementById("templateNameDialog");
   const templateNameForm = document.getElementById("templateNameForm");
   const templateNameInput = document.getElementById("templateNameInput");
@@ -285,6 +286,7 @@
   const LS_SHORTCUTS = "simple-diagram-shortcuts-v13";
   const LS_RECENT = "simple-diagram-recent-v13";
   const LS_AUTOBACKUP = "simple-diagram-autobackup-v13";
+  const LS_RAIL_WIDTH = "simple-diagram-rail-width-v13";
   const LS_LEGACY = {
     [LS_GRID_MODE]: ["exam-diagram-grid-mode-v114"],
     [LS_CUSTOM_TPL]: ["exam-diagram-custom-templates"],
@@ -340,6 +342,8 @@
       chk_grid: "網格", chk_hide_pts: "匯出隱藏點", chk_dark: "深色畫布",
       tip_theme_day: "淺色畫布（編輯）",
       tip_theme_night: "深色畫布（僅編輯；匯出仍白底）",
+      tip_rail_resize: "拖曳調整工具列寬度",
+      aria_rail_resize: "調整工具列寬度",
       aria_theme: "畫布明暗",
       length_float_title: "長度",
       tip_length_size: "長度文字大小",
@@ -627,6 +631,8 @@
       chk_grid: "Grid", chk_hide_pts: "Hide pts", chk_dark: "Dark",
       tip_theme_day: "Light canvas (edit)",
       tip_theme_night: "Dark canvas (edit only; export stays white)",
+      tip_rail_resize: "Drag to resize tool rail",
+      aria_rail_resize: "Resize tool rail",
       aria_theme: "Canvas theme",
       length_float_title: "Length",
       tip_length_size: "Length text size",
@@ -942,7 +948,6 @@
     });
     const mapId = {
       btnTemplateMenu: "btn_template",
-      btnSaveTemplate: "btn_save_tpl",
       btnSaveTemplateMenu: "btn_save_tpl",
       btnRecentMenu: "btn_recent",
       btnCopy: "btn_copy",
@@ -1091,6 +1096,92 @@
     } catch (_) {}
     applyDarkCanvasClass();
     draw();
+  }
+
+  /** Rail width: narrow → 2 cols, default/wide → 3 cols. Persisted in localStorage. */
+  const RAIL_WIDTH_MIN = 108;
+  const RAIL_WIDTH_MAX = 240;
+  const RAIL_WIDTH_2COL = 138;
+
+  function railColsForWidth(px) {
+    return px < RAIL_WIDTH_2COL ? 2 : 3;
+  }
+
+  function applyRailWidth(px, persist) {
+    if (!toolRailEl) return;
+    const tb = 1.2;
+    const minPx = Math.round(RAIL_WIDTH_MIN * tb);
+    const maxPx = Math.round(RAIL_WIDTH_MAX * tb);
+    const w = Math.round(Math.min(maxPx, Math.max(minPx, Number(px) || minPx)));
+    const cols = railColsForWidth(w / tb);
+    toolRailEl.style.width = w + "px";
+    toolRailEl.style.setProperty("--rail-cols", String(cols));
+    toolRailEl.dataset.railCols = String(cols);
+    if (railResizeEl) {
+      railResizeEl.setAttribute("aria-valuenow", String(w));
+      railResizeEl.setAttribute("aria-valuemin", String(minPx));
+      railResizeEl.setAttribute("aria-valuemax", String(maxPx));
+    }
+    if (persist) {
+      try {
+        lsSet(LS_RAIL_WIDTH, String(w));
+      } catch (_) {}
+    }
+  }
+
+  function readRailWidthPref() {
+    try {
+      const raw = lsGet(LS_RAIL_WIDTH);
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= RAIL_WIDTH_MIN) return n;
+    } catch (_) {}
+    return null;
+  }
+
+  function initRailResize() {
+    const pref = readRailWidthPref();
+    if (pref != null) applyRailWidth(pref, false);
+    else if (toolRailEl) {
+      const w = toolRailEl.getBoundingClientRect().width || Math.round(156 * 1.2);
+      applyRailWidth(w, false);
+    }
+    if (!railResizeEl || !toolRailEl) return;
+    let dragging = false;
+    let startX = 0;
+    let startW = 0;
+    const onMove = (e) => {
+      if (!dragging) return;
+      const dx = (e.clientX || 0) - startX;
+      applyRailWidth(startW + dx, false);
+    };
+    const onUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      railResizeEl.classList.remove("is-dragging");
+      document.body.classList.remove("is-rail-resizing");
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      const w = toolRailEl.getBoundingClientRect().width;
+      applyRailWidth(w, true);
+    };
+    railResizeEl.addEventListener("pointerdown", (e) => {
+      if (e.button != null && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      dragging = true;
+      startX = e.clientX || 0;
+      startW = toolRailEl.getBoundingClientRect().width;
+      railResizeEl.classList.add("is-dragging");
+      document.body.classList.add("is-rail-resizing");
+      try {
+        railResizeEl.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
+    railResizeEl.addEventListener("dblclick", () => {
+      applyRailWidth(Math.round(156 * 1.2), true);
+    });
   }
 
   function readGridModePref() {
@@ -10263,7 +10354,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.20",
+      version: "13.5.21",
       app: "simple-diagram",
       points,
       segments,
@@ -13326,10 +13417,10 @@ ${body}</svg>`;
     refreshBuiltinTemplateMenu();
     document.addEventListener("click", () => closeTemplateMenu());
   }
-  if (btnSaveTemplate) btnSaveTemplate.addEventListener("click", openSaveTemplateDialog);
   if (btnSaveTemplateMenu) {
     btnSaveTemplateMenu.addEventListener("click", (e) => {
       e.stopPropagation();
+      closeTemplateMenu();
       openSaveTemplateDialog();
     });
   }
@@ -13848,6 +13939,7 @@ ${body}</svg>`;
   renderRecentMenu();
   applyDarkCanvasClass();
   applyChromeLang();
+  initRailResize();
   updateStatus();
   draw();
 
