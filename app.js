@@ -339,8 +339,8 @@
       tool_tangent: "切線", tool_circlePart: "圓件", tool_shape: "圖形",
       tool_reflex: "優角", tool_coord: "座標", tool_fill: "填色",
       group_templates: "模板", group_props: "屬性", group_view: "檢視／匯出",
-      rail_draw: "繪", rail_construct: "構", rail_marks: "記",
-      rail_draw_title: "繪製", rail_construct_title: "構造", rail_marks_title: "記號",
+      rail_draw: "繪畫", rail_construct: "構建", rail_marks: "記號",
+      rail_draw_title: "繪畫", rail_construct_title: "構建", rail_marks_title: "記號",
       chk_grid: "網格", chk_hide_pts: "匯出隱藏點", chk_dark: "深色畫布",
       tip_theme_day: "淺色畫布（編輯）",
       tip_theme_night: "深色畫布（僅編輯；匯出仍白底）",
@@ -638,7 +638,7 @@
       tool_tangent: "Tan", tool_circlePart: "Chord", tool_shape: "Shape",
       tool_reflex: "Reflex", tool_coord: "Axes", tool_fill: "Fill",
       group_templates: "Templates", group_props: "Props", group_view: "View / Export",
-      rail_draw: "Draw", rail_construct: "Build", rail_marks: "Mark",
+      rail_draw: "Draw", rail_construct: "Construct", rail_marks: "Marks",
       rail_draw_title: "Draw", rail_construct_title: "Construct", rail_marks_title: "Marks",
       chk_grid: "Grid", chk_hide_pts: "Hide pts", chk_dark: "Dark",
       tip_theme_day: "Light canvas (edit)",
@@ -10529,7 +10529,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.24",
+      version: "13.5.25",
       app: "simple-diagram",
       points,
       segments,

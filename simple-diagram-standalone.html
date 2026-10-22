@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261022-release-v13.5.24" />
+  <meta name="simple-diagram-build" content="20261022-release-v13.5.25" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -2033,7 +2033,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.24</span>
+            <span class="brand-sub">v13.5.25</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -2051,7 +2051,7 @@ body.dark-canvas .coord-curve-row {
           </div>
         </div>
         <div class="rail-section" data-group="draw">
-          <span class="rail-title" title="繪製" data-i18n="rail_draw" data-i18n-title="rail_draw_title">繪</span>
+          <span class="rail-title" title="繪畫" data-i18n="rail_draw" data-i18n-title="rail_draw_title">繪畫</span>
           <button type="button" class="tool active" data-tool="select" title="選取／移動 (V)" data-i18n-title="tip_tool_select">
             <span class="icon">↖</span><span class="label" data-i18n="tool_select">選取</span>
           </button>
@@ -2085,7 +2085,7 @@ body.dark-canvas .coord-curve-row {
         </div>
 
         <div class="rail-section" data-group="construct">
-          <span class="rail-title" title="構造" data-i18n="rail_construct" data-i18n-title="rail_construct_title">構</span>
+          <span class="rail-title" title="構建" data-i18n="rail_construct" data-i18n-title="rail_construct_title">構建</span>
           <button type="button" class="tool" data-tool="intersect" title="兩線交點" data-i18n-title="tip_tool_intersect">
             <span class="icon">✕</span><span class="label" data-i18n="tool_intersect">交點</span>
           </button>
@@ -2116,7 +2116,7 @@ body.dark-canvas .coord-curve-row {
         </div>
 
         <div class="rail-section" data-group="marks">
-          <span class="rail-title" title="記號" data-i18n="rail_marks" data-i18n-title="rail_marks_title">記</span>
+          <span class="rail-title" title="記號" data-i18n="rail_marks" data-i18n-title="rail_marks_title">記號</span>
           <button type="button" class="tool" data-tool="rightAngle" title="直角記號" data-i18n-title="tip_tool_rightAngle">
             <span class="icon">∟</span><span class="label" data-i18n="tool_rightAngle">直角</span>
           </button>
@@ -2946,8 +2946,8 @@ body.dark-canvas .coord-curve-row {
       tool_tangent: "切線", tool_circlePart: "圓件", tool_shape: "圖形",
       tool_reflex: "優角", tool_coord: "座標", tool_fill: "填色",
       group_templates: "模板", group_props: "屬性", group_view: "檢視／匯出",
-      rail_draw: "繪", rail_construct: "構", rail_marks: "記",
-      rail_draw_title: "繪製", rail_construct_title: "構造", rail_marks_title: "記號",
+      rail_draw: "繪畫", rail_construct: "構建", rail_marks: "記號",
+      rail_draw_title: "繪畫", rail_construct_title: "構建", rail_marks_title: "記號",
       chk_grid: "網格", chk_hide_pts: "匯出隱藏點", chk_dark: "深色畫布",
       tip_theme_day: "淺色畫布（編輯）",
       tip_theme_night: "深色畫布（僅編輯；匯出仍白底）",
@@ -3245,7 +3245,7 @@ body.dark-canvas .coord-curve-row {
       tool_tangent: "Tan", tool_circlePart: "Chord", tool_shape: "Shape",
       tool_reflex: "Reflex", tool_coord: "Axes", tool_fill: "Fill",
       group_templates: "Templates", group_props: "Props", group_view: "View / Export",
-      rail_draw: "Draw", rail_construct: "Build", rail_marks: "Mark",
+      rail_draw: "Draw", rail_construct: "Construct", rail_marks: "Marks",
       rail_draw_title: "Draw", rail_construct_title: "Construct", rail_marks_title: "Marks",
       chk_grid: "Grid", chk_hide_pts: "Hide pts", chk_dark: "Dark",
       tip_theme_day: "Light canvas (edit)",
@@ -13136,7 +13136,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.24",
+      version: "13.5.25",
       app: "simple-diagram",
       points,
       segments,
