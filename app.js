@@ -561,6 +561,7 @@
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_reset: "還原預設",
       btn_close: "關閉",
+      whats_new_title: "更新說明",
       attr_credit: "Simple Diagram · Wilson Li · MIT",
       attr_credit_tip: "授權與轉載聲明（開啟 ? 看完整說明）",
       attr_help: "可自由使用、複製及二次開發；轉載或再發佈時請保留來源聲明：Simple Diagram（Wilson Li）及 GitHub 連結。",
@@ -814,6 +815,7 @@
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_reset: "Reset defaults",
       btn_close: "Close",
+      whats_new_title: "What’s new",
       attr_credit: "Simple Diagram · Wilson Li · MIT",
       attr_credit_tip: "License & attribution (open ? for details)",
       attr_help: "Free to use, copy, and modify. Please keep attribution: “Simple Diagram” by Wilson Li — and the GitHub link.",
@@ -908,6 +910,7 @@
     renderRecentMenu();
     refreshBuiltinTemplateMenu();
     refreshCustomTemplateMenu();
+    renderWhatsNewList();
     updateStatus();
   }
 
@@ -9877,7 +9880,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.10",
+      version: "13.5.11",
       app: "simple-diagram",
       points,
       segments,
@@ -12591,9 +12594,38 @@ ${body}</svg>`;
     }
   }
 
+  /**
+   * User-facing release notes — keep SHORT (one line each). Detail → store internal/.
+   * Newest first; last item may be an “earlier…” summary.
+   */
+  const WHATS_NEW = [
+    { v: "v13.5.11", zh: "更新說明改精簡", en: "Shorter release notes" },
+    { v: "v13.5.10", zh: "記號／標籤預設鎖定，解鎖後可拖移", en: "Marks/labels locked by default; unlock to drag" },
+    { v: "v13.5.9", zh: "可存成模板；模板內有 AI 接入說明", en: "Save as template; AI setup tip in Templates" },
+    { v: "v13.5.8", zh: "模板選單與 AI 模板目錄一致", en: "Templates menu matches AI template list" },
+    { v: "v13.5.7", zh: "清除只清圖形，保留網格設定", en: "Clear keeps grid settings" },
+    { v: "v13.5.6", zh: "修復圖形浮層底列無法點擊", en: "Shape float bottom row clickable again" },
+    { v: "v13.5.5", zh: "立體進圖形浮層；模板改為組合起點", en: "Solids in Shape float; Templates = combos" },
+    { v: "v13.5.4", zh: "更多常用圖形；白色填色；垂足", en: "More shapes; white fill; foot of perpendicular" },
+    { v: "", zh: "更早版本… 填色、圖層、切線、AI 繪圖／匯出、MIT 等", en: "Earlier… fill, layers, tangent, AI draw/export, MIT, …" },
+  ];
+
+  function renderWhatsNewList() {
+    const el = document.getElementById("whatsNewList");
+    if (!el) return;
+    el.innerHTML = "";
+    for (const row of WHATS_NEW) {
+      const li = document.createElement("li");
+      const text = uiLang === "en" ? row.en : row.zh;
+      li.textContent = row.v ? row.v + " — " + text : text;
+      el.appendChild(li);
+    }
+  }
+
   function openShortcuts() {
     shortcutListenId = null;
     renderShortcutMap();
+    renderWhatsNewList();
     if (shortcutsDialog && typeof shortcutsDialog.showModal === "function") {
       shortcutsDialog.showModal();
     }

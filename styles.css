@@ -629,6 +629,36 @@ button:disabled {
   display: none;
 }
 
+.whats-new {
+  margin: 10px 0 4px;
+  border-top: 1px solid var(--bar-border, #e2e2e2);
+  padding-top: 8px;
+}
+
+.whats-new summary {
+  cursor: pointer;
+  font-size: calc(13px * var(--tb, 1));
+  font-weight: 600;
+  color: var(--ink, #222);
+  list-style: none;
+}
+
+.whats-new summary::-webkit-details-marker {
+  display: none;
+}
+
+.whats-new-list {
+  margin: 6px 0 0;
+  padding-left: 1.15em;
+  font-size: calc(12px * var(--tb, 1));
+  line-height: 1.45;
+  color: var(--muted, #555);
+}
+
+.whats-new-list li {
+  margin: 0 0 4px;
+}
+
 .mark-opts {
   display: inline-flex;
   align-items: center;
