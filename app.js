@@ -9921,7 +9921,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.13",
+      version: "13.5.14",
       app: "simple-diagram",
       points,
       segments,
@@ -12852,6 +12852,7 @@ ${body}</svg>`;
    * Newest first; last item may be an “earlier…” summary.
    */
   const WHATS_NEW = [
+    { v: "v13.5.14", zh: "深色介面對比改善（填色色票等）", en: "Dark chrome contrast (fill swatches, etc.)" },
     { v: "v13.5.13", zh: "可一鍵分享給 Gemini（預填說明頁）", en: "Share with Gemini (prefilled guide URL)" },
     { v: "v13.5.12", zh: "可貼上 JSON；AI 說明頁 ai.html（Pages）", en: "Paste JSON; AI guide page ai.html on Pages" },
     { v: "v13.5.11", zh: "更新說明改精簡", en: "Shorter release notes" },

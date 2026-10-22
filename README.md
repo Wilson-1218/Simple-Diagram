@@ -76,11 +76,12 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.5.13）
+## 目前版本 / Current version（v13.5.14）
 
 左側兩欄工具｜頂部選單｜情境浮層。預設：網格開、三角格、縮放 **2×**。
 
 ### 更新說明
+- **v13.5.14** — 深色介面對比改善（填色色票等）
 - **v13.5.13** — 可一鍵分享給 Gemini（預填說明頁）
 - **v13.5.12** — 可貼上 JSON；AI 說明頁 ai.html（Pages）
 - **v13.5.11** — 更新說明改精簡

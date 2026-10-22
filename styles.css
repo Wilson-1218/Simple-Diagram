@@ -5,8 +5,15 @@
   --muted: #5c5a55;
   --bar: #f7f5f0;
   --bar-border: #d4d0c8;
+  --panel: #ffffff;
+  --btn: #f7f5f0;
+  --btn-hover: #efece4;
+  --btn-border: #d4d0c8;
+  --chrome-bg: rgba(247, 245, 240, 0.92);
+  --status-bg: rgba(247, 245, 240, 0.92);
   --accent: #1a4a6e;
   --accent-soft: #d8e6f0;
+  --accent-ink: #ffffff;
   --snap: #2a7ab0;
   --guide: #9aabb8;
   --danger: #8b2e2e;
@@ -18,39 +25,66 @@
   --canvas-paper: #ffffff;
   --canvas-ink: #111111;
   --canvas-grid: rgba(0, 0, 0, 0.08);
+  --swatch-base: #ffffff;
+  --swatch-check: #dddddd;
+  --swatch-border: #9a9a9a;
+  --swatch-ring: var(--accent);
 }
 
+/*
+ * Dark chrome (canvas may stay dark; export still white).
+ * Keep borders/buttons a step brighter than panels so inactive controls read.
+ */
 body.dark-canvas {
-  --bg: #1c1f24;
+  --bg: #181b20;
   --paper: #252a31;
   --ink: #e8eaed;
-  --muted: #9aa0a6;
-  --bar: #2a3038;
-  --bar-border: #3c4450;
+  --muted: #b0b6be;
+  --bar: #2c333c;
+  --bar-border: #5c6776;
+  --panel: #323a45;
+  --btn: #3c4654;
+  --btn-hover: #4a5566;
+  --btn-border: #7a8696;
+  --chrome-bg: rgba(44, 51, 60, 0.96);
+  --status-bg: rgba(44, 51, 60, 0.92);
   --accent: #6eb6e0;
-  --accent-soft: #243846;
+  --accent-soft: #2a4050;
+  --accent-ink: #0e1a22;
   --snap: #7ec8f0;
-  --guide: #6a8499;
+  --guide: #7a94a8;
   --canvas-paper: #1e2329;
   --canvas-ink: #e6e8eb;
   --canvas-grid: rgba(255, 255, 255, 0.08);
+  --swatch-base: #f2f2f2;
+  --swatch-check: #c8c8c8;
+  --swatch-border: #d0d6de;
+  --swatch-ring: #9ad0f0;
 }
 
-body.dark-canvas button {
-  background: #323842;
+/* Do NOT use shorthand `background` on .fill-swatch — it wipes checkerboard layers. */
+body.dark-canvas button:not(.fill-swatch):not(.active) {
+  background: var(--btn);
   color: var(--ink);
-  border-color: var(--bar-border);
+  border-color: var(--btn-border);
 }
 
-body.dark-canvas button:hover {
-  background: #3a424e;
-  border-color: #5a6575;
+body.dark-canvas button:not(.fill-swatch):not(.active):hover {
+  background: var(--btn-hover);
+  border-color: #93a0b0;
+}
+
+body.dark-canvas button.active:not(.fill-swatch) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
 }
 
 body.dark-canvas .menu-panel,
 body.dark-canvas dialog {
-  background: #2a3038;
+  background: var(--panel);
   color: var(--ink);
+  border-color: var(--bar-border);
 }
 
 /* Form controls: always dark ink on light field (toolbar selects stay white) */
@@ -149,7 +183,7 @@ body {
 }
 
 .chrome-lang {
-  background: rgba(247, 245, 240, 0.92);
+  background: var(--chrome-bg);
   border: 1px solid var(--bar-border);
   border-radius: var(--radius);
   padding: calc(3px * var(--tb)) calc(5px * var(--tb));
@@ -157,7 +191,7 @@ body {
 }
 
 .chrome-actions {
-  background: rgba(247, 245, 240, 0.92);
+  background: var(--chrome-bg);
   border: 1px solid var(--bar-border);
   border-radius: var(--radius);
   padding: calc(3px * var(--tb)) calc(5px * var(--tb));
@@ -372,15 +406,15 @@ button:disabled {
 .tool.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .tool.active .icon {
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .tool.active .label {
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .tool:disabled {
@@ -398,7 +432,7 @@ button:disabled {
 .style-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 #labelSizeSelect,
@@ -786,7 +820,7 @@ button:disabled {
   align-items: stretch;
   gap: calc(4px * var(--tb, 1.2));
   padding: calc(6px * var(--tb, 1.2));
-  background: rgba(247, 245, 240, 0.96);
+  background: var(--chrome-bg);
   border: 1px solid var(--bar-border);
   border-radius: var(--radius);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
@@ -900,7 +934,7 @@ button:disabled {
 .float-shape .shape-icon-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 /* Fill shade swatches — clipped so checkerboard cannot bleed */
@@ -919,7 +953,7 @@ button:disabled {
 }
 
 .fill-swatch-bar.is-dim {
-  opacity: 0.5;
+  opacity: 0.55;
 }
 
 .fill-swatch {
@@ -928,16 +962,16 @@ button:disabled {
   min-width: calc(22px * var(--tb, 1));
   min-height: calc(22px * var(--tb, 1));
   padding: 0;
-  border: 1px solid #9a9a9a;
+  border: 1.5px solid var(--swatch-border);
   border-radius: 3px;
   /* Solid base + clipped checker via layered backgrounds (no page bleed) */
-  background-color: #fff;
+  background-color: var(--swatch-base);
   background-image:
     linear-gradient(var(--swatch, rgba(102, 102, 102, 0.2)), var(--swatch, rgba(102, 102, 102, 0.2))),
-    linear-gradient(45deg, #ddd 25%, transparent 25%),
-    linear-gradient(-45deg, #ddd 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #ddd 75%),
-    linear-gradient(-45deg, transparent 75%, #ddd 75%);
+    linear-gradient(45deg, var(--swatch-check) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--swatch-check) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--swatch-check) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--swatch-check) 75%);
   background-size: 100% 100%, 8px 8px, 8px 8px, 8px 8px, 8px 8px;
   background-position: 0 0, 0 0, 0 4px, 4px -4px, -4px 0;
   background-repeat: no-repeat, repeat, repeat, repeat, repeat;
@@ -946,31 +980,72 @@ button:disabled {
   contain: strict;
   cursor: pointer;
   flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
 }
 
 .fill-swatch:hover {
-  border-color: var(--accent);
+  border-color: var(--swatch-ring);
 }
 
 .fill-swatch.active {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  border-color: var(--accent);
+  outline: 2px solid var(--swatch-ring);
+  outline-offset: 2px;
+  border-color: var(--swatch-ring);
 }
 
-body.dark-canvas .float-panel,
-body.dark-canvas .chrome-lang,
-body.dark-canvas .chrome-actions {
-  background: rgba(42, 48, 56, 0.94);
+/* White dig-out: solid light fill so it never disappears on dark chrome */
+.fill-swatch[data-fill-key="white"] {
+  background-image: none;
+  background-color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-canvas .float-panel {
+  background: var(--chrome-bg);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
 }
 
 body.dark-canvas .fill-swatch-bar {
   background: transparent;
+  padding: calc(3px * var(--tb, 1));
 }
 
 body.dark-canvas .fill-swatch {
-  border-color: #6a7280;
-  background-color: #323842;
+  /* Re-assert layers: global button rules must not wipe checkerboard */
+  border-color: var(--swatch-border);
+  background-color: var(--swatch-base);
+  background-image:
+    linear-gradient(var(--swatch, rgba(102, 102, 102, 0.2)), var(--swatch, rgba(102, 102, 102, 0.2))),
+    linear-gradient(45deg, var(--swatch-check) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--swatch-check) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--swatch-check) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--swatch-check) 75%);
+  background-size: 100% 100%, 8px 8px, 8px 8px, 8px 8px, 8px 8px;
+  background-position: 0 0, 0 0, 0 4px, 4px -4px, -4px 0;
+  background-repeat: no-repeat, repeat, repeat, repeat, repeat;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28);
+}
+
+body.dark-canvas .fill-swatch[data-fill-key="white"] {
+  background-image: none;
+  background-color: #ffffff;
+  border-color: #e8ecf0;
+  box-shadow: inset 0 0 0 1px #333940;
+}
+
+body.dark-canvas .fill-swatch.active {
+  outline-color: var(--swatch-ring);
+  border-color: var(--swatch-ring);
+}
+
+body.dark-canvas .tpl-gemini-btn {
+  color: #d8f0f4;
+  background: #243a40;
+  border-color: #5a8a94;
+}
+
+body.dark-canvas .tpl-gemini-btn:hover {
+  background: #2e4a52;
 }
 
 .tool-rail .rail-mini-btn {
@@ -987,7 +1062,7 @@ body.dark-canvas .fill-swatch {
 .tool-rail .rail-mini-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .menu-check {
@@ -1055,13 +1130,13 @@ body.dark-canvas .fill-swatch {
 .mark-group-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .menu-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .workspace {
@@ -1103,7 +1178,7 @@ body.dark-canvas .fill-swatch {
   flex-wrap: wrap;
   gap: 10px 16px;
   padding: 6px 12px;
-  background: rgba(247, 245, 240, 0.92);
+  background: var(--status-bg);
   border: 1px solid var(--bar-border);
   border-radius: var(--radius);
   font-size: 12px;
@@ -1121,8 +1196,8 @@ body.dark-canvas .fill-swatch {
   padding: 4px 8px;
   font-size: 11px;
   color: var(--muted);
-  background: rgba(247, 245, 240, 0.82);
-  border: 1px solid transparent;
+  background: var(--status-bg);
+  border: 1px solid var(--bar-border);
   border-radius: var(--radius);
   pointer-events: auto;
   z-index: 2;
@@ -1139,7 +1214,49 @@ body.dark-canvas .fill-swatch {
 }
 
 body.dark-canvas .site-credit {
-  background: rgba(28, 32, 38, 0.82);
+  background: var(--status-bg);
+}
+
+body.dark-canvas .status {
+  color: #c5ccd4;
+}
+
+body.dark-canvas .menu-panel button:not(.active) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink);
+}
+
+body.dark-canvas .menu-panel button:not(.active):hover {
+  background: var(--btn-hover);
+  border-color: transparent;
+}
+
+body.dark-canvas .menu-section-title,
+body.dark-canvas .tpl-ai-help summary,
+body.dark-canvas .tpl-gemini-note,
+body.dark-canvas .menu-empty {
+  color: var(--muted);
+}
+
+body.dark-canvas .check-opt {
+  color: var(--ink);
+}
+
+body.dark-canvas .brand-name {
+  color: var(--ink);
+}
+
+body.dark-canvas .brand-sub {
+  color: var(--muted);
+}
+
+body.dark-canvas .rail-title {
+  color: var(--muted);
+}
+
+body.dark-canvas .float-panel .float-title {
+  color: var(--muted);
 }
 
 .site-attribution {
@@ -1341,7 +1458,7 @@ body.dark-canvas .shortcut-row .sk-key {
 .lang-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .coord-params {
