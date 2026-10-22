@@ -9913,7 +9913,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.15",
+      version: "13.5.16",
       app: "simple-diagram",
       points,
       segments,
@@ -12782,6 +12782,7 @@ ${body}</svg>`;
    * Newest first; last item may be an “earlier…” summary.
    */
   const WHATS_NEW = [
+    { v: "v13.5.16", zh: "AI 說明頁補齊 addShape／fill／角弧參數", en: "AI guide: addShape / fill / angle-arc params" },
     { v: "v13.5.15", zh: "改為連到 ai.html；請用 Chrome 分享分頁給 Gemini", en: "Link to ai.html; share that tab with Gemini in Chrome" },
     { v: "v13.5.14", zh: "深色介面對比改善（填色色票等）", en: "Dark chrome contrast (fill swatches, etc.)" },
     { v: "v13.5.12", zh: "可貼上 JSON；AI 說明頁 ai.html（Pages）", en: "Paste JSON; AI guide page ai.html on Pages" },
