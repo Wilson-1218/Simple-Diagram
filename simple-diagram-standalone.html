@@ -19,6 +19,7 @@
   --btn-border: #d4d0c8;
   --chrome-bg: rgba(247, 245, 240, 0.92);
   --status-bg: rgba(247, 245, 240, 0.92);
+  --float-bg: rgba(247, 245, 240, 0.96);
   --accent: #1a4a6e;
   --accent-soft: #d8e6f0;
   --accent-ink: #ffffff;
@@ -64,10 +65,11 @@ body.dark-canvas {
   --canvas-paper: #1e2329;
   --canvas-ink: #e6e8eb;
   --canvas-grid: rgba(255, 255, 255, 0.08);
-  --swatch-base: #f2f2f2;
-  --swatch-check: #c8c8c8;
-  --swatch-border: #d0d6de;
-  --swatch-ring: #9ad0f0;
+  --swatch-base: #ffffff;
+  --swatch-check: #b4b4b4;
+  --swatch-border: #f0f3f7;
+  --swatch-ring: #b8e0f8;
+  --float-bg: #3a4350;
 }
 
 /* Do NOT use shorthand `background` on .fill-swatch — it wipes checkerboard layers. */
@@ -828,7 +830,7 @@ button:disabled {
   align-items: stretch;
   gap: calc(4px * var(--tb, 1.2));
   padding: calc(6px * var(--tb, 1.2));
-  background: var(--chrome-bg);
+  background: var(--float-bg);
   border: 1px solid var(--bar-border);
   border-radius: var(--radius);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
@@ -965,12 +967,12 @@ button:disabled {
 }
 
 .fill-swatch {
-  width: calc(22px * var(--tb, 1));
-  height: calc(22px * var(--tb, 1));
-  min-width: calc(22px * var(--tb, 1));
-  min-height: calc(22px * var(--tb, 1));
+  width: calc(24px * var(--tb, 1));
+  height: calc(24px * var(--tb, 1));
+  min-width: calc(24px * var(--tb, 1));
+  min-height: calc(24px * var(--tb, 1));
   padding: 0;
-  border: 1.5px solid var(--swatch-border);
+  border: 2px solid var(--swatch-border);
   border-radius: 3px;
   /* Solid base + clipped checker via layered backgrounds (no page bleed) */
   background-color: var(--swatch-base);
@@ -996,9 +998,10 @@ button:disabled {
 }
 
 .fill-swatch.active {
-  outline: 2px solid var(--swatch-ring);
+  outline: 2.5px solid var(--swatch-ring);
   outline-offset: 2px;
   border-color: var(--swatch-ring);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(0, 0, 0, 0.12);
 }
 
 /* White dig-out: solid light fill so it never disappears on dark chrome */
@@ -1009,7 +1012,8 @@ button:disabled {
 }
 
 body.dark-canvas .float-panel {
-  background: var(--chrome-bg);
+  background: var(--float-bg);
+  border-color: #8a96a6;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
 }
 
