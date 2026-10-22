@@ -1,7 +1,7 @@
 # Simple Diagram 功能清單
 
 手繪風格立體圖編輯器。應用位於儲存庫根目錄（`index.html` / `app.js` / `styles.css`）。  
-目前版本：**v13.5.8**。
+目前版本：**v13.5.9**。
 
 工具列：**左側兩欄網格**（頂部品牌 Logo＋名稱）＝繪製／構造／記號；**頂部 overlay**（不佔畫布高度）＝中EN／模板／檢視／編輯／檔案；線型、弧／扇、單／雙／翻面、填色、圖形、圓件、對齊為左側情境浮層。
 
@@ -17,7 +17,7 @@
 | 4 | **匯出隱藏點** | 「匯出 ▾」內勾選（預設開） |
 | 5 | **水平線／垂線／垂足／切線** | 構造：水平／垂線點選後拖曳定長；**垂足**先點一點再點線段（正交投影＋高線）；**切線**點圓周（或近圓周）後拖曳定長，垂直於半徑；端點可再拖調 |
 | 6 | **雙網格** | 方格｜三角格（預設三角格＋網格開） |
-| 7 | **組合／自訂模板** | 頂欄「模板 ▾」：組合起點來自共用 `TEMPLATE_CATALOG`（與 MCP `list_templates` 同源）＋自訂；平面／立體單形改由「圖形」／`addShape`；tooltip 含模板 `id` |
+| 7 | **組合／我的模板** | 頂欄「模板 ▾」：組合起點（共用 catalog）＋**存成模板**（整圖→localStorage「我的／Saved」、更名／刪除／匯出 JSON）＋「如何接入 AI」；平面／立體見「圖形」 |
 | 8 | **長度沿邊傾斜** | 長度標註平行於邊、可讀翻正 |
 | 9 | **快捷鍵可自訂** | `?`／`Ctrl+/`；可改鍵並存本機；衝突會標示；預設含填色 I、圖形 B、圓件 T |
 | 10 | **標籤避線** | 新建標籤自動偏離附近線／圓 |
@@ -47,7 +47,7 @@
 
 ## 簡短操作流程
 
-1. 開啟 `index.html` 或 `simple-diagram-standalone.html`（標題應見 **Simple Diagram · v13.5.8**）。
+1. 開啟 `index.html` 或 `simple-diagram-standalone.html`（標題應見 **Simple Diagram · v13.5.9**）。
 2. 左側選工具；頂部 overlay「匯出 ▾」預覽或存檔。
 3. Chrome／Edge 存檔可選資料夾；匯出不受深色畫布影響。
 4. AI／自動化（v13.5：`insertTemplate`、macros、`export-diagram` SVG）：見 [`diagram-format.md`](diagram-format.md)、[`agent-draw-playbook.md`](agent-draw-playbook.md) 與 README「AI / Automation」（JSON＋ops，不模擬 UI；v13.5.0 起含扇／弓形填色與圖形／圓件／對齊 ops）。

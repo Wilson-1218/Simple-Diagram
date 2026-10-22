@@ -24,3 +24,10 @@ Desktop.ini
 .cache/
 dist/
 node_modules/
+
+# Training / exam eval packs stay in Agent Store / Context — not GitHub
+examples/train/
+**/Mensuration*.pdf
+tools/gen-mensuration-train.mjs
+tools/build-train-pack.mjs
+docs/train-pack-fidelity-lessons.md

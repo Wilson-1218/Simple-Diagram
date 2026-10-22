@@ -43,9 +43,12 @@
   const customTplList = document.getElementById("customTplList");
   const customTplEmpty = document.getElementById("customTplEmpty");
   const btnSaveTemplate = document.getElementById("btnSaveTemplate");
+  const btnSaveTemplateMenu = document.getElementById("btnSaveTemplateMenu");
   const templateNameDialog = document.getElementById("templateNameDialog");
   const templateNameForm = document.getElementById("templateNameForm");
   const templateNameInput = document.getElementById("templateNameInput");
+  const templateNameEnInput = document.getElementById("templateNameEnInput");
+  const templateEditId = document.getElementById("templateEditId");
   const templateNameCancel = document.getElementById("templateNameCancel");
   const chkDarkCanvas = document.getElementById("chkDarkCanvas");
   const btnRecentMenu = document.getElementById("btnRecentMenu");
@@ -448,19 +451,33 @@
       circlePart_need_circle: "請點選圓或圓周上的點",
       circlePart_too_short: "拖曳太短，已取消",
       shape_too_small: "圖形太小，已取消",
-      btn_template: "模板 ▾", btn_save_tpl: "存為模板", btn_recent: "最近 ▾",
+      btn_template: "模板 ▾", btn_save_tpl: "存成模板", btn_recent: "最近 ▾",
       btn_copy: "複製", btn_delete: "刪除", btn_clear: "清除", btn_save: "儲存", btn_load: "開啟",
       btn_export_menu: "匯出 ▾", btn_export_crop: "框選匯出", btn_clear_crop: "清除裁切", btn_preview: "預覽匯出",
       btn_restore_backup: "還原自動備份", menu_recent: "最近開啟", menu_backup: "備份",
       menu_plane: "平面", menu_solid: "立體", menu_combo: "組合起點", menu_custom: "自訂",
+      menu_saved: "我的／Saved",
       tpl_circleGeom: "圓＋弦徑", tpl_circleCenter: "圓＋圓心", tpl_altBase: "高到底",
+      tpl_ai_summary: "如何接入 AI / Connect AI",
+      tpl_dialog_lead: "將目前圖形存成模板",
+      tpl_dialog_lead_rename: "重新命名模板",
+      tpl_name_zh: "名稱（中文）",
+      tpl_name_en: "Name (English)",
+      tpl_dialog_note: "儲存於本機瀏覽器（localStorage）。插入時置於畫面中央。給 AI 用請按模板列「匯出」。",
+      tpl_dialog_save: "儲存",
+      tpl_dialog_cancel: "取消",
+      tpl_empty_canvas: "畫布是空的，請先畫圖再存成模板",
+      tpl_saved_ok: "已存成模板「{name}」",
+      tpl_renamed_ok: "已重新命名「{name}」",
+      tip_rename_tpl: "重新命名",
+      tip_export_tpl: "匯出 JSON（給 AI／備份）",
       size_s: "小", size_m: "中", size_l: "大", size_xl: "特大",
       mark_single: "單", mark_double: "雙", mark_flip: "翻面", sector_arc: "弧", sector_pie: "扇",
-      empty_custom_tpl: "尚無自訂模板", empty_recent: "尚無記錄",
+      empty_custom_tpl: "尚無已存模板", empty_recent: "尚無記錄",
       tip_lang_zh: "中文介面",
       tip_lang_en: "English UI",
-      tip_templates: "組合起點／自訂模板（平面與立體圖形見「圖形」工具）",
-      tip_save_tpl: "將目前選取存為自訂模板",
+      tip_templates: "組合起點／我的模板／接入 AI（平面與立體見「圖形」）",
+      tip_save_tpl: "將目前整圖存成模板（本機）",
       tip_style_solid: "實線",
       tip_style_dashed: "虛線（隱藏邊）",
       tip_style_dotted: "點線（構造）",
@@ -546,6 +563,9 @@
       attr_credit: "Simple Diagram · Wilson Li · MIT",
       attr_credit_tip: "授權與轉載聲明（開啟 ? 看完整說明）",
       attr_help: "可自由使用、複製及二次開發；轉載或再發佈時請保留來源聲明：Simple Diagram（Wilson Li）及 GitHub 連結。",
+      tpl_ai_body:
+        "<p><strong>ZH</strong>：在 Cursor 用 MCP 跑 <code>npm run mcp</code>（見 README）。常用：<code>list_templates</code> → <code>insertTemplate</code>／<code>apply_ops</code>。組合 id 與上方「組合起點」相同（tooltip 可複製）。本機「我的」模板只在瀏覽器；給 AI 請用「匯出」或另存 JSON。手冊：<code>docs/agent-draw-playbook.md</code>。</p>" +
+        "<p><strong>EN</strong>: Run MCP via <code>npm run mcp</code>. Use <code>list_templates</code> then <code>insertTemplate</code> / <code>apply_ops</code>. Saved templates are browser-local — export JSON for agents.</p>",
     },
     en: {
       tool_select: "Select", tool_hand: "Pan", tool_point: "Point", tool_line: "Line",
@@ -684,19 +704,33 @@
       circlePart_need_circle: "Click a circle or a point on a circle",
       circlePart_too_short: "Drag too short — cancelled",
       shape_too_small: "Shape too small — cancelled",
-      btn_template: "Templates ▾", btn_save_tpl: "Save tpl", btn_recent: "Recent ▾",
+      btn_template: "Templates ▾", btn_save_tpl: "Save as template", btn_recent: "Recent ▾",
       btn_copy: "Copy", btn_delete: "Delete", btn_clear: "Clear", btn_save: "Save", btn_load: "Open",
       btn_export_menu: "Export ▾", btn_export_crop: "Crop export", btn_clear_crop: "Clear crop", btn_preview: "Preview",
       btn_restore_backup: "Restore backup", menu_recent: "Recent", menu_backup: "Backup",
       menu_plane: "Plane", menu_solid: "Solid", menu_combo: "Combo starters", menu_custom: "Custom",
+      menu_saved: "Saved",
       tpl_circleGeom: "Circle + chord/diameter", tpl_circleCenter: "Circle + center", tpl_altBase: "Altitude to base",
+      tpl_ai_summary: "How to connect AI",
+      tpl_dialog_lead: "Save current diagram as template",
+      tpl_dialog_lead_rename: "Rename template",
+      tpl_name_zh: "Name (Chinese)",
+      tpl_name_en: "Name (English)",
+      tpl_dialog_note: "Stored in this browser (localStorage). Inserts at view center. Use Export on a row for AI.",
+      tpl_dialog_save: "Save",
+      tpl_dialog_cancel: "Cancel",
+      tpl_empty_canvas: "Canvas is empty — draw something first",
+      tpl_saved_ok: "Saved template “{name}”",
+      tpl_renamed_ok: "Renamed “{name}”",
+      tip_rename_tpl: "Rename",
+      tip_export_tpl: "Export JSON (for AI / backup)",
       size_s: "S", size_m: "M", size_l: "L", size_xl: "XL",
       mark_single: "1×", mark_double: "2×", mark_flip: "Flip", sector_arc: "Arc", sector_pie: "Pie",
-      empty_custom_tpl: "No custom templates", empty_recent: "No recent files",
+      empty_custom_tpl: "No saved templates", empty_recent: "No recent files",
       tip_lang_zh: "Chinese UI",
       tip_lang_en: "English UI",
-      tip_templates: "Combo starters / custom (plane & solids are in Shape tool)",
-      tip_save_tpl: "Save selection as a custom template",
+      tip_templates: "Combos / saved templates / connect AI (plane & solids: Shape)",
+      tip_save_tpl: "Save the whole diagram as a local template",
       tip_style_solid: "Solid",
       tip_style_dashed: "Dashed (hidden edge)",
       tip_style_dotted: "Dotted (construction)",
@@ -782,6 +816,9 @@
       attr_credit: "Simple Diagram · Wilson Li · MIT",
       attr_credit_tip: "License & attribution (open ? for details)",
       attr_help: "Free to use, copy, and modify. Please keep attribution: “Simple Diagram” by Wilson Li — and the GitHub link.",
+      tpl_ai_body:
+        "<p><strong>EN</strong>: Run MCP with <code>npm run mcp</code> (see README). Use <code>list_templates</code> then <code>insertTemplate</code> / <code>apply_ops</code>. Combo ids match the menu (tooltips). Saved templates are <em>browser-local</em> — export JSON for agents. Playbook: <code>docs/agent-draw-playbook.md</code>.</p>" +
+        "<p><strong>ZH</strong>：Cursor MCP 跑 <code>npm run mcp</code>。流程：<code>list_templates</code> → <code>insertTemplate</code>／<code>apply_ops</code>。「我的」模板只在瀏覽器；給 AI 請匯出 JSON。</p>",
     },
   };
 
@@ -817,9 +854,16 @@
       const k = el.getAttribute("data-i18n-aria");
       if (k) el.setAttribute("aria-label", t(k));
     });
+    document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+      const k = el.getAttribute("data-i18n-html");
+      if (!k) return;
+      const val = t(k);
+      if (val && val !== k) el.innerHTML = val;
+    });
     const mapId = {
       btnTemplateMenu: "btn_template",
       btnSaveTemplate: "btn_save_tpl",
+      btnSaveTemplateMenu: "btn_save_tpl",
       btnRecentMenu: "btn_recent",
       btnCopy: "btn_copy",
       btnDelete: "btn_delete",
@@ -9724,7 +9768,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.8",
+      version: "13.5.9",
       app: "simple-diagram",
       points,
       segments,
@@ -11620,6 +11664,37 @@ ${body}</svg>`;
     }
   }
 
+  function customTemplateDisplayName(tpl) {
+    if (!tpl) return uiLang === "en" ? "Untitled" : "未命名";
+    if (uiLang === "en") {
+      return (tpl.nameEn || tpl.name || tpl.nameZh || "Untitled").trim() || "Untitled";
+    }
+    return (tpl.nameZh || tpl.name || tpl.nameEn || "未命名").trim() || "未命名";
+  }
+
+  function exportCustomTemplate(tpl) {
+    if (!tpl) return;
+    const payload = {
+      kind: "simple-diagram-user-template",
+      formatVersion: FORMAT_VERSION,
+      exportedAt: Date.now(),
+      template: tpl,
+      note:
+        "Browser-local saved template. Open in editor via insert, or apply geometry with a local tool. Node MCP does not read localStorage.",
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const a = document.createElement("a");
+    const base = customTemplateDisplayName(tpl).replace(/[^\w\u4e00-\u9fff\-]+/g, "_") || "template";
+    a.href = URL.createObjectURL(blob);
+    a.download = base + ".template.json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    statusHint.textContent =
+      uiLang === "en" ? "Exported template JSON" : "已匯出模板 JSON";
+  }
+
   function refreshCustomTemplateMenu() {
     if (!customTplList) return;
     const list = loadCustomTemplates();
@@ -11628,14 +11703,35 @@ ${body}</svg>`;
     for (const tpl of list) {
       const row = document.createElement("div");
       row.className = "custom-tpl-row";
+      const label = customTemplateDisplayName(tpl);
       const ins = document.createElement("button");
       ins.type = "button";
       ins.className = "tpl-insert";
-      ins.textContent = tpl.name || "未命名";
-      ins.title = t("tip_insert_tpl").replace("{name}", tpl.name || "");
+      ins.textContent = label;
+      ins.title =
+        t("tip_insert_tpl").replace("{name}", label) +
+        (tpl.id ? " · id: " + tpl.id : "");
       ins.addEventListener("click", () => {
         closeTemplateMenu();
         insertCustomTemplate(tpl);
+      });
+      const ren = document.createElement("button");
+      ren.type = "button";
+      ren.className = "tpl-ren";
+      ren.textContent = "✎";
+      ren.title = t("tip_rename_tpl");
+      ren.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openRenameTemplateDialog(tpl.id);
+      });
+      const exp = document.createElement("button");
+      exp.type = "button";
+      exp.className = "tpl-export";
+      exp.textContent = "↥";
+      exp.title = t("tip_export_tpl");
+      exp.addEventListener("click", (e) => {
+        e.stopPropagation();
+        exportCustomTemplate(tpl);
       });
       const del = document.createElement("button");
       del.type = "button";
@@ -11644,12 +11740,15 @@ ${body}</svg>`;
       del.title = t("tip_del_tpl");
       del.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (!confirm("刪除自訂模板「" + (tpl.name || "") + "」？")) return;
-        const next = loadCustomTemplates().filter((t) => t.id !== tpl.id);
+        const nm = customTemplateDisplayName(tpl);
+        if (!confirm((uiLang === "en" ? "Delete template “" : "刪除模板「") + nm + (uiLang === "en" ? "”?" : "」？"))) return;
+        const next = loadCustomTemplates().filter((x) => x.id !== tpl.id);
         saveCustomTemplates(next);
         refreshCustomTemplateMenu();
       });
       row.appendChild(ins);
+      row.appendChild(ren);
+      row.appendChild(exp);
       row.appendChild(del);
       customTplList.appendChild(row);
     }
@@ -11695,94 +11794,49 @@ ${body}</svg>`;
     btnExportMenu.setAttribute("aria-expanded", "true");
   }
 
-  /** Collect geometry from current selection into a relative custom template. */
-  function captureSelectionAsTemplate(name) {
-    const pointIds = new Set();
-    const segIds = new Set();
-    const circleIds = new Set();
-    const ellipseIds = new Set();
-    const raIds = new Set();
-    const pmIds = new Set();
-    const emIds = new Set();
-    const llIds = new Set();
-
-    for (const s of selection) {
-      if (s.type === "point") pointIds.add(s.id);
-      else if (s.type === "segment") {
-        segIds.add(s.id);
-        const seg = segmentById(s.id);
-        if (seg) {
-          pointIds.add(seg.a);
-          pointIds.add(seg.b);
-        }
-      } else if (s.type === "circle") {
-        circleIds.add(s.id);
-        const cir = circles.find((c) => c.id === s.id);
-        if (cir) {
-          pointIds.add(cir.centerId);
-          pointIds.add(cir.throughId);
-        }
-      } else if (s.type === "ellipse") {
-        ellipseIds.add(s.id);
-        const el = ellipses.find((c) => c.id === s.id);
-        if (el) {
-          pointIds.add(el.centerId);
-          pointIds.add(el.rxId);
-          pointIds.add(el.ryId);
-        }
-      } else if (s.type === "label") {
-        const lab = labels.find((l) => l.id === s.id);
-        if (lab) pointIds.add(lab.pointId);
-      } else if (s.type === "rightAngle") {
-        raIds.add(s.id);
-        const ra = rightAngles.find((r) => r.id === s.id);
-        if (ra) {
-          pointIds.add(ra.vertex);
-          pointIds.add(ra.arm1);
-          pointIds.add(ra.arm2);
-        }
-      } else if (s.type === "parallelMark") {
-        pmIds.add(s.id);
-        const m = parallelMarks.find((x) => x.id === s.id);
-        if (m) {
-          const seg = segmentById(m.segmentId);
-          if (seg) {
-            segIds.add(seg.id);
-            pointIds.add(seg.a);
-            pointIds.add(seg.b);
-          }
-        }
-      } else if (s.type === "equalMark") {
-        emIds.add(s.id);
-        const m = equalMarks.find((x) => x.id === s.id);
-        if (m) {
-          const seg = segmentById(m.segmentId);
-          if (seg) {
-            segIds.add(seg.id);
-            pointIds.add(seg.a);
-            pointIds.add(seg.b);
-          }
-        }
-      } else if (s.type === "lengthLabel") {
-        llIds.add(s.id);
-        const ll = lengthLabels.find((x) => x.id === s.id);
-        if (ll) {
-          const seg = segmentById(ll.segmentId);
-          if (seg) {
-            segIds.add(seg.id);
-            pointIds.add(seg.a);
-            pointIds.add(seg.b);
-          }
-        }
-      }
-    }
-
+  /**
+   * Save the current diagram (all geometry) as a relative custom template.
+   * Stores ZH/EN names + geometry snapshot in localStorage via saveCustomTemplates.
+   */
+  function captureDiagramAsTemplate(nameZh, nameEn, existingId) {
+    const pointIds = new Set(points.map((p) => p.id));
     if (!pointIds.size) {
-      statusHint.textContent = "請先選取點／線／圓／橢圓等物件再存為模板";
+      statusHint.textContent = t("tpl_empty_canvas");
       return null;
     }
+    const segIds = new Set(segments.map((s) => s.id));
+    const circleIds = new Set(circles.map((c) => c.id));
+    const ellipseIds = new Set(ellipses.map((e) => e.id));
+    const sectorIds = new Set(sectors.map((s) => s.id));
+    const fillIds = new Set(fills.map((f) => f.id));
+    const raIds = new Set(rightAngles.map((r) => r.id));
+    const arcIds = new Set(angleArcs.map((a) => a.id));
+    const mtIds = new Set(midTicks.map((m) => m.id));
+    const pmIds = new Set(parallelMarks.map((m) => m.id));
+    const emIds = new Set(equalMarks.map((m) => m.id));
+    const llIds = new Set(lengthLabels.map((m) => m.id));
 
-    const idList = [...pointIds];
+    // Ensure fill/sector referenced points are included
+    for (const f of fills) {
+      for (const pid of fillReferencedPointIds(f)) pointIds.add(pid);
+    }
+    for (const sec of sectors) {
+      pointIds.add(sec.centerId);
+      pointIds.add(sec.startId);
+      pointIds.add(sec.endId);
+    }
+    for (const ra of rightAngles) {
+      pointIds.add(ra.vertex);
+      pointIds.add(ra.arm1);
+      pointIds.add(ra.arm2);
+    }
+    for (const a of angleArcs) {
+      pointIds.add(a.vertex);
+      pointIds.add(a.arm1);
+      pointIds.add(a.arm2);
+    }
+
+    const idList = [...pointIds].filter((id) => pointById(id));
     const idx = {};
     idList.forEach((id, i) => {
       idx[id] = i;
@@ -11807,6 +11861,7 @@ ${body}</svg>`;
         label: lab ? lab.text : null,
         ox: lab ? lab.ox : null,
         oy: lab ? lab.oy : null,
+        size: lab ? lab.size : null,
       };
     });
 
@@ -11820,9 +11875,11 @@ ${body}</svg>`;
     }
 
     const cirs = [];
+    const circleIndex = {};
     for (const id of circleIds) {
       const cir = circles.find((c) => c.id === id);
       if (!cir || idx[cir.centerId] == null || idx[cir.throughId] == null) continue;
+      circleIndex[id] = cirs.length;
       cirs.push({
         center: idx[cir.centerId],
         through: idx[cir.throughId],
@@ -11843,11 +11900,83 @@ ${body}</svg>`;
       });
     }
 
+    const secs = [];
+    for (const id of sectorIds) {
+      const sec = sectors.find((c) => c.id === id);
+      if (!sec || idx[sec.centerId] == null || idx[sec.startId] == null || idx[sec.endId] == null) continue;
+      secs.push({
+        center: idx[sec.centerId],
+        start: idx[sec.startId],
+        end: idx[sec.endId],
+        style: sec.style || "solid",
+        mode: sec.mode === "sector" ? "sector" : "arc",
+      });
+    }
+
+    const fillRows = [];
+    for (const id of fillIds) {
+      const f = fills.find((c) => c.id === id);
+      if (!f) continue;
+      const kind = fillKindOf(f);
+      if (kind === "sector") {
+        if (idx[f.centerId] == null || idx[f.startId] == null || idx[f.endId] == null) continue;
+        fillRows.push({
+          kind: "sector",
+          center: idx[f.centerId],
+          start: idx[f.startId],
+          end: idx[f.endId],
+          circle: f.circleId && circleIndex[f.circleId] != null ? circleIndex[f.circleId] : null,
+          color: f.color || "#666666",
+          opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+        });
+      } else if (kind === "segment") {
+        if (idx[f.startId] == null || idx[f.endId] == null) continue;
+        fillRows.push({
+          kind: "segment",
+          start: idx[f.startId],
+          end: idx[f.endId],
+          circle: f.circleId && circleIndex[f.circleId] != null ? circleIndex[f.circleId] : null,
+          color: f.color || "#666666",
+          opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+        });
+      } else {
+        const mapped = (f.pointIds || []).map((pid) => idx[pid]).filter((i) => i != null);
+        if (mapped.length < 3) continue;
+        fillRows.push({
+          kind: "polygon",
+          pointIds: mapped,
+          color: f.color || "#666666",
+          opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+        });
+      }
+    }
+
     const ras = [];
     for (const id of raIds) {
       const ra = rightAngles.find((r) => r.id === id);
       if (!ra || idx[ra.vertex] == null || idx[ra.arm1] == null || idx[ra.arm2] == null) continue;
       ras.push({ vertex: idx[ra.vertex], arm1: idx[ra.arm1], arm2: idx[ra.arm2] });
+    }
+
+    const arcs = [];
+    for (const id of arcIds) {
+      const a = angleArcs.find((r) => r.id === id);
+      if (!a || idx[a.vertex] == null || idx[a.arm1] == null || idx[a.arm2] == null) continue;
+      arcs.push({
+        vertex: idx[a.vertex],
+        arm1: idx[a.arm1],
+        arm2: idx[a.arm2],
+        group: a.group ? 1 : 0,
+        text: a.text || "",
+        reflex: !!a.reflex,
+      });
+    }
+
+    const mts = [];
+    for (const id of mtIds) {
+      const m = midTicks.find((x) => x.id === id);
+      if (!m || segIndex[m.segmentId] == null || idx[m.pointId] == null) continue;
+      mts.push({ segment: segIndex[m.segmentId], point: idx[m.pointId] });
     }
 
     const pms = [];
@@ -11881,19 +12010,34 @@ ${body}</svg>`;
       });
     }
 
+    const zh = (nameZh || "").trim() || (uiLang === "en" ? "My template" : "我的模板");
+    const en = (nameEn || "").trim() || zh;
     return {
-      id: uid(),
-      name: (name || "我的模板").trim() || "我的模板",
+      id: existingId || uid(),
+      kind: "diagram",
+      name: zh,
+      nameZh: zh,
+      nameEn: en,
       createdAt: Date.now(),
+      updatedAt: Date.now(),
       points: pts,
       segments: segs,
       circles: cirs,
       ellipses: ells,
+      sectors: secs,
+      fills: fillRows,
       rightAngles: ras,
+      angleArcs: arcs,
+      midTicks: mts,
       parallelMarks: pms,
       equalMarks: ems,
       lengthLabels: lls,
     };
+  }
+
+  /** @deprecated alias — selection-based save replaced by whole-diagram capture */
+  function captureSelectionAsTemplate(name) {
+    return captureDiagramAsTemplate(name, name, null);
   }
 
   function insertCustomTemplate(tpl) {
@@ -11901,7 +12045,6 @@ ${body}</svg>`;
     pushHistory();
     const before = snapshotIdSets();
     const pts = tpl.points.map((row) => {
-      // World deltas from saved centroid; grid ON → snap each vertex to lattice
       const pos = templateWorldPos(row.rx, row.ry, false);
       const p = addPoint(pos.x, pos.y, true, row.marker || undefined, true);
       if (row.label) {
@@ -11910,7 +12053,7 @@ ${body}</svg>`;
           row.label,
           row.ox != null ? row.ox : 0,
           row.oy != null ? row.oy : -14,
-          labelFontSize,
+          row.size != null ? row.size : labelFontSize,
           true
         );
       }
@@ -11925,14 +12068,20 @@ ${body}</svg>`;
       const ns = addSegment(pts[s.a].id, pts[s.b].id, s.style || "solid", true);
       segIds.push(ns ? ns.id : null);
     }
+    const newCircleIds = [];
     for (const cir of tpl.circles || []) {
-      if (!pts[cir.center] || !pts[cir.through]) continue;
+      if (!pts[cir.center] || !pts[cir.through]) {
+        newCircleIds.push(null);
+        continue;
+      }
+      const id = uid();
       circles.push({
-        id: uid(),
+        id,
         centerId: pts[cir.center].id,
         throughId: pts[cir.through].id,
         style: cir.style || "solid",
       });
+      newCircleIds.push(id);
     }
     for (const el of tpl.ellipses || []) {
       if (!pts[el.center] || !pts[el.rx] || !pts[el.ry]) continue;
@@ -11945,6 +12094,54 @@ ${body}</svg>`;
         backDashed: !!el.backDashed,
       });
     }
+    for (const sec of tpl.sectors || []) {
+      if (!pts[sec.center] || !pts[sec.start] || !pts[sec.end]) continue;
+      sectors.push({
+        id: uid(),
+        centerId: pts[sec.center].id,
+        startId: pts[sec.start].id,
+        endId: pts[sec.end].id,
+        style: sec.style || "solid",
+        mode: sec.mode === "sector" ? "sector" : "arc",
+      });
+    }
+    for (const f of tpl.fills || []) {
+      const kind = f.kind || "polygon";
+      if (kind === "sector") {
+        if (!pts[f.center] || !pts[f.start] || !pts[f.end]) continue;
+        fills.push({
+          id: uid(),
+          kind: "sector",
+          circleId: f.circle != null ? newCircleIds[f.circle] || null : null,
+          centerId: pts[f.center].id,
+          startId: pts[f.start].id,
+          endId: pts[f.end].id,
+          color: f.color || "#666666",
+          opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+        });
+      } else if (kind === "segment") {
+        if (!pts[f.start] || !pts[f.end]) continue;
+        fills.push({
+          id: uid(),
+          kind: "segment",
+          circleId: f.circle != null ? newCircleIds[f.circle] || null : null,
+          startId: pts[f.start].id,
+          endId: pts[f.end].id,
+          color: f.color || "#666666",
+          opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+        });
+      } else {
+        const mapped = (f.pointIds || []).map((i) => pts[i] && pts[i].id).filter(Boolean);
+        if (mapped.length < 3) continue;
+        fills.push({
+          id: uid(),
+          kind: "polygon",
+          pointIds: mapped,
+          color: f.color || "#666666",
+          opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+        });
+      }
+    }
     for (const ra of tpl.rightAngles || []) {
       if (!pts[ra.vertex] || !pts[ra.arm1] || !pts[ra.arm2]) continue;
       rightAngles.push({
@@ -11954,6 +12151,24 @@ ${body}</svg>`;
         arm2: pts[ra.arm2].id,
         size: rightAngleSize,
       });
+    }
+    for (const a of tpl.angleArcs || []) {
+      if (!pts[a.vertex] || !pts[a.arm1] || !pts[a.arm2]) continue;
+      angleArcs.push({
+        id: uid(),
+        vertex: pts[a.vertex].id,
+        arm1: pts[a.arm1].id,
+        arm2: pts[a.arm2].id,
+        size: rightAngleSize,
+        group: a.group ? 1 : 0,
+        text: a.text || "",
+        reflex: !!a.reflex,
+      });
+    }
+    for (const m of tpl.midTicks || []) {
+      const sid = segIds[m.segment];
+      if (!sid || !pts[m.point]) continue;
+      midTicks.push({ id: uid(), segmentId: sid, pointId: pts[m.point].id });
     }
     for (const m of tpl.parallelMarks || []) {
       const sid = segIds[m.segment];
@@ -11988,12 +12203,33 @@ ${body}</svg>`;
     finishTemplateInsert(before, null);
   }
 
+  function syncTemplateNameDialogLead(isRename) {
+    const lead = document.getElementById("templateNameLead");
+    if (lead) lead.textContent = t(isRename ? "tpl_dialog_lead_rename" : "tpl_dialog_lead");
+  }
+
   function openSaveTemplateDialog() {
-    if (!selection.length) {
-      statusHint.textContent = "請先多選要存成模板的物件";
+    if (!points.length) {
+      statusHint.textContent = t("tpl_empty_canvas");
       return;
     }
-    if (templateNameInput) templateNameInput.value = "我的模板";
+    if (templateEditId) templateEditId.value = "";
+    syncTemplateNameDialogLead(false);
+    if (templateNameInput) templateNameInput.value = uiLang === "en" ? "My template" : "我的模板";
+    if (templateNameEnInput) templateNameEnInput.value = "My template";
+    if (templateNameDialog && typeof templateNameDialog.showModal === "function") {
+      templateNameDialog.showModal();
+      if (templateNameInput) templateNameInput.select();
+    }
+  }
+
+  function openRenameTemplateDialog(id) {
+    const tpl = loadCustomTemplates().find((x) => x.id === id);
+    if (!tpl) return;
+    if (templateEditId) templateEditId.value = id;
+    syncTemplateNameDialogLead(true);
+    if (templateNameInput) templateNameInput.value = tpl.nameZh || tpl.name || "";
+    if (templateNameEnInput) templateNameEnInput.value = tpl.nameEn || tpl.name || "";
     if (templateNameDialog && typeof templateNameDialog.showModal === "function") {
       templateNameDialog.showModal();
       if (templateNameInput) templateNameInput.select();
@@ -12545,22 +12781,48 @@ ${body}</svg>`;
     document.addEventListener("click", () => closeTemplateMenu());
   }
   if (btnSaveTemplate) btnSaveTemplate.addEventListener("click", openSaveTemplateDialog);
+  if (btnSaveTemplateMenu) {
+    btnSaveTemplateMenu.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openSaveTemplateDialog();
+    });
+  }
   if (templateNameForm) {
     templateNameForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      const name = templateNameInput ? templateNameInput.value : "我的模板";
-      const tpl = captureSelectionAsTemplate(name);
+      const nameZh = templateNameInput ? templateNameInput.value : "";
+      const nameEn = templateNameEnInput ? templateNameEnInput.value : "";
+      const editId = templateEditId && templateEditId.value ? templateEditId.value : "";
       if (templateNameDialog) templateNameDialog.close();
-      if (!tpl) return;
       const list = loadCustomTemplates();
+      if (editId) {
+        const i = list.findIndex((x) => x.id === editId);
+        if (i < 0) return;
+        const zh = (nameZh || "").trim() || list[i].nameZh || list[i].name || "我的模板";
+        const en = (nameEn || "").trim() || list[i].nameEn || zh;
+        list[i] = {
+          ...list[i],
+          name: zh,
+          nameZh: zh,
+          nameEn: en,
+          updatedAt: Date.now(),
+        };
+        saveCustomTemplates(list);
+        refreshCustomTemplateMenu();
+        statusHint.textContent = t("tpl_renamed_ok").replace("{name}", customTemplateDisplayName(list[i]));
+        return;
+      }
+      const tpl = captureDiagramAsTemplate(nameZh, nameEn, null);
+      if (!tpl) return;
       list.push(tpl);
       saveCustomTemplates(list);
       refreshCustomTemplateMenu();
-      statusHint.textContent = "已儲存自訂模板「" + tpl.name + "」";
+      statusHint.textContent = t("tpl_saved_ok").replace("{name}", customTemplateDisplayName(tpl));
     });
   }
   if (templateNameCancel) {
     templateNameCancel.addEventListener("click", () => {
+      if (templateEditId) templateEditId.value = "";
       if (templateNameDialog) templateNameDialog.close();
     });
   }

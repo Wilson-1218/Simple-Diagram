@@ -76,7 +76,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.5.8）
+## 目前版本 / Current version（v13.5.9）
 
 **左側兩欄網格**（頂部品牌＋繪製／構造／記號）｜**頂部 overlay**（不佔畫布高度）｜**左側情境浮層**｜**匯出 ▾**
 
@@ -94,13 +94,13 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 **v13.4.2**：AI 層優化 — sector/segment `addFill`、圖形／切線／弦徑便利 op、對齊／圖層 ops、MCP summarize、[`docs/agent-draw-playbook.md`](docs/agent-draw-playbook.md)。
 **v13.5.0**：AI 模板 `insertTemplate`、HKDSE macros（`run_macro`）、eval 套件、headless SVG／PNG 匯出 CLI／MCP。  
 **v13.5.1**：MIT 授權＋雙語轉載聲明（README／網頁／`?` 面板）；`package.json` `"license": "MIT"`。  
-**v13.5.2**：Mensuration AI train pack（`examples/train/`，10 題 seed `20261021`）＋ eval。  
-**v13.5.3**：Train case 03 — point/label D at BH∩CF（不再偏高）。
+**v13.5.2–13.5.3**：內部評測包（已自 GitHub 移除；見 Agent Store／Context，不進版控）。
 **v13.5.4**：圖形浮層改圖示網格（無文字標籤）；擴充 HKDSE 常用形（菱形／平行四邊形／等腰梯形／鳶形／直角／等腰直角／正五／正六／圓／半圓）並接 `addShape`；填色色票新增**白色**（不透明，疊在灰影上挖空）；構造還原**垂足**（點→線段正交投影）＋ `addFoot`。
 **v13.5.5**：立體投影進「圖形」浮層（立方體／長方體／棱柱／圓台／錐／柱等）；模板選單收斂為組合起點（圓＋弦徑／圓＋圓心／高到底）＋自訂。
 **v13.5.6**：修復圖形浮層底列圖示無法點擊（viewport 內捲動＋z-index／pointer-events）。
 **v13.5.7**：清除只清空圖形，保留網格顯示／吸附／方格｜三角格設定。
 **v13.5.8**：Templates／MCP 共用 `TEMPLATE_CATALOG`（`src/diagram/templates.mjs`；`npm run embed-templates` 同步 app.js）。
+**v13.5.9**：存成模板（整圖→本機「我的／Saved」＋更名／匯出）；模板選單內 AI 接入教學；**自 GitHub 移除**考試 train pack（改留 Agent Store／Context）。
 
 | 位置 | 內容 |
 |---|---|
@@ -121,13 +121,9 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## AI train pack / 「對著畫」評測
-
-來源：`Mensuration-clean.pdf`（隨機 10 題，seed **20261021**）。每題含 `prompt.md`、`ops.json`、`target.svg`。說明見 [`examples/train/README.md`](examples/train/README.md)。重建：`node tools/gen-mensuration-train.mjs`。
-
----
-
 ## AI / Automation（JSON + ops）
+
+> **Training packs**（考試「對著畫」評測等）留在 Agent Store／Context，**不上 GitHub**。Core AI layer（ops、MCP、macros、shared catalog）仍在本 repo。
 
 | 中文 | English |
 |---|---|
