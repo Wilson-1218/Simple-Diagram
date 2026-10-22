@@ -76,7 +76,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.5.6）
+## 目前版本 / Current version（v13.5.7）
 
 **左側兩欄網格**（頂部品牌＋繪製／構造／記號）｜**頂部 overlay**（不佔畫布高度）｜**左側情境浮層**｜**匯出 ▾**
 
@@ -99,6 +99,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 **v13.5.4**：圖形浮層改圖示網格（無文字標籤）；擴充 HKDSE 常用形（菱形／平行四邊形／等腰梯形／鳶形／直角／等腰直角／正五／正六／圓／半圓）並接 `addShape`；填色色票新增**白色**（不透明，疊在灰影上挖空）；構造還原**垂足**（點→線段正交投影）＋ `addFoot`。
 **v13.5.5**：立體投影進「圖形」浮層（立方體／長方體／棱柱／圓台／錐／柱等）；模板選單收斂為組合起點（圓＋弦徑／圓＋圓心／高到底）＋自訂。
 **v13.5.6**：修復圖形浮層底列圖示無法點擊（viewport 內捲動＋z-index／pointer-events）。
+**v13.5.7**：清除只清空圖形，保留網格顯示／吸附／方格｜三角格設定。
 
 | 位置 | 內容 |
 |---|---|

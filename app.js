@@ -474,7 +474,7 @@
       tip_undo: "復原 (Ctrl+Z)",
       tip_redo: "重做 (Ctrl+Y)",
       tip_delete: "刪除 (Delete)",
-      tip_clear: "清除整個圖形",
+      tip_clear: "清除圖形內容（保留網格設定）",
       tip_save: "儲存 JSON",
       tip_load: "開啟 JSON",
       tip_export_menu: "匯出選項",
@@ -710,7 +710,7 @@
       tip_undo: "Undo (Ctrl+Z)",
       tip_redo: "Redo (Ctrl+Y)",
       tip_delete: "Delete (Delete)",
-      tip_clear: "Clear the whole figure",
+      tip_clear: "Clear figure content (keeps grid settings)",
       tip_save: "Save JSON",
       tip_load: "Open JSON",
       tip_export_menu: "Export options",
@@ -3270,7 +3270,7 @@
     pendingLengthSeg = null;
     pendingCoordEditId = null;
     nextLetter = "A";
-    applyDocumentViewDefaults();
+    // Keep grid/snap/mode (+ export-hide-points) prefs — clear is geometry only.
     fitEmptyView();
     // Tip of history remains the pre-clear snapshot; Ctrl+Z restores it.
     updateStatus();
@@ -9722,7 +9722,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.6",
+      version: "13.5.7",
       app: "simple-diagram",
       points,
       segments,
