@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.5.5" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.5.6" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -605,15 +605,21 @@ button:disabled {
   position: absolute;
   top: calc(48px * var(--tb, 1.2));
   left: calc(8px * var(--tb, 1.2));
-  z-index: 35;
+  /* Keep stack inside workspace so bottom icons are never clipped by overflow:hidden */
+  bottom: calc(52px * var(--tb, 1.2));
+  z-index: 45;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: calc(8px * var(--tb, 1.2));
+  max-height: none;
+  overflow: visible;
   pointer-events: none;
 }
 
 .float-panel {
+  position: relative;
+  z-index: 1;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
@@ -626,6 +632,9 @@ button:disabled {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(4px);
   max-width: calc(120px * var(--tb, 1.2));
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .float-panel[hidden] {
@@ -668,8 +677,11 @@ button:disabled {
 
 /* Shape float: compact 3-col icon grid (plane + solids; no text labels) */
 .float-panel.float-shape {
-  max-width: calc(108px * var(--tb, 1.2));
+  max-width: calc(112px * var(--tb, 1.2));
   padding: calc(5px * var(--tb, 1.2));
+  /* Fill available float-stack height; grid scrolls inside */
+  flex: 0 1 auto;
+  max-height: 100%;
 }
 
 .float-shape .shape-icon-grid {
@@ -677,9 +689,15 @@ button:disabled {
   grid-template-columns: 1fr 1fr 1fr;
   gap: calc(3px * var(--tb, 1.2));
   width: 100%;
-  max-height: calc(300px * var(--tb, 1.2));
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(6px * var(--tb, 1.2));
+  scrollbar-gutter: stable;
+  pointer-events: auto;
 }
 
 .float-shape .shape-icon-sep {
@@ -687,13 +705,16 @@ button:disabled {
   height: 1px;
   margin: calc(2px * var(--tb, 1.2)) 0;
   background: var(--bar-border);
+  pointer-events: none;
 }
 
 .float-shape .shape-icon-btn {
+  position: relative;
+  z-index: 1;
   flex: 0 0 auto;
   width: 100%;
   aspect-ratio: 1;
-  min-height: 0;
+  min-height: calc(28px * var(--tb, 1.2));
   min-width: 0;
   padding: calc(4px * var(--tb, 1.2));
   display: inline-flex;
@@ -701,6 +722,8 @@ button:disabled {
   justify-content: center;
   line-height: 0;
   color: var(--ink);
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .float-shape .shape-icon-btn svg {
@@ -915,6 +938,7 @@ body.dark-canvas .fill-swatch {
   position: absolute;
   left: 10px;
   bottom: 10px;
+  z-index: 5;
   display: flex;
   flex-wrap: wrap;
   gap: 10px 16px;
@@ -924,6 +948,7 @@ body.dark-canvas .fill-swatch {
   border-radius: var(--radius);
   font-size: 12px;
   color: var(--muted);
+  /* Never steal clicks from shape/fill floats above */
   pointer-events: none;
   backdrop-filter: blur(4px);
 }
@@ -1584,7 +1609,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.5</span>
+            <span class="brand-sub">v13.5.6</span>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -11808,7 +11833,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.5",
+      version: "13.5.6",
       app: "simple-diagram",
       points,
       segments,
@@ -13813,6 +13838,22 @@ ${body}</svg>`;
   if (rightAngleSizeSelect) {
     rightAngleSizeSelect.addEventListener("change", () =>
       setRightAngleSize(rightAngleSizeSelect.value)
+    );
+  }
+
+  /* Keep wheel zoom off scrollable floats so bottom icon rows stay reachable */
+  const floatStackEl = document.getElementById("floatStack");
+  if (floatStackEl) {
+    floatStackEl.addEventListener(
+      "wheel",
+      (e) => {
+        const scrollable =
+          e.target && e.target.closest
+            ? e.target.closest(".shape-icon-grid, .float-panel")
+            : null;
+        if (scrollable) e.stopPropagation();
+      },
+      { passive: true }
     );
   }
 
