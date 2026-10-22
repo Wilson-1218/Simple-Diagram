@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simple Diagram · AI JSON guide</title>
+  <meta name="description" content="How AI (Gemini, etc.) should output ops JSON for Simple Diagram — paste into the app. No repo access needed." />
+  <style>
+    :root {
+      --ink: #1a1a1a;
+      --muted: #555;
+      --line: #ddd;
+      --bg: #faf9f7;
+      --code: #f0eeea;
+      --accent: #0b5f6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 16px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      color: var(--ink);
+      background: linear-gradient(165deg, #f7f3ec 0%, #eef2f4 55%, #faf9f7 100%);
+      min-height: 100vh;
+    }
+    main {
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.35rem;
+    }
+    .lede { color: var(--muted); margin: 0 0 1.25rem; font-size: 0.98rem; }
+    h2 {
+      font-size: 1.05rem;
+      margin: 1.5rem 0 0.5rem;
+      border-top: 1px solid var(--line);
+      padding-top: 1rem;
+    }
+    p, li { margin: 0 0 0.55rem; }
+    ul { padding-left: 1.2em; margin: 0 0 0.75rem; }
+    code, pre {
+      font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+      font-size: 0.84rem;
+    }
+    code {
+      background: var(--code);
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+    }
+    pre {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      overflow-x: auto;
+      margin: 0.5rem 0 1rem;
+    }
+    a { color: var(--accent); }
+    .links { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin: 1rem 0 0.5rem; }
+    .links a { font-weight: 600; }
+    .note { font-size: 0.9rem; color: var(--muted); }
+    .en { font-size: 0.92rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Simple Diagram · AI JSON</h1>
+    <p class="lede">給 Gemini／其他 AI：只需讀本頁，輸出 JSON，讓使用者在 App 裡「貼上 JSON」。<br />
+      <span class="en">For Gemini etc.: read this page only → output JSON → user pastes in the app.</span>
+    </p>
+    <p class="links">
+      <a href="./">← Open app</a>
+      <a href="./#paste-json">Paste JSON in app</a>
+    </p>
+
+    <h2>1. 產出什麼 / What to output</h2>
+    <ul>
+      <li><strong>Ops 陣列</strong>（推薦）：<code>[{ "op": "addPoint", … }, …]</code></li>
+      <li>或<strong>完整圖檔</strong>：含 <code>formatVersion</code>、<code>points</code>、<code>segments</code>… 的物件</li>
+      <li>也可 <code>{ "ops": [ … ] }</code></li>
+    </ul>
+    <p class="note">不要模擬滑鼠／UI。使用者貼上後 App 會套用並更新畫布。<br />
+      <span class="en">Do not click the UI. User pastes; the app applies and redraws.</span>
+    </p>
+
+    <h2>2. 座標 / Coordinates</h2>
+    <ul>
+      <li>世界座標；<strong>+y 向下</strong>（畫布）</li>
+      <li>點請給穩定 <code>id</code>（如 <code>A</code>、<code>B</code>、<code>O</code>）</li>
+      <li>隱藏邊：<code>"style": "dashed"</code>；構造線：<code>"dotted"</code></li>
+    </ul>
+
+    <h2>3. 常用 ops（最小例）</h2>
+<pre>[
+  { "op": "addPoint", "id": "A", "x": 120, "y": 280 },
+  { "op": "addPoint", "id": "B", "x": 320, "y": 280 },
+  { "op": "addPoint", "id": "C", "x": 120, "y": 120 },
+  { "op": "addSegment", "id": "AB", "a": "A", "b": "B" },
+  { "op": "addSegment", "id": "BC", "a": "B", "b": "C" },
+  { "op": "addSegment", "id": "CA", "a": "C", "b": "A" },
+  { "op": "addRightAngle", "vertex": "A", "arm1": "B", "arm2": "C" },
+  { "op": "addLabel", "pointId": "A", "text": "A", "ox": -16, "oy": 14 },
+  { "op": "addLabel", "pointId": "B", "text": "B", "ox": 14, "oy": 14 },
+  { "op": "addLabel", "pointId": "C", "text": "C", "ox": -16, "oy": -14 },
+  { "op": "addFill", "kind": "polygon", "pointIds": ["A","B","C"], "opacity": 0.15 }
+]</pre>
+
+    <h2>4. 更多 ops（簡表）</h2>
+    <ul>
+      <li><code>addCircle</code> — <code>centerId</code> + <code>throughId</code></li>
+      <li><code>addShape</code> — <code>kind</code>：正方形／三角／圓… 或立體 <code>cube</code>、<code>frustum</code>…</li>
+      <li><code>addFoot</code> — 垂足：<code>pointId</code> + <code>segmentId</code></li>
+      <li><code>addFill</code> — <code>kind</code>：<code>polygon</code>｜<code>sector</code>｜<code>segment</code>（白色挖空：<code>color:"#ffffff", opacity:1</code>）</li>
+      <li><code>insertTemplate</code> — <code>id</code>：<code>circleGeom</code>｜<code>circleCenter</code>｜<code>altBase</code>…</li>
+      <li><code>setView</code> — <code>{ "x", "y", "scale" }</code></li>
+    </ul>
+    <p class="note">順序：先點／線／圓，再記號與填色。之後的 op 只能引用已有 id。</p>
+
+    <h2>5. 使用者怎麼貼 / How the user pastes</h2>
+    <ol>
+      <li>開啟 <a href="./">Simple Diagram</a>（本站）</li>
+      <li>按頂欄 <strong>貼上 JSON</strong></li>
+      <li>貼上 AI 產出的 JSON → <strong>套用</strong></li>
+    </ol>
+    <p class="note">可 Ctrl+Z 復原。錯誤會以中／EN 顯示。</p>
+
+    <h2>6. 規則 / Rules</h2>
+    <ul>
+      <li>只輸出 JSON（可包在 markdown 程式碼塊裡，App 會剝掉）</li>
+      <li>id 唯一；線段的 <code>a</code>/<code>b</code> 必須是已有點</li>
+      <li>數字座標用有限數字（勿用字串）</li>
+      <li>完整圖檔需像 App「儲存」的結構（含 <code>points</code> 等陣列）</li>
+    </ul>
+
+    <p class="links" style="margin-top:2rem">
+      <a href="./">App</a>
+      <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
+    </p>
+    <p class="note">Simple Diagram · Wilson Li · MIT</p>
+  </main>
+</body>
+</html>

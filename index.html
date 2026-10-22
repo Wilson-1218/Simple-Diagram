@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261021-release-v13.5.11" />
+  <meta name="simple-diagram-build" content="20261021-release-v13.5.12" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.5.11" />
+  <link rel="stylesheet" href="styles.css?v=20261021-release-v13.5.12" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.11</span>
+            <span class="brand-sub">v13.5.12</span>
           </div>
         </div>
         <div class="rail-section" data-group="draw">
@@ -138,8 +138,8 @@
                   <details class="tpl-ai-help">
                     <summary data-i18n="tpl_ai_summary">如何接入 AI / Connect AI</summary>
                     <div class="tpl-ai-body" data-i18n-html="tpl_ai_body">
-                      <p><strong>ZH</strong>：在 Cursor 用 MCP 跑 <code>npm run mcp</code>（見 README）。常用：<code>list_templates</code> → <code>insertTemplate</code>／<code>apply_ops</code>。組合 id 與上方「組合起點」相同（tooltip 可複製）。本機「我的」模板只在瀏覽器；給 AI 請用「匯出」或另存 JSON。</p>
-                      <p><strong>EN</strong>: Run MCP via <code>npm run mcp</code> (README). Use <code>list_templates</code> then <code>insertTemplate</code> / <code>apply_ops</code>. Combo ids match the menu (see tooltips). Saved templates are browser-local — export JSON for agents. Playbook: <code>docs/agent-draw-playbook.md</code>.</p>
+                      <p><strong>ZH</strong>：給 Gemini 看 <a href="ai.html" target="_blank" rel="noopener">ai.html</a>（本站），產出 ops JSON，再按頂欄「貼上 JSON」。亦可本機 MCP。</p>
+                      <p><strong>EN</strong>: Point Gemini at <a href="ai.html" target="_blank" rel="noopener">ai.html</a>, then use <strong>Paste JSON</strong> in the app.</p>
                     </div>
                   </details>
                 </div>
@@ -200,6 +200,7 @@
             </div>
 
             <div class="tool-group" data-group="file">
+              <button type="button" id="btnPasteJson" title="貼上 AI／ops JSON" data-i18n-title="tip_paste_json" data-i18n="btn_paste_json">貼上 JSON</button>
               <button type="button" id="btnSave" title="儲存 JSON" data-i18n-title="tip_save">儲存</button>
               <button type="button" id="btnLoad" title="開啟 JSON" data-i18n-title="tip_load">開啟</button>
               <div class="menu-wrap">
@@ -533,6 +534,23 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261021-release-v13.5.11"></script>
+  <dialog id="pasteJsonDialog">
+    <form method="dialog" id="pasteJsonForm" class="paste-json-form">
+      <p class="dialog-lead" data-i18n="paste_json_lead">貼上 JSON</p>
+      <p class="dialog-note" data-i18n="paste_json_note">接受 ops 陣列或完整圖檔。AI 說明：<a href="ai.html" target="_blank" rel="noopener">ai.html</a></p>
+      <textarea id="pasteJsonInput" rows="12" spellcheck="false" placeholder='[{ "op": "addPoint", "id": "A", "x": 100, "y": 100 }, …]'></textarea>
+      <p class="dialog-note paste-json-err" id="pasteJsonError" hidden></p>
+      <label class="check-opt paste-json-merge">
+        <input type="checkbox" id="pasteJsonMerge" />
+        <span data-i18n="paste_json_merge">加到目前圖形（不勾＝以貼上內容取代）</span>
+      </label>
+      <div class="dialog-actions">
+        <button type="submit" value="ok" data-i18n="paste_json_apply">套用</button>
+        <button type="button" id="pasteJsonCancel" value="cancel" data-i18n="tpl_dialog_cancel">取消</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js?v=20261021-release-v13.5.12"></script>
 </body>
 </html>

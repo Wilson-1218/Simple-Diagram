@@ -659,6 +659,37 @@ button:disabled {
   margin: 0 0 4px;
 }
 
+.paste-json-form {
+  min-width: min(92vw, 420px);
+}
+
+.paste-json-form textarea {
+  width: 100%;
+  min-height: 180px;
+  margin: 6px 0 8px;
+  padding: 8px 10px;
+  font: 12px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  border: 1px solid var(--bar-border, #ccc);
+  border-radius: 6px;
+  resize: vertical;
+  background: var(--panel, #fff);
+  color: var(--ink, #222);
+}
+
+.paste-json-err {
+  color: var(--danger, #b00020) !important;
+  white-space: pre-wrap;
+}
+
+.paste-json-merge {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 4px 0 10px;
+  font-size: calc(12px * var(--tb, 1));
+  color: var(--muted);
+}
+
 .mark-opts {
   display: inline-flex;
   align-items: center;
