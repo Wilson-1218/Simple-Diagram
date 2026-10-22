@@ -8,9 +8,12 @@
 import {
   normalizeLengthStyle,
   normalizeLengthOrient,
+  normalizeLengthStroke,
+  lengthStrokeDash,
   lengthOffsetFrame,
   dimMarkParts,
   arcsMarkParts,
+  endsMarkParts,
   readableEdgeAngle,
 } from "./length-mark.mjs";
 
@@ -125,15 +128,17 @@ function svgLengthLabel(ll, doc, pts, toS, scale) {
   const orient = normalizeLengthOrient(ll.orient);
   const fontPx = Math.min(48, Math.max(10, Number(ll.size) || 16)) * scale * 0.75;
   const side = ll.side === -1 ? -1 : 1;
-  const off = (style === "text" ? 14 : 18) * scale * 0.75;
+  const sc = scale * 0.75;
+  const off =
+    (style === "text" ? 14 : style === "ends" ? 10 : 18) * sc;
   const frame = lengthOffsetFrame(a, b, side, off);
   const ang = orient === "horizontal" ? 0 : frame.angle || readableEdgeAngle(frame.dx, frame.dy);
-  const lw = Math.max(1.1, 1.35 * scale * 0.75).toFixed(2);
+  const lw = Math.max(1.1, 1.35 * sc).toFixed(2);
   let out = "";
   let lx = frame.mx;
   let ly = frame.my;
   if (style === "dim") {
-    const parts = dimMarkParts(frame, fontPx, ll.text || "", scale * 0.75);
+    const parts = dimMarkParts(frame, fontPx, ll.text || "", sc);
     const { tick0, tick1, lineA, lineB, arrow0, arrow1 } = parts;
     out += `<line x1="${tick0.x0.toFixed(2)}" y1="${tick0.y0.toFixed(2)}" x2="${tick0.x1.toFixed(2)}" y2="${tick0.y1.toFixed(2)}" stroke="#111" stroke-width="${lw}"/>\n`;
     out += `<line x1="${tick1.x0.toFixed(2)}" y1="${tick1.y0.toFixed(2)}" x2="${tick1.x1.toFixed(2)}" y2="${tick1.y1.toFixed(2)}" stroke="#111" stroke-width="${lw}"/>\n`;
@@ -144,9 +149,20 @@ function svgLengthLabel(ll, doc, pts, toS, scale) {
     lx = parts.label.x;
     ly = parts.label.y;
   } else if (style === "arcs") {
-    // Markers sit on the segment ends; label lifts just above the midline.
+    const parts = arcsMarkParts(frame, fontPx, ll.text || "", sc);
+    const dash = lengthStrokeDash(normalizeLengthStroke(ll.stroke), sc);
+    const dashAttr = dash.length
+      ? ` stroke-dasharray="${dash.map((n) => n.toFixed(2)).join(" ")}"`
+      : "";
+    const qPath = (q) =>
+      `M${q.x0.toFixed(2)},${q.y0.toFixed(2)} Q${q.cx.toFixed(2)},${q.cy.toFixed(2)} ${q.x1.toFixed(2)},${q.y1.toFixed(2)}`;
+    out += `<path d="${qPath(parts.arcA)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"${dashAttr}/>\n`;
+    out += `<path d="${qPath(parts.arcB)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"${dashAttr}/>\n`;
+    lx = parts.label.x;
+    ly = parts.label.y;
+  } else if (style === "ends") {
     const onSeg = lengthOffsetFrame(a, b, side, 0);
-    const parts = arcsMarkParts(onSeg, fontPx, ll.text || "", scale * 0.75);
+    const parts = endsMarkParts(onSeg, fontPx, ll.text || "", sc);
     const qPath = (q) =>
       `M${q.x0.toFixed(2)},${q.y0.toFixed(2)} Q${q.cx.toFixed(2)},${q.cy.toFixed(2)} ${q.x1.toFixed(2)},${q.y1.toFixed(2)}`;
     for (const mark of [parts.mark0, parts.mark1]) {

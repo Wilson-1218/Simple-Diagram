@@ -261,8 +261,10 @@
   let lengthMarkSize = DEFAULT_LABEL_SIZE;
   /** @type {"tilt"|"horizontal"} */
   let lengthMarkOrient = "tilt";
-  /** @type {"text"|"dim"|"arcs"} */
+  /** @type {"text"|"dim"|"arcs"|"ends"} */
   let lengthMarkStyle = "text";
+  /** @type {"solid"|"dashed"|"dotted"} arc-bracket stroke default */
+  let lengthMarkStroke = "dotted";
   let activeParallelGroup = 0; // 0 or 1
   let activeEqualGroup = 0;
   let activeArcGroup = 0; // 0 = single, 1 = double arc
@@ -356,10 +358,19 @@
       tip_length_style: "長度標註樣式",
       tip_length_style_text: "純文字",
       tip_length_style_dim: "尺寸線（兩端箭頭）",
-      tip_length_style_arcs: "端點雙弧記號（考卷弧括）",
+      tip_length_style_arcs: "弧括號：平行弧＋中間數值",
+      tip_length_style_ends: "端點弧：線上雙弧記號",
+      tip_length_stroke: "弧括號線型",
+      tip_length_stroke_solid: "實線",
+      tip_length_stroke_dashed: "虛線",
+      tip_length_stroke_dotted: "點線",
       length_style_text: "1 文字",
       length_style_dim: "2 尺寸",
       length_style_arcs: "3 弧括",
+      length_style_ends: "4 端點弧",
+      length_stroke_solid: "實線",
+      length_stroke_dashed: "虛線",
+      length_stroke_dotted: "點線",
       btn_layers: "圖層 ▾", layers_title: "圖層", layers_grid: "網格", layers_coords: "座標",
       layers_helpers: "記號", layers_show: "顯示", layers_lock: "鎖定",
       tip_layers: "圖層顯示／鎖定（網格／座標／記號；記號預設鎖定，解鎖後可拖標籤／記號）",
@@ -602,11 +613,11 @@
       aria_label_size: "標籤字級",
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
-      hint_idle: "右鍵選取 · 中鍵拖曳平移 · 空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
+      hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
       title_doc: "Simple Diagram · Wilson",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
-      shortcuts_pointer_note: "滑鼠：右鍵＝選取工具（並取消進行中的步驟）；中鍵按住拖曳＝平移畫布（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。",
+      shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
       shortcuts_reset: "還原預設",
       btn_close: "關閉",
       whats_new_title: "更新說明",
@@ -646,10 +657,19 @@
       tip_length_style: "Length mark style",
       tip_length_style_text: "Text only",
       tip_length_style_dim: "Dimension line (arrows both ends)",
-      tip_length_style_arcs: "Dual-arc end marks (exam style)",
+      tip_length_style_arcs: "Arc bracket: parallel bow with mid gap",
+      tip_length_style_ends: "End arcs: dual-arc ticks on the segment",
+      tip_length_stroke: "Arc-bracket stroke",
+      tip_length_stroke_solid: "Solid",
+      tip_length_stroke_dashed: "Dashed",
+      tip_length_stroke_dotted: "Dotted",
       length_style_text: "1 Text",
       length_style_dim: "2 Dim",
       length_style_arcs: "3 Arcs",
+      length_style_ends: "4 Ends",
+      length_stroke_solid: "Solid",
+      length_stroke_dashed: "Dashed",
+      length_stroke_dotted: "Dotted",
       btn_layers: "Layers ▾", layers_title: "Layers", layers_grid: "Grid", layers_coords: "Axes",
       layers_helpers: "Marks", layers_show: "Show", layers_lock: "Lock",
       tip_layers: "Layer show/lock (grid / axes / marks; marks default locked — unlock to drag)",
@@ -893,11 +913,11 @@
       aria_label_size: "Label size",
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
-      hint_idle: "RMB Select · middle-drag pan · Space pan · wheel zoom · Esc cancel · ? shortcuts",
+      hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
       title_doc: "Simple Diagram · Wilson",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
-      shortcuts_pointer_note: "Pointer: right-click = Select tool (cancels an in-progress draft); middle-button drag = pan (same as Space / Hand). Browser context menu is suppressed on the canvas.",
+      shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
       shortcuts_reset: "Reset defaults",
       btn_close: "Close",
       whats_new_title: "What’s new",
@@ -1008,6 +1028,8 @@
   /** @type {{kind:string,x?:number,y?:number,x1?:number,y1?:number,x2?:number,y2?:number,label?:string}[]} */
   let alignGuides = [];
   let previousTool = "select";
+  /** Last non-select tool (for Select + `+` restore after right-click→select). */
+  let lastNonSelectTool = null;
   let currentDocName = "simple-diagram.json";
   let autosaveTimer = null;
   let shortcutListenId = null;
@@ -2598,7 +2620,11 @@
   }
 
   function setTool(name) {
-    if (name && name !== tool) previousTool = tool;
+    if (name && name !== tool) {
+      previousTool = tool;
+      // Remember the drawing tool we left when entering Select (or switching among tools)
+      if (tool && tool !== "select") lastNonSelectTool = tool;
+    }
     tool = name;
     draft = null;
     document.querySelectorAll(".tool").forEach((btn) => {
@@ -6422,22 +6448,37 @@
   function normalizeLengthStyle(v) {
     if (v === "dim" || v === 2 || v === "2") return "dim";
     if (v === "arcs" || v === 3 || v === "3") return "arcs";
+    if (v === "ends" || v === "endArcs" || v === 4 || v === "4") return "ends";
     return "text";
   }
   function normalizeLengthOrient(v) {
     if (v === "horizontal" || v === "h" || v === "fixed") return "horizontal";
     return "tilt";
   }
+  function normalizeLengthStroke(v) {
+    if (v === "solid" || v === "dashed" || v === "dotted") return v;
+    return "dotted";
+  }
+  function lengthStrokeDash(stroke, scaleMul) {
+    const st = normalizeLengthStroke(stroke);
+    if (st === "solid") return [];
+    if (st === "dashed") return [Math.max(5, 7 * scaleMul), Math.max(4, 5 * scaleMul)];
+    return [Math.max(1.4, 1.8 * scaleMul), Math.max(3.2, 4 * scaleMul)];
+  }
   function normalizeLengthLabelRecord(m) {
     if (!m) return m;
-    return {
+    const style = normalizeLengthStyle(m.style);
+    const row = {
       ...m,
       side: m.side === -1 ? -1 : 1,
       text: m.text != null ? String(m.text) : "",
       size: clampLabelSize(m.size != null ? m.size : DEFAULT_LABEL_SIZE),
       orient: normalizeLengthOrient(m.orient),
-      style: normalizeLengthStyle(m.style),
+      style,
     };
+    if (style === "arcs") row.stroke = normalizeLengthStroke(m.stroke);
+    else delete row.stroke;
+    return row;
   }
   function lengthLabelFontPx(ll, scaleMul) {
     const base = clampLabelSize(ll && ll.size != null ? ll.size : lengthMarkSize);
@@ -6445,8 +6486,8 @@
   }
   function lengthOffsetPx(ll, scaleMul) {
     const style = normalizeLengthStyle(ll && ll.style);
-    // arcs: markers on the segment; label sits just above (small lift)
-    const base = style === "text" ? 14 : style === "arcs" ? 10 : 18;
+    // ends: ticks on segment (small lift); arcs/dim: parallel offset
+    const base = style === "text" ? 14 : style === "ends" ? 10 : 18;
     return base * scaleMul;
   }
   function approxLengthTextWidth(text, fontPx) {
@@ -6544,12 +6585,44 @@
     }
 
     if (style === "arcs") {
-      // Exam-style: dual-arc ticks on segment ends; value just above midline
+      // Parallel bow beside segment with mid gap for the value
+      const pad = Math.max(4, fontPx * 0.35);
+      const gap = approxLengthTextWidth(ll.text, fontPx) + pad * 2;
+      const halfGap = gap / 2;
+      const bulge = Math.max(7, 9.5 * scaleMul);
+      const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
+      const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
+      const mA = {
+        x: (p0.x + g0.x) / 2 + nx * bulge,
+        y: (p0.y + g0.y) / 2 + ny * bulge,
+      };
+      const mB = {
+        x: (g1.x + p1.x) / 2 + nx * bulge,
+        y: (g1.y + p1.y) / 2 + ny * bulge,
+      };
+      c.save();
+      c.strokeStyle = ink;
+      c.lineWidth = lw;
+      c.lineCap = "round";
+      c.lineJoin = "round";
+      c.setLineDash(lengthStrokeDash(ll.stroke, scaleMul));
+      c.beginPath();
+      c.moveTo(p0.x, p0.y);
+      c.quadraticCurveTo(mA.x, mA.y, g0.x, g0.y);
+      c.moveTo(g1.x, g1.y);
+      c.quadraticCurveTo(mB.x, mB.y, p1.x, p1.y);
+      c.stroke();
+      c.setLineDash([]);
+      c.restore();
+      paintLabelText(c, ll.text, mx, my, fontPx, ink, withHalo, ang);
+      return;
+    }
+
+    if (style === "ends") {
+      // Dual-arc end ticks on the segment; value just above midline
       const lift = Math.max(fontPx * 0.55, 8 * scaleMul);
       const w = Math.max(4.2, 5.2 * scaleMul);
       const h = Math.max(5.2, 6.8 * scaleMul);
-      const tip0 = sa;
-      const tip1 = sb;
       const lx = (sa.x + sb.x) / 2 + nx * lift;
       const ly = (sa.y + sb.y) / 2 + ny * lift;
       const strokeEndMark = (tip) => {
@@ -6575,8 +6648,8 @@
       c.lineJoin = "round";
       c.setLineDash([]);
       c.beginPath();
-      strokeEndMark(tip0);
-      strokeEndMark(tip1);
+      strokeEndMark(sa);
+      strokeEndMark(sb);
       c.stroke();
       c.restore();
       paintLabelText(c, ll.text, lx, ly, fontPx, ink, withHalo, ang);
@@ -6651,6 +6724,27 @@
       out += svgArrowHead(p0.x, p0.y, -dx, -dy, arrow);
       out += svgArrowHead(p1.x, p1.y, dx, dy, arrow);
     } else if (style === "arcs") {
+      const pad = Math.max(4, fontPx * 0.35);
+      const gap = approxLengthTextWidth(ll.text, fontPx) + pad * 2;
+      const halfGap = gap / 2;
+      const bulge = Math.max(7, 9.5 * scaleMul);
+      const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
+      const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
+      const mA = {
+        x: (p0.x + g0.x) / 2 + nx * bulge,
+        y: (p0.y + g0.y) / 2 + ny * bulge,
+      };
+      const mB = {
+        x: (g1.x + p1.x) / 2 + nx * bulge,
+        y: (g1.y + p1.y) / 2 + ny * bulge,
+      };
+      const dash = lengthStrokeDash(ll.stroke, scaleMul);
+      const dashAttr = dash.length
+        ? ` stroke-dasharray="${dash.map((n) => n.toFixed(2)).join(" ")}"`
+        : "";
+      out += `<path d="M${p0.x.toFixed(2)},${p0.y.toFixed(2)} Q${mA.x.toFixed(2)},${mA.y.toFixed(2)} ${g0.x.toFixed(2)},${g0.y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"${dashAttr}/>\n`;
+      out += `<path d="M${g1.x.toFixed(2)},${g1.y.toFixed(2)} Q${mB.x.toFixed(2)},${mB.y.toFixed(2)} ${p1.x.toFixed(2)},${p1.y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round"${dashAttr}/>\n`;
+    } else if (style === "ends") {
       const lift = Math.max(fontPx * 0.55, 8 * scaleMul);
       const w = Math.max(4.2, 5.2 * scaleMul);
       const h = Math.max(5.2, 6.8 * scaleMul);
@@ -6677,7 +6771,7 @@
     const halo = Math.max(3, fontPx * 0.28);
     let lx = labelX;
     let ly = labelY;
-    if (style === "arcs") {
+    if (style === "ends") {
       const lift = Math.max(fontPx * 0.55, 8 * scaleMul);
       lx = (sa.x + sb.x) / 2 + nx * lift;
       ly = (sa.y + sb.y) / 2 + ny * lift;
@@ -6705,6 +6799,7 @@
       size: lengthMarkSize,
       orient: lengthMarkOrient,
       style: lengthMarkStyle,
+      stroke: lengthMarkStroke,
     };
     if (lengthSizeSelect) {
       lengthSizeSelect.value = String(clampLabelSize(src.size != null ? src.size : lengthMarkSize));
@@ -6712,8 +6807,15 @@
     document.querySelectorAll("[data-length-orient]").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.lengthOrient === normalizeLengthOrient(src.orient));
     });
+    const style = normalizeLengthStyle(src.style);
     document.querySelectorAll("[data-length-style]").forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.lengthStyle === normalizeLengthStyle(src.style));
+      btn.classList.toggle("active", btn.dataset.lengthStyle === style);
+    });
+    const strokeBar = document.getElementById("lengthStrokeBar");
+    if (strokeBar) strokeBar.hidden = style !== "arcs";
+    const stroke = normalizeLengthStroke(src.stroke != null ? src.stroke : lengthMarkStroke);
+    document.querySelectorAll("[data-length-stroke]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.lengthStroke === stroke);
     });
   }
 
@@ -6758,11 +6860,40 @@
     document.querySelectorAll("[data-length-style]").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.lengthStyle === st);
     });
+    const strokeBar = document.getElementById("lengthStrokeBar");
+    if (strokeBar) strokeBar.hidden = st !== "arcs";
     const labs = selectedLengthLabels();
-    if (!labs.length) return;
-    if (labs.some((l) => normalizeLengthStyle(l.style) !== st)) {
+    if (!labs.length) {
+      syncLengthFloatUI();
+      return;
+    }
+    const need =
+      labs.some((l) => normalizeLengthStyle(l.style) !== st) ||
+      (st === "arcs" &&
+        labs.some((l) => normalizeLengthStroke(l.stroke) !== normalizeLengthStroke(lengthMarkStroke)));
+    if (need) {
       pushHistory();
-      for (const l of labs) l.style = st;
+      for (const l of labs) {
+        l.style = st;
+        if (st === "arcs") l.stroke = normalizeLengthStroke(l.stroke || lengthMarkStroke);
+        else delete l.stroke;
+      }
+      draw();
+    }
+    syncLengthFloatUI();
+  }
+
+  function setLengthMarkStroke(stroke) {
+    const st = normalizeLengthStroke(stroke);
+    lengthMarkStroke = st;
+    document.querySelectorAll("[data-length-stroke]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.lengthStroke === st);
+    });
+    const labs = selectedLengthLabels().filter((l) => normalizeLengthStyle(l.style) === "arcs");
+    if (!labs.length) return;
+    if (labs.some((l) => normalizeLengthStroke(l.stroke) !== st)) {
+      pushHistory();
+      for (const l of labs) l.stroke = st;
       draw();
     }
   }
@@ -7654,10 +7785,16 @@
       return;
     }
 
-    // Right-click anywhere → select tool (cancels in-progress draft via setTool)
+    // Right-click toggle: non-select → Select (cancel draft); Select → last non-select tool
     if (e.button === 2) {
       e.preventDefault();
-      setTool("select");
+      if (tool === "select") {
+        if (lastNonSelectTool && lastNonSelectTool !== "select") {
+          setTool(lastNonSelectTool);
+        }
+      } else {
+        setTool("select");
+      }
       return;
     }
 
@@ -10392,7 +10529,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.23",
+      version: "13.5.24",
       app: "simple-diagram",
       points,
       segments,
@@ -12613,14 +12750,18 @@ ${body}</svg>`;
     for (const id of llIds) {
       const ll = lengthLabels.find((x) => x.id === id);
       if (!ll || segIndex[ll.segmentId] == null) continue;
-      lls.push({
+      const st = normalizeLengthStyle(ll.style);
+      /** @type {Record<string, unknown>} */
+      const row = {
         segment: segIndex[ll.segmentId],
         text: ll.text || "6",
         side: ll.side === -1 ? -1 : 1,
         size: clampLabelSize(ll.size != null ? ll.size : DEFAULT_LABEL_SIZE),
         orient: normalizeLengthOrient(ll.orient),
-        style: normalizeLengthStyle(ll.style),
-      });
+        style: st,
+      };
+      if (st === "arcs") row.stroke = normalizeLengthStroke(ll.stroke);
+      lls.push(row);
     }
 
     const zh = (nameZh || "").trim() || (uiLang === "en" ? "My template" : "我的模板");
@@ -12815,6 +12956,7 @@ ${body}</svg>`;
           size: ll.size,
           orient: ll.orient,
           style: ll.style,
+          stroke: ll.stroke,
         })
       );
     }
@@ -13181,6 +13323,20 @@ ${body}</svg>`;
       canvas.classList.add("space-pan", "panning");
       e.preventDefault();
       return;
+    }
+    // Select + `+` / `=` / NumpadAdd → restore previous non-select tool
+    if (
+      tool === "select" &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.altKey &&
+      (e.key === "+" || e.key === "=" || e.code === "NumpadAdd" || e.code === "Equal")
+    ) {
+      if (lastNonSelectTool && lastNonSelectTool !== "select") {
+        e.preventDefault();
+        setTool(lastNonSelectTool);
+        return;
+      }
     }
     if (e.key === "Enter") {
       if (draft && draft.kind === "fill") {
@@ -13614,6 +13770,9 @@ ${body}</svg>`;
         existing.size = clampLabelSize(existing.size != null ? existing.size : lengthMarkSize);
         existing.orient = normalizeLengthOrient(existing.orient || lengthMarkOrient);
         existing.style = normalizeLengthStyle(existing.style || lengthMarkStyle);
+        if (existing.style === "arcs") {
+          existing.stroke = normalizeLengthStroke(existing.stroke || lengthMarkStroke);
+        } else delete existing.stroke;
       } else
         lengthLabels.push(
           normalizeLengthLabelRecord({
@@ -13624,6 +13783,7 @@ ${body}</svg>`;
             size: lengthMarkSize,
             orient: lengthMarkOrient,
             style: lengthMarkStyle,
+            stroke: lengthMarkStyle === "arcs" ? lengthMarkStroke : undefined,
           })
         );
       history[histIndex] = snapshot();
@@ -13772,6 +13932,9 @@ ${body}</svg>`;
   });
   document.querySelectorAll("[data-length-style]").forEach((btn) => {
     btn.addEventListener("click", () => setLengthMarkStyle(btn.dataset.lengthStyle));
+  });
+  document.querySelectorAll("[data-length-stroke]").forEach((btn) => {
+    btn.addEventListener("click", () => setLengthMarkStroke(btn.dataset.lengthStroke));
   });
 
   /* Keep wheel zoom off scrollable floats so bottom icon rows stay reachable */
