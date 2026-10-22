@@ -11,6 +11,8 @@
 
 Schema: [`diagram-format.md`](diagram-format.md) · Module: `src/diagram/` · MCP: `mcp/server.mjs`
 
+**Pages-only AI guide (Gemini):** [`ai.html`](../ai.html) — then user **Paste JSON** in the app.
+
 ---
 
 ## Recommended loop / 建議流程

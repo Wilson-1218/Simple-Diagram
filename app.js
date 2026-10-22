@@ -453,7 +453,21 @@
       circlePart_too_short: "拖曳太短，已取消",
       shape_too_small: "圖形太小，已取消",
       btn_template: "模板 ▾", btn_save_tpl: "存成模板", btn_recent: "最近 ▾",
-      btn_copy: "複製", btn_delete: "刪除", btn_clear: "清除", btn_save: "儲存", btn_load: "開啟",
+      btn_copy: "複製", btn_delete: "刪除", btn_clear: "清除",
+      btn_paste_json: "貼上 JSON", btn_save: "儲存", btn_load: "開啟",
+      tip_paste_json: "貼上 AI／ops JSON 或完整圖檔",
+      paste_json_lead: "貼上 JSON",
+      paste_json_note: "接受 ops 陣列或完整圖檔。AI 說明：ai.html（本站）",
+      paste_json_merge: "加到目前圖形（不勾＝以貼上內容取代）",
+      paste_json_apply: "套用",
+      paste_json_ok_ops: "已套用 {n} 步 ops",
+      paste_json_ok_doc: "已載入圖檔",
+      paste_json_err_empty: "請貼上 JSON",
+      paste_json_err_parse: "JSON 無法解析",
+      paste_json_err_shape: "需要 ops 陣列或完整圖檔物件",
+      paste_json_err_ops: "套用 ops 失敗",
+      paste_json_err_doc: "圖檔無效",
+      paste_json_err_import: "無法載入 ops 引擎（請用網頁伺服器開啟，勿用 file://）",
       btn_export_menu: "匯出 ▾", btn_export_crop: "框選匯出", btn_clear_crop: "清除裁切", btn_preview: "預覽匯出",
       btn_restore_backup: "還原自動備份", menu_recent: "最近開啟", menu_backup: "備份",
       menu_plane: "平面", menu_solid: "立體", menu_combo: "組合起點", menu_custom: "自訂",
@@ -566,8 +580,8 @@
       attr_credit_tip: "授權與轉載聲明（開啟 ? 看完整說明）",
       attr_help: "可自由使用、複製及二次開發；轉載或再發佈時請保留來源聲明：Simple Diagram（Wilson Li）及 GitHub 連結。",
       tpl_ai_body:
-        "<p><strong>ZH</strong>：在 Cursor 用 MCP 跑 <code>npm run mcp</code>（見 README）。常用：<code>list_templates</code> → <code>insertTemplate</code>／<code>apply_ops</code>。組合 id 與上方「組合起點」相同（tooltip 可複製）。本機「我的」模板只在瀏覽器；給 AI 請用「匯出」或另存 JSON。手冊：<code>docs/agent-draw-playbook.md</code>。</p>" +
-        "<p><strong>EN</strong>: Run MCP via <code>npm run mcp</code>. Use <code>list_templates</code> then <code>insertTemplate</code> / <code>apply_ops</code>. Saved templates are browser-local — export JSON for agents.</p>",
+        "<p><strong>ZH</strong>：給 Gemini 開 <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>（本站即可），產出 ops JSON，再按「貼上 JSON」。亦可本機 MCP。</p>" +
+        "<p><strong>EN</strong>: Point Gemini at <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>, then <strong>Paste JSON</strong>.</p>",
     },
     en: {
       tool_select: "Select", tool_hand: "Pan", tool_point: "Point", tool_line: "Line",
@@ -707,7 +721,21 @@
       circlePart_too_short: "Drag too short — cancelled",
       shape_too_small: "Shape too small — cancelled",
       btn_template: "Templates ▾", btn_save_tpl: "Save as template", btn_recent: "Recent ▾",
-      btn_copy: "Copy", btn_delete: "Delete", btn_clear: "Clear", btn_save: "Save", btn_load: "Open",
+      btn_copy: "Copy", btn_delete: "Delete", btn_clear: "Clear",
+      btn_paste_json: "Paste JSON", btn_save: "Save", btn_load: "Open",
+      tip_paste_json: "Paste AI / ops JSON or a full diagram document",
+      paste_json_lead: "Paste JSON",
+      paste_json_note: "Ops array or full document. AI guide: ai.html on this site",
+      paste_json_merge: "Merge onto current figure (off = replace)",
+      paste_json_apply: "Apply",
+      paste_json_ok_ops: "Applied {n} ops",
+      paste_json_ok_doc: "Document loaded",
+      paste_json_err_empty: "Paste some JSON first",
+      paste_json_err_parse: "Could not parse JSON",
+      paste_json_err_shape: "Need an ops array or a full diagram object",
+      paste_json_err_ops: "Failed to apply ops",
+      paste_json_err_doc: "Invalid diagram document",
+      paste_json_err_import: "Could not load ops engine (serve over http, not file://)",
       btn_export_menu: "Export ▾", btn_export_crop: "Crop export", btn_clear_crop: "Clear crop", btn_preview: "Preview",
       btn_restore_backup: "Restore backup", menu_recent: "Recent", menu_backup: "Backup",
       menu_plane: "Plane", menu_solid: "Solid", menu_combo: "Combo starters", menu_custom: "Custom",
@@ -820,8 +848,8 @@
       attr_credit_tip: "License & attribution (open ? for details)",
       attr_help: "Free to use, copy, and modify. Please keep attribution: “Simple Diagram” by Wilson Li — and the GitHub link.",
       tpl_ai_body:
-        "<p><strong>EN</strong>: Run MCP with <code>npm run mcp</code> (see README). Use <code>list_templates</code> then <code>insertTemplate</code> / <code>apply_ops</code>. Combo ids match the menu (tooltips). Saved templates are <em>browser-local</em> — export JSON for agents. Playbook: <code>docs/agent-draw-playbook.md</code>.</p>" +
-        "<p><strong>ZH</strong>：Cursor MCP 跑 <code>npm run mcp</code>。流程：<code>list_templates</code> → <code>insertTemplate</code>／<code>apply_ops</code>。「我的」模板只在瀏覽器；給 AI 請匯出 JSON。</p>",
+        "<p><strong>EN</strong>: Point Gemini at <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a> on this site, then use <strong>Paste JSON</strong>. Optional: local MCP.</p>" +
+        "<p><strong>ZH</strong>：給 Gemini 看 <a href=\"ai.html\" target=\"_blank\" rel=\"noopener\">ai.html</a>，再「貼上 JSON」。</p>",
     },
   };
 
@@ -871,6 +899,7 @@
       btnCopy: "btn_copy",
       btnDelete: "btn_delete",
       btnClearAll: "btn_clear",
+      btnPasteJson: "btn_paste_json",
       btnSave: "btn_save",
       btnLoad: "btn_load",
       btnExportMenu: "btn_export_menu",
@@ -9880,7 +9909,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.11",
+      version: "13.5.12",
       app: "simple-diagram",
       points,
       segments,
@@ -10237,6 +10266,156 @@ ${body}</svg>`;
       }
     };
     reader.readAsText(file);
+  }
+
+  /** Strip optional markdown fences from AI paste. */
+  function stripJsonFences(raw) {
+    let s = String(raw || "").trim();
+    if (!s) return s;
+    const fence = /^```(?:json|JSON)?\s*\n?([\s\S]*?)\n?```$/;
+    const m = s.match(fence);
+    if (m) return m[1].trim();
+    if (s.startsWith("```")) {
+      s = s.replace(/^```(?:json|JSON)?\s*\n?/, "").replace(/\n?```\s*$/, "");
+    }
+    return s.trim();
+  }
+
+  function showPasteJsonError(msg) {
+    const el = document.getElementById("pasteJsonError");
+    if (!el) return;
+    if (!msg) {
+      el.hidden = true;
+      el.textContent = "";
+      return;
+    }
+    el.hidden = false;
+    el.textContent = msg;
+  }
+
+  function openPasteJsonDialog() {
+    const dlg = document.getElementById("pasteJsonDialog");
+    const input = document.getElementById("pasteJsonInput");
+    showPasteJsonError("");
+    if (input && !input.value) input.value = "";
+    if (dlg && typeof dlg.showModal === "function") {
+      dlg.showModal();
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+  }
+
+  function buildDocSnapshotForOps() {
+    return {
+      formatVersion: FORMAT_VERSION,
+      version: buildProjectData().version,
+      app: "simple-diagram",
+      points: structuredClone(points),
+      segments: structuredClone(segments),
+      labels: structuredClone(labels),
+      rightAngles: structuredClone(rightAngles),
+      angleArcs: structuredClone(angleArcs),
+      midTicks: structuredClone(midTicks),
+      parallelMarks: structuredClone(parallelMarks),
+      equalMarks: structuredClone(equalMarks),
+      lengthLabels: structuredClone(lengthLabels),
+      circles: structuredClone(circles),
+      ellipses: structuredClone(ellipses),
+      sectors: structuredClone(sectors),
+      fills: structuredClone(fills),
+      coordPlots: structuredClone(coordPlots),
+      layers: { ...layers },
+      nextLetter,
+      labelFontSize,
+      rightAngleSize,
+      gridSnap,
+      gridMode,
+      hideExportPoints,
+      view: { ...view },
+      name: currentDocName,
+    };
+  }
+
+  async function loadDiagramModule() {
+    // Relative to the HTML page URL (works on GitHub Pages + local http server).
+    return import(new URL("./src/diagram/index.mjs", window.location.href).href);
+  }
+
+  /**
+   * Paste ops array or full document. Undoable via applyProjectData → pushHistory.
+   * @returns {Promise<{ ok: boolean, message?: string }>}
+   */
+  async function applyPastedJsonText(raw, mergeOntoCurrent) {
+    const text = stripJsonFences(raw);
+    if (!text) return { ok: false, message: t("paste_json_err_empty") };
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (err) {
+      return {
+        ok: false,
+        message: t("paste_json_err_parse") + (err && err.message ? " — " + err.message : ""),
+      };
+    }
+
+    let ops = null;
+    if (Array.isArray(data)) {
+      ops = data;
+    } else if (data && typeof data === "object" && Array.isArray(data.ops) && !Array.isArray(data.points)) {
+      ops = data.ops;
+    }
+
+    if (ops) {
+      let mod;
+      try {
+        mod = await loadDiagramModule();
+      } catch (err) {
+        return {
+          ok: false,
+          message: t("paste_json_err_import") + (err && err.message ? " — " + err.message : ""),
+        };
+      }
+      try {
+        const base = mergeOntoCurrent ? buildDocSnapshotForOps() : null;
+        const doc = mod.applyOps(base, ops);
+        const v = mod.validateDiagram(doc);
+        if (!v.ok) {
+          return {
+            ok: false,
+            message:
+              t("paste_json_err_ops") +
+              "\n" +
+              (v.errors || []).slice(0, 6).join("\n"),
+          };
+        }
+        applyProjectData(doc, { name: doc.name || currentDocName || "pasted-ops.json" });
+        return { ok: true, message: t("paste_json_ok_ops").replace("{n}", String(ops.length)) };
+      } catch (err) {
+        return {
+          ok: false,
+          message: t("paste_json_err_ops") + " — " + (err && err.message ? err.message : String(err)),
+        };
+      }
+    }
+
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      const check = lightValidateProject(data);
+      if (!check.ok) {
+        return {
+          ok: false,
+          message: t("paste_json_err_doc") + "\n" + (check.errors || []).join("\n"),
+        };
+      }
+      if (mergeOntoCurrent) {
+        // Merge document geometry onto current via ops is hard; treat as replace.
+      }
+      applyProjectData(data, { name: data.name || "pasted.json" });
+      return { ok: true, message: t("paste_json_ok_doc") };
+    }
+
+    return { ok: false, message: t("paste_json_err_shape") };
   }
 
   // ——— Templates ———
@@ -12599,6 +12778,7 @@ ${body}</svg>`;
    * Newest first; last item may be an “earlier…” summary.
    */
   const WHATS_NEW = [
+    { v: "v13.5.12", zh: "可貼上 JSON；AI 說明頁 ai.html（Pages）", en: "Paste JSON; AI guide page ai.html on Pages" },
     { v: "v13.5.11", zh: "更新說明改精簡", en: "Shorter release notes" },
     { v: "v13.5.10", zh: "記號／標籤預設鎖定，解鎖後可拖移", en: "Marks/labels locked by default; unlock to drag" },
     { v: "v13.5.9", zh: "可存成模板；模板內有 AI 接入說明", en: "Save as template; AI setup tip in Templates" },
@@ -12606,7 +12786,6 @@ ${body}</svg>`;
     { v: "v13.5.7", zh: "清除只清圖形，保留網格設定", en: "Clear keeps grid settings" },
     { v: "v13.5.6", zh: "修復圖形浮層底列無法點擊", en: "Shape float bottom row clickable again" },
     { v: "v13.5.5", zh: "立體進圖形浮層；模板改為組合起點", en: "Solids in Shape float; Templates = combos" },
-    { v: "v13.5.4", zh: "更多常用圖形；白色填色；垂足", en: "More shapes; white fill; foot of perpendicular" },
     { v: "", zh: "更早版本… 填色、圖層、切線、AI 繪圖／匯出、MIT 等", en: "Earlier… fill, layers, tangent, AI draw/export, MIT, …" },
   ];
 
@@ -12875,6 +13054,45 @@ ${body}</svg>`;
   document.getElementById("btnClearAll").addEventListener("click", clearAll);
   document.getElementById("btnSave").addEventListener("click", saveProject);
   document.getElementById("btnLoad").addEventListener("click", () => fileInput.click());
+  const btnPasteJson = document.getElementById("btnPasteJson");
+  const pasteJsonDialog = document.getElementById("pasteJsonDialog");
+  const pasteJsonForm = document.getElementById("pasteJsonForm");
+  const pasteJsonInput = document.getElementById("pasteJsonInput");
+  const pasteJsonCancel = document.getElementById("pasteJsonCancel");
+  const pasteJsonMerge = document.getElementById("pasteJsonMerge");
+  if (btnPasteJson) {
+    btnPasteJson.addEventListener("click", () => openPasteJsonDialog());
+  }
+  if (pasteJsonCancel) {
+    pasteJsonCancel.addEventListener("click", () => {
+      if (pasteJsonDialog) pasteJsonDialog.close();
+    });
+  }
+  if (pasteJsonForm) {
+    pasteJsonForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const raw = pasteJsonInput ? pasteJsonInput.value : "";
+      const merge = !!(pasteJsonMerge && pasteJsonMerge.checked);
+      showPasteJsonError("");
+      const result = await applyPastedJsonText(raw, merge);
+      if (!result.ok) {
+        showPasteJsonError(result.message || t("paste_json_err_shape"));
+        return;
+      }
+      if (pasteJsonDialog) pasteJsonDialog.close();
+      if (pasteJsonInput) pasteJsonInput.value = "";
+      statusHint.textContent = result.message || "";
+    });
+  }
+  // Deep-link from ai.html → open paste dialog
+  if (location.hash === "#paste-json" || location.hash === "#pasteJson") {
+    setTimeout(() => openPasteJsonDialog(), 0);
+  }
+  window.addEventListener("hashchange", () => {
+    if (location.hash === "#paste-json" || location.hash === "#pasteJson") {
+      openPasteJsonDialog();
+    }
+  });
   document.getElementById("btnExportPng").addEventListener("click", () => {
     closeExportMenu();
     exportPng();
