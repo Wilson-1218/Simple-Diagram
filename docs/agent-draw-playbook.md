@@ -97,8 +97,8 @@ Later fills paint on top. Opaque white (`#ffffff`, `opacity: 1`) punches out sha
 
 | Need | How |
 |---|---|
-| Templates ▾ combo (shared catalog) | MCP `list_templates` → same ids as UI: `circleGeom`, `circleCenter`, `altBase`. Insert: `{ "op": "insertTemplate", "id": "circleGeom" }` |
-| Plane / solid single figures | Prefer Shape UI or `{ "op": "addShape", "kind": "frustum", … }`. AI-only template ids: `list_templates` with `includeAll:true` (still accepted by `insertTemplate`) |
+| Templates ▾ | Human menu is **saved-only** (no builtin combos). MCP `list_templates` defaults to empty UI list; use `includeAll:true` for plane/solid ids. |
+| Plane / solid single figures | Prefer Shape UI or `{ "op": "addShape", "kind": "frustum", … }`. Or `{ "op": "insertTemplate", "id": "rightTri" }` via `list_templates` with `includeAll:true` |
 | User “Saved” templates | Browser `localStorage` only. Node MCP **cannot** see them. User: Templates ▾ → 存成模板 / Export JSON on a row for agents. Agent-produced docs: user opens JSON then clicks **存成模板**. |
 | One-shot HKDSE macro | MCP `run_macro` or `node tools/export-diagram.mjs --macro drawFrustum --out out.svg` |
 | Macros | `drawRightTriangle`, `drawFrustum`, `drawCircleWithTangent`, `drawCuboid`, `drawCube` |

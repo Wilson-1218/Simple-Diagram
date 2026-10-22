@@ -15,17 +15,15 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 test("TEMPLATE_CATALOG covers every BUILTIN_TEMPLATES id", () => {
   assertTemplateCatalogIntegrity();
-  assert.deepEqual(
-    TEMPLATE_UI_IDS,
-    ["circleGeom", "circleCenter", "altBase"],
-    "Templates menu combos"
-  );
+  assert.deepEqual(TEMPLATE_UI_IDS, [], "Templates menu has no builtin combos");
 });
 
-test("listBuiltinTemplates defaults to UI combos", () => {
+test("listBuiltinTemplates defaults to empty UI list (saved-only Templates)", () => {
   const rows = listBuiltinTemplates();
-  assert.equal(rows.length, 3);
-  assert.ok(rows.every((r) => r.labelZh && r.labelEn));
+  assert.equal(rows.length, 0);
+  const all = listBuiltinTemplates({ uiOnly: false });
+  assert.ok(all.length > 0);
+  assert.ok(all.every((r) => r.labelZh && r.labelEn));
 });
 
 test("app.js embed matches src/diagram/templates.mjs", () => {

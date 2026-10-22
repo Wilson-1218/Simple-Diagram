@@ -62,10 +62,11 @@ test("eval: drawCircleWithTangent", () => {
 test("eval: insertTemplate plane+solid pack", () => {
   const doc = applyOps(null, [
     { op: "insertTemplate", id: "rightTri", dx: -120 },
-    { op: "insertTemplate", id: "circleGeom", dx: 120 },
+    { op: "insertTemplate", id: "frustum", dx: 120 },
     { op: "setMeta", name: "eval-pack.json", hideExportPoints: true },
   ]);
-  assert.ok(doc.circles.length >= 1);
+  assert.ok(doc.points.length >= 3);
+  assert.ok(doc.segments.length >= 3);
   assertExamDoc(doc, "pack");
 });
 

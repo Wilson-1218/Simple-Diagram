@@ -164,8 +164,8 @@ const TOOLS = [
   {
     name: "list_templates",
     description:
-      "List Templates ▾ combo catalog (same source as the UI: circleGeom, circleCenter, altBase). " +
-      "Pass includeAll=true for AI-only plane/solid ids (ui:false; prefer addShape for solids). " +
+      "List Templates catalog. Default = human Templates ▾ (currently empty / saved-only). " +
+      "Pass includeAll=true for plane/solid ids (ui:false; prefer addShape for solids). " +
       "Insert with { op: insertTemplate, id }.",
     inputSchema: {
       type: "object",
@@ -311,8 +311,8 @@ function callTool(name, args) {
       return toolResult({
         templates: listBuiltinTemplates({ uiOnly: !includeAll }),
         tip: includeAll
-          ? "Combos: insertTemplate. Solids/planes: prefer addShape; insertTemplate still accepts ui:false ids."
-          : 'apply_ops with { "op": "insertTemplate", "id": "circleGeom" } — same ids as Templates ▾',
+          ? "Solids/planes: prefer addShape; insertTemplate still accepts these ui:false ids."
+          : "Templates ▾ has no builtin combos (saved-only). Pass includeAll:true for plane/solid insertTemplate ids.",
       });
     }
     case "run_macro": {

@@ -55,9 +55,9 @@ npx --yes serve -l 5173 .
 
 ## 介面語言 / UI language
 
-頂欄可切換 **中｜EN**（按鈕與工具提示同步；畫布數學標籤不變）。
+左側品牌下方可切換 **中｜EN**（按鈕與工具提示同步；畫布數學標籤不變）。
 
-Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math labels stay the same).
+Toggle **中｜EN** under the left-rail brand (buttons and tooltips follow; canvas math labels stay the same).
 
 ---
 
@@ -76,11 +76,12 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 
 ---
 
-## 目前版本 / Current version（v13.5.18）
+## 目前版本 / Current version（v13.5.19）
 
 左側兩欄工具｜頂部選單｜情境浮層。預設：網格開、三角格、縮放 **2×**。
 
 ### 更新說明
+- **v13.5.19** — Json ▾；語系在左欄；模板改僅「我的」
 - **v13.5.18** — AI 說明：⊥座標對應、cube／函數填色例
 - **v13.5.17** — AI 說明頁涵蓋全部 ops（含座標圖）
 - **v13.5.16** — AI 說明頁補齊 addShape／fill／角弧參數
@@ -94,12 +95,11 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 - **v13.5.7** — 清除只清圖形，保留網格設定
 - **v13.5.6** — 修復圖形浮層底列無法點擊
 - **v13.5.5** — 立體進圖形浮層；模板改為組合起點
-- **v13.5.4** — 更多常用圖形；白色填色；垂足
 - *更早版本…* 填色、圖層、切線、AI 繪圖／匯出、MIT 等
 
 | 位置 | 內容 |
 |---|---|
-| **左頂：品牌** | Logo、Simple Diagram、版本號 |
+| **左頂：品牌** | Logo、Simple Diagram、版本號、**中｜EN** |
 | **左：繪製** | 選取、手掌、點、線段、圓弧、橢圓、扇弧、**填色**、**圖形**、標籤 |
 | **左：構造** | 交點、中點、比例、水平、垂線、**垂足**、**切線**、**圓件**、座標 |
 | **左：記號** | 直角、角弧、優角、平行、等長、長度 |
@@ -108,7 +108,7 @@ Toggle **中｜EN** in the top bar (buttons and tooltips follow; canvas math lab
 | **浮層：單／雙／翻面** | 平行／等長／角弧工具（或選取對應記號）時顯示 |
 | **浮層：填色** | 填色工具：模式（多邊形／扇形／弓形）＋色票 |
 | **浮層：圖形／圓件／對齊** | 圖形＝平面＋立體投影圖示；對齊於選取≥2 時 |
-| **頂 overlay** | 中｜EN、**模板（組合起點）**、網格／深色／**圖層**／最近、複製／復原、儲存／開啟、「匯出 ▾」、`?` |
+| **頂 overlay** | **模板（我的）**、網格／深色／**圖層**／最近、複製／復原、**Json ▾**、「匯出 ▾」、`?` |
 
 快捷鍵（預設，可於 `?` 改）：選取 V、點 P、線 L、水平 H、圓 C、橢圓 E、扇弧 A、填色 I、圖形 B、圓件 T、中點 M、比例 R；Ctrl+Z／Y 復原重做、Ctrl+D 複製。
 
