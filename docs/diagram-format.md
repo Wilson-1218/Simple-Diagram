@@ -108,7 +108,8 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 { "id": "ll1", "segmentId": "AB", "text": "5", "side": 1, "style": "text", "orient": "tilt", "size": 16 }
 ```
 
-- `style`：`text`（純文字）｜`dim`（尺寸線＋雙箭）｜`arcs`（端點雙弧記號＋線上數值）；缺省 `text`
+- `style`：`text`（純文字）｜`dim`（尺寸線＋雙箭）｜`arcs`（平行弧括＋中間數值）｜`ends`（端點雙弧記號）；缺省 `text`
+- `stroke`（僅 `arcs`）：`solid`｜`dashed`｜`dotted`（缺省 `dotted`，貼近考卷點線）
 - `orient`：`tilt`（隨線）｜`horizontal`；缺省 `tilt`
 - `size`：字級（約 12–48）
 

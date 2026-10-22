@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261022-release-v13.5.23" />
+  <meta name="simple-diagram-build" content="20261022-release-v13.5.24" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261022-release-v13.5.23" />
+  <link rel="stylesheet" href="styles.css?v=20261022-release-v13.5.24" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.23</span>
+            <span class="brand-sub">v13.5.24</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -282,7 +282,13 @@
             <span class="float-mini-opts" id="lengthStyleBar" title="長度標註樣式" data-i18n-title="tip_length_style">
               <button type="button" class="mark-group-btn rail-mini-btn active" data-length-style="text" title="純文字" data-i18n-title="tip_length_style_text" data-i18n="length_style_text">1 文字</button>
               <button type="button" class="mark-group-btn rail-mini-btn" data-length-style="dim" title="尺寸線（兩端箭頭）" data-i18n-title="tip_length_style_dim" data-i18n="length_style_dim">2 尺寸</button>
-              <button type="button" class="mark-group-btn rail-mini-btn" data-length-style="arcs" title="弧括號" data-i18n-title="tip_length_style_arcs" data-i18n="length_style_arcs">3 弧括</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-length-style="arcs" title="弧括號：平行弧＋中間數值" data-i18n-title="tip_length_style_arcs" data-i18n="length_style_arcs">3 弧括</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-length-style="ends" title="端點弧：線上雙弧記號" data-i18n-title="tip_length_style_ends" data-i18n="length_style_ends">4 端點弧</button>
+            </span>
+            <span class="float-mini-opts" id="lengthStrokeBar" title="弧括號線型" data-i18n-title="tip_length_stroke" hidden>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-length-stroke="solid" title="實線" data-i18n-title="tip_length_stroke_solid" data-i18n="length_stroke_solid">實線</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-length-stroke="dashed" title="虛線" data-i18n-title="tip_length_stroke_dashed" data-i18n="length_stroke_dashed">虛線</button>
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-length-stroke="dotted" title="點線" data-i18n-title="tip_length_stroke_dotted" data-i18n="length_stroke_dotted">點線</button>
             </span>
           </div>
           <div class="float-panel float-fill" id="fillFloat" hidden>
@@ -354,7 +360,7 @@
         <div id="status" class="status" role="status">
           <span id="statusTool">工具：選取</span>
           <span id="statusSnap">吸附：—</span>
-          <span id="statusHint" data-i18n="hint_idle">右鍵選取 · 中鍵拖曳平移 · 空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵</span>
+          <span id="statusHint" data-i18n="hint_idle">右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵</span>
         </div>
         <p class="site-credit" id="siteCredit">
           <a href="https://github.com/Wilson-1218/Simple-Diagram" target="_blank" rel="noopener noreferrer" data-i18n="attr_credit" data-i18n-title="attr_credit_tip" title="授權與轉載聲明">Simple Diagram · Wilson Li · MIT</a>
@@ -537,7 +543,7 @@
     <div class="shortcuts-panel shortcuts-panel-wide">
       <h2 data-i18n="shortcuts_title">快捷鍵（可自訂）</h2>
       <p class="dialog-note" data-i18n="shortcuts_note">點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。</p>
-      <p class="dialog-note" data-i18n="shortcuts_pointer_note">滑鼠：右鍵＝選取工具（並取消進行中的步驟）；中鍵按住拖曳＝平移畫布（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。</p>
+      <p class="dialog-note" data-i18n="shortcuts_pointer_note">滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。</p>
       <p class="shortcut-conflict" id="shortcutConflict" hidden></p>
       <div id="shortcutMapList" class="shortcut-map-list"></div>
       <p class="ai-guide-row dialog-note">
@@ -586,6 +592,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261022-release-v13.5.23"></script>
+  <script src="app.js?v=20261022-release-v13.5.24"></script>
 </body>
 </html>

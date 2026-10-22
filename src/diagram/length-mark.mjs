@@ -2,14 +2,18 @@
  * Length-mark geometry helpers (exam-diagram styles).
  * Screen-space: endpoints already mapped; offPx = offset from segment midline.
  *
- * style: "text" | "dim" | "arcs"
+ * style: "text" | "dim" | "arcs" | "ends"
+ *   arcs = parallel bow beside segment with mid gap (style 3 弧括號)
+ *   ends = dual-arc end ticks on the segment (style 4 端點弧)
  * orient: "tilt" | "horizontal"
+ * stroke (arcs): "solid" | "dashed" | "dotted"
  */
 
 /** @param {unknown} s */
 export function normalizeLengthStyle(s) {
   if (s === "dim" || s === 2 || s === "2") return "dim";
   if (s === "arcs" || s === 3 || s === "3") return "arcs";
+  if (s === "ends" || s === "endArcs" || s === 4 || s === "4") return "ends";
   return "text";
 }
 
@@ -17,6 +21,21 @@ export function normalizeLengthStyle(s) {
 export function normalizeLengthOrient(o) {
   if (o === "horizontal" || o === "h" || o === "fixed") return "horizontal";
   return "tilt";
+}
+
+/** Arc-bracket stroke (style 3). Default dotted to match exam refs. */
+export function normalizeLengthStroke(s) {
+  if (s === "solid" || s === "dashed" || s === "dotted") return s;
+  return "dotted";
+}
+
+/** Canvas / SVG dash array for length arc stroke (screen px). */
+export function lengthStrokeDash(stroke, scale = 1) {
+  const st = normalizeLengthStroke(stroke);
+  if (st === "solid") return [];
+  if (st === "dashed") return [Math.max(5, 7 * scale), Math.max(4, 5 * scale)];
+  // dotted — short dashes like exam ink
+  return [Math.max(1.4, 1.8 * scale), Math.max(3.2, 4 * scale)];
 }
 
 /** Keep text readable while parallel to the edge. */
@@ -78,10 +97,8 @@ export function dimMarkParts(frame, fontPx, text, scale = 1) {
   const { p0, p1, dx, dy, mx, my } = frame;
   const along0 = { x: p0.x + dx * arrow, y: p0.y + dy * arrow };
   const along1 = { x: p1.x - dx * arrow, y: p1.y - dy * arrow };
-  // Mid gap along the dim line
   const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
   const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
-  // Extension ticks perpendicular to dim direction at ends
   const px = -dy;
   const py = dx;
   const tick0 = {
@@ -99,13 +116,46 @@ export function dimMarkParts(frame, fontPx, text, scale = 1) {
   return {
     tick0,
     tick1,
-    // line segments with gap (arrow tip → gap edge)
     lineA: { x0: along0.x, y0: along0.y, x1: g0.x, y1: g0.y },
     lineB: { x0: g1.x, y0: g1.y, x1: along1.x, y1: along1.y },
     arrow0: { tip: p0, dir: { x: -dx, y: -dy }, size: arrow },
     arrow1: { tip: p1, dir: { x: dx, y: dy }, size: arrow },
     label: { x: mx, y: my },
     gap,
+  };
+}
+
+/**
+ * Style 3 — parallel arc bracket beside the segment with a mid gap for the value.
+ * Prefer `lengthOffsetFrame(a, b, side, off≈16–20)`.
+ * @param {ReturnType<typeof lengthOffsetFrame>} frame
+ * @param {number} fontPx
+ * @param {string} text
+ * @param {number} [scale=1]
+ */
+export function arcsMarkParts(frame, fontPx, text, scale = 1) {
+  const pad = Math.max(4, fontPx * 0.35);
+  const gap = approxTextWidth(text, fontPx) + pad * 2;
+  const halfGap = gap / 2;
+  // Gentle outward bow (exam parallel arc)
+  const bulge = Math.max(7, 9.5 * scale);
+  const { p0, p1, dx, dy, nx, ny, mx, my } = frame;
+  const g0 = { x: mx - dx * halfGap, y: my - dy * halfGap };
+  const g1 = { x: mx + dx * halfGap, y: my + dy * halfGap };
+  const mA = {
+    x: (p0.x + g0.x) / 2 + nx * bulge,
+    y: (p0.y + g0.y) / 2 + ny * bulge,
+  };
+  const mB = {
+    x: (g1.x + p1.x) / 2 + nx * bulge,
+    y: (g1.y + p1.y) / 2 + ny * bulge,
+  };
+  return {
+    arcA: { x0: p0.x, y0: p0.y, cx: mA.x, cy: mA.y, x1: g0.x, y1: g0.y },
+    arcB: { x0: g1.x, y0: g1.y, cx: mB.x, cy: mB.y, x1: p1.x, y1: p1.y },
+    label: { x: mx, y: my },
+    gap,
+    bulge,
   };
 }
 
@@ -120,11 +170,10 @@ export function dimMarkParts(frame, fontPx, text, scale = 1) {
  * @param {number} scale
  */
 export function arcsEndMark(tip, dx, dy, nx, ny, scale = 1) {
-  const w = Math.max(4.2, 5.2 * scale); // half-span along segment
-  const h = Math.max(5.2, 6.8 * scale); // flare height along normal
+  const w = Math.max(4.2, 5.2 * scale);
+  const h = Math.max(5.2, 6.8 * scale);
   const endL = { x: tip.x - dx * w + nx * h, y: tip.y - dy * w + ny * h };
   const endR = { x: tip.x + dx * w + nx * h, y: tip.y + dy * w + ny * h };
-  // Controls bulge outward so arms look like soft parentheses meeting on the line
   const cL = {
     x: tip.x - dx * w * 1.05 + nx * h * 0.22,
     y: tip.y - dy * w * 1.05 + ny * h * 0.22,
@@ -140,14 +189,14 @@ export function arcsEndMark(tip, dx, dy, nx, ny, scale = 1) {
 }
 
 /**
- * Build exam arc-bracket style: end marks on the segment + value just above midline.
- * Prefer `lengthOffsetFrame(a, b, side, 0)` so p0/p1 sit on the segment ends.
+ * Style 4 — end-tick dual arcs on the segment + value just above midline.
+ * Prefer `lengthOffsetFrame(a, b, side, 0)`.
  * @param {ReturnType<typeof lengthOffsetFrame>} frame
  * @param {number} fontPx
  * @param {string} [_text]
  * @param {number} [scale=1]
  */
-export function arcsMarkParts(frame, fontPx, _text, scale = 1) {
+export function endsMarkParts(frame, fontPx, _text, scale = 1) {
   const { p0, p1, dx, dy, nx, ny } = frame;
   const lift = Math.max(fontPx * 0.55, 8 * scale);
   const mx = (p0.x + p1.x) / 2 + nx * lift;

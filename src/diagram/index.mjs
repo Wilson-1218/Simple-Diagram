@@ -24,11 +24,14 @@ export {
 export {
   normalizeLengthStyle,
   normalizeLengthOrient,
+  normalizeLengthStroke,
+  lengthStrokeDash,
   readableEdgeAngle,
   lengthOffsetFrame,
   dimMarkParts,
   arcsMarkParts,
   arcsEndMark,
+  endsMarkParts,
   approxTextWidth,
 } from "./length-mark.mjs";
 export {

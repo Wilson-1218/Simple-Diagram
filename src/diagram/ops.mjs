@@ -319,12 +319,21 @@ const HANDLERS = {
         ? "dim"
         : op.style === "arcs" || op.style === 3 || op.style === "3"
           ? "arcs"
-          : "text";
+          : op.style === "ends" ||
+              op.style === "endArcs" ||
+              op.style === 4 ||
+              op.style === "4"
+            ? "ends"
+            : "text";
     const orient =
       op.orient === "horizontal" || op.orient === "h" || op.orient === "fixed"
         ? "horizontal"
         : "tilt";
-    /** @type {{ id: string, segmentId: string, text: string, side: 1|-1, style: string, orient: string, size?: number }} */
+    const stroke =
+      op.stroke === "solid" || op.stroke === "dashed" || op.stroke === "dotted"
+        ? op.stroke
+        : "dotted";
+    /** @type {{ id: string, segmentId: string, text: string, side: 1|-1, style: string, orient: string, stroke?: string, size?: number }} */
     const row = {
       id,
       segmentId: op.segmentId,
@@ -333,6 +342,7 @@ const HANDLERS = {
       style,
       orient,
     };
+    if (style === "arcs") row.stroke = stroke;
     if (op.size != null && Number.isFinite(Number(op.size))) {
       row.size = Math.min(48, Math.max(10, Math.round(Number(op.size))));
     }
