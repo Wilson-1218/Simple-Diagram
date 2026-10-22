@@ -1,6 +1,6 @@
 # AI Diagram Layer · AI 圖層（ABCD）
 
-**狀態：** 已實作（v13.2）· AI 優化 **v13.5.14**· 產品名 **Simple Diagram** · MIT  
+**狀態：** 已實作（v13.2）· AI 優化 **v13.5.15**· 產品名 **Simple Diagram** · MIT  
 **原則：** AI 只走 **JSON document + ops**，不模擬人手 UI；現有畫布／快捷鍵／存檔／Pages 不變。
 
 **PR：** https://github.com/Wilson-1218/Simple-Diagram/pull/1 · `cursor/ai-diagram-layer-037e` → `main`

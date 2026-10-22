@@ -654,47 +654,25 @@ button:disabled {
   color: var(--ink, #222);
 }
 
-.tpl-gemini-btn {
-  display: block;
-  width: calc(100% - 8px);
-  margin: 2px 4px 4px;
-  padding: 5px 8px;
+.tpl-ai-link {
+  margin: 2px 6px 8px;
   font-size: calc(11px * var(--tb, 1));
   font-weight: 600;
-  color: #0b5f6b;
-  background: #eef6f7;
-  border: 1px solid #b7d4d8;
-  border-radius: 4px;
-  cursor: pointer;
 }
 
-.tpl-gemini-btn:hover {
-  background: #e2f0f2;
+.tpl-ai-link a {
+  color: var(--accent, #1a5f7a);
 }
 
-.tpl-gemini-note {
-  margin: 0 6px 6px;
-  padding: 0 2px;
-  font-size: calc(10px * var(--tb, 1));
-  line-height: 1.4;
-  color: var(--muted);
-  max-width: 260px;
-}
-
-.gemini-share-row {
+.ai-guide-row {
   margin: 8px 0 4px;
   padding: 8px 0 0;
   border-top: 1px solid var(--bar-border, #e2e2e2);
 }
 
-.gemini-share-row .tpl-gemini-btn {
-  width: auto;
-  display: inline-block;
-  margin: 0 0 6px;
-}
-
-.gemini-share-row .dialog-note {
-  margin: 0;
+.ai-guide-row a {
+  font-weight: 600;
+  color: var(--accent, #1a5f7a);
 }
 
 .menu-empty {
@@ -1042,14 +1020,9 @@ body.dark-canvas .fill-swatch.active {
   border-color: var(--swatch-ring);
 }
 
-body.dark-canvas .tpl-gemini-btn {
-  color: #d8f0f4;
-  background: #243a40;
-  border-color: #5a8a94;
-}
-
-body.dark-canvas .tpl-gemini-btn:hover {
-  background: #2e4a52;
+body.dark-canvas .tpl-ai-link a,
+body.dark-canvas .ai-guide-row a {
+  color: var(--accent);
 }
 
 .tool-rail .rail-mini-btn {
@@ -1238,7 +1211,6 @@ body.dark-canvas .menu-panel button:not(.active):hover {
 
 body.dark-canvas .menu-section-title,
 body.dark-canvas .tpl-ai-help summary,
-body.dark-canvas .tpl-gemini-note,
 body.dark-canvas .menu-empty {
   color: var(--muted);
 }
