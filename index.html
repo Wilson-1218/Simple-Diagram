@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261022-release-v13.5.22" />
+  <meta name="simple-diagram-build" content="20261022-release-v13.5.23" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261022-release-v13.5.22" />
+  <link rel="stylesheet" href="styles.css?v=20261022-release-v13.5.23" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.22</span>
+            <span class="brand-sub">v13.5.23</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -43,7 +43,7 @@
           <button type="button" class="tool active" data-tool="select" title="選取／移動 (V)" data-i18n-title="tip_tool_select">
             <span class="icon">↖</span><span class="label" data-i18n="tool_select">選取</span>
           </button>
-          <button type="button" class="tool" data-tool="hand" title="手掌：拖曳平移畫布（空白鍵亦可暫用）" data-i18n-title="tip_tool_hand">
+          <button type="button" class="tool" data-tool="hand" title="手掌：拖曳平移（空白鍵／中鍵拖曳亦可）" data-i18n-title="tip_tool_hand">
             <span class="icon">✋</span><span class="label" data-i18n="tool_hand">手掌</span>
           </button>
           <button type="button" class="tool" data-tool="point" title="點 (P)" data-i18n-title="tip_tool_point">
@@ -55,7 +55,7 @@
           <button type="button" class="tool" data-tool="circle" title="圓／作圖弧：圓心 → 半徑點 (C)" data-i18n-title="tip_tool_circle">
             <span class="icon">○</span><span class="label" data-i18n="tool_circle">圓弧</span>
           </button>
-          <button type="button" class="tool" data-tool="ellipse" title="橢圓：圓心 → 水平半徑 → 鉛垂半徑；左鍵實線／右鍵虛線 (E)" data-i18n-title="tip_tool_ellipse">
+          <button type="button" class="tool" data-tool="ellipse" title="橢圓：圓心 → 水平半徑 → 鉛垂半徑；線型用工具列／S (E)" data-i18n-title="tip_tool_ellipse">
             <span class="icon">⬭</span><span class="label" data-i18n="tool_ellipse">橢圓</span>
           </button>
           <button type="button" class="tool" data-tool="sector" title="扇形／弧段：圓心 → 起點 → 終點；工具列切換弧／扇形 (A)" data-i18n-title="tip_tool_sector">
@@ -67,7 +67,7 @@
           <button type="button" class="tool" data-tool="shape" title="常用圖形：正方／等邊／長方／等腰 (B)" data-i18n-title="tip_tool_shape">
             <span class="icon">◻</span><span class="label" data-i18n="tool_shape">圖形</span>
           </button>
-          <button type="button" class="tool" data-tool="label" title="標籤：左鍵自訂／右鍵直接套預設" data-i18n-title="tip_tool_label">
+          <button type="button" class="tool" data-tool="label" title="標籤：點頂點自訂（右鍵改選取）" data-i18n-title="tip_tool_label">
             <span class="icon">A</span><span class="label" data-i18n="tool_label">標籤</span>
           </button>
         </div>
@@ -114,10 +114,10 @@
           <button type="button" class="tool" data-tool="reflex" title="優角：大於 180° 的角弧記號" data-i18n-title="tip_tool_reflex">
             <span class="icon">◡</span><span class="label" data-i18n="tool_reflex">優角</span>
           </button>
-          <button type="button" class="tool" data-tool="parallel" title="平行記號：左鍵單箭／右鍵雙箭" data-i18n-title="tip_tool_parallel">
+          <button type="button" class="tool" data-tool="parallel" title="平行記號：點線段（單／雙用工具列或 G）" data-i18n-title="tip_tool_parallel">
             <span class="icon">≫</span><span class="label" data-i18n="tool_parallel">平行</span>
           </button>
-          <button type="button" class="tool" data-tool="equal" title="等長記號：左鍵單劃／右鍵雙劃" data-i18n-title="tip_tool_equal">
+          <button type="button" class="tool" data-tool="equal" title="等長記號：點線段（單／雙用工具列或 G）" data-i18n-title="tip_tool_equal">
             <span class="icon">⫽</span><span class="label" data-i18n="tool_equal">等長</span>
           </button>
           <button type="button" class="tool" data-tool="length" title="線段長度標註（例：6）" data-i18n-title="tip_tool_length">
@@ -354,7 +354,7 @@
         <div id="status" class="status" role="status">
           <span id="statusTool">工具：選取</span>
           <span id="statusSnap">吸附：—</span>
-          <span id="statusHint" data-i18n="hint_idle">空白鍵＋拖曳平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵</span>
+          <span id="statusHint" data-i18n="hint_idle">右鍵選取 · 中鍵拖曳平移 · 空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵</span>
         </div>
         <p class="site-credit" id="siteCredit">
           <a href="https://github.com/Wilson-1218/Simple-Diagram" target="_blank" rel="noopener noreferrer" data-i18n="attr_credit" data-i18n-title="attr_credit_tip" title="授權與轉載聲明">Simple Diagram · Wilson Li · MIT</a>
@@ -537,6 +537,7 @@
     <div class="shortcuts-panel shortcuts-panel-wide">
       <h2 data-i18n="shortcuts_title">快捷鍵（可自訂）</h2>
       <p class="dialog-note" data-i18n="shortcuts_note">點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。</p>
+      <p class="dialog-note" data-i18n="shortcuts_pointer_note">滑鼠：右鍵＝選取工具（並取消進行中的步驟）；中鍵按住拖曳＝平移畫布（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。</p>
       <p class="shortcut-conflict" id="shortcutConflict" hidden></p>
       <div id="shortcutMapList" class="shortcut-map-list"></div>
       <p class="ai-guide-row dialog-note">
@@ -585,6 +586,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261022-release-v13.5.22"></script>
+  <script src="app.js?v=20261022-release-v13.5.23"></script>
 </body>
 </html>
