@@ -439,17 +439,17 @@
       hint_coord_origin: "點選原點位置以放置座標軸",
       hint_coord_placed: "已放置座標軸；雙擊可改曲線／視窗",
       hint_select: "拖曳移動 · Shift 多選 · 空白處框選 · Ctrl+D 複製",
-      hint_hand: "拖曳平移畫布（不建立圖形；空白鍵暫用亦可）",
+      hint_hand: "拖曳平移畫布（空白鍵／中鍵拖曳亦可）",
       hint_point: "點擊放置頂點；靠近線段／圓／橢圓／弧會吸附",
-      hint_line: "兩點連線：左鍵＝實線 · 右鍵＝虛線（隱藏邊）",
+      hint_line: "兩點連線（線型用工具列／S）；右鍵＝選取",
       hint_horizontal: "點選既有點後左右拖曳定長（實線；放開完成）",
       hint_circle: "先點圓心，再點圓周上的半徑點",
-      hint_ellipse: "圓心 → 水平半徑點 → 鉛垂半徑點；完成時左鍵實線／右鍵虛線",
-      hint_sector_arc: "弧段：圓心 → 起點 → 終點；完成時左鍵實線／右鍵虛線 · 工具列弧／扇切換",
-      hint_sector_pie: "扇形：圓心 → 起點 → 終點；完成時左鍵實線／右鍵虛線 · 工具列弧／扇切換",
+      hint_ellipse: "圓心 → 水平半徑點 → 鉛垂半徑點（線型用工具列／S）；右鍵＝選取",
+      hint_sector_arc: "弧段：圓心 → 起點 → 終點（線型用工具列／S）· 工具列弧／扇切換；右鍵＝選取",
+      hint_sector_pie: "扇形：圓心 → 起點 → 終點（線型用工具列／S）· 工具列弧／扇切換；右鍵＝選取",
       hint_exportCrop_set: "已設裁切範圍 · 再拖可重設 · Esc 取消拖曳 ·「清除裁切」還原整圖",
       hint_exportCrop: "拖曳框選匯出範圍，放開後開預覽",
-      hint_label: "點頂點：左鍵開對話框 · 右鍵直接套預設字母／字級",
+      hint_label: "點頂點開對話框；右鍵＝選取",
       hint_intersect: "依序點兩條線段 → 交點",
       hint_rightAngle: "恰兩條邊可一鍵；否則頂點→兩臂端點",
       hint_angleArc: "角弧：恰兩條邊可一鍵；否則頂點→兩臂 · G 切換單／雙弧",
@@ -459,8 +459,8 @@
       hint_ratio: "點選線段，輸入比例（由第一端→第二端）",
       hint_length: "點選線段，輸入長度文字（例：6）",
       hint_perpendicular: "點選既有點後向下拖曳定長（點線；放開完成）",
-      hint_parallel: "點線段：左鍵＝單箭 · 右鍵＝雙箭（工具列「單／雙」或 G 可預設）",
-      hint_equal: "點線段：左鍵＝單劃 · 右鍵＝雙劃（工具列「單／雙」或 G 可預設）",
+      hint_parallel: "點線段加記號（單／雙用工具列或 G）；右鍵＝選取",
+      hint_equal: "點線段加記號（單／雙用工具列或 G）；右鍵＝選取",
       hint_fill: "依序點頂點，再點起點完成",
       hint_fill_sector: "點既有扇形，或圓心→起點→終點",
       hint_fill_segment: "在同一圓上點兩點（填次要弓形）",
@@ -552,13 +552,13 @@
       tip_hide_pts: "匯出 PNG／SVG 時隱藏頂點圓點（預設開啟）",
       tip_shortcuts: "快捷鍵一覽 (?)",
       tip_tool_select: "選取／移動 (V)",
-      tip_tool_hand: "手掌：拖曳平移畫布（空白鍵亦可暫用）",
+      tip_tool_hand: "手掌：拖曳平移（空白鍵／中鍵拖曳亦可）",
       tip_tool_point: "點 (P)",
       tip_tool_line: "線段 (L)",
       tip_tool_circle: "圓／作圖弧：圓心 → 半徑點 (C)",
-      tip_tool_ellipse: "橢圓：圓心 → 水平半徑 → 鉛垂半徑；左鍵實線／右鍵虛線 (E)",
+      tip_tool_ellipse: "橢圓：圓心 → 水平半徑 → 鉛垂半徑；線型用工具列／S (E)",
       tip_tool_sector: "扇形／弧段：圓心 → 起點 → 終點；工具列切換弧／扇形 (A)",
-      tip_tool_label: "標籤：左鍵自訂／右鍵直接套預設",
+      tip_tool_label: "標籤：點頂點自訂（右鍵改選取）",
       tip_sector_bar: "弧段僅畫弧；扇形含兩條半徑",
       tip_sector_arc: "只畫圓弧",
       tip_sector_pie: "扇形（弧＋兩半徑）",
@@ -580,8 +580,8 @@
       tip_tool_rightAngle: "直角記號",
       tip_tool_angleArc: "角弧：非直角的弧線記號",
       tip_tool_reflex: "優角：大於 180° 的角弧記號",
-      tip_tool_parallel: "平行記號：左鍵單箭／右鍵雙箭",
-      tip_tool_equal: "等長記號：左鍵單劃／右鍵雙劃",
+      tip_tool_parallel: "平行記號：點線段（單／雙用工具列或 G）",
+      tip_tool_equal: "等長記號：點線段（單／雙用工具列或 G）",
       tip_mark_bar: "單／雙記號與翻面",
       tip_mark_single: "單箭／單劃（G）",
       tip_mark_double: "雙箭／雙劃（G）",
@@ -602,10 +602,11 @@
       aria_label_size: "標籤字級",
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
-      hint_idle: "空白鍵＋拖曳平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
+      hint_idle: "右鍵選取 · 中鍵拖曳平移 · 空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
       title_doc: "Simple Diagram · Wilson",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
+      shortcuts_pointer_note: "滑鼠：右鍵＝選取工具（並取消進行中的步驟）；中鍵按住拖曳＝平移畫布（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。",
       shortcuts_reset: "還原預設",
       btn_close: "關閉",
       whats_new_title: "更新說明",
@@ -729,17 +730,17 @@
       hint_coord_origin: "Click to place the axes origin",
       hint_coord_placed: "Axes placed; double-click to edit curve/window",
       hint_select: "Drag to move · Shift multi-select · marquee · Ctrl+D duplicate",
-      hint_hand: "Drag to pan (Space also pans)",
+      hint_hand: "Drag to pan (Space or middle-drag also pans)",
       hint_point: "Click to place a vertex; snaps to segments/circles",
-      hint_line: "Two points: LMB solid · RMB dashed (hidden edge)",
+      hint_line: "Two points (style via toolbar / S); RMB = Select",
       hint_horizontal: "Pick a point, drag left/right for length",
       hint_circle: "Center, then a radius point",
-      hint_ellipse: "Center → horizontal → vertical radius; LMB/RMB style",
-      hint_sector_arc: "Arc: center → start → end; LMB/RMB style",
-      hint_sector_pie: "Sector: center → start → end; LMB/RMB style",
+      hint_ellipse: "Center → horiz → vert radius (style via toolbar / S); RMB = Select",
+      hint_sector_arc: "Arc: center → start → end (style via toolbar / S); RMB = Select",
+      hint_sector_pie: "Sector: center → start → end (style via toolbar / S); RMB = Select",
       hint_exportCrop_set: "Crop set · drag again to reset · Clear crop for full figure",
       hint_exportCrop: "Drag a crop box, release to preview",
-      hint_label: "Click vertex: LMB dialog · RMB quick letter",
+      hint_label: "Click vertex for dialog; RMB = Select",
       hint_intersect: "Click two segments → intersection",
       hint_rightAngle: "Two edges: one click; else vertex → arms",
       hint_angleArc: "Angle arc: two edges one click; else vertex → arms · G toggles",
@@ -749,8 +750,8 @@
       hint_ratio: "Click a segment, enter a ratio",
       hint_length: "Click a segment, enter length text",
       hint_perpendicular: "Pick a point, drag down for length (dotted)",
-      hint_parallel: "Click segment: LMB single · RMB double chevron",
-      hint_equal: "Click segment: LMB single · RMB double tick",
+      hint_parallel: "Click segment (single/double via toolbar or G); RMB = Select",
+      hint_equal: "Click segment (single/double via toolbar or G); RMB = Select",
       hint_fill: "Click vertices in order, then click the start point to finish",
       hint_fill_sector: "Click an existing sector, or center → start → end",
       hint_fill_segment: "Click two points on the same circle (minor segment)",
@@ -842,13 +843,13 @@
       tip_hide_pts: "Hide vertex dots in PNG/SVG export (on by default)",
       tip_shortcuts: "Keyboard shortcuts (?)",
       tip_tool_select: "Select / move (V)",
-      tip_tool_hand: "Pan: drag to move the canvas (Space also pans)",
+      tip_tool_hand: "Pan: drag to move (Space or middle-drag also pans)",
       tip_tool_point: "Point (P)",
       tip_tool_line: "Segment (L)",
       tip_tool_circle: "Circle/arc: center → radius point (C)",
-      tip_tool_ellipse: "Ellipse: center → horiz → vert radius; LMB solid / RMB dashed (E)",
+      tip_tool_ellipse: "Ellipse: center → horiz → vert radius; style via toolbar / S (E)",
       tip_tool_sector: "Sector/arc: center → start → end; toggle arc/sector in rail (A)",
-      tip_tool_label: "Label: LMB dialog / RMB quick letter",
+      tip_tool_label: "Label: click vertex for dialog (RMB = Select)",
       tip_sector_bar: "Arc = arc only; sector = arc + two radii",
       tip_sector_arc: "Draw arc only",
       tip_sector_pie: "Sector (arc + two radii)",
@@ -870,8 +871,8 @@
       tip_tool_rightAngle: "Right-angle mark",
       tip_tool_angleArc: "Angle arc mark (non-right angle)",
       tip_tool_reflex: "Reflex angle: arc mark >180°",
-      tip_tool_parallel: "Parallel mark: LMB single / RMB double chevron",
-      tip_tool_equal: "Equal-length mark: LMB single / RMB double tick",
+      tip_tool_parallel: "Parallel mark: click segment (single/double via toolbar or G)",
+      tip_tool_equal: "Equal-length mark: click segment (single/double via toolbar or G)",
       tip_mark_bar: "Single/double marks and flip",
       tip_mark_single: "Single chevron/tick (G)",
       tip_mark_double: "Double chevron/tick (G)",
@@ -892,10 +893,11 @@
       aria_label_size: "Label size",
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
-      hint_idle: "Space+drag pan · wheel zoom · Esc cancel · ? shortcuts",
+      hint_idle: "RMB Select · middle-drag pan · Space pan · wheel zoom · Esc cancel · ? shortcuts",
       title_doc: "Simple Diagram · Wilson",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
+      shortcuts_pointer_note: "Pointer: right-click = Select tool (cancels an in-progress draft); middle-button drag = pan (same as Space / Hand). Browser context menu is suppressed on the canvas.",
       shortcuts_reset: "Reset defaults",
       btn_close: "Close",
       whats_new_title: "What’s new",
@@ -1045,7 +1047,7 @@
     tool_circlePart: "圓件（弦／徑）",
     tool_midTick: "中點工具",
     tool_ratio: "比例工具",
-    tool_hand: "手掌（空白鍵暫用）",
+    tool_hand: "手掌（空白鍵／中鍵拖曳）",
     flip_mark: "記號翻面",
     cycle_mark: "單／雙記號或弧｜扇",
     cycle_style: "循環線型",
@@ -3657,7 +3659,7 @@
       }
       draft.rxId = rxPt.id;
       draft.cursor = { x: c.x, y: world.y };
-      statusHint.textContent = "再點鉛垂半徑端點（左鍵實線／右鍵虛線）";
+      statusHint.textContent = "再點鉛垂半徑端點（線型用工具列／S；右鍵＝選取）";
       draw();
       return;
     }
@@ -3724,7 +3726,7 @@
       draft.startId = start.id;
       draft.cursor = { x: world.x, y: world.y };
       statusHint.textContent =
-        (draft.mode === "sector" ? "扇形" : "弧段") + "：再點終點（左鍵實線／右鍵虛線）";
+        (draft.mode === "sector" ? "扇形" : "弧段") + "：再點終點（線型用工具列／S；右鍵＝選取）";
       draw();
       return;
     }
@@ -7640,50 +7642,54 @@
     const pos = canvasPos(e);
     const world = screenToWorld(pos.x, pos.y);
 
+    // Middle-button drag = pan (same path as Space / hand tool)
     if (e.button === 1 || (e.button === 0 && (spaceDown || tool === "hand"))) {
       panning = true;
       panLast = pos;
       canvas.classList.add("panning", "active", "space-pan");
       e.preventDefault();
+      try {
+        canvas.setPointerCapture(e.pointerId);
+      } catch (_) {}
       return;
     }
 
-    // Line tool: left = solid, right = dashed (override toolbar style)
-    if (tool === "line" && (e.button === 0 || e.button === 2)) {
+    // Right-click anywhere → select tool (cancels in-progress draft via setTool)
+    if (e.button === 2) {
       e.preventDefault();
-      handleLineClick(world, e.button === 2 ? "dashed" : "solid");
+      setTool("select");
       return;
     }
 
-    // Ellipse: left = solid, right = dashed on the completing (3rd) click
-    if (tool === "ellipse" && (e.button === 0 || e.button === 2)) {
+    // Line / ellipse / sector: LMB uses current toolbar line style (S to cycle)
+    if (tool === "line" && e.button === 0) {
       e.preventDefault();
-      handleEllipseClick(world, e.button === 2 ? "dashed" : "solid");
+      handleLineClick(world, lineStyle || "solid");
+      return;
+    }
+    if (tool === "ellipse" && e.button === 0) {
+      e.preventDefault();
+      handleEllipseClick(world, lineStyle || "solid");
+      return;
+    }
+    if (tool === "sector" && e.button === 0) {
+      e.preventDefault();
+      handleSectorClick(world, lineStyle || "solid");
       return;
     }
 
-    // Sector/arc: left = solid, right = dashed on completing click
-    if (tool === "sector" && (e.button === 0 || e.button === 2)) {
+    // Parallel / equal: LMB uses active mark group (toolbar / G)
+    if ((tool === "parallel" || tool === "equal") && e.button === 0) {
       e.preventDefault();
-      handleSectorClick(world, e.button === 2 ? "dashed" : "solid");
-      return;
-    }
-
-    // Parallel / equal: left = single, right = double (override toolbar group)
-    if (
-      (tool === "parallel" || tool === "equal") &&
-      (e.button === 0 || e.button === 2)
-    ) {
-      e.preventDefault();
-      const group = e.button === 2 ? 1 : 0;
+      const group = tool === "parallel" ? activeParallelGroup : activeEqualGroup;
       placeSegMarkAt(world, tool, group);
       return;
     }
 
-    // Label: left = dialog, right = quick default (no confirm)
-    if (tool === "label" && (e.button === 0 || e.button === 2)) {
+    // Label: left = dialog
+    if (tool === "label" && e.button === 0) {
       e.preventDefault();
-      handleLabelClick(world, e.button === 0);
+      handleLabelClick(world, true);
       return;
     }
 
@@ -10386,7 +10392,7 @@ ${body}</svg>`;
   function buildProjectData() {
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.22",
+      version: "13.5.23",
       app: "simple-diagram",
       points,
       segments,
