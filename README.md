@@ -109,11 +109,19 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
+## For exam PDF digitization / Simple Paper
+
+| 中文 | English |
+|---|---|
+| 試卷 PDF 還原／電子試卷（**Simple Paper**）請讀 [`docs/paper-handoff.md`](docs/paper-handoff.md)：OCR／layout、paper schema、題圖以 Diagram ops 重繪。 | Exam PDF digitization（**Simple Paper**）: see [`docs/paper-handoff.md`](docs/paper-handoff.md) for OCR／layout, paper schema, and redrawing figures via Diagram ops. |
+
+---
+
 ## For solution agents / Simple Solution
 
 | 中文 | English |
 |---|---|
-| 解題／上層 agent（如 **Simple Solution**）請讀 [`docs/solver-handoff.md`](docs/solver-handoff.md)：角色分工、出圖管線、勿依賴 Agent Store。 | Solution／upper agents (e.g. **Simple Solution**): see [`docs/solver-handoff.md`](docs/solver-handoff.md) for role split, figure pipeline, and “don’t scrape Agent Store”. |
+| 解題／上層 agent（如 **Simple Solution**，**產品暫緩**）請讀 [`docs/solver-handoff.md`](docs/solver-handoff.md)：角色分工、出圖管線、勿依賴 Agent Store。 | Solution／upper agents (e.g. **Simple Solution** — **solver product paused**): see [`docs/solver-handoff.md`](docs/solver-handoff.md) for role split, figure pipeline, and “don’t scrape Agent Store”. |
 
 ---
 
