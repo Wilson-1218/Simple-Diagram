@@ -109,6 +109,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
+## For solution agents / Simple Solution
+
+| 中文 | English |
+|---|---|
+| 解題／上層 agent（如 **Simple Solution**）請讀 [`docs/solver-handoff.md`](docs/solver-handoff.md)：角色分工、出圖管線、勿依賴 Agent Store。 | Solution／upper agents (e.g. **Simple Solution**): see [`docs/solver-handoff.md`](docs/solver-handoff.md) for role split, figure pipeline, and “don’t scrape Agent Store”. |
+
+---
+
 ## AI / Automation（JSON + ops）
 
 **路徑（Pages）**：開啟 [`ai.html`](https://wilson-1218.github.io/Simple-Diagram/ai.html)（或本機 `ai.html`）→ 在 Chrome **分享分頁給 Gemini** → AI 產出 ops／圖檔 JSON → App **Json ▾ → 貼上 JSON**。頁內**沒有**原生聊天；只作說明與 schema。
