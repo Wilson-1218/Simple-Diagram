@@ -3,6 +3,8 @@
 給 **Simple Solution**（或其他解題／solution agent）的整合說明。  
 本檔在 **GitHub** 公開；對接時以本 repo 為準，**不要**依賴其他 Cursor Project 的 Agent Store。
 
+> **Status:** Simple Solution（solver product）**paused／暫緩**. For exam PDF digitization see [`paper-handoff.md`](paper-handoff.md).
+
 **Audience:** solution agents / orchestrators that produce step-by-step answers and call Simple Diagram only for figures.
 
 ---
