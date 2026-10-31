@@ -1,8 +1,8 @@
 /**
  * Headless SVG export for agents (no DOM). White paper, black ink.
  * Covers points, segments, circles, ellipses, sectors (arc strokes),
- * polygon/sector/segment fills, labels, rightAngles, angleArcs (+ text),
- * lengthLabels (text|dim|arcs), equalMarks (ticks).
+ * polygon/sector/segment/polyArc/pathFill fills, labels, rightAngles, angleArcs (+ text),
+ * lengthLabels (text|dim|arcs), equalMarks (ticks), parallelMarks (chevrons).
  */
 
 import {
@@ -92,6 +92,75 @@ function hexToRgba(hex, opacity) {
   const b = parseInt(h.slice(4, 6), 16);
   const a = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.2;
   return `rgba(${r},${g},${b},${a})`;
+}
+
+/** Layout slots along a segment so equal / parallel don't stack on midpoint (matches editor). */
+function markTAlong(doc, kind, segmentId, group) {
+  const hasEqual = (doc.equalMarks || []).some((m) => m.segmentId === segmentId);
+  const hasParallel = (doc.parallelMarks || []).some((m) => m.segmentId === segmentId);
+  let t = kind === "equal" ? 0.35 : kind === "parallel" ? 0.65 : 0.5;
+  if (kind === "equal" && !hasParallel) t = 0.38;
+  if (kind === "parallel" && !hasEqual) t = 0.62;
+  if (kind === "equal" && hasParallel) t = 0.32;
+  if (kind === "parallel" && hasEqual) t = 0.68;
+  if ((group || 0) === 1) {
+    if (kind === "equal") t -= 0.05;
+    if (kind === "parallel") t += 0.05;
+  }
+  return Math.max(0.18, Math.min(0.82, t));
+}
+
+function segmentDrawBasis(seg, pts, tAlong, toS) {
+  const a = pts.get(seg.a);
+  const b = pts.get(seg.b);
+  if (!a || !b) return null;
+  const t = tAlong != null ? tAlong : 0.5;
+  const wx = a.x + (b.x - a.x) * t;
+  const wy = a.y + (b.y - a.y) * t;
+  const p = toS(wx, wy);
+  let wdx = b.x - a.x,
+    wdy = b.y - a.y;
+  const wlen = Math.hypot(wdx, wdy) || 1;
+  wdx /= wlen;
+  wdy /= wlen;
+  const q = toS(wx + wdx, wy + wdy);
+  let dx = q.x - p.x,
+    dy = q.y - p.y;
+  const len = Math.hypot(dx, dy) || 1;
+  dx /= len;
+  dy /= len;
+  return { px: p.x, py: p.y, dx, dy, nx: -dy, ny: dx };
+}
+
+/** Textbook parallel chevrons — same geometry as editor drawParallelMark. */
+function parallelMarkDrawChevrons(basis, group, side, size, gap) {
+  const count = (group || 0) === 0 ? 1 : 2;
+  const dir = side === -1 ? -1 : 1;
+  const dx = basis.dx * dir;
+  const dy = basis.dy * dir;
+  const nx = basis.nx;
+  const ny = basis.ny;
+  const tipX = size * 0.52;
+  const backX = -size * 0.42;
+  const wingY = size * 0.58;
+  const chevrons = [];
+  for (let i = 0; i < count; i++) {
+    const along = count === 1 ? 0 : (i - (count - 1) / 2) * gap;
+    const ox = basis.px + dx * along;
+    const oy = basis.py + dy * along;
+    const local = [
+      { lx: backX, ly: wingY },
+      { lx: tipX, ly: 0 },
+      { lx: backX, ly: -wingY },
+    ];
+    chevrons.push(
+      local.map(({ lx, ly }) => ({
+        x: ox + dx * lx + nx * ly,
+        y: oy + dy * lx + ny * ly,
+      }))
+    );
+  }
+  return chevrons;
 }
 
 function svgArrowHead(tipX, tipY, dirX, dirY, size) {
@@ -484,6 +553,29 @@ export function documentToSvg(doc, opts = {}) {
         const ty = sv.y + Math.sin(mid) * tr;
         const fs = 13 * scale * 0.75;
         body += `<text x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(aa.text)}</text>\n`;
+      }
+    }
+    const unit = scale * 0.75;
+    const markLw = (1.55 * unit).toFixed(2);
+    for (const pm of doc.parallelMarks || []) {
+      const seg = (doc.segments || []).find((s) => s.id === pm.segmentId);
+      if (!seg) continue;
+      const basis = segmentDrawBasis(
+        seg,
+        pts,
+        markTAlong(doc, "parallel", pm.segmentId, pm.group),
+        toS
+      );
+      if (!basis) continue;
+      const chevrons = parallelMarkDrawChevrons(
+        basis,
+        pm.group,
+        pm.side === -1 ? -1 : 1,
+        11 * unit,
+        9 * unit
+      );
+      for (const tri of chevrons) {
+        body += `<polyline points="${tri[0].x.toFixed(2)},${tri[0].y.toFixed(2)} ${tri[1].x.toFixed(2)},${tri[1].y.toFixed(2)} ${tri[2].x.toFixed(2)},${tri[2].y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${markLw}" stroke-linecap="round" stroke-linejoin="round" />\n`;
       }
     }
     for (const em of doc.equalMarks || []) {
