@@ -162,6 +162,7 @@ PDF
 | [`ai-diagram-layer.md`](ai-diagram-layer.md) | AI 圖層（schema／ops／CLI／MCP／驗證） |
 | [`simple-diagram-style.md`](simple-diagram-style.md) | 考試圖視覺風格 |
 | [`solver-handoff.md`](solver-handoff.md) | 相關但不同產品（解題／Solution · **paused**） |
+| [`grok-bridge-inbox.md`](grok-bridge-inbox.md) | Live cross-project feedback channel via Grok Bot（Diagram ↔ Paper） |
 | [README](../README.md) | 產品概覽、CLI／MCP、版本 |
 
 ---
