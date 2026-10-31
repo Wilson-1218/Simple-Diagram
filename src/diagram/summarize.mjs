@@ -70,7 +70,7 @@ export const OP_CATALOG = {
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },
   addFill: {
     args: "kind?, pointIds? | centerId+startId+endId | polyArc | pathFill edges[{line|arc}], color?, opacity?",
-    note: "kind polygon|sector|segment|polyArc|pathFill",
+    note: "kind polygon|sector|segment|polyArc|pathFill; two arcs+chord → pathFill (not white overlay)",
   },
   addShape: {
     args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?",

@@ -62,10 +62,17 @@ UI-only (no dedicated op — approximate with points/segments/movePoint): live m
 { "op": "addFill", "kind": "polygon", "pointIds": ["A","B","C"], "opacity": 0.2 }
 { "op": "addFill", "kind": "sector", "centerId": "O", "startId": "A", "endId": "B", "opacity": 0.2 }
 { "op": "addFill", "kind": "segment", "circleId": "c1", "startId": "P", "endId": "Q", "opacity": 0.2 }
+{ "op": "addFill", "kind": "pathFill", "edges": [
+  { "type": "line", "a": "A", "b": "C" },
+  { "type": "arc", "centerId": "O2", "from": "C", "to": "B" },
+  { "type": "arc", "centerId": "O1", "from": "B", "to": "A" }
+], "opacity": 0.2 }
 { "op": "addFill", "kind": "polygon", "pointIds": ["D","E","F"], "color": "#ffffff", "opacity": 1 }
 ```
 
-Later fills paint on top. Opaque white (`#ffffff`, `opacity: 1`) punches out shaded regions for exam-style composite shading.
+**Two arcs + one chord:** use `pathFill` (real region). Do **not** stack gray sector + opaque white sector — white covers the grid/ink (mask, not subtract).
+
+Later fills paint on top. Opaque white (`#ffffff`, `opacity: 1`) is only for other composite punch-outs, not for two-arc slices.
 
 ---
 

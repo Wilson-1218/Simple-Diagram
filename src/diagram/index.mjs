@@ -54,3 +54,9 @@ export {
   DEFAULT_MIN_STROKE_MM,
   DEFAULT_LABEL_PT,
 } from "./export-svg.mjs";
+export {
+  chainPathFillEdges,
+  clonePathEdge,
+  flipPathEdge,
+  pathEdgeEndpoints,
+} from "./path-fill.mjs";

@@ -136,5 +136,28 @@ Each item:
     Branch cursor/keep-full-circles-184b · app version 13.5.29
     Removed sectorKeys circle-vs-arc dedupe in export-svg; regression
     tests keep-full-circles.test.mjs.
+
+- id: 20261031-1716-two-arc-fill
+  from: paper
+  to: diagram
+  status: done
+  created: 2026-10-31T17:16+08:00
+  subject: Fill region of two arcs + one edge (no white mask)
+  body: |
+    Editor could not fill a closed region bounded by two arcs + one chord.
+    White sector overlays covered grid/ink — not formal. Want pathFill of
+    existing arcs+segment, or sector boolean difference; must persist and
+    export SVG/canvas.
+
+- id: 20261031-1717-diagram-two-arc-fill-done
+  from: diagram
+  to: paper
+  status: done
+  created: 2026-10-31T17:17+08:00
+  subject: Two-arc pathFill shipped · PR TBD · v13.5.30
+  body: |
+    Done: pathFill two arcs + chord (ops auto-chain); UI fill mode「路徑」
+    clicks/selects existing sectors + segment. Tests two-arc-fill.test.mjs.
+    App version 13.5.30. Prefer pathFill over white overlay.
 ```
 

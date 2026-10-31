@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261031-release-v13.5.29" />
+  <meta name="simple-diagram-build" content="20261031-release-v13.5.30" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -2037,7 +2037,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.29</span>
+            <span class="brand-sub">v13.5.30</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -2307,6 +2307,7 @@ body.dark-canvas .coord-curve-row {
               <button type="button" class="mark-group-btn rail-mini-btn active" data-fill-mode="polygon" title="多邊形填色" data-i18n-title="tip_fill_polygon" data-i18n="fill_mode_polygon">多邊形</button>
               <button type="button" class="mark-group-btn rail-mini-btn" data-fill-mode="sector" title="扇形填色" data-i18n-title="tip_fill_sector" data-i18n="fill_mode_sector">扇形</button>
               <button type="button" class="mark-group-btn rail-mini-btn" data-fill-mode="segment" title="弓形填色" data-i18n-title="tip_fill_segment" data-i18n="fill_mode_segment">弓形</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-fill-mode="path" title="路徑填色：點既有弧與線段（兩弧＋一邊）" data-i18n-title="tip_fill_path" data-i18n="fill_mode_path">路徑</button>
             </span>
             <span class="fill-swatch-bar" id="fillPresetBar" title="填色陰影／白色挖空" data-i18n-title="tip_fill_bar">
               <button type="button" class="fill-swatch" data-fill-key="g10" title="灰影 10%" data-i18n-title="tip_fill_g10" style="--swatch:rgba(102,102,102,0.10)" aria-label="10%"></button>
@@ -2798,7 +2799,7 @@ body.dark-canvas .coord-curve-row {
     /** Opaque white — paint later fills on top to punch out shaded regions. */
     { key: "white", color: "#ffffff", opacity: 1 },
   ];
-  /** @type {"polygon"|"sector"|"segment"} */
+  /** @type {"polygon"|"sector"|"segment"|"path"} */
   let fillMode = "polygon";
   const SHAPE_PLANE_MODES = [
     "square",
@@ -3007,8 +3008,9 @@ body.dark-canvas .coord-curve-row {
       circlePart_chord: "弦", circlePart_diameter: "直徑", circlePart_radius: "半徑",
       tip_circlePart_bar: "弦／直徑／半徑", tip_circlePart_chord: "弦：圓上兩點",
       tip_circlePart_diameter: "直徑：過圓心", tip_circlePart_radius: "半徑：圓心到圓周",
-      fill_mode_polygon: "多邊形", fill_mode_sector: "扇形", fill_mode_segment: "弓形",
+      fill_mode_polygon: "多邊形", fill_mode_sector: "扇形", fill_mode_segment: "弓形", fill_mode_path: "路徑",
       tip_fill_mode: "填色模式", tip_fill_polygon: "多邊形填色", tip_fill_sector: "扇形填色",
+      tip_fill_path: "路徑填色：點既有弧與線段（兩弧＋一邊）",
       tip_fill_segment: "弓形填色",
       align_title: "對齊", align_distH: "橫距", align_distV: "縱距", align_equalLen: "等長",
       tip_align_left: "左對齊", tip_align_center: "水平置中", tip_align_right: "右對齊",
@@ -3081,6 +3083,9 @@ body.dark-canvas .coord-curve-row {
       hint_fill: "依序點頂點，再點起點完成",
       hint_fill_sector: "點既有扇形，或圓心→起點→終點",
       hint_fill_segment: "在同一圓上點兩點（填次要弓形）",
+      hint_fill_path: "點既有弧／扇與線段組成封閉區（兩弧＋一邊）；或先多選再點畫布",
+      fill_path_need: "請點弧／扇與線段（至少兩邊）",
+      fill_path_open: "邊未封閉，請再點相接的弧或線段",
       hint_shape: "拖曳放置圖形，放開完成",
       hint_circlePart: "在圓上拖曳建立弦／直徑／半徑",
       fill_need_point: "請點選既有頂點",
@@ -3204,7 +3209,7 @@ body.dark-canvas .coord-curve-row {
       tip_mark_double: "雙箭／雙劃（G）",
       tip_mark_flip: "記號翻面（選取平行／等長記號後）",
       tip_tool_length: "線段長度標註（例：6）",
-      tip_tool_fill: "填色：多邊形／扇形／弓形；浮層切換模式與色票 (I)",
+      tip_tool_fill: "填色：多邊形／扇形／弓形／路徑；浮層切換模式與色票 (I)",
       tip_preview_crop: "關閉後拖曳框選匯出範圍",
       tip_preview_clear_crop: "改回自動裁切整圖",
       tip_preview_png: "儲存 PNG（Chrome／Edge 可選資料夾與檔名）",
@@ -3306,8 +3311,9 @@ body.dark-canvas .coord-curve-row {
       circlePart_chord: "Chord", circlePart_diameter: "Diam", circlePart_radius: "Rad",
       tip_circlePart_bar: "Chord / diameter / radius", tip_circlePart_chord: "Chord: two points on circle",
       tip_circlePart_diameter: "Diameter through center", tip_circlePart_radius: "Radius: center to rim",
-      fill_mode_polygon: "Poly", fill_mode_sector: "Pie", fill_mode_segment: "Seg",
+      fill_mode_polygon: "Poly", fill_mode_sector: "Pie", fill_mode_segment: "Seg", fill_mode_path: "Path",
       tip_fill_mode: "Fill mode", tip_fill_polygon: "Polygon fill", tip_fill_sector: "Sector fill",
+      tip_fill_path: "Path fill: click existing arcs + a segment (two arcs + chord)",
       tip_fill_segment: "Segment fill",
       align_title: "Align", align_distH: "DistH", align_distV: "DistV", align_equalLen: "EqLen",
       tip_align_left: "Align left", tip_align_center: "Align center", tip_align_right: "Align right",
@@ -3381,6 +3387,9 @@ body.dark-canvas .coord-curve-row {
       hint_fill: "Click vertices in order, then click the start point to finish",
       hint_fill_sector: "Click an existing sector, or center → start → end",
       hint_fill_segment: "Click two points on the same circle (minor segment)",
+      hint_fill_path: "Click existing arcs/sectors and a segment (two arcs + chord); or multi-select then click canvas",
+      fill_path_need: "Click arcs/sectors and segments (≥2 edges)",
+      fill_path_open: "Edges do not close yet — click a connecting arc or segment",
       hint_shape: "Drag to place a shape, release to commit",
       hint_circlePart: "Drag on a circle to make a chord / diameter / radius",
       fill_need_point: "Click an existing vertex",
@@ -3504,7 +3513,7 @@ body.dark-canvas .coord-curve-row {
       tip_mark_double: "Double chevron/tick (G)",
       tip_mark_flip: "Flip mark (select parallel/equal mark first)",
       tip_tool_length: "Segment length label (e.g. 6)",
-      tip_tool_fill: "Fill: polygon / sector / segment; float for mode & swatches (I)",
+      tip_tool_fill: "Fill: polygon / sector / segment / path; float for mode & swatches (I)",
       tip_preview_crop: "Close, then drag a crop box",
       tip_preview_clear_crop: "Back to auto crop of whole figure",
       tip_preview_png: "Save PNG (Chrome/Edge: pick folder & name)",
@@ -4498,7 +4507,7 @@ body.dark-canvas .coord-curve-row {
   }
 
   function setFillMode(mode) {
-    if (mode === "sector" || mode === "segment") fillMode = mode;
+    if (mode === "sector" || mode === "segment" || mode === "path") fillMode = mode;
     else fillMode = "polygon";
     draft = null;
     syncFillModeUI();
@@ -5158,7 +5167,188 @@ body.dark-canvas .coord-curve-row {
     return f;
   }
 
+  function pathEdgeFromSector(sec) {
+    if (!sec) return null;
+    return {
+      type: "arc",
+      centerId: sec.centerId,
+      from: sec.startId,
+      to: sec.endId,
+    };
+  }
+
+  function pathEdgeFromSegment(seg) {
+    if (!seg) return null;
+    return { type: "line", a: seg.a, b: seg.b };
+  }
+
+  function clonePathEdge(e) {
+    if (!e) return null;
+    if (e.type === "line") return { type: "line", a: e.a, b: e.b };
+    if (e.type === "arc") {
+      const out = {
+        type: "arc",
+        centerId: e.centerId,
+        from: e.from,
+        to: e.to,
+      };
+      if (e.circleId) out.circleId = e.circleId;
+      return out;
+    }
+    return null;
+  }
+
+  function flipPathEdge(e) {
+    if (!e) return null;
+    if (e.type === "line") return { type: "line", a: e.b, b: e.a };
+    if (e.type === "arc") {
+      const out = {
+        type: "arc",
+        centerId: e.centerId,
+        from: e.to,
+        to: e.from,
+      };
+      if (e.circleId) out.circleId = e.circleId;
+      return out;
+    }
+    return null;
+  }
+
+  function pathEdgeEndpoints(e) {
+    if (!e) return null;
+    if (e.type === "line") return [e.a, e.b];
+    if (e.type === "arc") return [e.from, e.to];
+    return null;
+  }
+
+  function pathEdgeKey(e) {
+    if (!e) return "";
+    if (e.type === "line") {
+      const a = String(e.a);
+      const b = String(e.b);
+      return a < b ? `L:${a}|${b}` : `L:${b}|${a}`;
+    }
+    if (e.type === "arc") {
+      const a = String(e.from);
+      const b = String(e.to);
+      const ends = a < b ? `${a}|${b}` : `${b}|${a}`;
+      return `A:${e.centerId}:${ends}`;
+    }
+    return "";
+  }
+
+  /**
+   * Orient & order pathFill edges into a closed chain.
+   * Used for two arcs + one chord (and general mixed line/arc loops).
+   */
+  function chainPathFillEdges(rawEdges) {
+    if (!Array.isArray(rawEdges) || rawEdges.length < 2) return null;
+    const edges = rawEdges.map(clonePathEdge).filter(Boolean);
+    if (edges.length < 2) return null;
+    for (let si = 0; si < edges.length; si++) {
+      for (const startFlip of [false, true]) {
+        const pool = edges.filter((_, i) => i !== si).map(clonePathEdge);
+        let cur = startFlip ? flipPathEdge(edges[si]) : clonePathEdge(edges[si]);
+        if (!cur) continue;
+        const ordered = [cur];
+        let tip = pathEdgeEndpoints(cur)[1];
+        let ok = true;
+        while (pool.length) {
+          let found = -1;
+          let flip = false;
+          for (let i = 0; i < pool.length; i++) {
+            const ends = pathEdgeEndpoints(pool[i]);
+            if (!ends) continue;
+            if (ends[0] === tip) {
+              found = i;
+              flip = false;
+              break;
+            }
+            if (ends[1] === tip) {
+              found = i;
+              flip = true;
+              break;
+            }
+          }
+          if (found < 0) {
+            ok = false;
+            break;
+          }
+          const next = flip ? flipPathEdge(pool[found]) : clonePathEdge(pool[found]);
+          ordered.push(next);
+          tip = pathEdgeEndpoints(next)[1];
+          pool.splice(found, 1);
+        }
+        if (ok && tip === pathEdgeEndpoints(ordered[0])[0]) return ordered;
+      }
+    }
+    return null;
+  }
+
+  function addFillPath(edges, color, opacity, skipHist) {
+    const chained = chainPathFillEdges(edges);
+    if (!chained || chained.length < 2) return null;
+    if (!skipHist) pushHistory();
+    const f = {
+      id: uid(),
+      kind: "pathFill",
+      edges: chained,
+      color: color || activeFillStyle().color,
+      opacity: opacity != null ? opacity : activeFillStyle().opacity,
+    };
+    fills.push(f);
+    return f;
+  }
+
+  function pathEdgesFromSelection() {
+    const edges = [];
+    const seen = new Set();
+    for (const sel of selection) {
+      let e = null;
+      if (sel.type === "sector") {
+        e = pathEdgeFromSector(sectors.find((s) => s.id === sel.id));
+      } else if (sel.type === "segment") {
+        e = pathEdgeFromSegment(segments.find((s) => s.id === sel.id));
+      }
+      if (!e) continue;
+      const key = pathEdgeKey(e);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      edges.push(e);
+    }
+    return edges;
+  }
+
+  function tryCommitPathEdges(edges) {
+    const chained = chainPathFillEdges(edges);
+    if (!chained) return false;
+    const style = activeFillStyle();
+    const created = addFillPath(chained, style.color, style.opacity);
+    draft = null;
+    if (created) {
+      setSelection([{ type: "fill", id: created.id }]);
+      statusHint.textContent = t("fill_closed");
+    }
+    updateStatus();
+    draw();
+    return !!created;
+  }
+
+  function commitFillPathDraft() {
+    if (!draft || draft.kind !== "fillPath") return false;
+    if (!draft.edges || draft.edges.length < 2) {
+      statusHint.textContent = t("fill_path_need");
+      return false;
+    }
+    if (!tryCommitPathEdges(draft.edges)) {
+      statusHint.textContent = t("fill_path_open");
+      return false;
+    }
+    return true;
+  }
+
   function commitFillDraft() {
+    if (draft && draft.kind === "fillPath") return commitFillPathDraft();
     if (!draft || draft.kind !== "fill") return false;
     if (!draft.pointIds || draft.pointIds.length < 3) {
       statusHint.textContent = t("fill_need_more");
@@ -5183,6 +5373,10 @@ body.dark-canvas .coord-curve-row {
     }
     if (fillMode === "segment") {
       handleFillSegmentClick(world);
+      return;
+    }
+    if (fillMode === "path") {
+      handleFillPathClick(world);
       return;
     }
     // Prefer start vertex when closing so nearby last-point doesn't steal the hit
@@ -5288,6 +5482,82 @@ body.dark-canvas .coord-curve-row {
       statusHint.textContent = t("fill_closed");
     }
     updateStatus();
+    draw();
+  }
+
+  function handleFillPathClick(world) {
+    // Prefer multi-select of arcs + segment → one-shot pathFill
+    if (!draft || draft.kind !== "fillPath") {
+      const fromSel = pathEdgesFromSelection();
+      if (fromSel.length >= 2 && chainPathFillEdges(fromSel)) {
+        if (tryCommitPathEdges(fromSel)) return;
+      }
+    }
+    const secHit = nearestSectorHit(world.x, world.y);
+    const segHit = nearestSegmentHit(world.x, world.y);
+    let edge = null;
+    let sourceKey = "";
+    // Prefer whichever geom snap is closer when both hit
+    if (secHit && segHit) {
+      const g = sectorGeom(secHit);
+      const a = pointById(segHit.a);
+      const b = pointById(segHit.b);
+      let dSec = Infinity;
+      let dSeg = Infinity;
+      if (g) {
+        const ang = Math.atan2(world.y - g.c.y, world.x - g.c.x);
+        const on = {
+          x: g.c.x + g.r * Math.cos(ang),
+          y: g.c.y + g.r * Math.sin(ang),
+        };
+        dSec = dist(world, on);
+      }
+      if (a && b) {
+        const t = Math.max(
+          0,
+          Math.min(
+            1,
+            ((world.x - a.x) * (b.x - a.x) + (world.y - a.y) * (b.y - a.y)) /
+              (Math.hypot(b.x - a.x, b.y - a.y) ** 2 || 1)
+          )
+        );
+        dSeg = dist(world, { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+      }
+      if (dSec <= dSeg) {
+        edge = pathEdgeFromSector(secHit);
+        sourceKey = "sector:" + secHit.id;
+      } else {
+        edge = pathEdgeFromSegment(segHit);
+        sourceKey = "segment:" + segHit.id;
+      }
+    } else if (secHit) {
+      edge = pathEdgeFromSector(secHit);
+      sourceKey = "sector:" + secHit.id;
+    } else if (segHit) {
+      edge = pathEdgeFromSegment(segHit);
+      sourceKey = "segment:" + segHit.id;
+    }
+    if (!edge) {
+      statusHint.textContent = t("fill_path_need");
+      return;
+    }
+    if (!draft || draft.kind !== "fillPath") {
+      draft = { kind: "fillPath", edges: [edge], sourceKeys: [sourceKey] };
+      statusHint.textContent = t("hint_fill_path");
+      draw();
+      return;
+    }
+    if (draft.sourceKeys && draft.sourceKeys.includes(sourceKey)) return;
+    const key = pathEdgeKey(edge);
+    if (draft.edges.some((e) => pathEdgeKey(e) === key)) return;
+    draft.edges.push(edge);
+    if (!draft.sourceKeys) draft.sourceKeys = [];
+    draft.sourceKeys.push(sourceKey);
+    if (chainPathFillEdges(draft.edges)) {
+      tryCommitPathEdges(draft.edges);
+      return;
+    }
+    statusHint.textContent = t("fill_path_open");
     draw();
   }
 
@@ -5492,7 +5762,9 @@ body.dark-canvas .coord-curve-row {
           ? t("hint_fill_sector")
           : fillMode === "segment"
             ? t("hint_fill_segment")
-            : t("hint_fill"),
+            : fillMode === "path"
+              ? t("hint_fill_path")
+              : t("hint_fill"),
     };
     statusHint.textContent = hints[tool] || "";
   }
@@ -5691,7 +5963,12 @@ body.dark-canvas .coord-curve-row {
       };
       syncLayersUI();
     }
-    if (data.fillMode === "sector" || data.fillMode === "segment" || data.fillMode === "polygon") {
+    if (
+      data.fillMode === "sector" ||
+      data.fillMode === "segment" ||
+      data.fillMode === "polygon" ||
+      data.fillMode === "path"
+    ) {
       fillMode = data.fillMode;
       syncFillModeUI();
     }
@@ -10396,6 +10673,61 @@ body.dark-canvas .coord-curve-row {
         }
       }
     }
+    if (draft.kind === "fillPath" && Array.isArray(draft.edges) && draft.edges.length) {
+      const style = activeFillStyle();
+      const chained = chainPathFillEdges(draft.edges);
+      const preview = {
+        kind: "pathFill",
+        edges: chained || draft.edges,
+        color: style.color,
+        opacity: Math.min(0.35, style.opacity),
+      };
+      if (chained && buildFillPath(ctx, preview, (x, y) => worldToScreen(x, y))) {
+        ctx.fillStyle = hexToRgba(style.color, Math.min(0.35, style.opacity));
+        ctx.fill();
+        ctx.strokeStyle = "rgba(42,122,176,0.7)";
+        ctx.lineWidth = 1.25;
+        ctx.setLineDash([5, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else {
+        // Open draft: stroke each picked edge
+        ctx.strokeStyle = "rgba(42,122,176,0.75)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        for (const e of draft.edges) {
+          if (!e) continue;
+          if (e.type === "line") {
+            const a = pointById(e.a);
+            const b = pointById(e.b);
+            if (!a || !b) continue;
+            const sa = worldToScreen(a.x, a.y);
+            const sb = worldToScreen(b.x, b.y);
+            ctx.beginPath();
+            ctx.moveTo(sa.x, sa.y);
+            ctx.lineTo(sb.x, sb.y);
+            ctx.stroke();
+          } else if (e.type === "arc") {
+            const c = pointById(e.centerId);
+            const s0 = pointById(e.from);
+            const s1 = pointById(e.to);
+            if (!c || !s0 || !s1) continue;
+            const a0 = Math.atan2(s0.y - c.y, s0.x - c.x);
+            const a1 = Math.atan2(s1.y - c.y, s1.x - c.x);
+            let delta = a1 - a0;
+            while (delta <= -Math.PI) delta += Math.PI * 2;
+            while (delta > Math.PI) delta -= Math.PI * 2;
+            const sc = worldToScreen(c.x, c.y);
+            const ss = worldToScreen(s0.x, s0.y);
+            const rScreen = Math.hypot(ss.x - sc.x, ss.y - sc.y);
+            ctx.beginPath();
+            ctx.arc(sc.x, sc.y, rScreen, a0, a1, delta < 0);
+            ctx.stroke();
+          }
+        }
+        ctx.setLineDash([]);
+      }
+    }
     if ((draft.kind === "rightAngle" || draft.kind === "angleArc") && draft.vertex) {
       const v = pointById(draft.vertex);
       if (v) {
@@ -13417,7 +13749,7 @@ ${body}</svg>`;
     // Stable 35-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.29",
+      version: "13.5.30",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
@@ -13686,7 +14018,12 @@ ${body}</svg>`;
     // buildProjectData + buildDocSnapshotForOps (merge-ops used to drop the key and wipe crop).
     exportCrop = data.exportCrop || null;
     if (data.sectorMode === "sector" || data.sectorMode === "arc") sectorMode = data.sectorMode;
-    if (data.fillMode === "sector" || data.fillMode === "segment" || data.fillMode === "polygon") {
+    if (
+      data.fillMode === "sector" ||
+      data.fillMode === "segment" ||
+      data.fillMode === "polygon" ||
+      data.fillMode === "path"
+    ) {
       fillMode = data.fillMode;
     }
     if (isShapeMode(data.shapeMode)) {
@@ -16208,7 +16545,7 @@ ${body}</svg>`;
     else if (id === "cycle_mark") {
       if (tool === "sector") setSectorMode(sectorMode === "arc" ? "sector" : "arc");
       else if (tool === "fill") {
-        const order = ["polygon", "sector", "segment"];
+        const order = ["polygon", "sector", "segment", "path"];
         setFillMode(order[(order.indexOf(fillMode) + 1) % order.length]);
       } else if (tool === "shape") {
         const order = SHAPE_MODES;
@@ -16272,10 +16609,20 @@ ${body}</svg>`;
       }
     }
     if (e.key === "Enter") {
-      if (draft && draft.kind === "fill") {
+      if (draft && (draft.kind === "fill" || draft.kind === "fillPath")) {
         e.preventDefault();
         commitFillDraft();
         return;
+      }
+      if (tool === "fill" && fillMode === "path" && (!draft || draft.kind !== "fillPath")) {
+        const fromSel = pathEdgesFromSelection();
+        if (fromSel.length >= 2) {
+          e.preventDefault();
+          if (!tryCommitPathEdges(fromSel)) {
+            statusHint.textContent = t("fill_path_open");
+          }
+          return;
+        }
       }
     }
     if (e.key === "Escape") {

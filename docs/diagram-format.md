@@ -54,7 +54,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `savedAt` | number | 儲存時間戳（毫秒） |
 | `name` | string | 檔名提示 |
 
-儲存時固定輸出上述 **35** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.29"`）。
+儲存時固定輸出上述 **35** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.30"`）。
 
 ---
 
@@ -152,13 +152,20 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 { "id": "f3", "kind": "segment", "circleId": "c1", "startId": "P", "endId": "Q", "opacity": 0.2 }
 { "id": "f4", "kind": "segment", "centerId": "O", "startId": "P", "endId": "Q", "opacity": 0.2 }
 { "id": "f5", "kind": "pathFill", "edges": [{ "type": "line", "a": "A", "b": "C" }, { "type": "arc", "centerId": "O", "from": "C", "to": "A" }], "opacity": 0.2 }
+{ "id": "f6", "kind": "pathFill", "edges": [
+  { "type": "line", "a": "A", "b": "C" },
+  { "type": "arc", "centerId": "O2", "from": "C", "to": "B" },
+  { "type": "arc", "centerId": "O1", "from": "B", "to": "A" }
+], "opacity": 0.2 }
 ```
 
 - `kind`：`polygon`（預設）｜`sector`｜`segment`（弓形）｜`polyArc`｜`pathFill`
 - 多邊形：依既有頂點順序（≥3）；扇形：圓心＋兩端點；弓形：`circleId` 或僅 `centerId`＋弦兩端（勿寫 `circleId: null`）
 - `pathFill`：`edges` 為 `line`／`arc` 混合邊；開檔→存檔須原樣保留，不可塌成空 `polygon`
+- **兩弧＋一邊**（lens／slice）：用 `pathFill` 三邊（兩 `arc`＋一 `line`）；`addFill` 會在可封閉時自動接順方向。勿用白蓋扇形遮罩。
+- UI 填色模式：多邊形／扇形／弓形／**路徑**（點既有弧＋線段，或先多選再填）
 - `opacity` 0–1；繪於線段／標籤之下；同區重複填色存檔時去重
-- UI 色票：灰 10／20／35／50%、藍灰約 22%（`#6b8799`）、白蓋（`#ffffff` opacity 1）
+- UI 色票：灰 10／20／35／50%、藍灰約 22%（`#6b8799`）、白蓋（`#ffffff` opacity 1；僅複合挖空，非兩弧區正式做法）
 
 ### coordPlots
 
