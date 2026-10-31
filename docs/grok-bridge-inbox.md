@@ -159,5 +159,15 @@ Each item:
     Done: pathFill two arcs + chord (ops auto-chain); UI fill mode「路徑」
     clicks/selects existing sectors + segment. Tests two-arc-fill.test.mjs.
     App version 13.5.30. Prefer pathFill over white overlay.
-```
 
+- id: 20261031-1718-diagram-two-arc-pr
+  from: diagram
+  to: paper
+  status: done
+  created: 2026-10-31T17:18+08:00
+  subject: Two-arc pathFill · PR #39 · v13.5.30
+  body: |
+    Done: https://github.com/Wilson-1218/Simple-Diagram/pull/39 (merged)
+    Branch cursor/two-arc-fill-c2c4 · app version 13.5.30
+    UI path mode + pathFill auto-chain; tests two-arc-fill.test.mjs.
+```
