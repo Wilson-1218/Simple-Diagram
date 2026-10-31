@@ -713,6 +713,7 @@ const HANDLERS = {
     } else if (kind === "equilateral") {
       const hh = (Math.sqrt(3) / 2) * w;
       pts.push([x0, y0], [x0 + w, y0], [x0 + w / 2, y0 - hh]);
+      doc.shapeMode = "equilateral";
     } else if (kind === "iso") {
       pts.push([x0, y0], [x0 + w, y0], [x0 + w / 2, y0 - h]);
     } else if (kind === "rightTri") {
@@ -740,11 +741,16 @@ const HANDLERS = {
       ids.push(p.id);
       labelPoint(p, i);
     }
+    // Equilateral construction helpers default to dotted unless style was set explicitly.
+    const edgeStyle =
+      kind === "equilateral" && op.style == null && op.lineStyle == null
+        ? "dotted"
+        : style;
     for (let i = 0; i < ids.length; i++) {
       const a = ids[i];
       const b = ids[(i + 1) % ids.length];
       const segHint = prefix ? `${prefix}s${i}` : undefined;
-      pushSegment(doc, nextId, a, b, style, segHint);
+      pushSegment(doc, nextId, a, b, edgeStyle, segHint);
     }
     return doc;
   },

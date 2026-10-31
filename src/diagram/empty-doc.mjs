@@ -1,7 +1,7 @@
 /** Empty Simple Diagram document (formatVersion 1). */
 
 export const CURRENT_FORMAT_VERSION = 1;
-export const APP_VERSION = "13.5.26";
+export const APP_VERSION = "13.5.27";
 
 export const DEFAULT_LAYERS = {
   gridShow: true,
@@ -12,6 +12,45 @@ export const DEFAULT_LAYERS = {
   /** Marks/labels layer defaults locked: follow geometry until unlocked. */
   helpersLock: true,
 };
+
+/** Stable top-level save key order (35 keys). Empty collections → []. */
+export const STABLE_TOP_LEVEL_KEYS = [
+  "formatVersion",
+  "version",
+  "app",
+  "points",
+  "segments",
+  "labels",
+  "rightAngles",
+  "angleArcs",
+  "midTicks",
+  "parallelMarks",
+  "equalMarks",
+  "lengthLabels",
+  "circles",
+  "ellipses",
+  "sectors",
+  "fills",
+  "coordPlots",
+  "exportCrop",
+  "sectorMode",
+  "fillMode",
+  "shapeMode",
+  "circlePartMode",
+  "layers",
+  "nextLetter",
+  "labelFontSize",
+  "rightAngleSize",
+  "activeParallelGroup",
+  "activeEqualGroup",
+  "activeArcGroup",
+  "gridSnap",
+  "gridMode",
+  "hideExportPoints",
+  "view",
+  "savedAt",
+  "name",
+];
 
 /**
  * @param {Record<string, unknown>} [overrides]

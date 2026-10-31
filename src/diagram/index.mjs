@@ -4,6 +4,7 @@ export {
   CURRENT_FORMAT_VERSION,
   APP_VERSION,
   DEFAULT_LAYERS,
+  STABLE_TOP_LEVEL_KEYS,
 } from "./empty-doc.mjs";
 export { collectIds, createIdFactory } from "./ids.mjs";
 export { validateDiagram } from "./validate.mjs";

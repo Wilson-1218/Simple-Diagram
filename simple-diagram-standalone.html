@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261022-release-v13.5.26" />
+  <meta name="simple-diagram-build" content="20261031-release-v13.5.27" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -2037,7 +2037,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.26</span>
+            <span class="brand-sub">v13.5.27</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -4559,7 +4559,14 @@ body.dark-canvas .coord-curve-row {
 
   function fillKindOf(fill) {
     if (!fill) return "polygon";
-    if (fill.kind === "sector" || fill.kind === "segment") return fill.kind;
+    if (
+      fill.kind === "sector" ||
+      fill.kind === "segment" ||
+      fill.kind === "polyArc" ||
+      fill.kind === "pathFill"
+    ) {
+      return fill.kind;
+    }
     return "polygon";
   }
 
@@ -4572,17 +4579,90 @@ body.dark-canvas .coord-curve-row {
       color: f.color || "#666666",
       opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
     };
+    if (kind === "pathFill") {
+      const edges = [];
+      if (Array.isArray(f.edges)) {
+        for (const e of f.edges) {
+          if (!e || typeof e !== "object") continue;
+          if (e.type === "line" && e.a && e.b) {
+            edges.push({ type: "line", a: String(e.a), b: String(e.b) });
+          } else if (e.type === "arc" && e.centerId && e.from && e.to) {
+            const edge = {
+              type: "arc",
+              centerId: String(e.centerId),
+              from: String(e.from),
+              to: String(e.to),
+            };
+            if (e.circleId) edge.circleId = String(e.circleId);
+            edges.push(edge);
+          }
+        }
+      }
+      out.edges = edges;
+      return out;
+    }
     if (kind === "polygon") {
       out.pointIds = Array.isArray(f.pointIds) ? [...f.pointIds] : [];
-    } else if (kind === "sector") {
-      out.circleId = f.circleId || null;
-      out.centerId = f.centerId || null;
-      out.startId = f.startId || null;
-      out.endId = f.endId || null;
-    } else {
-      out.circleId = f.circleId || null;
-      out.startId = f.startId || null;
-      out.endId = f.endId || null;
+      return out;
+    }
+    if (kind === "polyArc") {
+      out.pointIds = Array.isArray(f.pointIds) ? [...f.pointIds] : [];
+      if (f.centerId) out.centerId = f.centerId;
+      if (f.startId) out.startId = f.startId;
+      if (f.endId) out.endId = f.endId;
+      if (f.circleId) out.circleId = f.circleId;
+      return out;
+    }
+    if (kind === "sector") {
+      if (f.centerId) out.centerId = f.centerId;
+      if (f.startId) out.startId = f.startId;
+      if (f.endId) out.endId = f.endId;
+      if (f.circleId) out.circleId = f.circleId;
+      return out;
+    }
+    // segment (circular): prefer circleId; else keep centerId — never emit circleId: null
+    if (f.startId) out.startId = f.startId;
+    if (f.endId) out.endId = f.endId;
+    if (f.circleId) out.circleId = f.circleId;
+    else if (f.centerId) out.centerId = f.centerId;
+    return out;
+  }
+
+  /** Geometry fingerprint for fill dedupe on save (ignores id). */
+  function fillSaveSignature(f) {
+    if (!f) return "";
+    const kind = fillKindOf(f);
+    const base = [kind, f.color || "", Number(f.opacity)];
+    if (kind === "pathFill") return JSON.stringify(base.concat([f.edges || []]));
+    if (kind === "polygon") return JSON.stringify(base.concat([f.pointIds || []]));
+    if (kind === "polyArc") {
+      return JSON.stringify(
+        base.concat([f.pointIds || [], f.centerId || "", f.startId || "", f.endId || "", f.circleId || ""])
+      );
+    }
+    return JSON.stringify(
+      base.concat([f.circleId || "", f.centerId || "", f.startId || "", f.endId || ""])
+    );
+  }
+
+  /** Persist fills faithfully; drop broken legacy collapses; one fill per region. */
+  function sanitizeFillsForSave(list) {
+    const out = [];
+    const seen = new Set();
+    for (const raw of list || []) {
+      const f = normalizeFillRecord(raw);
+      if (!f) continue;
+      const kind = f.kind;
+      if (kind === "polygon" && (!Array.isArray(f.pointIds) || f.pointIds.length < 3)) continue;
+      if (kind === "pathFill" && (!Array.isArray(f.edges) || f.edges.length < 2)) continue;
+      if (kind === "polyArc" && (!Array.isArray(f.pointIds) || f.pointIds.length < 2)) continue;
+      if ((kind === "sector" || kind === "segment") && !(f.startId && f.endId)) continue;
+      if (kind === "sector" && !f.centerId) continue;
+      if (kind === "segment" && !(f.circleId || f.centerId)) continue;
+      const sig = fillSaveSignature(f);
+      if (seen.has(sig)) continue;
+      seen.add(sig);
+      out.push(f);
     }
     return out;
   }
@@ -4680,6 +4760,18 @@ body.dark-canvas .coord-curve-row {
     const kind = fillKindOf(fill);
     if (kind === "sector") return pointInFillSector(wx, wy, fillSectorGeom(fill));
     if (kind === "segment") return pointInFillSegment(wx, wy, fillSegmentGeom(fill));
+    if (kind === "pathFill" || kind === "polyArc") {
+      // Hit-test in world space via a throwaway 2d context (no camera transform).
+      try {
+        const off = document.createElement("canvas").getContext("2d");
+        if (off && buildFillPath(off, fill, (x, y) => ({ x, y }))) {
+          return off.isPointInPath(wx, wy);
+        }
+      } catch (_) {
+        /* fall through */
+      }
+      return false;
+    }
     const pts = fillWorldPoints(fill);
     return !!(pts && pointInPolygon(wx, wy, pts));
   }
@@ -4694,13 +4786,14 @@ body.dark-canvas .coord-curve-row {
 
   function buildFillPath(ctxOrC, fill, toS) {
     const kind = fillKindOf(fill);
+    const begin = typeof ctxOrC.beginPath === "function";
     if (kind === "sector") {
       const g = fillSectorGeom(fill);
       if (!g) return false;
       const sc = toS(g.c.x, g.c.y);
       const ss = toS(g.s.x, g.s.y);
       const rScreen = Math.hypot(ss.x - sc.x, ss.y - sc.y);
-      ctxOrC.beginPath();
+      if (begin) ctxOrC.beginPath();
       ctxOrC.moveTo(sc.x, sc.y);
       ctxOrC.lineTo(ss.x, ss.y);
       ctxOrC.arc(sc.x, sc.y, rScreen, g.a0, g.a1, g.anticlockwise);
@@ -4713,16 +4806,83 @@ body.dark-canvas .coord-curve-row {
       const sc = toS(g.c.x, g.c.y);
       const ss = toS(g.s.x, g.s.y);
       const rScreen = Math.hypot(ss.x - sc.x, ss.y - sc.y);
-      ctxOrC.beginPath();
+      if (begin) ctxOrC.beginPath();
       ctxOrC.moveTo(ss.x, ss.y);
       ctxOrC.arc(sc.x, sc.y, rScreen, g.a0, g.a1, g.anticlockwise);
+      ctxOrC.closePath();
+      return true;
+    }
+    if (kind === "pathFill" && Array.isArray(fill.edges) && fill.edges.length >= 2) {
+      let started = false;
+      if (begin) ctxOrC.beginPath();
+      for (const e of fill.edges) {
+        if (!e) return false;
+        if (e.type === "line") {
+          const a = pointById(e.a);
+          const b = pointById(e.b);
+          if (!a || !b) return false;
+          const sa = toS(a.x, a.y);
+          const sb = toS(b.x, b.y);
+          if (!started) {
+            ctxOrC.moveTo(sa.x, sa.y);
+            started = true;
+          }
+          ctxOrC.lineTo(sb.x, sb.y);
+        } else if (e.type === "arc") {
+          const c = pointById(e.centerId);
+          const s0 = pointById(e.from);
+          const s1 = pointById(e.to);
+          if (!c || !s0 || !s1) return false;
+          const a0 = Math.atan2(s0.y - c.y, s0.x - c.x);
+          const a1 = Math.atan2(s1.y - c.y, s1.x - c.x);
+          let delta = a1 - a0;
+          while (delta <= -Math.PI) delta += Math.PI * 2;
+          while (delta > Math.PI) delta -= Math.PI * 2;
+          const sc = toS(c.x, c.y);
+          const ss = toS(s0.x, s0.y);
+          const rScreen = Math.hypot(ss.x - sc.x, ss.y - sc.y);
+          if (!started) {
+            ctxOrC.moveTo(ss.x, ss.y);
+            started = true;
+          }
+          ctxOrC.arc(sc.x, sc.y, rScreen, a0, a1, delta < 0);
+        } else {
+          return false;
+        }
+      }
+      if (!started) return false;
+      ctxOrC.closePath();
+      return true;
+    }
+    if (kind === "polyArc" && Array.isArray(fill.pointIds) && fill.pointIds.length >= 2) {
+      const c = pointById(fill.centerId);
+      const s0 = pointById(fill.startId);
+      const s1 = pointById(fill.endId);
+      if (!c || !s0 || !s1) return false;
+      if (begin) ctxOrC.beginPath();
+      for (let i = 0; i < fill.pointIds.length; i++) {
+        const p = pointById(fill.pointIds[i]);
+        if (!p) return false;
+        const s = toS(p.x, p.y);
+        if (i === 0) ctxOrC.moveTo(s.x, s.y);
+        else ctxOrC.lineTo(s.x, s.y);
+      }
+      const a0 = Math.atan2(s0.y - c.y, s0.x - c.x);
+      const a1 = Math.atan2(s1.y - c.y, s1.x - c.x);
+      let delta = a1 - a0;
+      while (delta <= -Math.PI) delta += Math.PI * 2;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      const sc = toS(c.x, c.y);
+      const ss = toS(s0.x, s0.y);
+      const rScreen = Math.hypot(ss.x - sc.x, ss.y - sc.y);
+      ctxOrC.arc(sc.x, sc.y, rScreen, a0, a1, delta < 0);
       ctxOrC.closePath();
       return true;
     }
     const pts = fillWorldPoints(fill);
     if (!pts) return false;
     const s0 = toS(pts[0].x, pts[0].y);
-    ctxOrC.beginPath();
+    if (begin) ctxOrC.beginPath();
     ctxOrC.moveTo(s0.x, s0.y);
     for (let i = 1; i < pts.length; i++) {
       const s = toS(pts[i].x, pts[i].y);
@@ -4746,7 +4906,7 @@ body.dark-canvas .coord-curve-row {
     }
   }
 
-  /** SVG path `d` for a fill (polygon / sector pie / circular segment). */
+  /** SVG path `d` for a fill (polygon / sector / segment / polyArc / pathFill). */
   function fillToSvgPath(fill, toS) {
     const kind = fillKindOf(fill);
     if (kind === "sector") {
@@ -4811,6 +4971,102 @@ body.dark-canvas .coord-curve-row {
         " Z"
       );
     }
+    if (kind === "pathFill" && Array.isArray(fill.edges) && fill.edges.length >= 2) {
+      let d = "";
+      let started = false;
+      for (const e of fill.edges) {
+        if (!e) return null;
+        if (e.type === "line") {
+          const a = pointById(e.a);
+          const b = pointById(e.b);
+          if (!a || !b) return null;
+          const sa = toS(a.x, a.y);
+          const sb = toS(b.x, b.y);
+          if (!started) {
+            d += "M" + sa.x.toFixed(2) + " " + sa.y.toFixed(2);
+            started = true;
+          }
+          d += " L" + sb.x.toFixed(2) + " " + sb.y.toFixed(2);
+        } else if (e.type === "arc") {
+          const c = pointById(e.centerId);
+          const s0 = pointById(e.from);
+          const s1 = pointById(e.to);
+          if (!c || !s0 || !s1) return null;
+          const r = Math.hypot(s0.x - c.x, s0.y - c.y) || Math.hypot(s1.x - c.x, s1.y - c.y);
+          const ang0 = Math.atan2(s0.y - c.y, s0.x - c.x);
+          const ang1 = Math.atan2(s1.y - c.y, s1.x - c.x);
+          let delta = ang1 - ang0;
+          while (delta <= -Math.PI) delta += Math.PI * 2;
+          while (delta > Math.PI) delta -= Math.PI * 2;
+          const large = Math.abs(delta) > Math.PI ? 1 : 0;
+          const sweep = delta < 0 ? 0 : 1;
+          const p0 = toS(s0.x, s0.y);
+          const p1 = toS(s1.x, s1.y);
+          // Approximate screen radius from center→start in draw space
+          const sc = toS(c.x, c.y);
+          const sr = Math.hypot(p0.x - sc.x, p0.y - sc.y) || r;
+          if (!started) {
+            d += "M" + p0.x.toFixed(2) + " " + p0.y.toFixed(2);
+            started = true;
+          }
+          d +=
+            " A" +
+            sr.toFixed(2) +
+            " " +
+            sr.toFixed(2) +
+            " 0 " +
+            large +
+            " " +
+            sweep +
+            " " +
+            p1.x.toFixed(2) +
+            " " +
+            p1.y.toFixed(2);
+        } else {
+          return null;
+        }
+      }
+      return started ? d + " Z" : null;
+    }
+    if (kind === "polyArc" && Array.isArray(fill.pointIds) && fill.pointIds.length >= 2) {
+      const c = pointById(fill.centerId);
+      const s0 = pointById(fill.startId);
+      const s1 = pointById(fill.endId);
+      if (!c || !s0 || !s1) return null;
+      let d = "";
+      for (let i = 0; i < fill.pointIds.length; i++) {
+        const p = pointById(fill.pointIds[i]);
+        if (!p) return null;
+        const s = toS(p.x, p.y);
+        d += (i === 0 ? "M" : " L") + s.x.toFixed(2) + " " + s.y.toFixed(2);
+      }
+      const ang0 = Math.atan2(s0.y - c.y, s0.x - c.x);
+      const ang1 = Math.atan2(s1.y - c.y, s1.x - c.x);
+      let delta = ang1 - ang0;
+      while (delta <= -Math.PI) delta += Math.PI * 2;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      const large = Math.abs(delta) > Math.PI ? 1 : 0;
+      const sweep = delta < 0 ? 0 : 1;
+      const sc = toS(c.x, c.y);
+      const p0 = toS(s0.x, s0.y);
+      const p1 = toS(s1.x, s1.y);
+      const sr = Math.hypot(p0.x - sc.x, p0.y - sc.y);
+      d +=
+        " A" +
+        sr.toFixed(2) +
+        " " +
+        sr.toFixed(2) +
+        " 0 " +
+        large +
+        " " +
+        sweep +
+        " " +
+        p1.x.toFixed(2) +
+        " " +
+        p1.y.toFixed(2) +
+        " Z";
+      return d;
+    }
     const pts = fillWorldPoints(fill);
     if (!pts) return null;
     return (
@@ -4828,6 +5084,23 @@ body.dark-canvas .coord-curve-row {
     const kind = fillKindOf(fill);
     if (kind === "polygon" && Array.isArray(fill.pointIds)) {
       for (const id of fill.pointIds) ids.push(id);
+    } else if (kind === "pathFill" && Array.isArray(fill.edges)) {
+      for (const e of fill.edges) {
+        if (!e) continue;
+        if (e.type === "line") {
+          if (e.a) ids.push(e.a);
+          if (e.b) ids.push(e.b);
+        } else if (e.type === "arc") {
+          if (e.centerId) ids.push(e.centerId);
+          if (e.from) ids.push(e.from);
+          if (e.to) ids.push(e.to);
+        }
+      }
+    } else if (kind === "polyArc") {
+      if (Array.isArray(fill.pointIds)) for (const id of fill.pointIds) ids.push(id);
+      if (fill.centerId) ids.push(fill.centerId);
+      if (fill.startId) ids.push(fill.startId);
+      if (fill.endId) ids.push(fill.endId);
     } else {
       if (fill.centerId) ids.push(fill.centerId);
       if (fill.startId) ids.push(fill.startId);
@@ -4856,29 +5129,31 @@ body.dark-canvas .coord-curve-row {
     const f = {
       id: uid(),
       kind: "sector",
-      circleId: circleId || null,
       centerId,
       startId,
       endId,
       color: color || activeFillStyle().color,
       opacity: opacity != null ? opacity : activeFillStyle().opacity,
     };
+    if (circleId) f.circleId = circleId;
     fills.push(f);
     return f;
   }
 
-  function addFillSegment(startId, endId, circleId, color, opacity, skipHist) {
-    if (!startId || !endId || !circleId) return null;
+  function addFillSegment(startId, endId, circleId, color, opacity, skipHist, centerId) {
+    if (!startId || !endId) return null;
+    if (!circleId && !centerId) return null;
     if (!skipHist) pushHistory();
     const f = {
       id: uid(),
       kind: "segment",
-      circleId,
       startId,
       endId,
       color: color || activeFillStyle().color,
       opacity: opacity != null ? opacity : activeFillStyle().opacity,
     };
+    if (circleId) f.circleId = circleId;
+    else if (centerId) f.centerId = centerId;
     fills.push(f);
     return f;
   }
@@ -5389,7 +5664,7 @@ body.dark-canvas .coord-curve-row {
     circles = data.circles || [];
     ellipses = data.ellipses || [];
     sectors = data.sectors || [];
-    fills = (data.fills || []).map((f) => normalizeFillRecord(f)).filter(Boolean);
+    fills = sanitizeFillsForSave(data.fills || []);
     if (data.activeParallelGroup != null) activeParallelGroup = data.activeParallelGroup ? 1 : 0;
     if (data.activeEqualGroup != null) activeEqualGroup = data.activeEqualGroup ? 1 : 0;
     if (data.activeArcGroup != null) activeArcGroup = data.activeArcGroup ? 1 : 0;
@@ -11479,12 +11754,15 @@ body.dark-canvas .coord-curve-row {
       return;
     }
     const corners = geom.corners;
+    // Equilateral helpers: unlabeled id_… points + dotted construction edges; keep named labels elsewhere.
+    if (mode === "equilateral") shapeMode = "equilateral";
+    const edgeStyle = mode === "equilateral" ? "dotted" : style;
     const ids = corners.map((p) => addPoint(p.x, p.y, true, null, true).id);
     const newSegs = [];
     for (let i = 0; i < ids.length; i++) {
       const a = ids[i];
       const b = ids[(i + 1) % ids.length];
-      const seg = addSegment(a, b, style, true);
+      const seg = addSegment(a, b, edgeStyle, true);
       if (seg) newSegs.push({ type: "segment", id: seg.id });
     }
     history[histIndex] = snapshot();
@@ -13136,30 +13414,38 @@ ${body}</svg>`;
   const FORMAT_VERSION = 1;
 
   function buildProjectData() {
+    // Stable 35-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.26",
+      version: "13.5.27",
       app: "simple-diagram",
-      points,
-      segments,
-      labels,
-      rightAngles,
-      angleArcs,
-      midTicks,
-      parallelMarks,
-      equalMarks,
-      lengthLabels,
-      circles,
-      ellipses,
-      sectors,
-      fills,
-      coordPlots,
-      exportCrop,
+      points: points || [],
+      segments: segments || [],
+      labels: labels || [],
+      rightAngles: rightAngles || [],
+      angleArcs: angleArcs || [],
+      midTicks: midTicks || [],
+      parallelMarks: parallelMarks || [],
+      equalMarks: equalMarks || [],
+      lengthLabels: lengthLabels || [],
+      circles: circles || [],
+      ellipses: ellipses || [],
+      sectors: sectors || [],
+      fills: sanitizeFillsForSave(fills),
+      coordPlots: coordPlots || [],
+      exportCrop: exportCrop || null,
       sectorMode,
       fillMode,
       shapeMode,
       circlePartMode,
-      layers: { ...layers },
+      layers: {
+        gridShow: !!layers.gridShow,
+        gridLock: !!layers.gridLock,
+        coordsShow: !!layers.coordsShow,
+        coordsLock: !!layers.coordsLock,
+        helpersShow: !!layers.helpersShow,
+        helpersLock: !!layers.helpersLock,
+      },
       nextLetter,
       labelFontSize,
       rightAngleSize,
@@ -13169,7 +13455,9 @@ ${body}</svg>`;
       gridSnap,
       gridMode,
       hideExportPoints,
-      view,
+      view: view && typeof view === "object"
+        ? { x: view.x, y: view.y, scale: view.scale }
+        : { x: 400, y: 300, scale: 2 },
       savedAt: Date.now(),
       name: currentDocName,
     };
@@ -13393,8 +13681,11 @@ ${body}</svg>`;
     circles = data.circles || [];
     ellipses = data.ellipses || [];
     sectors = data.sectors || [];
-    fills = (data.fills || []).map((f) => normalizeFillRecord(f)).filter(Boolean);
-    exportCrop = data.exportCrop || null;
+    fills = sanitizeFillsForSave(data.fills || []);
+    // Preserve exportCrop on re-open unless the file explicitly clears it (null) or omits → keep prior only when key absent from partial patches; full docs always include the key.
+    if (Object.prototype.hasOwnProperty.call(data, "exportCrop")) {
+      exportCrop = data.exportCrop || null;
+    }
     if (data.sectorMode === "sector" || data.sectorMode === "arc") sectorMode = data.sectorMode;
     if (data.fillMode === "sector" || data.fillMode === "segment" || data.fillMode === "polygon") {
       fillMode = data.fillMode;
@@ -13472,23 +13763,23 @@ ${body}</svg>`;
 
   function loadProject(file) {
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const data = JSON.parse(reader.result);
-        const check = lightValidateProject(data);
-        if (!check.ok) {
-          alert("無法開啟：檔案格式損壞或不支援。\n" + check.errors.join("\n"));
-          return;
-        }
-        const name = (file && file.name) || data.name || "simple-diagram.json";
-        applyProjectData(data, { name });
+        const name = (file && file.name) || (data && data.name) || "simple-diagram.json";
+        const result = await openDiagramPayload(data, { name, merge: false });
         pushRecentEntry(name, buildProjectData());
         let msg = "已開啟：" + name;
-        if (data.formatVersion != null) msg += " · format v" + data.formatVersion;
-        else if (check.warnings.length) msg += " · 舊檔（視為 v1）";
+        if (result.kind === "ops") {
+          msg += " · ops ×" + result.count;
+        } else if (data && data.formatVersion != null) {
+          msg += " · format v" + data.formatVersion;
+        } else if (result.warnings && result.warnings.length) {
+          msg += " · 舊檔（視為 v1）";
+        }
         statusHint.textContent = msg;
       } catch (err) {
-        alert("無法讀取專案檔：" + err.message);
+        alert("無法讀取專案檔：" + (err && err.message ? err.message : String(err)));
       }
     };
     reader.readAsText(file);
@@ -13534,6 +13825,7 @@ ${body}</svg>`;
   }
 
   function buildDocSnapshotForOps() {
+    // Keep exportCrop / UI modes so merge-ops and re-save do not wipe them.
     return {
       formatVersion: FORMAT_VERSION,
       version: buildProjectData().version,
@@ -13552,16 +13844,89 @@ ${body}</svg>`;
       sectors: structuredClone(sectors),
       fills: structuredClone(fills),
       coordPlots: structuredClone(coordPlots),
+      exportCrop: exportCrop ? { ...exportCrop } : null,
+      sectorMode,
+      fillMode,
+      shapeMode,
+      circlePartMode,
       layers: { ...layers },
       nextLetter,
       labelFontSize,
       rightAngleSize,
+      activeParallelGroup,
+      activeEqualGroup,
+      activeArcGroup,
       gridSnap,
       gridMode,
       hideExportPoints,
       view: { ...view },
       name: currentDocName,
     };
+  }
+
+  /**
+   * Open a JSON payload: full document, top-level ops array, or `{ ops: [...] }`.
+   * Same rules as paste-JSON; used by File → 開啟 and paste dialog.
+   */
+  async function openDiagramPayload(data, opts) {
+    opts = opts || {};
+    const merge = !!opts.merge;
+    const nameHint = opts.name;
+
+    let ops = null;
+    if (Array.isArray(data)) {
+      ops = data;
+    } else if (
+      data &&
+      typeof data === "object" &&
+      Array.isArray(data.ops) &&
+      !Array.isArray(data.points)
+    ) {
+      ops = data.ops;
+    }
+
+    if (ops) {
+      let mod;
+      try {
+        mod = await loadDiagramModule();
+      } catch (err) {
+        throw new Error(
+          t("paste_json_err_import") + (err && err.message ? " — " + err.message : "")
+        );
+      }
+      try {
+        const base = merge ? buildDocSnapshotForOps() : null;
+        const doc = mod.applyOps(base, ops);
+        const v = mod.validateDiagram(doc);
+        if (!v.ok) {
+          throw new Error(
+            t("paste_json_err_ops") + "\n" + (v.errors || []).slice(0, 6).join("\n")
+          );
+        }
+        applyProjectData(doc, {
+          name: nameHint || doc.name || "ops.json",
+        });
+        return { kind: "ops", count: ops.length };
+      } catch (err) {
+        if (err && String(err.message || "").startsWith(t("paste_json_err_ops"))) throw err;
+        throw new Error(
+          t("paste_json_err_ops") + " — " + (err && err.message ? err.message : String(err))
+        );
+      }
+    }
+
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      const check = lightValidateProject(data);
+      if (!check.ok) {
+        throw new Error(
+          t("paste_json_err_doc") + "\n" + (check.errors || []).join("\n")
+        );
+      }
+      applyProjectData(data, { name: nameHint || data.name || "diagram.json" });
+      return { kind: "doc", warnings: check.warnings || [] };
+    }
+
+    throw new Error(t("paste_json_err_shape"));
   }
 
   async function loadDiagramModule() {
@@ -13585,63 +13950,23 @@ ${body}</svg>`;
         message: t("paste_json_err_parse") + (err && err.message ? " — " + err.message : ""),
       };
     }
-
-    let ops = null;
-    if (Array.isArray(data)) {
-      ops = data;
-    } else if (data && typeof data === "object" && Array.isArray(data.ops) && !Array.isArray(data.points)) {
-      ops = data.ops;
-    }
-
-    if (ops) {
-      let mod;
-      try {
-        mod = await loadDiagramModule();
-      } catch (err) {
+    try {
+      const result = await openDiagramPayload(data, {
+        merge: !!mergeOntoCurrent,
+        name:
+          (data && !Array.isArray(data) && data.name) ||
+          (Array.isArray(data) || (data && data.ops) ? "pasted-ops.json" : "pasted.json"),
+      });
+      if (result.kind === "ops") {
         return {
-          ok: false,
-          message: t("paste_json_err_import") + (err && err.message ? " — " + err.message : ""),
+          ok: true,
+          message: t("paste_json_ok_ops").replace("{n}", String(result.count)),
         };
       }
-      try {
-        const base = mergeOntoCurrent ? buildDocSnapshotForOps() : null;
-        const doc = mod.applyOps(base, ops);
-        const v = mod.validateDiagram(doc);
-        if (!v.ok) {
-          return {
-            ok: false,
-            message:
-              t("paste_json_err_ops") +
-              "\n" +
-              (v.errors || []).slice(0, 6).join("\n"),
-          };
-        }
-        applyProjectData(doc, { name: doc.name || currentDocName || "pasted-ops.json" });
-        return { ok: true, message: t("paste_json_ok_ops").replace("{n}", String(ops.length)) };
-      } catch (err) {
-        return {
-          ok: false,
-          message: t("paste_json_err_ops") + " — " + (err && err.message ? err.message : String(err)),
-        };
-      }
-    }
-
-    if (data && typeof data === "object" && !Array.isArray(data)) {
-      const check = lightValidateProject(data);
-      if (!check.ok) {
-        return {
-          ok: false,
-          message: t("paste_json_err_doc") + "\n" + (check.errors || []).join("\n"),
-        };
-      }
-      if (mergeOntoCurrent) {
-        // Merge document geometry onto current via ops is hard; treat as replace.
-      }
-      applyProjectData(data, { name: data.name || "pasted.json" });
       return { ok: true, message: t("paste_json_ok_doc") };
+    } catch (err) {
+      return { ok: false, message: err && err.message ? err.message : String(err) };
     }
-
-    return { ok: false, message: t("paste_json_err_shape") };
   }
 
   // ——— Templates ———
@@ -16787,64 +17112,7 @@ ${body}</svg>`;
       loadProject(new File([JSON.stringify(data)], "f.json", { type: "application/json" }));
     },
     applyData(data) {
-      // Synchronous apply (same fields as loadProject) for tests
-      points = data.points || [];
-      segments = data.segments || [];
-      labels = (data.labels || []).map((l) => ({
-        ...l,
-        size: clampLabelSize(l.size || data.labelFontSize || DEFAULT_LABEL_SIZE),
-      }));
-      rightAngles = (data.rightAngles || []).map((r) => ({
-        ...r,
-        size: r.size || data.rightAngleSize || DEFAULT_RA_SIZE,
-      }));
-      angleArcs = (data.angleArcs || []).map((a) => ({
-        ...a,
-        size: a.size || data.rightAngleSize || DEFAULT_RA_SIZE,
-        group: a.group ? 1 : 0,
-        text: a.text || "",
-        reflex: !!a.reflex,
-      }));
-      coordPlots = (data.coordPlots || []).map((p) => normalizeCoordPlot(p) || p);
-      midTicks = data.midTicks || [];
-      parallelMarks = (data.parallelMarks || []).map((m) => ({
-        ...m,
-        side: m.side === -1 ? -1 : 1,
-      }));
-      equalMarks = (data.equalMarks || []).map((m) => ({
-        ...m,
-        side: m.side === -1 ? -1 : 1,
-      }));
-      lengthLabels = (data.lengthLabels || []).map((m) => normalizeLengthLabelRecord(m));
-      circles = data.circles || [];
-      ellipses = data.ellipses || [];
-      sectors = data.sectors || [];
-      exportCrop = data.exportCrop || null;
-      if (data.sectorMode === "sector" || data.sectorMode === "arc") sectorMode = data.sectorMode;
-      nextLetter = data.nextLetter || "A";
-      labelFontSize = clampLabelSize(data.labelFontSize || DEFAULT_LABEL_SIZE);
-      rightAngleSize = data.rightAngleSize || DEFAULT_RA_SIZE;
-      if (data.gridSnap != null) {
-        gridSnap = !!data.gridSnap;
-        if (chkGridSnap) chkGridSnap.checked = gridSnap;
-      }
-      if (data.gridMode === "square" || data.gridMode === "triangle") {
-        gridMode = data.gridMode;
-        syncGridModeUI();
-      }
-      if (data.hideExportPoints != null) {
-        hideExportPoints = !!data.hideExportPoints;
-        if (chkHideExportPoints) chkHideExportPoints.checked = hideExportPoints;
-      }
-      applyLoadedView(data.view);
-      setSelection([]);
-      draft = null;
-      history[histIndex] = snapshot();
-      syncSectorModeUI();
-      syncExportCropUI();
-      updateStatus();
-      draw();
-      markDocClean();
+      applyProjectData(data, { name: (data && data.name) || currentDocName });
     },
     buildExportCanvas,
     boundsWorld,

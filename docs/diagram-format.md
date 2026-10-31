@@ -21,8 +21,6 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `formatVersion` | number | **Schema 版**；新檔寫 `1`；載入時缺省＝v1 |
 | `version` | number \| string | 應用版（如 `13.5.1`），僅資訊用 |
 | `app` | string | 固定 `"simple-diagram"` |
-| `name` | string | 檔名提示 |
-| `savedAt` | number | 可選；儲存時間戳 |
 | `points` | array | 頂點 |
 | `segments` | array | 線段 |
 | `labels` | array | 點標籤 |
@@ -37,19 +35,26 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `sectors` | array | 圓弧／扇形 |
 | `fills` | array | 區域填色（封閉多邊形陰影） |
 | `coordPlots` | array | 簡易座標圖 |
-| `exportCrop` | object\|null | 匯出裁切 `{minX,minY,maxX,maxY}` |
-| `sectorMode` | `"arc"`\|`"sector"` | UI 扇弧模式 |
+| `exportCrop` | object\|null | 匯出裁切 `{minX,minY,maxX,maxY}`；重存時保留既有值，除非用家清除 |
+| `sectorMode` | `"arc"`\|`"sector"` | UI 扇弧模式；缺省 `"arc"` |
+| `fillMode` | `"polygon"`\|`"sector"`\|`"segment"` | UI 填色模式；缺省 `"polygon"` |
+| `shapeMode` | string | UI 圖形工具種類（如 `"square"`｜`"equilateral"`…）；缺省 `"square"` |
+| `circlePartMode` | `"chord"`\|`"diameter"`\|`"radius"` | UI 圓件模式；缺省 `"chord"` |
 | `nextLetter` | string | 下一個預設標籤字母 |
 | `labelFontSize` | number | 預設字級（12–36） |
 | `rightAngleSize` | number | 直角／角弧預設尺寸 |
 | `activeParallelGroup` | 0\|1 | UI：單／雙平行 |
 | `activeEqualGroup` | 0\|1 | UI：單／雙等長 |
 | `activeArcGroup` | 0\|1 | UI：單／雙角弧 |
-| `layers` | object | 圖層：`gridShow`（網格顯示，UI 與吸附開關聯動）；`coordsShow`/`coordsLock`；`helpersShow`/`helpersLock`（`gridLock` 保留於檔案相容，UI 不再暴露） |
+| `layers` | object | 六布林：`gridShow`、`gridLock`、`coordsShow`、`coordsLock`、`helpersShow`、`helpersLock`（`gridShow` 與吸附開關聯動；`gridLock` 檔案相容保留） |
 | `gridSnap` | boolean | 網格吸附 |
 | `gridMode` | `"square"`\|`"triangle"` | 網格種類 |
 | `hideExportPoints` | boolean | 匯出隱藏頂點 |
 | `view` | object | 相機 `{x,y,scale}`（螢幕座標平移＋縮放） |
+| `savedAt` | number | 儲存時間戳（毫秒） |
+| `name` | string | 檔名提示 |
+
+儲存時固定輸出上述 **35** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.27"`）。
 
 ---
 
@@ -145,12 +150,15 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 { "id": "f1", "kind": "polygon", "pointIds": ["A", "B", "C", "D"], "color": "#666666", "opacity": 0.2 }
 { "id": "f2", "kind": "sector", "centerId": "O", "startId": "A", "endId": "B", "color": "#666666", "opacity": 0.2 }
 { "id": "f3", "kind": "segment", "circleId": "c1", "startId": "P", "endId": "Q", "opacity": 0.2 }
+{ "id": "f4", "kind": "segment", "centerId": "O", "startId": "P", "endId": "Q", "opacity": 0.2 }
+{ "id": "f5", "kind": "pathFill", "edges": [{ "type": "line", "a": "A", "b": "C" }, { "type": "arc", "centerId": "O", "from": "C", "to": "A" }], "opacity": 0.2 }
 ```
 
-- `kind`：`polygon`（預設）｜`sector`｜`segment`（弓形）
-- 多邊形：依既有頂點順序（≥3）；扇形：圓心＋兩端點；弓形：圓＋弦兩端
-- `opacity` 0–1；繪於線段／標籤之下
-- UI 色票：灰 10／20／35／50% 與藍灰約 22%（`#6b8799`）
+- `kind`：`polygon`（預設）｜`sector`｜`segment`（弓形）｜`polyArc`｜`pathFill`
+- 多邊形：依既有頂點順序（≥3）；扇形：圓心＋兩端點；弓形：`circleId` 或僅 `centerId`＋弦兩端（勿寫 `circleId: null`）
+- `pathFill`：`edges` 為 `line`／`arc` 混合邊；開檔→存檔須原樣保留，不可塌成空 `polygon`
+- `opacity` 0–1；繪於線段／標籤之下；同區重複填色存檔時去重
+- UI 色票：灰 10／20／35／50%、藍灰約 22%（`#6b8799`）、白蓋（`#ffffff` opacity 1）
 
 ### coordPlots
 
