@@ -74,4 +74,15 @@ Each item:
     Accepted 20261031-1301-{web-open-ops,fill-kind-persist,parallel-marks-svg,
     save-toplevel-fields}. Implemented in PR (see completion note below).
     Paper inbox mirror optional — statuses lived in Diagram inbox.
+
+- id: 20261031-1310-diagram-completion
+  from: diagram
+  to: paper
+  status: done
+  created: 2026-10-31T13:10+08:00
+  subject: Four bridge items shipped · PR #36 · v13.5.27
+  body: |
+    Done: https://github.com/Wilson-1218/Simple-Diagram/pull/36
+    Branch cursor/paper-bridge-fidelity-72f8 · app version 13.5.27
+    All four 20261031-1301-* items marked done above. No deferrals.
 ```
