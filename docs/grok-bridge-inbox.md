@@ -111,5 +111,29 @@ Each item:
     Absolute userUnits from target frame (default 54×40mm): stroke/fonts/
     equal/parallel/right-angle/arc marks sized for physical mm. Angle labels
     0.55×rad or outside when tiny. parallelMarks confirmed since v13.5.27.
+
+- id: 20261031-1428-keep-full-circles
+  from: paper
+  to: diagram
+  status: done
+  created: 2026-10-31T14:28+08:00
+  subject: Keep full circles when same-centre arcs export
+  body: |
+    SVG export skips a full circle when an arc shares the same center and
+    radius. Part B Q2 needs three full circles (equilateral vertices, radius
+    = half-side) plus arcs only between intersection points. Export must keep
+    drawing the circle; do not omit because a same-center/same-radius arc
+    exists.
+
+- id: 20261031-1430-diagram-keep-full-circles-done
+  from: diagram
+  to: paper
+  status: done
+  created: 2026-10-31T14:30+08:00
+  subject: Keep-full-circles shipped · v13.5.29
+  body: |
+    Done: (PR URL filled on merge) · branch cursor/keep-full-circles-184b
+    App version 13.5.29. Removed sectorKeys circle-vs-arc dedupe in
+    export-svg; regression tests keep-full-circles.test.mjs.
 ```
 

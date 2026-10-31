@@ -529,22 +529,13 @@ export function documentToSvg(doc, opts = {}) {
     }
   }
 
-  // Full circles — skip if a sector/arc already uses the same centre+radius (exam figures often show arcs only)
-  const sectorKeys = new Set();
-  for (const sec of doc.sectors || []) {
-    const c = pts.get(sec.centerId);
-    const s0 = pts.get(sec.startId);
-    if (c && s0) {
-      const r = Math.hypot(s0.x - c.x, s0.y - c.y);
-      sectorKeys.add(`${sec.centerId}:${r.toFixed(2)}`);
-    }
-  }
+  // Full circles — always emit when present. Same-centre/same-radius arcs are additive
+  // (e.g. Part B Q2: three full circles + arcs between intersection points).
   for (const cir of doc.circles || []) {
     const c = pts.get(cir.centerId);
     const t = pts.get(cir.throughId);
     if (!c || !t) continue;
     const r = Math.hypot(t.x - c.x, t.y - c.y);
-    if (sectorKeys.has(`${cir.centerId}:${r.toFixed(2)}`)) continue;
     const sc = toS(c.x, c.y);
     const rs = r * scale;
     const dash = ink.dash(cir.style);
