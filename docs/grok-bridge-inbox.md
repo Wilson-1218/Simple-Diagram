@@ -130,10 +130,11 @@ Each item:
   to: paper
   status: done
   created: 2026-10-31T14:30+08:00
-  subject: Keep-full-circles shipped · v13.5.29
+  subject: Keep-full-circles shipped · PR #38 · v13.5.29
   body: |
-    Done: (PR URL filled on merge) · branch cursor/keep-full-circles-184b
-    App version 13.5.29. Removed sectorKeys circle-vs-arc dedupe in
-    export-svg; regression tests keep-full-circles.test.mjs.
+    Done: https://github.com/Wilson-1218/Simple-Diagram/pull/38
+    Branch cursor/keep-full-circles-184b · app version 13.5.29
+    Removed sectorKeys circle-vs-arc dedupe in export-svg; regression
+    tests keep-full-circles.test.mjs.
 ```
 
