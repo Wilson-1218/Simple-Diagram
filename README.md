@@ -76,14 +76,15 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.27 · 穩定）
+## 目前版本 / Current version（v13.5.28 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
-- **v13.5.27** — 圖層：網格僅開關＋類型；座標／記號顯示＋鎖定
+- **v13.5.28** — 試卷小框 SVG：墨水／記號依實體框（約 54×40mm）絕對 userUnits，不隨幾何 scale 變淡
+- **v13.5.27** — Paper bridge：開啟 ops、fill 保真、SVG 平行記號、35 鍵存檔
 - **v13.5.25** — 左欄標題：繪畫／構建／記號
 - **v13.5.24** — 長度平行弧括（實／虛／點）＋端點弧；右鍵選取⇄上一工具；選取時 +／=
 - **v13.5.23** — 中鍵拖曳平移；右鍵進選取

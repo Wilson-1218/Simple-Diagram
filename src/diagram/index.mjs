@@ -44,4 +44,13 @@ export {
   drawCuboid,
   drawCube,
 } from "./macros.mjs";
-export { documentToSvg } from "./export-svg.mjs";
+export {
+  documentToSvg,
+  resolveInkBudget,
+  inkUserUnitsPerMm,
+  angleLabelRadius,
+  DEFAULT_FRAME_WIDTH_MM,
+  DEFAULT_FRAME_HEIGHT_MM,
+  DEFAULT_MIN_STROKE_MM,
+  DEFAULT_LABEL_PT,
+} from "./export-svg.mjs";

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261031-release-v13.5.27" />
+  <meta name="simple-diagram-build" content="20261031-release-v13.5.28" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -2037,7 +2037,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.27</span>
+            <span class="brand-sub">v13.5.28</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -13417,7 +13417,7 @@ ${body}</svg>`;
     // Stable 35-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.27",
+      version: "13.5.28",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
@@ -13682,10 +13682,9 @@ ${body}</svg>`;
     ellipses = data.ellipses || [];
     sectors = data.sectors || [];
     fills = sanitizeFillsForSave(data.fills || []);
-    // Preserve exportCrop on re-open unless the file explicitly clears it (null) or omits → keep prior only when key absent from partial patches; full docs always include the key.
-    if (Object.prototype.hasOwnProperty.call(data, "exportCrop")) {
-      exportCrop = data.exportCrop || null;
-    }
+    // Always read exportCrop from the payload (null if absent). Re-save preserves it via
+    // buildProjectData + buildDocSnapshotForOps (merge-ops used to drop the key and wipe crop).
+    exportCrop = data.exportCrop || null;
     if (data.sectorMode === "sector" || data.sectorMode === "arc") sectorMode = data.sectorMode;
     if (data.fillMode === "sector" || data.fillMode === "segment" || data.fillMode === "polygon") {
       fillMode = data.fillMode;

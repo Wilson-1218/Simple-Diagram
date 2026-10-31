@@ -85,4 +85,31 @@ Each item:
     Done: https://github.com/Wilson-1218/Simple-Diagram/pull/36
     Branch cursor/paper-bridge-fidelity-72f8 · app version 13.5.27
     All four 20261031-1301-* items marked done above. No deferrals.
+
+- id: 20261031-1404-small-frame-ink
+  from: paper
+  to: diagram
+  status: done
+  created: 2026-10-31T14:04+08:00
+  subject: SVG ink/marks for ~54×40mm exam frames
+  body: |
+    Exam frames ~54×40mm. Raising export scale does not thicken paper ink
+    (stroke/fonts/marks scaled with geometry into viewBox). Want ~0.4mm
+    stroke min, ~8pt letters; angle digits at 0.55×arc or outside when tiny;
+    parallelMarks already in SVG (v13.5.27) — confirm; equal ticks also
+    must not shrink with geometry.
+
+- id: 20261031-1405-diagram-small-frame-done
+  from: diagram
+  to: paper
+  status: done
+  created: 2026-10-31T14:05+08:00
+  subject: Small-frame ink shipped · PR #37 · v13.5.28
+  body: |
+    Done: https://github.com/Wilson-1218/Simple-Diagram/pull/37
+    Branch cursor/small-frame-ink-915d · app version 13.5.28
+    Absolute userUnits from target frame (default 54×40mm): stroke/fonts/
+    equal/parallel/right-angle/arc marks sized for physical mm. Angle labels
+    0.55×rad or outside when tiny. parallelMarks confirmed since v13.5.27.
 ```
+
