@@ -33,7 +33,10 @@ Options:
   --params JSON   Macro params object
   --out PATH      Output .svg or .png
   --format svg|png  Override extension
-  --scale N       Export scale (default 2)
+  --scale N       Geometry scale (default 2; does not set paper ink thickness)
+  --frame-mm WxH  Target embed frame in mm for ink (default 54x40)
+  --stroke-mm N   Min stroke mm when fitted to frame (default 0.4)
+  --label-pt N    Baseline letter size in pt (default 8)
   --validate      Exit 1 if validateDiagram fails
   --summary       Print summarizeDiagram JSON to stderr
 `);
@@ -48,6 +51,10 @@ function parseArgs(argv) {
     out: null,
     format: null,
     scale: 2,
+    frameWidthMm: 54,
+    frameHeightMm: 40,
+    minStrokeMm: 0.4,
+    labelPt: 8,
     validate: false,
     summary: false,
   };
@@ -60,6 +67,17 @@ function parseArgs(argv) {
     else if (a === "--out") args.out = argv[++i];
     else if (a === "--format") args.format = argv[++i];
     else if (a === "--scale") args.scale = Number(argv[++i]);
+    else if (a === "--frame-mm") {
+      const raw = String(argv[++i] || "");
+      const m = raw.match(/^([0-9.]+)\s*[x×]\s*([0-9.]+)$/i);
+      if (!m) {
+        console.error("Bad --frame-mm; expected WxH e.g. 54x40");
+        process.exit(2);
+      }
+      args.frameWidthMm = Number(m[1]);
+      args.frameHeightMm = Number(m[2]);
+    } else if (a === "--stroke-mm") args.minStrokeMm = Number(argv[++i]);
+    else if (a === "--label-pt") args.labelPt = Number(argv[++i]);
     else if (a === "--validate") args.validate = true;
     else if (a === "--summary") args.summary = true;
     else if (a === "-h" || a === "--help") {
@@ -131,7 +149,13 @@ async function main() {
     console.error(JSON.stringify(summarizeDiagram(doc), null, 2));
   }
 
-  const svg = documentToSvg(doc, { scale: args.scale });
+  const svg = documentToSvg(doc, {
+    scale: args.scale,
+    frameWidthMm: args.frameWidthMm,
+    frameHeightMm: args.frameHeightMm,
+    minStrokeMm: args.minStrokeMm,
+    labelPt: args.labelPt,
+  });
   const format =
     args.format ||
     (extname(args.out).toLowerCase() === ".png" ? "png" : "svg");

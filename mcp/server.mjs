@@ -204,7 +204,23 @@ const TOOLS = [
       type: "object",
       properties: {
         doc: { type: "object", description: "Diagram JSON" },
-        scale: { type: "number", description: "Export scale (default 2)" },
+        scale: { type: "number", description: "Export geometry scale (default 2); does not thin/thicken paper ink" },
+        frameWidthMm: {
+          type: "number",
+          description: "Target embed width in mm for ink sizing (default 54)",
+        },
+        frameHeightMm: {
+          type: "number",
+          description: "Target embed height in mm for ink sizing (default 40)",
+        },
+        minStrokeMm: {
+          type: "number",
+          description: "Minimum stroke thickness in mm when fitted to frame (default 0.4)",
+        },
+        labelPt: {
+          type: "number",
+          description: "Baseline letter size in pt when fitted to frame (default 8)",
+        },
       },
       required: ["doc"],
     },
@@ -340,7 +356,13 @@ function callTool(name, args) {
     case "export_svg": {
       if (!args.doc) return toolResult({ error: "doc required" }, true);
       try {
-        const svg = documentToSvg(args.doc, { scale: args.scale });
+        const svg = documentToSvg(args.doc, {
+          scale: args.scale,
+          frameWidthMm: args.frameWidthMm,
+          frameHeightMm: args.frameHeightMm,
+          minStrokeMm: args.minStrokeMm,
+          labelPt: args.labelPt,
+        });
         return toolResult({
           svg,
           summary: summarizeDiagram(args.doc),
