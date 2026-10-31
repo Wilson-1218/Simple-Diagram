@@ -7,6 +7,7 @@ import {
   SHAPE_SOLID_TEMPLATE_IDS,
   TEMPLATE_CELL_SIZE,
 } from "./templates.mjs";
+import { chainPathFillEdges } from "./path-fill.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -483,6 +484,7 @@ const HANDLERS = {
     const opacity = clampOpacity(op.opacity, 0.2);
     if (kind === "pathFill") {
       // edges: [{type:"line",a,b} | {type:"arc",centerId,from,to, circleId?}, ...]
+      // Typical exam slice: two arcs + one chord (order/orientation auto-chained when closable).
       if (!Array.isArray(op.edges) || op.edges.length < 2) {
         throw new Error("addFill(pathFill): edges must be an array of ≥2 edges");
       }
@@ -512,7 +514,14 @@ const HANDLERS = {
           throw new Error('addFill(pathFill): edge.type must be "line" or "arc"');
         }
       }
-      doc.fills.push({ id, kind: "pathFill", edges, color, opacity });
+      const chained = chainPathFillEdges(edges);
+      doc.fills.push({
+        id,
+        kind: "pathFill",
+        edges: chained || edges,
+        color,
+        opacity,
+      });
       return doc;
     }
     if (kind === "polygon") {

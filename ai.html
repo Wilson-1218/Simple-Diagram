@@ -182,7 +182,7 @@
     <p class="note"><code>arm1</code>/<code>arm2</code> 是角兩邊上的<strong>點</strong> id，不是線段 id。</p>
 
     <h2>8. 填色 / <code>addFill</code></h2>
-    <p>可選：<code>color</code>（預設 <code>#666666</code>）, <code>opacity</code>（預設 0.2）。白色挖空：<code>color:"#ffffff", opacity:1</code>。</p>
+    <p>可選：<code>color</code>（預設 <code>#666666</code>）, <code>opacity</code>（預設 0.2）。白色挖空：<code>color:"#ffffff", opacity:1</code>（僅其他複合遮罩；<strong>兩弧＋一邊請用 pathFill</strong>）。</p>
     <table>
       <thead><tr><th>kind</th><th>必填</th><th>tip</th></tr></thead>
       <tbody>
@@ -190,9 +190,14 @@
         <tr><td><code>sector</code></td><td><code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>可選 <code>circleId</code></td></tr>
         <tr><td><code>segment</code></td><td><code>startId</code>, <code>endId</code> + (<code>circleId</code>|<code>centerId</code>)</td><td>弓形</td></tr>
         <tr><td><code>polyArc</code></td><td><code>pointIds</code> ≥2 + <code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>折線＋弧閉合</td></tr>
-        <tr><td><code>pathFill</code></td><td><code>edges</code> ≥2</td><td><code>{type:"line",a,b}</code> 或 <code>{type:"arc",centerId,from,to,circleId?}</code></td></tr>
+        <tr><td><code>pathFill</code></td><td><code>edges</code> ≥2</td><td><code>{type:"line",a,b}</code> 或 <code>{type:"arc",centerId,from,to,circleId?}</code>；兩弧＋弦可亂序，會自動接封閉</td></tr>
       </tbody>
     </table>
+    <pre><code>{ "op": "addFill", "kind": "pathFill", "opacity": 0.2, "edges": [
+  { "type": "line", "a": "A", "b": "C" },
+  { "type": "arc", "centerId": "O2", "from": "C", "to": "B" },
+  { "type": "arc", "centerId": "O1", "from": "B", "to": "A" }
+] }</code></pre>
 
     <h2>9. <code>addShape</code></h2>
     <p>一次放平面／立體圖形（UI「圖形」拖放的 JSON 版）。</p>
@@ -421,7 +426,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.29 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.30 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>
