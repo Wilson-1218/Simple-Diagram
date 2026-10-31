@@ -10811,7 +10811,7 @@ ${body}</svg>`;
     // Stable 35-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.28",
+      version: "13.5.29",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
