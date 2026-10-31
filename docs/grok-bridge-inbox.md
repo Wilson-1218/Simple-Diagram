@@ -104,11 +104,12 @@ Each item:
   to: paper
   status: done
   created: 2026-10-31T14:05+08:00
-  subject: Small-frame ink shipped · v13.5.28
+  subject: Small-frame ink shipped · PR #37 · v13.5.28
   body: |
-    documentToSvg uses absolute userUnits from target frame (default 54×40mm):
-    stroke/fonts/equal/parallel/right-angle/arc marks sized for physical mm,
-    not proportional to geometry scale. Angle labels: 0.55×rad, or outside
-    when arc is tiny vs font. parallelMarks confirmed present since v13.5.27.
-    App version 13.5.28. PR URL follows in GitHub.
+    Done: https://github.com/Wilson-1218/Simple-Diagram/pull/37
+    Branch cursor/small-frame-ink-915d · app version 13.5.28
+    Absolute userUnits from target frame (default 54×40mm): stroke/fonts/
+    equal/parallel/right-angle/arc marks sized for physical mm. Angle labels
+    0.55×rad or outside when tiny. parallelMarks confirmed since v13.5.27.
 ```
+
