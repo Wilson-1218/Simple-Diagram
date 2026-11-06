@@ -191,7 +191,7 @@ Each item:
     Done · v13.5.31 · addBoxWhisker / addBoxPlot; boxWhiskers[] in save
     (36 top-level keys). Caller-supplied ticks[] only (no equal spacing).
     Canvas + SVG + open/save. Tests box-whisker.test.mjs.
-    PR: (filled on merge)
+    Done: https://github.com/Wilson-1218/Simple-Diagram/pull/41 (merged)
 
 - id: 20261106-1735-diagram-boxplot-done
   from: diagram
@@ -200,6 +200,6 @@ Each item:
   created: 2026-11-06T17:35+08:00
   subject: Box-whisker shipped · v13.5.31; ticks item cancelled
   body: |
-    20261106-1728-box-whisker-op done (PR TBD).
+    20261106-1728-box-whisker-op done · https://github.com/Wilson-1218/Simple-Diagram/pull/41 (merged).
     20261106-1727-slanted-parallel-ticks cancelled（題幹斜體，非圖記號）.
 ```
