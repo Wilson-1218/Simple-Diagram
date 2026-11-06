@@ -1,4 +1,5 @@
 import { CURRENT_FORMAT_VERSION } from "./empty-doc.mjs";
+import { normalizeBoxWhisker } from "./box-whisker.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 const MARKERS = new Set(["x", "foot"]);
@@ -69,6 +70,7 @@ export function validateDiagram(doc) {
     "sectors",
     "fills",
     "coordPlots",
+    "boxWhiskers",
   ];
 
   for (const key of arrayFields) {
@@ -385,6 +387,18 @@ export function validateDiagram(doc) {
             errors.push(`${cp}.params must be an object`);
           }
         }
+      }
+    }
+  }
+
+  if (Array.isArray(d.boxWhiskers)) {
+    for (let i = 0; i < d.boxWhiskers.length; i++) {
+      const bw = d.boxWhiskers[i];
+      const path = `boxWhiskers[${i}]`;
+      try {
+        normalizeBoxWhisker(bw, { requireId: true });
+      } catch (e) {
+        errors.push(`${path}: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
   }

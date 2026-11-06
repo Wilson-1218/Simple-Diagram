@@ -14,8 +14,8 @@ test("stable top-level keys: emptyDiagram has 34 + savedAt on save habit", () =>
   assert.equal(doc.formatVersion, 1);
   assert.equal(doc.app, "simple-diagram");
   assert.equal(doc.version, APP_VERSION);
-  assert.equal(APP_VERSION, "13.5.30");
-  assert.equal(STABLE_TOP_LEVEL_KEYS.length, 35);
+  assert.equal(APP_VERSION, "13.5.31");
+  assert.equal(STABLE_TOP_LEVEL_KEYS.length, 36);
   for (const k of STABLE_TOP_LEVEL_KEYS) {
     if (k === "savedAt") continue; // stamped only on editor save
     assert.ok(k in doc, `missing key ${k}`);

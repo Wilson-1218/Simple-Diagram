@@ -2,7 +2,8 @@
  * Headless SVG export for agents (no DOM). White paper, black ink.
  * Covers points, segments, circles, ellipses, sectors (arc strokes),
  * polygon/sector/segment/polyArc/pathFill fills, labels, rightAngles, angleArcs (+ text),
- * lengthLabels (text|dim|arcs), equalMarks (ticks), parallelMarks (chevrons).
+ * lengthLabels (text|dim|arcs), equalMarks (ticks), parallelMarks (chevrons),
+ * boxWhiskers (dedicated box-and-whisker plots).
  *
  * Ink / marks use a **physical-frame** budget (default 54×40mm): stroke, fonts, and
  * mark geometry are sized in SVG userUnits so that when the viewBox is fitted into
@@ -21,6 +22,11 @@ import {
   endsMarkParts,
   readableEdgeAngle,
 } from "./length-mark.mjs";
+import {
+  normalizeBoxWhisker,
+  boxWhiskerParts,
+  addBoxWhiskerBounds,
+} from "./box-whisker.mjs";
 
 /** Exam-figure default embed frame (Paper). */
 export const DEFAULT_FRAME_WIDTH_MM = 54;
@@ -77,6 +83,13 @@ function boundsOf(doc, pad = 24) {
     const r = Math.hypot(t.x - c.x, t.y - c.y);
     add(c.x - r, c.y - r);
     add(c.x + r, c.y + r);
+  }
+  for (const raw of doc.boxWhiskers || []) {
+    try {
+      addBoxWhiskerBounds(normalizeBoxWhisker(raw), add);
+    } catch {
+      /* skip corrupt */
+    }
   }
   if (doc.exportCrop) {
     minX = doc.exportCrop.minX;
@@ -599,6 +612,38 @@ export function documentToSvg(doc, opts = {}) {
       ? ` stroke-dasharray="${dash.map((d) => d.toFixed(2)).join(" ")}"`
       : "";
     body += `<line x1="${sa.x.toFixed(2)}" y1="${sa.y.toFixed(2)}" x2="${sb.x.toFixed(2)}" y2="${sb.y.toFixed(2)}" stroke="#111" stroke-width="${sw}" stroke-linecap="round"${da} />\n`;
+  }
+
+  for (const raw of doc.boxWhiskers || []) {
+    let bw;
+    try {
+      bw = normalizeBoxWhisker(raw);
+    } catch {
+      continue;
+    }
+    const parts = boxWhiskerParts(bw);
+    const line = (s) => {
+      const a = toS(s.x1, s.y1);
+      const b = toS(s.x2, s.y2);
+      return `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${sw}" stroke-linecap="round" />\n`;
+    };
+    const tl = toS(parts.box.x, parts.box.y);
+    const br = toS(parts.box.x + parts.box.w, parts.box.y + parts.box.h);
+    const rx = Math.min(tl.x, br.x);
+    const ry = Math.min(tl.y, br.y);
+    const rw = Math.abs(br.x - tl.x);
+    const rh = Math.abs(br.y - tl.y);
+    body += `<rect x="${rx.toFixed(2)}" y="${ry.toFixed(2)}" width="${rw.toFixed(2)}" height="${rh.toFixed(2)}" fill="none" stroke="#111" stroke-width="${sw}" />\n`;
+    body += line(parts.median);
+    for (const s of parts.whiskers) body += line(s);
+    for (const s of parts.caps) body += line(s);
+    if (parts.axis) body += line(parts.axis);
+    for (const s of parts.tickMarks) body += line(s);
+    const or = ink.mm(0.55);
+    for (const o of parts.outliers) {
+      const s = toS(o.x, o.y);
+      body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${or.toFixed(2)}" fill="none" stroke="#111" stroke-width="${sw}" />\n`;
+    }
   }
 
   if (helpersShow) {

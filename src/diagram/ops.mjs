@@ -8,6 +8,7 @@ import {
   TEMPLATE_CELL_SIZE,
 } from "./templates.mjs";
 import { chainPathFillEdges } from "./path-fill.mjs";
+import { normalizeBoxWhisker } from "./box-whisker.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -27,6 +28,7 @@ function ensureArrays(doc) {
     "sectors",
     "fills",
     "coordPlots",
+    "boxWhiskers",
   ];
   for (const k of keys) {
     if (!Array.isArray(doc[k])) doc[k] = [];
@@ -297,6 +299,20 @@ const HANDLERS = {
       group: op.group ? 1 : 0,
       side: op.side === -1 ? -1 : 1,
     });
+    return doc;
+  },
+
+  /**
+   * Dedicated box-and-whisker plot (not assembled from rects/segments).
+   * Tick positions are caller-supplied — never invent equal spacing.
+   */
+  addBoxWhisker(doc, op, nextId) {
+    const id = resolveId(op, nextId, "bw");
+    const bw = normalizeBoxWhisker({ ...op, id }, { requireId: true });
+    if (doc.boxWhiskers.some((x) => x.id === id)) {
+      throw new Error(`addBoxWhisker: duplicate id ${id}`);
+    }
+    doc.boxWhiskers.push(bw);
     return doc;
   },
 
@@ -1086,6 +1102,7 @@ const HANDLERS = {
       sector: "sectors",
       fill: "fills",
       coordPlot: "coordPlots",
+      boxWhisker: "boxWhiskers",
     };
     const key = map[type];
     if (!key) throw new Error(`remove: unknown type ${type}`);
@@ -1125,6 +1142,7 @@ HANDLERS.addEqual = HANDLERS.addEqualMark;
 HANDLERS.addLength = HANDLERS.addLengthLabel;
 HANDLERS.addArc = HANDLERS.addAngleArc;
 HANDLERS.addTemplate = HANDLERS.insertTemplate;
+HANDLERS.addBoxPlot = HANDLERS.addBoxWhisker;
 
 export const OP_NAMES = Object.keys(HANDLERS).sort();
 

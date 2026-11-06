@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "version": "13.5.30",
+  "version": "13.5.31",
   "app": "simple-diagram",
   "points": [
     {
@@ -195,6 +195,7 @@
   "sectors": [],
   "fills": [],
   "coordPlots": [],
+  "boxWhiskers": [],
   "exportCrop": null,
   "sectorMode": "arc",
   "fillMode": "polygon",

@@ -170,4 +170,36 @@ Each item:
     Done: https://github.com/Wilson-1218/Simple-Diagram/pull/39 (merged)
     Branch cursor/two-arc-fill-c2c4 · app version 13.5.30
     UI path mode + pathFill auto-chain; tests two-arc-fill.test.mjs.
+
+- id: 20261106-1727-slanted-parallel-ticks
+  from: paper
+  to: diagram
+  status: cancelled
+  created: 2026-11-06T17:27+08:00
+  subject: Parallel marks as slanted ticks (cancelled)
+  body: |
+    CANCELLED — user meant italic ∥ in stem text（題幹斜體），NOT diagram
+    parallel tick marks. No Diagram PR for ticks/chevron style.
+
+- id: 20261106-1728-box-whisker-op
+  from: paper
+  to: diagram
+  status: done
+  created: 2026-11-06T17:28+08:00
+  subject: Dedicated box-and-whisker plot op
+  body: |
+    Done · v13.5.31 · addBoxWhisker / addBoxPlot; boxWhiskers[] in save
+    (36 top-level keys). Caller-supplied ticks[] only (no equal spacing).
+    Canvas + SVG + open/save. Tests box-whisker.test.mjs.
+    PR: (filled on merge)
+
+- id: 20261106-1735-diagram-boxplot-done
+  from: diagram
+  to: paper
+  status: done
+  created: 2026-11-06T17:35+08:00
+  subject: Box-whisker shipped · v13.5.31; ticks item cancelled
+  body: |
+    20261106-1728-box-whisker-op done (PR TBD).
+    20261106-1727-slanted-parallel-ticks cancelled（題幹斜體，非圖記號）.
 ```
