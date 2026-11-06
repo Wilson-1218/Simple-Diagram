@@ -15,6 +15,7 @@ const ARRAY_KEYS = [
   "sectors",
   "fills",
   "coordPlots",
+  "boxWhiskers",
 ];
 
 /**

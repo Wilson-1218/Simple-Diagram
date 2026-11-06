@@ -35,6 +35,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `sectors` | array | 圓弧／扇形 |
 | `fills` | array | 區域填色（封閉多邊形陰影） |
 | `coordPlots` | array | 簡易座標圖 |
+| `boxWhiskers` | array | 箱形圖（盒鬚圖）專用物件 |
 | `exportCrop` | object\|null | 匯出裁切 `{minX,minY,maxX,maxY}`；重存時保留既有值，除非用家清除 |
 | `sectorMode` | `"arc"`\|`"sector"` | UI 扇弧模式；缺省 `"arc"` |
 | `fillMode` | `"polygon"`\|`"sector"`\|`"segment"` | UI 填色模式；缺省 `"polygon"` |
@@ -54,7 +55,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `savedAt` | number | 儲存時間戳（毫秒） |
 | `name` | string | 檔名提示 |
 
-儲存時固定輸出上述 **35** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.30"`）。
+儲存時固定輸出上述 **36** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.31"`）。
 
 ---
 
@@ -167,6 +168,30 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 - `opacity` 0–1；繪於線段／標籤之下；同區重複填色存檔時去重
 - UI 色票：灰 10／20／35／50%、藍灰約 22%（`#6b8799`）、白蓋（`#ffffff` opacity 1；僅複合挖空，非兩弧區正式做法）
 
+### boxWhiskers
+
+```json
+{
+  "id": "bw1",
+  "orientation": "h",
+  "y": 200,
+  "min": 50, "q1": 80, "median": 110, "q3": 150, "max": 190,
+  "outliers": [40, 210],
+  "ticks": [40, 50, 80, 110, 150, 190, 210],
+  "boxHeight": 40,
+  "cap": 14,
+  "showAxis": true
+}
+```
+
+- 專用盒鬚圖（非 rect／segment 拼裝）；`addBoxWhisker`／別名 `addBoxPlot`
+- 水平（預設 `orientation:"h"`）：`y` 為箱中線；`min`…`max` 為世界 **x**
+- 垂直 `orientation:"v"`：改用 `x` 為中線；`min`…`max` 為世界 **y**
+- 須滿足 `min≤q1≤median≤q3≤max`
+- `ticks[]`：**呼叫端提供的刻度位置**；不會自動等分（避免洩漏未知數）
+- `showAxis`：有 `ticks` 時預設 true；無 ticks 則不畫軸
+- `outliers`：離群點座標（沿數值軸）；畫成空心圓
+
 ### coordPlots
 
 ```json
@@ -229,7 +254,7 @@ node tools/validate-diagram.mjs examples/cube-sketch.json
 
 純函式：`applyOps(doc, ops[]) → doc`（見 `src/diagram/`）。
 
-常用 op：`addPoint`、`addSegment`、`addLabel`、`addRightAngle`、`addAngleArc`／`addReflex`、`addParallelMark`、`addEqualMark`、`addLengthLabel`、`addCircle`、`addEllipse`、`addSector`、`addFill`（polygon｜sector｜segment）、`addShape`、`addFoot`、`addTangent`／`addRadius`／`addDiameter`／`addChord`、`alignPoints`／`distributePoints`／`equalizeSegments`、`addCoordPlot`、`addCurve`、`setView`、`setMeta`／`setLayers`、`movePoint`、`remove`。詳見 [`agent-draw-playbook.md`](agent-draw-playbook.md)。
+常用 op：`addPoint`、`addSegment`、`addLabel`、`addRightAngle`、`addAngleArc`／`addReflex`、`addParallelMark`、`addEqualMark`、`addLengthLabel`、`addCircle`、`addEllipse`、`addSector`、`addFill`（polygon｜sector｜segment）、`addShape`、`addFoot`、`addTangent`／`addRadius`／`addDiameter`／`addChord`、`alignPoints`／`distributePoints`／`equalizeSegments`、`addCoordPlot`、`addCurve`、`addBoxWhisker`／`addBoxPlot`、`setView`、`setMeta`／`setLayers`、`movePoint`、`remove`。詳見 [`agent-draw-playbook.md`](agent-draw-playbook.md)。
 
 CLI：
 

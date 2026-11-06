@@ -60,3 +60,8 @@ export {
   flipPathEdge,
   pathEdgeEndpoints,
 } from "./path-fill.mjs";
+export {
+  normalizeBoxWhisker,
+  boxWhiskerParts,
+  addBoxWhiskerBounds,
+} from "./box-whisker.mjs";

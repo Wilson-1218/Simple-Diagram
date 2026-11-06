@@ -162,6 +162,8 @@
   let angleArcs = []; // group 0 = single arc, 1 = double; optional text; optional reflex:true
   /** @type {object[]} Simple coordinate axes + optional curve overlays */
   let coordPlots = [];
+  /** @type {object[]} Dedicated box-and-whisker plots (ops / JSON; not rect+segment assemblies) */
+  let boxWhiskers = [];
   /** @type {{id:string,segmentId:string,pointId?:string}[]} */
   let midTicks = []; // ratio division ticks only (midpoint tool does not use these)
   /** @type {{id:string,segmentId:string,group:number,side?:number}[]} */
@@ -3280,6 +3282,7 @@
       sectors,
       fills,
       coordPlots,
+      boxWhiskers,
       nextLetter,
       labelFontSize,
       rightAngleSize,
@@ -3316,6 +3319,7 @@
       reflex: !!a.reflex,
     }));
     coordPlots = (data.coordPlots || []).map((p) => normalizeCoordPlot(p) || p);
+    boxWhiskers = (data.boxWhiskers || []).map((b) => normalizeBoxWhiskerRecord(b)).filter(Boolean);
     midTicks = data.midTicks || [];
     parallelMarks = (data.parallelMarks || []).map((m) => ({
       ...m,
@@ -4087,7 +4091,8 @@
       !ellipses.length &&
       !sectors.length &&
       !fills.length &&
-      !coordPlots.length;
+      !coordPlots.length &&
+      !boxWhiskers.length;
     if (empty) {
       statusHint.textContent = "畫布已是空白";
       return;
@@ -4108,6 +4113,7 @@
     sectors = [];
     fills = [];
     coordPlots = [];
+    boxWhiskers = [];
     setSelection([]);
     draft = null;
     hoverSnap = null;
@@ -4185,6 +4191,8 @@
       fills = fills.filter((f) => f.id !== id);
     } else if (type === "coordPlot") {
       coordPlots = coordPlots.filter((p) => p.id !== id);
+    } else if (type === "boxWhisker") {
+      boxWhiskers = boxWhiskers.filter((p) => p.id !== id);
     }
   }
 
@@ -5561,6 +5569,214 @@
     const lw = LINE_WIDTH * (highlight ? 1.15 : 1);
     const fontPx = clampLabelSize(labelFontSize) * Math.min(Math.max(view.scale, 0.7), 1.4);
     paintCoordPlot(ctx, plot, toScreen, lw, fontPx, edInk(highlight), highlight);
+  }
+
+  /** Persist/render box-whisker (mirrors src/diagram/box-whisker.mjs). */
+  function normalizeBoxWhiskerRecord(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const orientation =
+      raw.orientation === "v" || raw.orientation === "vertical" ? "v" : "h";
+    const nums = ["min", "q1", "median", "q3", "max"].map((k) => Number(raw[k]));
+    if (nums.some((n) => !Number.isFinite(n))) return null;
+    const [min, q1, median, q3, max] = nums;
+    if (!(min <= q1 && q1 <= median && median <= q3 && q3 <= max)) return null;
+    const boxHeight = Math.max(4, Number(raw.boxHeight) || 36);
+    const cap = Math.max(2, Number.isFinite(Number(raw.cap)) ? Number(raw.cap) : boxHeight * 0.35);
+    const outliers = Array.isArray(raw.outliers)
+      ? raw.outliers.map(Number).filter((n) => Number.isFinite(n))
+      : [];
+    const ticks = Array.isArray(raw.ticks)
+      ? raw.ticks.map(Number).filter((n) => Number.isFinite(n))
+      : [];
+    const showAxis = raw.showAxis != null ? !!raw.showAxis : ticks.length > 0;
+    const out = {
+      id: typeof raw.id === "string" ? raw.id : "",
+      orientation,
+      min,
+      q1,
+      median,
+      q3,
+      max,
+      outliers,
+      ticks,
+      boxHeight,
+      cap,
+      showAxis,
+    };
+    if (orientation === "v") {
+      const x = Number(raw.x);
+      if (!Number.isFinite(x)) return null;
+      out.x = x;
+      if (raw.axisX != null && Number.isFinite(Number(raw.axisX))) out.axisX = Number(raw.axisX);
+    } else {
+      const y = Number(raw.y);
+      if (!Number.isFinite(y)) return null;
+      out.y = y;
+      if (raw.axisY != null && Number.isFinite(Number(raw.axisY))) out.axisY = Number(raw.axisY);
+    }
+    return out;
+  }
+
+  function boxWhiskerGeomParts(bw) {
+    const h = bw.boxHeight;
+    const half = h / 2;
+    const cap = bw.cap;
+    const tickLen = Math.max(3, h * 0.22);
+    if (bw.orientation === "v") {
+      const x = bw.x;
+      const box = { x: x - half, y: bw.q1, w: h, h: bw.q3 - bw.q1 };
+      const median = { x1: x - half, y1: bw.median, x2: x + half, y2: bw.median };
+      const whiskers = [
+        { x1: x, y1: bw.min, x2: x, y2: bw.q1 },
+        { x1: x, y1: bw.q3, x2: x, y2: bw.max },
+      ];
+      const caps = [
+        { x1: x - cap, y1: bw.min, x2: x + cap, y2: bw.min },
+        { x1: x - cap, y1: bw.max, x2: x + cap, y2: bw.max },
+      ];
+      const outliers = bw.outliers.map((v) => ({ x, y: v }));
+      let axis = null;
+      const tickMarks = [];
+      if (bw.showAxis && bw.ticks.length) {
+        const axisX =
+          bw.axisX != null ? bw.axisX : x + half + Math.max(10, h * 0.35);
+        const ys = bw.ticks.slice().sort((a, b) => a - b);
+        axis = { x1: axisX, y1: ys[0], x2: axisX, y2: ys[ys.length - 1] };
+        for (const ty of bw.ticks) {
+          tickMarks.push({
+            x1: axisX - tickLen / 2,
+            y1: ty,
+            x2: axisX + tickLen / 2,
+            y2: ty,
+          });
+        }
+      }
+      return { box, median, whiskers, caps, outliers, axis, tickMarks };
+    }
+    const y = bw.y;
+    const box = { x: bw.q1, y: y - half, w: bw.q3 - bw.q1, h };
+    const median = { x1: bw.median, y1: y - half, x2: bw.median, y2: y + half };
+    const whiskers = [
+      { x1: bw.min, y1: y, x2: bw.q1, y2: y },
+      { x1: bw.q3, y1: y, x2: bw.max, y2: y },
+    ];
+    const caps = [
+      { x1: bw.min, y1: y - cap, x2: bw.min, y2: y + cap },
+      { x1: bw.max, y1: y - cap, x2: bw.max, y2: y + cap },
+    ];
+    const outliers = bw.outliers.map((v) => ({ x: v, y }));
+    let axis = null;
+    const tickMarks = [];
+    if (bw.showAxis && bw.ticks.length) {
+      const axisY =
+        bw.axisY != null ? bw.axisY : y + half + Math.max(10, h * 0.35);
+      const xs = bw.ticks.slice().sort((a, b) => a - b);
+      axis = { x1: xs[0], y1: axisY, x2: xs[xs.length - 1], y2: axisY };
+      for (const tx of bw.ticks) {
+        tickMarks.push({
+          x1: tx,
+          y1: axisY - tickLen / 2,
+          x2: tx,
+          y2: axisY + tickLen / 2,
+        });
+      }
+    }
+    return { box, median, whiskers, caps, outliers, axis, tickMarks };
+  }
+
+  function boxWhiskerBounds(bw) {
+    if (!bw) return null;
+    const p = boxWhiskerGeomParts(bw);
+    const b = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+    const add = (x, y) => {
+      b.minX = Math.min(b.minX, x);
+      b.minY = Math.min(b.minY, y);
+      b.maxX = Math.max(b.maxX, x);
+      b.maxY = Math.max(b.maxY, y);
+    };
+    add(p.box.x, p.box.y);
+    add(p.box.x + p.box.w, p.box.y + p.box.h);
+    for (const s of [...p.whiskers, ...p.caps, p.median, ...p.tickMarks]) {
+      add(s.x1, s.y1);
+      add(s.x2, s.y2);
+    }
+    if (p.axis) {
+      add(p.axis.x1, p.axis.y1);
+      add(p.axis.x2, p.axis.y2);
+    }
+    for (const o of p.outliers) add(o.x, o.y);
+    return b;
+  }
+
+  function paintBoxWhisker(c, bw, toScreen, lw, color) {
+    const parts = boxWhiskerGeomParts(bw);
+    const strokeLine = (s) => {
+      const a = toScreen(s.x1, s.y1);
+      const b = toScreen(s.x2, s.y2);
+      c.beginPath();
+      c.moveTo(a.x, a.y);
+      c.lineTo(b.x, b.y);
+      c.stroke();
+    };
+    c.strokeStyle = color;
+    c.fillStyle = "transparent";
+    c.lineWidth = lw;
+    c.lineCap = "round";
+    c.lineJoin = "round";
+    c.setLineDash([]);
+    const tl = toScreen(parts.box.x, parts.box.y);
+    const br = toScreen(parts.box.x + parts.box.w, parts.box.y + parts.box.h);
+    c.beginPath();
+    c.rect(
+      Math.min(tl.x, br.x),
+      Math.min(tl.y, br.y),
+      Math.abs(br.x - tl.x),
+      Math.abs(br.y - tl.y)
+    );
+    c.stroke();
+    strokeLine(parts.median);
+    for (const s of parts.whiskers) strokeLine(s);
+    for (const s of parts.caps) strokeLine(s);
+    if (parts.axis) strokeLine(parts.axis);
+    for (const s of parts.tickMarks) strokeLine(s);
+    const r = Math.max(2.5, lw * 1.4);
+    for (const o of parts.outliers) {
+      const s = toScreen(o.x, o.y);
+      c.beginPath();
+      c.arc(s.x, s.y, r, 0, Math.PI * 2);
+      c.stroke();
+    }
+  }
+
+  function drawBoxWhisker(bw, highlight) {
+    const toScreen = (wx, wy) => worldToScreen(wx, wy);
+    const lw = LINE_WIDTH * (highlight ? 1.15 : 1);
+    paintBoxWhisker(ctx, bw, toScreen, lw, edInk(highlight));
+  }
+
+  function svgBoxWhisker(bw, toS, scale) {
+    const parts = boxWhiskerGeomParts(bw);
+    const lw = (LINE_WIDTH * scale * 0.75).toFixed(2);
+    let out = "";
+    const line = (s) => {
+      const a = toS(s.x1, s.y1);
+      const b = toS(s.x2, s.y2);
+      return `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" stroke-linecap="round" />\n`;
+    };
+    const tl = toS(parts.box.x, parts.box.y);
+    const br = toS(parts.box.x + parts.box.w, parts.box.y + parts.box.h);
+    out += `<rect x="${Math.min(tl.x, br.x).toFixed(2)}" y="${Math.min(tl.y, br.y).toFixed(2)}" width="${Math.abs(br.x - tl.x).toFixed(2)}" height="${Math.abs(br.y - tl.y).toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" />\n`;
+    out += line(parts.median);
+    for (const s of parts.whiskers) out += line(s);
+    for (const s of parts.caps) out += line(s);
+    if (parts.axis) out += line(parts.axis);
+    for (const s of parts.tickMarks) out += line(s);
+    const or = Math.max(2.5, LINE_WIDTH * scale * 0.75 * 1.4);
+    for (const o of parts.outliers) {
+      const s = toS(o.x, o.y);
+      out += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${or.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" />\n`;
+    }
+    return out;
   }
 
   /** Corner + edge handles of the plot window frame (axis units → world). */
@@ -8325,6 +8541,9 @@
         if (isSelected("coordPlot", cp.id)) drawCoordPlotResizeHandles(cp);
       }
     }
+    for (const bw of boxWhiskers) {
+      drawBoxWhisker(bw, isSelected("boxWhisker", bw.id));
+    }
     for (const p of points) {
       drawPoint(p, isSelected("point", p.id));
     }
@@ -10337,7 +10556,8 @@
       !sectors.length &&
       !fills.length &&
       !segments.length &&
-      !coordPlots.length;
+      !coordPlots.length &&
+      !boxWhiskers.length;
     if (empty) return { minX: -100, minY: -100, maxX: 100, maxY: 100 };
     const b = {
       minX: Infinity,
@@ -10382,6 +10602,12 @@
     }
     for (const cp of coordPlots) {
       const bb = coordPlotBounds(cp);
+      expandBounds(b, bb.minX, bb.minY);
+      expandBounds(b, bb.maxX, bb.maxY);
+    }
+    for (const bw of boxWhiskers) {
+      const bb = boxWhiskerBounds(bw);
+      if (!bb) continue;
       expandBounds(b, bb.minX, bb.minY);
       expandBounds(b, bb.maxX, bb.maxY);
     }
@@ -10654,6 +10880,10 @@
         const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
         paintCoordPlot(c, cp, toS, LINE_WIDTH * scale * 0.75, fontPx, "#111", false);
       }
+    }
+
+    for (const bw of boxWhiskers) {
+      paintBoxWhisker(c, bw, toS, LINE_WIDTH * scale * 0.75, "#111");
     }
 
     for (const cir of circles) {
@@ -11021,6 +11251,10 @@
       }
     }
 
+    for (const bw of boxWhiskers) {
+      body += svgBoxWhisker(bw, toS, scale);
+    }
+
     for (const cir of circles) {
       const cen = pointById(cir.centerId);
       const thr = pointById(cir.throughId);
@@ -11139,10 +11373,10 @@ ${body}</svg>`;
   const FORMAT_VERSION = 1;
 
   function buildProjectData() {
-    // Stable 35-key top-level save shape (empty collections as []).
+    // Stable 36-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.30",
+      version: "13.5.31",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
@@ -11158,6 +11392,7 @@ ${body}</svg>`;
       sectors: sectors || [],
       fills: sanitizeFillsForSave(fills),
       coordPlots: coordPlots || [],
+      boxWhiskers: boxWhiskers || [],
       exportCrop: exportCrop || null,
       sectorMode,
       fillMode,
@@ -11224,6 +11459,7 @@ ${body}</svg>`;
       "sectors",
       "fills",
       "coordPlots",
+      "boxWhiskers",
     ];
     for (const k of arrayKeys) {
       if (data[k] != null && !Array.isArray(data[k])) {
@@ -11323,6 +11559,7 @@ ${body}</svg>`;
       !sectors.length &&
       !fills.length &&
       !coordPlots.length &&
+      !boxWhiskers.length &&
       !angleArcs.length
     );
   }
@@ -11393,6 +11630,7 @@ ${body}</svg>`;
       reflex: !!a.reflex,
     }));
     coordPlots = (data.coordPlots || []).map((p) => normalizeCoordPlot(p) || p);
+    boxWhiskers = (data.boxWhiskers || []).map((b) => normalizeBoxWhiskerRecord(b)).filter(Boolean);
     midTicks = data.midTicks || [];
     parallelMarks = (data.parallelMarks || []).map((m) => ({
       ...m,
@@ -11573,6 +11811,7 @@ ${body}</svg>`;
       sectors: structuredClone(sectors),
       fills: structuredClone(fills),
       coordPlots: structuredClone(coordPlots),
+      boxWhiskers: structuredClone(boxWhiskers),
       exportCrop: exportCrop ? { ...exportCrop } : null,
       sectorMode,
       fillMode,

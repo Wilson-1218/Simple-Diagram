@@ -33,6 +33,7 @@ export function summarizeDiagram(doc) {
       rightAngles: count(doc.rightAngles),
       angleArcs: count(doc.angleArcs),
       coordPlots: count(doc.coordPlots),
+      boxWhiskers: count(doc.boxWhiskers),
       lengthLabels: count(doc.lengthLabels),
       parallelMarks: count(doc.parallelMarks),
       equalMarks: count(doc.equalMarks),
@@ -57,6 +58,10 @@ export const OP_CATALOG = {
   addReflex: { args: "same as addAngleArc", note: "Forces reflex:true" },
   addParallelMark: { args: "segmentId, group?, side?" },
   addEqualMark: { args: "segmentId, group?, side?" },
+  addBoxWhisker: {
+    args: "y|x, min, q1, median, q3, max, outliers?, ticks?, boxHeight?, orientation?, showAxis?",
+    note: "Dedicated boxplot; ticks[] caller-supplied (no equal-spacing invent); alias addBoxPlot",
+  },
   addLengthLabel: {
     args: "segmentId, text?, side?, style?(text|dim|arcs), orient?(tilt|horizontal), size?",
   },
