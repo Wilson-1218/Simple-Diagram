@@ -1,7 +1,7 @@
 /** Empty Simple Diagram document (formatVersion 1). */
 
 export const CURRENT_FORMAT_VERSION = 1;
-export const APP_VERSION = "13.5.31";
+export const APP_VERSION = "13.5.32";
 
 export const DEFAULT_LAYERS = {
   gridShow: true,
@@ -13,7 +13,7 @@ export const DEFAULT_LAYERS = {
   helpersLock: true,
 };
 
-/** Stable top-level save key order (36 keys). Empty collections → []. */
+/** Stable top-level save key order (37 keys). Empty collections → []. */
 export const STABLE_TOP_LEVEL_KEYS = [
   "formatVersion",
   "version",
@@ -33,6 +33,7 @@ export const STABLE_TOP_LEVEL_KEYS = [
   "fills",
   "coordPlots",
   "boxWhiskers",
+  "barCharts",
   "exportCrop",
   "sectorMode",
   "fillMode",
@@ -76,6 +77,7 @@ export function emptyDiagram(overrides = {}) {
     fills: [],
     coordPlots: [],
     boxWhiskers: [],
+    barCharts: [],
     exportCrop: null,
     sectorMode: "arc",
     fillMode: "polygon",

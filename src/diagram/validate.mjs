@@ -1,5 +1,6 @@
 import { CURRENT_FORMAT_VERSION } from "./empty-doc.mjs";
 import { normalizeBoxWhisker } from "./box-whisker.mjs";
+import { normalizeBarChart } from "./bar-chart.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 const MARKERS = new Set(["x", "foot"]);
@@ -71,6 +72,7 @@ export function validateDiagram(doc) {
     "fills",
     "coordPlots",
     "boxWhiskers",
+    "barCharts",
   ];
 
   for (const key of arrayFields) {
@@ -397,6 +399,18 @@ export function validateDiagram(doc) {
       const path = `boxWhiskers[${i}]`;
       try {
         normalizeBoxWhisker(bw, { requireId: true });
+      } catch (e) {
+        errors.push(`${path}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  }
+
+  if (Array.isArray(d.barCharts)) {
+    for (let i = 0; i < d.barCharts.length; i++) {
+      const bc = d.barCharts[i];
+      const path = `barCharts[${i}]`;
+      try {
+        normalizeBarChart(bc, { requireId: true });
       } catch (e) {
         errors.push(`${path}: ${e instanceof Error ? e.message : String(e)}`);
       }

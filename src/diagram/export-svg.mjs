@@ -3,7 +3,9 @@
  * Covers points, segments, circles, ellipses, sectors (arc strokes),
  * polygon/sector/segment/polyArc/pathFill fills, labels, rightAngles, angleArcs (+ text),
  * lengthLabels (text|dim|arcs), equalMarks (ticks), parallelMarks (chevrons),
- * boxWhiskers (dedicated box-and-whisker plots).
+ * boxWhiskers (dedicated box-and-whisker plots),
+ * barCharts (categories + hatch bars + vertical y-title),
+ * coordPlots (axes, arrows, integer ticks, axis names, curves).
  *
  * Ink / marks use a **physical-frame** budget (default 54×40mm): stroke, fonts, and
  * mark geometry are sized in SVG userUnits so that when the viewBox is fitted into
@@ -27,6 +29,13 @@ import {
   boxWhiskerParts,
   addBoxWhiskerBounds,
 } from "./box-whisker.mjs";
+import {
+  normalizeBarChart,
+  barChartParts,
+  addBarChartBounds,
+} from "./bar-chart.mjs";
+import { normalizeFillPattern, hatchStrokesForPolygon } from "./hatch.mjs";
+import { addCoordPlotBounds, svgCoordPlot } from "./coord-plot.mjs";
 
 /** Exam-figure default embed frame (Paper). */
 export const DEFAULT_FRAME_WIDTH_MM = 54;
@@ -87,6 +96,21 @@ function boundsOf(doc, pad = 24) {
   for (const raw of doc.boxWhiskers || []) {
     try {
       addBoxWhiskerBounds(normalizeBoxWhisker(raw), add);
+    } catch {
+      /* skip corrupt */
+    }
+  }
+  for (const raw of doc.barCharts || []) {
+    try {
+      addBarChartBounds(normalizeBarChart(raw), add);
+    } catch {
+      /* skip corrupt */
+    }
+  }
+  for (const cp of doc.coordPlots || []) {
+    if (!cp || typeof cp !== "object") continue;
+    try {
+      addCoordPlotBounds(cp, add);
     } catch {
       /* skip corrupt */
     }
@@ -399,6 +423,28 @@ export function documentToSvg(doc, opts = {}) {
   const markLw = ink.markStroke.toFixed(2);
 
   let body = "";
+  let hatchClipSeq = 0;
+
+  /** Emit solid fill or clipped hatch for a closed path `d` (SVG userUnits). */
+  const emitFillPath = (f, d, screenPts) => {
+    if (!d) return;
+    const pattern = normalizeFillPattern(f.pattern);
+    if (pattern === "hatch") {
+      const clipId = `hatchclip${hatchClipSeq++}`;
+      const spacing = Math.max(2, Number(f.hatchSpacing) || 8) * scale;
+      const strokes = hatchStrokesForPolygon(screenPts, { spacing });
+      const strokeCol = String(f.color || "#111");
+      body += `<clipPath id="${clipId}"><path d="${d}" /></clipPath>\n`;
+      body += `<g clip-path="url(#${clipId})">\n`;
+      for (const s of strokes) {
+        body += `<line x1="${s.x1.toFixed(2)}" y1="${s.y1.toFixed(2)}" x2="${s.x2.toFixed(2)}" y2="${s.y2.toFixed(2)}" stroke="${strokeCol}" stroke-width="${sw}" stroke-linecap="butt" />\n`;
+      }
+      body += `</g>\n`;
+    } else {
+      const fill = hexToRgba(f.color, f.opacity);
+      body += `<path d="${d}" fill="${fill}" stroke="none" />\n`;
+    }
+  };
 
   for (const f of doc.fills || []) {
     const kind =
@@ -408,11 +454,11 @@ export function documentToSvg(doc, opts = {}) {
       f.kind === "pathFill"
         ? f.kind
         : "polygon";
-    const fill = hexToRgba(f.color, f.opacity);
     if (kind === "pathFill" && Array.isArray(f.edges) && f.edges.length >= 2) {
       let d = "";
       let ok = true;
       let started = false;
+      const screenPts = [];
       for (const e of f.edges) {
         if (!e) {
           ok = false;
@@ -427,6 +473,7 @@ export function documentToSvg(doc, opts = {}) {
           }
           const sa = toS(a.x, a.y);
           const sb = toS(bpt.x, bpt.y);
+          screenPts.push(sa, sb);
           if (!started) {
             d += `M${sa.x.toFixed(2)},${sa.y.toFixed(2)}`;
             started = true;
@@ -450,6 +497,7 @@ export function documentToSvg(doc, opts = {}) {
           const sweep = delta < 0 ? 0 : 1;
           const p0 = toS(s0.x, s0.y);
           const p1 = toS(s1.x, s1.y);
+          screenPts.push(p0, p1);
           const sr = r * scale;
           if (!started) {
             d += `M${p0.x.toFixed(2)},${p0.y.toFixed(2)}`;
@@ -461,20 +509,22 @@ export function documentToSvg(doc, opts = {}) {
           break;
         }
       }
-      if (ok && started) body += `<path d="${d} Z" fill="${fill}" stroke="none" />\n`;
+      if (ok && started) emitFillPath(f, `${d} Z`, screenPts);
     } else if (kind === "polygon" && Array.isArray(f.pointIds) && f.pointIds.length >= 3) {
-      const coords = [];
+      const screenPts = [];
       let ok = true;
-      for (const id of f.pointIds) {
-        const p = pts.get(id);
+      let d = "";
+      for (let i = 0; i < f.pointIds.length; i++) {
+        const p = pts.get(f.pointIds[i]);
         if (!p) {
           ok = false;
           break;
         }
         const s = toS(p.x, p.y);
-        coords.push(`${s.x.toFixed(2)},${s.y.toFixed(2)}`);
+        screenPts.push(s);
+        d += i === 0 ? `M${s.x.toFixed(2)},${s.y.toFixed(2)}` : ` L${s.x.toFixed(2)},${s.y.toFixed(2)}`;
       }
-      if (ok) body += `<polygon points="${coords.join(" ")}" fill="${fill}" stroke="none" />\n`;
+      if (ok) emitFillPath(f, `${d} Z`, screenPts);
     } else if (kind === "polyArc" && Array.isArray(f.pointIds) && f.pointIds.length >= 2) {
       const c = pts.get(f.centerId) || (f.circleId
         ? (() => {
@@ -496,6 +546,7 @@ export function documentToSvg(doc, opts = {}) {
         const sr = r * scale;
         let d = "";
         let ok = true;
+        const screenPts = [];
         for (let i = 0; i < f.pointIds.length; i++) {
           const p = pts.get(f.pointIds[i]);
           if (!p) {
@@ -503,12 +554,14 @@ export function documentToSvg(doc, opts = {}) {
             break;
           }
           const s = toS(p.x, p.y);
+          screenPts.push(s);
           d += i === 0 ? `M${s.x.toFixed(2)},${s.y.toFixed(2)}` : ` L${s.x.toFixed(2)},${s.y.toFixed(2)}`;
         }
         if (ok) {
           const a1 = toS(s1.x, s1.y);
+          screenPts.push(a1);
           d += ` A${sr.toFixed(2)},${sr.toFixed(2)} 0 ${large} ${sweep} ${a1.x.toFixed(2)},${a1.y.toFixed(2)} Z`;
-          body += `<path d="${d}" fill="${fill}" stroke="none" />\n`;
+          emitFillPath(f, d, screenPts);
         }
       }
     } else if (kind === "sector" || kind === "segment") {
@@ -534,9 +587,17 @@ export function documentToSvg(doc, opts = {}) {
         const large = Math.abs(delta) > Math.PI ? 1 : 0;
         const sweep = delta < 0 ? 0 : 1;
         if (kind === "sector") {
-          body += `<path d="M${sc.x.toFixed(2)},${sc.y.toFixed(2)} L${a0.x.toFixed(2)},${a0.y.toFixed(2)} A${sr.toFixed(2)},${sr.toFixed(2)} 0 ${large} ${sweep} ${a1.x.toFixed(2)},${a1.y.toFixed(2)} Z" fill="${fill}" stroke="none" />\n`;
+          emitFillPath(
+            f,
+            `M${sc.x.toFixed(2)},${sc.y.toFixed(2)} L${a0.x.toFixed(2)},${a0.y.toFixed(2)} A${sr.toFixed(2)},${sr.toFixed(2)} 0 ${large} ${sweep} ${a1.x.toFixed(2)},${a1.y.toFixed(2)} Z`,
+            [sc, a0, a1]
+          );
         } else {
-          body += `<path d="M${a0.x.toFixed(2)},${a0.y.toFixed(2)} A${sr.toFixed(2)},${sr.toFixed(2)} 0 ${large} ${sweep} ${a1.x.toFixed(2)},${a1.y.toFixed(2)} L${a0.x.toFixed(2)},${a0.y.toFixed(2)} Z" fill="${fill}" stroke="none" />\n`;
+          emitFillPath(
+            f,
+            `M${a0.x.toFixed(2)},${a0.y.toFixed(2)} A${sr.toFixed(2)},${sr.toFixed(2)} 0 ${large} ${sweep} ${a1.x.toFixed(2)},${a1.y.toFixed(2)} L${a0.x.toFixed(2)},${a0.y.toFixed(2)} Z`,
+            [a0, a1]
+          );
         }
       }
     }
@@ -644,6 +705,80 @@ export function documentToSvg(doc, opts = {}) {
       const s = toS(o.x, o.y);
       body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${or.toFixed(2)}" fill="none" stroke="#111" stroke-width="${sw}" />\n`;
     }
+  }
+
+  for (const raw of doc.barCharts || []) {
+    let bc;
+    try {
+      bc = normalizeBarChart(raw);
+    } catch {
+      continue;
+    }
+    const parts = barChartParts(bc);
+    const line = (s, dash) => {
+      const a = toS(s.x1, s.y1);
+      const b = toS(s.x2, s.y2);
+      const da = dash ? ` stroke-dasharray="${ink.dash("dotted").map((d) => d.toFixed(2)).join(" ")}"` : "";
+      return `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${sw}" stroke-linecap="butt"${da} />\n`;
+    };
+    for (const g of parts.grid) body += line(g, true);
+    for (const bar of parts.bars) {
+      const tl = toS(bar.x, bar.y);
+      const br = toS(bar.x + bar.w, bar.y + bar.h);
+      const rx = Math.min(tl.x, br.x);
+      const ry = Math.min(tl.y, br.y);
+      const rw = Math.abs(br.x - tl.x);
+      const rh = Math.abs(br.y - tl.y);
+      body += `<rect x="${rx.toFixed(2)}" y="${ry.toFixed(2)}" width="${rw.toFixed(2)}" height="${rh.toFixed(2)}" fill="none" stroke="#111" stroke-width="${sw}" />\n`;
+    }
+    for (const s of parts.hatch) {
+      const a = toS(s.x1, s.y1);
+      const b = toS(s.x2, s.y2);
+      body += `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${sw}" stroke-linecap="butt" />\n`;
+    }
+    if (bc.showAxes) {
+      body += line(parts.axisX, false);
+      body += line(parts.axisY, false);
+    }
+    for (const s of parts.tickMarks) body += line(s, false);
+    const fs = ink.fontForSize(14);
+    const fam =
+      'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
+    for (const t of parts.tickLabels) {
+      const p = toS(t.x, t.y);
+      body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fs.toFixed(1)}" text-anchor="end" dominant-baseline="middle">${escapeXml(t.text)}</text>\n`;
+    }
+    for (const c of parts.catLabels) {
+      const p = toS(c.x, c.y);
+      body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="hanging">${escapeXml(c.text)}</text>\n`;
+    }
+    if (parts.xLabel) {
+      const p = toS(parts.xLabel.x, parts.xLabel.y);
+      body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="hanging">${escapeXml(parts.xLabel.text)}</text>\n`;
+    }
+    if (parts.yLabel) {
+      const p = toS(parts.yLabel.x, parts.yLabel.y);
+      if (parts.yLabel.mode === "stack") {
+        const glyphs = Array.from(parts.yLabel.text);
+        const step = fs * 1.05;
+        const startY = p.y - ((glyphs.length - 1) * step) / 2;
+        for (let i = 0; i < glyphs.length; i++) {
+          body += `<text x="${p.x.toFixed(2)}" y="${(startY + i * step).toFixed(2)}" fill="#111" ${fam} font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(glyphs[i])}</text>\n`;
+        }
+      } else {
+        // Along the axis, reading upward (−90° in SVG y-down).
+        body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 ${p.x.toFixed(2)} ${p.y.toFixed(2)})">${escapeXml(parts.yLabel.text)}</text>\n`;
+      }
+    }
+  }
+
+  for (const cp of doc.coordPlots || []) {
+    if (!cp || typeof cp !== "object") continue;
+    body += svgCoordPlot(cp, toS, {
+      stroke: ink.stroke,
+      fontPx: ink.fontForSize(14),
+      markStroke: ink.markStroke,
+    });
   }
 
   if (helpersShow) {

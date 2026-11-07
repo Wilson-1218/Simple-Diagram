@@ -34,6 +34,7 @@ export function summarizeDiagram(doc) {
       angleArcs: count(doc.angleArcs),
       coordPlots: count(doc.coordPlots),
       boxWhiskers: count(doc.boxWhiskers),
+      barCharts: count(doc.barCharts),
       lengthLabels: count(doc.lengthLabels),
       parallelMarks: count(doc.parallelMarks),
       equalMarks: count(doc.equalMarks),
@@ -62,6 +63,14 @@ export const OP_CATALOG = {
     args: "y|x, min, q1, median, q3, max, outliers?, ticks?, boxHeight?, orientation?, showAxis?",
     note: "Dedicated boxplot; ticks[] caller-supplied (no equal-spacing invent); alias addBoxPlot",
   },
+  addBarChart: {
+    args: "x, y, categories, values|heights, plotW?, plotH?, yMin?, yMax?, yTicks?, yStep?, xLabel?, yLabel?, yLabelMode?, barPattern?, showGrid?",
+    note: "Dedicated bar chart; yLabel along axis (rotate|stack); barPattern hatch|solid; alias addBar",
+  },
+  addFill: {
+    args: "kind?, pattern?, pointIds? | centerId+startId+endId | polyArc | pathFill edges, color?, opacity?, hatchSpacing?",
+    note: "kind polygon|sector|segment|polyArc|pathFill; pattern solid|hatch (slanted strokes)",
+  },
   addLengthLabel: {
     args: "segmentId, text?, side?, style?(text|dim|arcs), orient?(tilt|horizontal), size?",
   },
@@ -73,10 +82,6 @@ export const OP_CATALOG = {
   addCircle: { args: "centerId, throughId, style?" },
   addEllipse: { args: "centerId, rxId, ryId, style?, backDashed?" },
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },
-  addFill: {
-    args: "kind?, pointIds? | centerId+startId+endId | polyArc | pathFill edges[{line|arc}], color?, opacity?",
-    note: "kind polygon|sector|segment|polyArc|pathFill; two arcs+chord → pathFill (not white overlay)",
-  },
   addShape: {
     args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?",
     note: "kind square|rect|…|circle|semicircle|cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone",

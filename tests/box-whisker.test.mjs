@@ -13,11 +13,11 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for box-whisker", () => {
-  assert.equal(APP_VERSION, "13.5.31");
+  assert.equal(APP_VERSION, "13.5.32");
 });
 
-test("stable top-level keys include boxWhiskers (36)", () => {
-  assert.equal(STABLE_TOP_LEVEL_KEYS.length, 36);
+test("stable top-level keys include boxWhiskers (37)", () => {
+  assert.equal(STABLE_TOP_LEVEL_KEYS.length, 37);
   assert.ok(STABLE_TOP_LEVEL_KEYS.includes("boxWhiskers"));
   const doc = emptyDiagram();
   assert.ok(Array.isArray(doc.boxWhiskers));
