@@ -164,6 +164,7 @@
   let coordPlots = [];
   /** @type {object[]} Dedicated box-and-whisker plots (ops / JSON; not rect+segment assemblies) */
   let boxWhiskers = [];
+  let barCharts = [];
   /** @type {{id:string,segmentId:string,pointId?:string}[]} */
   let midTicks = []; // ratio division ticks only (midpoint tool does not use these)
   /** @type {{id:string,segmentId:string,group:number,side?:number}[]} */
@@ -1983,6 +1984,13 @@
       color: f.color || "#666666",
       opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
     };
+    const pat = String(f.pattern || "").toLowerCase();
+    if (pat === "hatch" || pat === "hatched" || pat === "stripe" || pat === "stripes") {
+      out.pattern = "hatch";
+      if (Number.isFinite(Number(f.hatchSpacing)) && Number(f.hatchSpacing) >= 2) {
+        out.hatchSpacing = Number(f.hatchSpacing);
+      }
+    }
     if (kind === "pathFill") {
       const edges = [];
       if (Array.isArray(f.edges)) {
@@ -2036,7 +2044,7 @@
   function fillSaveSignature(f) {
     if (!f) return "";
     const kind = fillKindOf(f);
-    const base = [kind, f.color || "", Number(f.opacity)];
+    const base = [kind, f.color || "", Number(f.opacity), f.pattern || "solid", f.hatchSpacing || ""];
     if (kind === "pathFill") return JSON.stringify(base.concat([f.edges || []]));
     if (kind === "polygon") return JSON.stringify(base.concat([f.pointIds || []]));
     if (kind === "polyArc") {
@@ -2299,15 +2307,90 @@
   function drawFillShape(fill, selected, toScreenFn) {
     const toS = toScreenFn || ((x, y) => worldToScreen(x, y));
     if (!buildFillPath(ctx, fill, toS)) return;
-    ctx.fillStyle = hexToRgba(fill.color, fill.opacity);
-    ctx.fill();
+    const isHatch = String(fill.pattern || "").toLowerCase() === "hatch";
+    if (isHatch) {
+      ctx.save();
+      ctx.clip();
+      const spacing = Math.max(4, (Number(fill.hatchSpacing) || 8) * Math.min(Math.max(view.scale, 0.7), 1.6));
+      // Approximate screen bbox from clip via world polygon if available
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      const wpts = fillWorldPoints(fill);
+      if (wpts) {
+        for (const p of wpts) {
+          const s = toS(p.x, p.y);
+          minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
+          maxX = Math.max(maxX, s.x); maxY = Math.max(maxY, s.y);
+        }
+      } else {
+        // fallback: generous pad around origin
+        minX = 0; minY = 0; maxX = canvas.width; maxY = canvas.height;
+      }
+      const strokes = hatchStrokesInRectScreen(minX, minY, maxX - minX, maxY - minY, spacing);
+      ctx.strokeStyle = fill.color || "#111";
+      ctx.globalAlpha = Number.isFinite(Number(fill.opacity)) ? Number(fill.opacity) : 1;
+      ctx.lineWidth = Math.max(1, LINE_WIDTH * 0.85);
+      ctx.setLineDash([]);
+      for (const s of strokes) {
+        ctx.beginPath();
+        ctx.moveTo(s.x1, s.y1);
+        ctx.lineTo(s.x2, s.y2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else {
+      ctx.fillStyle = hexToRgba(fill.color, fill.opacity);
+      ctx.fill();
+    }
     if (selected) {
+      if (!buildFillPath(ctx, fill, toS)) return;
       ctx.strokeStyle = darkCanvas ? "rgba(126,200,240,0.95)" : "rgba(42,122,176,0.9)";
       ctx.lineWidth = 1.5;
       ctx.setLineDash([5, 4]);
       ctx.stroke();
       ctx.setLineDash([]);
     }
+  }
+
+  /** Screen-space hatch lines (mirrors src/diagram/hatch.mjs for canvas). */
+  function hatchStrokesInRectScreen(x, y, w, h, spacing) {
+    const rw = Number(w), rh = Number(h);
+    if (!(rw > 1e-6) || !(rh > 1e-6)) return [];
+    const sp = Math.max(2, spacing || 8);
+    const angle = -Math.PI / 4;
+    const dx = Math.cos(angle), dy = Math.sin(angle);
+    const nx = -dy, ny = dx;
+    const corners = [[x, y], [x + rw, y], [x, y + rh], [x + rw, y + rh]];
+    let minP = Infinity, maxP = -Infinity;
+    for (const [cx, cy] of corners) {
+      const p = cx * nx + cy * ny;
+      if (p < minP) minP = p;
+      if (p > maxP) maxP = p;
+    }
+    const strokes = [];
+    for (let p = minP - sp; p <= maxP + sp + 1e-9; p += sp) {
+      const qx = nx * p, qy = ny * p;
+      const seg = clipLineToAabb(qx, qy, dx, dy, x, y, rw, rh);
+      if (seg) strokes.push(seg);
+    }
+    return strokes;
+  }
+  function clipLineToAabb(px, py, dx, dy, x, y, w, h) {
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len;
+    let t0 = -Infinity, t1 = Infinity;
+    const slabs = [[ux, px, x, x + w], [uy, py, y, y + h]];
+    for (const [u, p, lo, hi] of slabs) {
+      if (Math.abs(u) < 1e-12) {
+        if (p < lo || p > hi) return null;
+        continue;
+      }
+      let ta = (lo - p) / u, tb = (hi - p) / u;
+      if (ta > tb) { const tmp = ta; ta = tb; tb = tmp; }
+      t0 = Math.max(t0, ta); t1 = Math.min(t1, tb);
+      if (t0 > t1) return null;
+    }
+    if (!Number.isFinite(t0) || !Number.isFinite(t1) || t1 - t0 < 1e-9) return null;
+    return { x1: px + ux * t0, y1: py + uy * t0, x2: px + ux * t1, y2: py + uy * t1 };
   }
 
   /** SVG path `d` for a fill (polygon / sector / segment / polyArc / pathFill). */
@@ -3283,6 +3366,7 @@
       fills,
       coordPlots,
       boxWhiskers,
+      barCharts,
       nextLetter,
       labelFontSize,
       rightAngleSize,
@@ -3320,6 +3404,7 @@
     }));
     coordPlots = (data.coordPlots || []).map((p) => normalizeCoordPlot(p) || p);
     boxWhiskers = (data.boxWhiskers || []).map((b) => normalizeBoxWhiskerRecord(b)).filter(Boolean);
+    barCharts = (data.barCharts || []).map((b) => normalizeBarChartRecord(b)).filter(Boolean);
     midTicks = data.midTicks || [];
     parallelMarks = (data.parallelMarks || []).map((m) => ({
       ...m,
@@ -4092,7 +4177,8 @@
       !sectors.length &&
       !fills.length &&
       !coordPlots.length &&
-      !boxWhiskers.length;
+      !boxWhiskers.length &&
+      !barCharts.length;
     if (empty) {
       statusHint.textContent = "畫布已是空白";
       return;
@@ -4114,6 +4200,7 @@
     fills = [];
     coordPlots = [];
     boxWhiskers = [];
+    barCharts = [];
     setSelection([]);
     draft = null;
     hoverSnap = null;
@@ -4193,6 +4280,8 @@
       coordPlots = coordPlots.filter((p) => p.id !== id);
     } else if (type === "boxWhisker") {
       boxWhiskers = boxWhiskers.filter((p) => p.id !== id);
+    } else if (type === "barChart") {
+      barCharts = barCharts.filter((p) => p.id !== id);
     }
   }
 
@@ -5753,6 +5842,224 @@
     const lw = LINE_WIDTH * (highlight ? 1.15 : 1);
     paintBoxWhisker(ctx, bw, toScreen, lw, edInk(highlight));
   }
+
+  function normalizeBarChartRecord(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    try {
+      const categories = Array.isArray(raw.categories)
+        ? raw.categories.map((x) => String(x ?? ""))
+        : Array.isArray(raw.labels)
+          ? raw.labels.map((x) => String(x ?? ""))
+          : [];
+      const valuesSrc = raw.values != null ? raw.values : raw.heights;
+      const values = Array.isArray(valuesSrc)
+        ? valuesSrc.map(Number).filter((n) => Number.isFinite(n))
+        : [];
+      if (!categories.length || values.length !== categories.length) return null;
+      const x = Number(raw.x), y = Number(raw.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+      const plotW = Math.max(20, Number(raw.plotW != null ? raw.plotW : raw.width) || 280);
+      const plotH = Math.max(20, Number(raw.plotH != null ? raw.plotH : raw.height) || 180);
+      let yMin = Number.isFinite(Number(raw.yMin)) ? Number(raw.yMin) : 0;
+      let yMax = Number(raw.yMax);
+      if (!Number.isFinite(yMax)) yMax = Math.max(1, ...values, 0);
+      if (!(yMax > yMin)) return null;
+      let yTicks = Array.isArray(raw.yTicks)
+        ? raw.yTicks.map(Number).filter((n) => Number.isFinite(n))
+        : [];
+      if (!yTicks.length) {
+        const step = Number(raw.yStep);
+        if (Number.isFinite(step) && step > 0) {
+          for (let t = yMin; t <= yMax + 1e-9; t += step) yTicks.push(Number(t.toFixed(8)));
+        } else {
+          yTicks = [yMin, yMax];
+        }
+      }
+      const pat = String(raw.barPattern != null ? raw.barPattern : raw.pattern || "hatch").toLowerCase();
+      return {
+        id: typeof raw.id === "string" ? raw.id : "",
+        x, y, plotW, plotH, categories, values, yMin, yMax, yTicks,
+        barGap: Math.min(0.7, Math.max(0, Number(raw.barGap) || 0.28)),
+        barPattern: pat === "solid" || pat === "none" ? "solid" : "hatch",
+        hatchSpacing: Math.max(2, Number(raw.hatchSpacing) || 7),
+        showGrid: raw.showGrid != null ? !!raw.showGrid : true,
+        showAxes: raw.showAxes != null ? !!raw.showAxes : true,
+        xLabel: raw.xLabel != null ? String(raw.xLabel) : "",
+        yLabel: raw.yLabel != null ? String(raw.yLabel) : "",
+        yLabelMode: raw.yLabelMode === "stack" || raw.yLabelMode === "vertical" ? "stack" : "rotate",
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function barChartGeomParts(bc) {
+    const n = bc.categories.length;
+    const slot = bc.plotW / n;
+    const gap = slot * bc.barGap;
+    const barW = Math.max(2, slot - gap);
+    const bars = [];
+    const hatch = [];
+    const valY = (v) => bc.y - ((v - bc.yMin) / (bc.yMax - bc.yMin)) * bc.plotH;
+    for (let i = 0; i < n; i++) {
+      const val = bc.values[i];
+      const bx = bc.x + i * slot + gap / 2;
+      const topY = valY(val);
+      const bar = { x: bx, y: topY, w: barW, h: Math.max(0, bc.y - topY), label: bc.categories[i] };
+      bars.push(bar);
+      if (bc.barPattern === "hatch" && bar.h > 1e-6) {
+        const worldStrokes = hatchStrokesInRectScreen(bar.x, bar.y, bar.w, bar.h, bc.hatchSpacing);
+        for (const s of worldStrokes) hatch.push(s);
+      }
+    }
+    const topY = bc.y - bc.plotH;
+    const grid = [], tickMarks = [], tickLabels = [], catLabels = [];
+    const tickLen = Math.max(3, Math.min(8, bc.plotW * 0.02));
+    for (const t of bc.yTicks) {
+      if (t < bc.yMin - 1e-9 || t > bc.yMax + 1e-9) continue;
+      const wy = valY(t);
+      if (bc.showGrid && Math.abs(t - bc.yMin) > 1e-9) grid.push({ x1: bc.x, y1: wy, x2: bc.x + bc.plotW, y2: wy });
+      tickMarks.push({ x1: bc.x - tickLen, y1: wy, x2: bc.x, y2: wy });
+      tickLabels.push({ x: bc.x - tickLen - 2, y: wy, text: String(t) });
+    }
+    for (let i = 0; i < n; i++) {
+      catLabels.push({ x: bc.x + i * slot + slot / 2, y: bc.y + Math.max(12, bc.plotH * 0.06), text: bc.categories[i] });
+    }
+    return {
+      frame: { x: bc.x, y: topY, w: bc.plotW, h: bc.plotH },
+      bars, grid, hatch, tickMarks, tickLabels, catLabels,
+      axisX: { x1: bc.x, y1: bc.y, x2: bc.x + bc.plotW, y2: bc.y },
+      axisY: { x1: bc.x, y1: bc.y, x2: bc.x, y2: topY },
+      xLabel: bc.xLabel ? { x: bc.x + bc.plotW / 2, y: bc.y + Math.max(28, bc.plotH * 0.14), text: bc.xLabel } : null,
+      yLabel: bc.yLabel ? { x: bc.x - Math.max(36, bc.plotW * 0.12), y: topY + bc.plotH / 2, text: bc.yLabel, mode: bc.yLabelMode } : null,
+    };
+  }
+
+  function barChartBounds(bc) {
+    if (!bc) return null;
+    const p = barChartGeomParts(bc);
+    const b = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+    const add = (x, y) => { b.minX = Math.min(b.minX, x); b.minY = Math.min(b.minY, y); b.maxX = Math.max(b.maxX, x); b.maxY = Math.max(b.maxY, y); };
+    add(p.frame.x, p.frame.y); add(p.frame.x + p.frame.w, p.frame.y + p.frame.h);
+    for (const c of p.catLabels) add(c.x, c.y + 4);
+    if (p.xLabel) add(p.xLabel.x, p.xLabel.y + 4);
+    if (p.yLabel) { add(p.yLabel.x - 8, p.yLabel.y); add(p.yLabel.x + 8, p.yLabel.y); }
+    return b;
+  }
+
+  function paintBarChart(c, bc, toScreen, lw, fontPx, color) {
+    const parts = barChartGeomParts(bc);
+    const strokeLine = (s, dash) => {
+      const a = toScreen(s.x1, s.y1), b = toScreen(s.x2, s.y2);
+      c.beginPath();
+      if (dash) c.setLineDash([Math.max(2, lw * 1.2), Math.max(2, lw * 1.6)]);
+      else c.setLineDash([]);
+      c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
+      c.setLineDash([]);
+    };
+    c.strokeStyle = color; c.fillStyle = color; c.lineWidth = lw; c.lineCap = "butt"; c.lineJoin = "round";
+    for (const g of parts.grid) strokeLine(g, true);
+    for (const bar of parts.bars) {
+      const tl = toScreen(bar.x, bar.y), br = toScreen(bar.x + bar.w, bar.y + bar.h);
+      c.beginPath();
+      c.rect(Math.min(tl.x, br.x), Math.min(tl.y, br.y), Math.abs(br.x - tl.x), Math.abs(br.y - tl.y));
+      c.stroke();
+    }
+    for (const s of parts.hatch) strokeLine(s, false);
+    if (bc.showAxes) { strokeLine(parts.axisX, false); strokeLine(parts.axisY, false); }
+    for (const s of parts.tickMarks) strokeLine(s, false);
+    c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
+    c.textBaseline = "middle";
+    for (const t of parts.tickLabels) {
+      const p = toScreen(t.x, t.y);
+      c.textAlign = "right";
+      c.fillText(t.text, p.x, p.y);
+    }
+    c.textBaseline = "top";
+    c.textAlign = "center";
+    for (const cat of parts.catLabels) {
+      const p = toScreen(cat.x, cat.y);
+      c.fillText(cat.text, p.x, p.y);
+    }
+    if (parts.xLabel) {
+      const p = toScreen(parts.xLabel.x, parts.xLabel.y);
+      c.fillText(parts.xLabel.text, p.x, p.y);
+    }
+    if (parts.yLabel) {
+      const p = toScreen(parts.yLabel.x, parts.yLabel.y);
+      if (parts.yLabel.mode === "stack") {
+        const glyphs = Array.from(parts.yLabel.text);
+        const step = fontPx * 1.05;
+        const startY = p.y - ((glyphs.length - 1) * step) / 2;
+        c.textBaseline = "middle";
+        for (let i = 0; i < glyphs.length; i++) c.fillText(glyphs[i], p.x, startY + i * step);
+      } else {
+        c.save();
+        c.translate(p.x, p.y);
+        c.rotate(-Math.PI / 2);
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        c.fillText(parts.yLabel.text, 0, 0);
+        c.restore();
+      }
+    }
+  }
+
+  function drawBarChart(bc, highlight) {
+    const toScreen = (wx, wy) => worldToScreen(wx, wy);
+    const lw = LINE_WIDTH * (highlight ? 1.15 : 1);
+    const fontPx = clampLabelSize(labelFontSize) * Math.min(Math.max(view.scale, 0.7), 1.4);
+    paintBarChart(ctx, bc, toScreen, lw, fontPx, edInk(highlight));
+  }
+
+  function svgBarChart(bc, toS, scale) {
+    const parts = barChartGeomParts(bc);
+    const lw = (LINE_WIDTH * scale * 0.75).toFixed(2);
+    const fontPx = (clampLabelSize(labelFontSize) * scale * 0.75).toFixed(1);
+    const fam = 'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
+    let out = "";
+    const line = (s, dash) => {
+      const a = toS(s.x1, s.y1), b = toS(s.x2, s.y2);
+      const da = dash ? ` stroke-dasharray="${(2 * scale * 0.75).toFixed(2)} ${(2.5 * scale * 0.75).toFixed(2)}"` : "";
+      return `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" stroke-linecap="butt"${da} />\n`;
+    };
+    for (const g of parts.grid) out += line(g, true);
+    for (const bar of parts.bars) {
+      const tl = toS(bar.x, bar.y), br = toS(bar.x + bar.w, bar.y + bar.h);
+      out += `<rect x="${Math.min(tl.x, br.x).toFixed(2)}" y="${Math.min(tl.y, br.y).toFixed(2)}" width="${Math.abs(br.x - tl.x).toFixed(2)}" height="${Math.abs(br.y - tl.y).toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" />\n`;
+    }
+    for (const s of parts.hatch) out += line(s, false);
+    if (bc.showAxes) { out += line(parts.axisX, false); out += line(parts.axisY, false); }
+    for (const s of parts.tickMarks) out += line(s, false);
+    for (const t of parts.tickLabels) {
+      const p = toS(t.x, t.y);
+      out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(t.text)}</text>\n`;
+    }
+    for (const cat of parts.catLabels) {
+      const p = toS(cat.x, cat.y);
+      out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="hanging">${escapeXml(cat.text)}</text>\n`;
+    }
+    if (parts.xLabel) {
+      const p = toS(parts.xLabel.x, parts.xLabel.y);
+      out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="hanging">${escapeXml(parts.xLabel.text)}</text>\n`;
+    }
+    if (parts.yLabel) {
+      const p = toS(parts.yLabel.x, parts.yLabel.y);
+      if (parts.yLabel.mode === "stack") {
+        const glyphs = Array.from(parts.yLabel.text);
+        const fs = Number(fontPx);
+        const step = fs * 1.05;
+        const startY = p.y - ((glyphs.length - 1) * step) / 2;
+        for (let i = 0; i < glyphs.length; i++) {
+          out += `<text x="${p.x.toFixed(2)}" y="${(startY + i * step).toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="middle">${escapeXml(glyphs[i])}</text>\n`;
+        }
+      } else {
+        out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 ${p.x.toFixed(2)} ${p.y.toFixed(2)})">${escapeXml(parts.yLabel.text)}</text>\n`;
+      }
+    }
+    return out;
+  }
+
 
   function svgBoxWhisker(bw, toS, scale) {
     const parts = boxWhiskerGeomParts(bw);
@@ -8544,6 +8851,9 @@
     for (const bw of boxWhiskers) {
       drawBoxWhisker(bw, isSelected("boxWhisker", bw.id));
     }
+    for (const bc of barCharts) {
+      drawBarChart(bc, isSelected("barChart", bc.id));
+    }
     for (const p of points) {
       drawPoint(p, isSelected("point", p.id));
     }
@@ -10557,7 +10867,8 @@
       !fills.length &&
       !segments.length &&
       !coordPlots.length &&
-      !boxWhiskers.length;
+      !boxWhiskers.length &&
+      !barCharts.length;
     if (empty) return { minX: -100, minY: -100, maxX: 100, maxY: 100 };
     const b = {
       minX: Infinity,
@@ -10607,6 +10918,12 @@
     }
     for (const bw of boxWhiskers) {
       const bb = boxWhiskerBounds(bw);
+      if (!bb) continue;
+      expandBounds(b, bb.minX, bb.minY);
+      expandBounds(b, bb.maxX, bb.maxY);
+    }
+    for (const bc of barCharts) {
+      const bb = barChartBounds(bc);
       if (!bb) continue;
       expandBounds(b, bb.minX, bb.minY);
       expandBounds(b, bb.maxX, bb.maxY);
@@ -10699,8 +11016,36 @@
 
     for (const f of fills) {
       if (!buildFillPath(c, f, toS)) continue;
-      c.fillStyle = hexToRgba(f.color, f.opacity);
-      c.fill();
+      if (String(f.pattern || "").toLowerCase() === "hatch") {
+        c.save();
+        c.clip();
+        const spacing = Math.max(3, (Number(f.hatchSpacing) || 8) * scale * 0.75);
+        let minX = 0, minY = 0, maxX = off.width, maxY = off.height;
+        const wpts = fillWorldPoints(f);
+        if (wpts) {
+          minX = Infinity; minY = Infinity; maxX = -Infinity; maxY = -Infinity;
+          for (const p of wpts) {
+            const s = toS(p.x, p.y);
+            minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
+            maxX = Math.max(maxX, s.x); maxY = Math.max(maxY, s.y);
+          }
+        }
+        const strokes = hatchStrokesInRectScreen(minX, minY, maxX - minX, maxY - minY, spacing);
+        c.strokeStyle = f.color || "#111";
+        c.globalAlpha = Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 1;
+        c.lineWidth = Math.max(1, LINE_WIDTH * scale * 0.75 * 0.85);
+        c.setLineDash([]);
+        for (const s of strokes) {
+          c.beginPath();
+          c.moveTo(s.x1, s.y1);
+          c.lineTo(s.x2, s.y2);
+          c.stroke();
+        }
+        c.restore();
+      } else {
+        c.fillStyle = hexToRgba(f.color, f.opacity);
+        c.fill();
+      }
     }
 
     for (const seg of segments) {
@@ -10884,6 +11229,10 @@
 
     for (const bw of boxWhiskers) {
       paintBoxWhisker(c, bw, toS, LINE_WIDTH * scale * 0.75, "#111");
+    }
+    for (const bc of barCharts) {
+      const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
+      paintBarChart(c, bc, toS, LINE_WIDTH * scale * 0.75, fontPx, "#111");
     }
 
     for (const cir of circles) {
@@ -11091,10 +11440,33 @@
     };
 
     let body = "";
+    let hatchClipSeq = 0;
     for (const f of fills) {
       const d = fillToSvgPath(f, toS);
       if (!d) continue;
-      body += `<path d="${d}" fill="${hexToRgba(f.color, f.opacity)}" stroke="none" />\n`;
+      if (String(f.pattern || "").toLowerCase() === "hatch") {
+        const clipId = "uihatch" + hatchClipSeq++;
+        const spacing = Math.max(3, (Number(f.hatchSpacing) || 8) * scale * 0.75);
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        const wpts = fillWorldPoints(f);
+        if (wpts) {
+          for (const p of wpts) {
+            const s = toS(p.x, p.y);
+            minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
+            maxX = Math.max(maxX, s.x); maxY = Math.max(maxY, s.y);
+          }
+        }
+        const strokes = hatchStrokesInRectScreen(minX, minY, maxX - minX, maxY - minY, spacing);
+        const lw = (LINE_WIDTH * scale * 0.75).toFixed(2);
+        body += `<clipPath id="${clipId}"><path d="${d}" /></clipPath>\n`;
+        body += `<g clip-path="url(#${clipId})">\n`;
+        for (const s of strokes) {
+          body += `<line x1="${s.x1.toFixed(2)}" y1="${s.y1.toFixed(2)}" x2="${s.x2.toFixed(2)}" y2="${s.y2.toFixed(2)}" stroke="${f.color || "#111"}" stroke-width="${lw}" stroke-linecap="butt" />\n`;
+        }
+        body += `</g>\n`;
+      } else {
+        body += `<path d="${d}" fill="${hexToRgba(f.color, f.opacity)}" stroke="none" />\n`;
+      }
     }
     for (const seg of segments) {
       const a = pointById(seg.a);
@@ -11254,6 +11626,9 @@
     for (const bw of boxWhiskers) {
       body += svgBoxWhisker(bw, toS, scale);
     }
+    for (const bc of barCharts) {
+      body += svgBarChart(bc, toS, scale);
+    }
 
     for (const cir of circles) {
       const cen = pointById(cir.centerId);
@@ -11373,10 +11748,10 @@ ${body}</svg>`;
   const FORMAT_VERSION = 1;
 
   function buildProjectData() {
-    // Stable 36-key top-level save shape (empty collections as []).
+    // Stable 37-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.31",
+      version: "13.5.32",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
@@ -11393,6 +11768,7 @@ ${body}</svg>`;
       fills: sanitizeFillsForSave(fills),
       coordPlots: coordPlots || [],
       boxWhiskers: boxWhiskers || [],
+      barCharts: barCharts || [],
       exportCrop: exportCrop || null,
       sectorMode,
       fillMode,
@@ -11460,6 +11836,7 @@ ${body}</svg>`;
       "fills",
       "coordPlots",
       "boxWhiskers",
+      "barCharts",
     ];
     for (const k of arrayKeys) {
       if (data[k] != null && !Array.isArray(data[k])) {
@@ -11560,6 +11937,7 @@ ${body}</svg>`;
       !fills.length &&
       !coordPlots.length &&
       !boxWhiskers.length &&
+      !barCharts.length &&
       !angleArcs.length
     );
   }
@@ -11631,6 +12009,7 @@ ${body}</svg>`;
     }));
     coordPlots = (data.coordPlots || []).map((p) => normalizeCoordPlot(p) || p);
     boxWhiskers = (data.boxWhiskers || []).map((b) => normalizeBoxWhiskerRecord(b)).filter(Boolean);
+    barCharts = (data.barCharts || []).map((b) => normalizeBarChartRecord(b)).filter(Boolean);
     midTicks = data.midTicks || [];
     parallelMarks = (data.parallelMarks || []).map((m) => ({
       ...m,
@@ -11812,6 +12191,7 @@ ${body}</svg>`;
       fills: structuredClone(fills),
       coordPlots: structuredClone(coordPlots),
       boxWhiskers: structuredClone(boxWhiskers),
+      barCharts: structuredClone(barCharts),
       exportCrop: exportCrop ? { ...exportCrop } : null,
       sectorMode,
       fillMode,

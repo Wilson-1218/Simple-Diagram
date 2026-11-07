@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.31 · 穩定）
+## 目前版本 / Current version（v13.5.32 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.32** — 棒形圖 `addBarChart`／斜線填色 `pattern:"hatch"`；`documentToSvg` 匯出 `coordPlots`；存檔 37 鍵
 - **v13.5.31** — 專用盒鬚圖 op `addBoxWhisker`／`addBoxPlot`（`boxWhiskers[]`；刻度由呼叫端提供）
 - **v13.5.30** — 兩弧＋一邊真實填色（`pathFill`／UI「路徑」）；勿再用白蓋遮罩
 - **v13.5.29** — SVG 匯出保留完整圓：同圓心同半徑弧不再省略 `<circle>`

@@ -202,4 +202,45 @@ Each item:
   body: |
     20261106-1728-box-whisker-op done · https://github.com/Wilson-1218/Simple-Diagram/pull/41 (merged).
     20261106-1727-slanted-parallel-ticks cancelled（題幹斜體，非圖記號）.
+
+- id: 20261107-1320-bar-hatch
+  from: paper
+  to: diagram
+  status: done
+  created: 2026-11-07T13:20+08:00
+  subject: 棒形圖需要斜線填充
+  note: 斜線填色仍 open。棒形圖操作和縱軸直寫見 20261107-1412-bar-chart，不在這裡重複。
+  body: |
+    2025 卷二第 29 題的棒是斜線陰影，不是實心。現有 addFill 只有單色透明填滿，沒有斜線。
+    請加一種填充：同向斜短線，可套在矩形棒上。在這之前，試卷不另畫斜線假裝。
+  done: |
+    v13.5.32 · addFill pattern:"hatch"（同向斜短線，canvas+SVG clip）；棒圖 barPattern:"hatch"。
+    PR TBD — Paper 可鏡射此 done 注。
+
+- id: 20261107-1412-bar-chart
+  from: paper
+  to: diagram
+  status: done
+  created: 2026-11-07T14:12+08:00
+  subject: 統計圖需要棒形圖和直寫的縱軸標題
+  body: |
+    斜線填色已記在 20261107-1320-bar-hatch，這則不重複那件事。
+    還缺兩樣。一、棒形圖操作：類別、高度、橫軸、縱軸和水平格線，不要叫試卷用矩形拼。二、縱軸標題要能沿軸直寫。
+    2025 卷二第 29 題在這兩樣出現之前，只留矩形外框和水平格線。不填斜線，也不把「Number of teachers」橫寫來假裝直寫。
+  done: |
+    v13.5.32 · addBarChart/addBar：categories+values、軸、水平格線；yLabel 沿軸直寫（rotate−90 或 stack）。
+    存檔 barCharts[]（37 keys）。PR TBD。
+
+- id: 20261107-1412-coord-plot-export
+  from: paper
+  to: diagram
+  status: done
+  created: 2026-11-07T14:12+08:00
+  subject: 匯出沒有畫出 addCoordPlot
+  body: |
+    addCoordPlot 和 addCurve 在編輯器裡會畫軸、整數刻度、軸名和曲線。tools/export-diagram.mjs 用的 documentToSvg 不讀 coordPlots，正式卷匯出是一塊空白。
+    2025 卷二第 14 題已改成這兩個操作，沒有再用線段手繪座標軸。請在匯出時畫出軸、箭頭、整數刻度、軸名和曲線。
+  done: |
+    v13.5.32 · documentToSvg 讀 coordPlots：軸、箭頭、整數刻度、軸名、曲線（export-diagram.mjs 同路徑）。
+    PR TBD。
 ```

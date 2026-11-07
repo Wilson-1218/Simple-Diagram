@@ -100,7 +100,7 @@
     </ul>
     <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
       <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
-    <p class="note">已知 ops（38，含別名）：<code>addPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
+    <p class="note">已知 ops（40，含別名）：<code>addPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
     <p class="note"><strong>UI ↔ op</strong>：工具列 <strong>⊥ 座標</strong>＝<code>addCoordPlot</code>（＋<code>addCurve</code>）。沒有 <code>addCoordMark</code> 這類 op 名。<br />
       <span class="en">Rail tool <strong>⊥ 座標 / Axes</strong> maps to <code>addCoordPlot</code> (+ <code>addCurve</code>). There is no <code>addCoordMark</code>.</span></p>
 
@@ -129,7 +129,7 @@
         <tr><td><code>addEllipse</code></td><td><code>centerId</code>, <code>rxId</code>, <code>ryId</code></td><td><code>style</code>, <code>backDashed</code>（3D 背弧）— 軸對齊</td></tr>
         <tr><td><code>addSector</code></td><td><code>centerId</code>, <code>startId</code>, <code>endId</code></td><td><code>mode</code>：<code>"arc"</code>（預設）｜<code>"sector"</code>（含兩半徑）</td></tr>
         <tr><td><code>movePoint</code></td><td><code>id</code>, <code>x</code>, <code>y</code></td><td><code>marker</code></td></tr>
-        <tr><td><code>remove</code></td><td><code>type</code>, <code>id</code></td><td>type：<code>point</code>｜<code>segment</code>｜<code>label</code>｜<code>circle</code>｜<code>ellipse</code>｜<code>sector</code>｜<code>fill</code>｜<code>coordPlot</code>｜<code>rightAngle</code>｜<code>angleArc</code>｜<code>midTick</code>｜<code>parallelMark</code>｜<code>equalMark</code>｜<code>lengthLabel</code></td></tr>
+        <tr><td><code>remove</code></td><td><code>type</code>, <code>id</code></td><td>type：<code>point</code>｜<code>segment</code>｜<code>label</code>｜<code>circle</code>｜<code>ellipse</code>｜<code>sector</code>｜<code>fill</code>｜<code>coordPlot</code>｜<code>boxWhisker</code>｜<code>barChart</code>｜<code>rightAngle</code>｜<code>angleArc</code>｜<code>midTick</code>｜<code>parallelMark</code>｜<code>equalMark</code>｜<code>lengthLabel</code></td></tr>
       </tbody>
     </table>
 
@@ -178,13 +178,14 @@
         <tr><td><code>addLengthLabel</code>＝<code>addLength</code></td><td><code>segmentId</code></td><td><code>text</code>, <code>side</code>, <code>style</code>（text｜dim｜arcs｜ends）, <code>stroke</code>（arcs：solid｜dashed｜dotted，預設 dotted）, <code>orient</code>（tilt｜horizontal）, <code>size</code></td></tr>
         <tr><td><code>addMidTick</code></td><td><code>segmentId</code></td><td><code>pointId</code>（比例分點短劃）</td></tr>
         <tr><td><code>addBoxWhisker</code>＝<code>addBoxPlot</code></td><td>水平：<code>y,min,q1,median,q3,max</code>；垂直另加 <code>orientation:"v"</code>＋<code>x</code></td><td><code>outliers[]</code>, <code>ticks[]</code>（呼叫端位置，不自動等分）, <code>boxHeight</code>, <code>cap</code>, <code>showAxis</code>, <code>axisY</code>/<code>axisX</code></td></tr>
+        <tr><td><code>addBarChart</code>＝<code>addBar</code></td><td><code>x</code>, <code>y</code>（資料區左下）, <code>categories[]</code>, <code>values[]</code>｜<code>heights[]</code></td><td><code>plotW</code>/<code>plotH</code>, <code>yMin</code>/<code>yMax</code>, <code>yTicks</code>/<code>yStep</code>, <code>xLabel</code>, <code>yLabel</code>（沿軸直寫）, <code>yLabelMode</code> <code>rotate</code>｜<code>stack</code>, <code>barPattern</code> <code>hatch</code>｜<code>solid</code>, <code>showGrid</code></td></tr>
       </tbody>
     </table>
     <p class="note"><code>arm1</code>/<code>arm2</code> 是角兩邊上的<strong>點</strong> id，不是線段 id。<br />
-      <span class="en"><code>addBoxWhisker</code>: dedicated boxplot — do not assemble from rects/segments. Tick positions are caller-supplied only.</span></p>
+      <span class="en"><code>addBoxWhisker</code>: dedicated boxplot — do not assemble from rects/segments. Tick positions are caller-supplied only. <code>addBarChart</code>: dedicated bars + vertical axis title — do not fake with rects or horizontal y-title.</span></p>
 
     <h2>8. 填色 / <code>addFill</code></h2>
-    <p>可選：<code>color</code>（預設 <code>#666666</code>）, <code>opacity</code>（預設 0.2）。白色挖空：<code>color:"#ffffff", opacity:1</code>（僅其他複合遮罩；<strong>兩弧＋一邊請用 pathFill</strong>）。</p>
+    <p>可選：<code>color</code>（預設 <code>#666666</code>；hatch 預設 <code>#111111</code>）, <code>opacity</code>（預設 0.2；hatch 預設 1）, <code>pattern</code>：<code>solid</code>（預設）｜<code>hatch</code>（同向斜短線，考試棒陰影）, <code>hatchSpacing</code>。白色挖空：<code>color:"#ffffff", opacity:1</code>（僅其他複合遮罩；<strong>兩弧＋一邊請用 pathFill</strong>）。</p>
     <table>
       <thead><tr><th>kind</th><th>必填</th><th>tip</th></tr></thead>
       <tbody>
@@ -224,7 +225,9 @@
     <h2>10. 座標圖 / Coordinate plots ★</h2>
     <p><strong>When</strong>：畫函數／圓／三角曲線。先 <code>addCoordPlot</code>，再可 <code>addCurve</code> 追加。<br />
       UI 工具列 <strong>⊥ 座標</strong> 開的就是這組 op（不是獨立的「座標記號」op）。</p>
-    <p class="note"><strong>盒鬚圖</strong>請用 <code>addBoxWhisker</code>（§7 表），不要用 rect／segment 拼裝；軸刻度 <code>ticks[]</code> 必須由呼叫端給定位置。</p>
+    <p class="note"><strong>盒鬚圖</strong>請用 <code>addBoxWhisker</code>（§7 表），不要用 rect／segment 拼裝；軸刻度 <code>ticks[]</code> 必須由呼叫端給定位置。<br />
+      <strong>棒形圖</strong>請用 <code>addBarChart</code>；縱軸標題用 <code>yLabel</code>（會直寫），斜線填色用 <code>barPattern:"hatch"</code> 或 <code>addFill</code> 的 <code>pattern:"hatch"</code>。<br />
+      正式卷匯出：<code>documentToSvg</code>／CLI 會畫出 <code>coordPlots</code>（軸／刻度／曲線），勿再手繪軸假裝。</p>
 
     <h3>10.1 <code>addCoordPlot</code></h3>
     <table>
@@ -429,7 +432,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.31 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.32 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

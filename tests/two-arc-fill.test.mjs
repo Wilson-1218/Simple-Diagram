@@ -9,7 +9,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for two-arc path fill", () => {
-  assert.equal(APP_VERSION, "13.5.31");
+  assert.equal(APP_VERSION, "13.5.32");
 });
 
 /** Two arcs (centres O1, O2) + chord AC: classic slice A–arc–B–arc–C–line. */

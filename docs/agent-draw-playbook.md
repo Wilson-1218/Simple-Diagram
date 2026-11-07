@@ -48,6 +48,8 @@ node tools/validate-diagram.mjs /tmp/tri.json
 | Foot of perpendicular | `addFoot` (`pointId` + `segmentId` or `a`/`b`) |
 | Circle tangent / radius / diameter / chord | `addTangent` · `addRadius` · `addDiameter` · `addChord` |
 | Polygon / sector / segment shade | `addFill` with `kind` |
+| Hatch (slanted bar shade) | `addFill` + `pattern:"hatch"`；or `addBarChart` `barPattern:"hatch"` |
+| Bar / column chart + vertical y-title | `addBarChart` / `addBar` |
 | Layer show/lock | `setLayers` / `setMeta.layers` |
 | Align / distribute / equal length | `alignPoints` · `distributePoints` · `equalizeSegments` |
 | Templates | Load `examples/*` or copy ops fixtures (`ops-*.json`, `frustum-square-ops.json`) |
@@ -68,9 +70,16 @@ UI-only (no dedicated op — approximate with points/segments/movePoint): live m
   { "type": "arc", "centerId": "O1", "from": "B", "to": "A" }
 ], "opacity": 0.2 }
 { "op": "addFill", "kind": "polygon", "pointIds": ["D","E","F"], "color": "#ffffff", "opacity": 1 }
+{ "op": "addFill", "kind": "polygon", "pointIds": ["A","B","C","D"], "pattern": "hatch", "hatchSpacing": 7 }
+{ "op": "addBarChart", "x": 120, "y": 320, "categories": ["P","Q"], "values": [4,7], "yMax": 8,
+  "yLabel": "Number of teachers", "barPattern": "hatch" }
 ```
 
 **Two arcs + one chord:** use `pathFill` (real region). Do **not** stack gray sector + opaque white sector — white covers the grid/ink (mask, not subtract).
+
+**Bar charts:** use `addBarChart` (axes + horizontal grid + vertical `yLabel`). Do not assemble bars from rects or fake a vertical title with horizontal text. Hatch via `barPattern:"hatch"` or fill `pattern:"hatch"`.
+
+**Coord export:** `documentToSvg` / `tools/export-diagram.mjs` render `coordPlots` (axes, arrows, integer ticks, names, curves) — same as the editor.
 
 Later fills paint on top. Opaque white (`#ffffff`, `opacity: 1`) is only for other composite punch-outs, not for two-arc slices.
 

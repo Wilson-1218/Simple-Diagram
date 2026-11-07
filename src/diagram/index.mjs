@@ -65,3 +65,26 @@ export {
   boxWhiskerParts,
   addBoxWhiskerBounds,
 } from "./box-whisker.mjs";
+export {
+  normalizeBarChart,
+  barChartParts,
+  addBarChartBounds,
+  barValueToWorldY,
+} from "./bar-chart.mjs";
+export {
+  normalizeFillPattern,
+  hatchStrokesInRect,
+  hatchStrokesForPolygon,
+  svgHatchInRect,
+  svgHatchClipped,
+  clipLineToRect,
+} from "./hatch.mjs";
+export {
+  coordPlotBounds,
+  addCoordPlotBounds,
+  coordIntegerTicks,
+  coordSampleOneCurve,
+  coordEvalY,
+  coordWorldFromAxis,
+  svgCoordPlot,
+} from "./coord-plot.mjs";

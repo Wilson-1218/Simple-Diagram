@@ -9,6 +9,8 @@ import {
 } from "./templates.mjs";
 import { chainPathFillEdges } from "./path-fill.mjs";
 import { normalizeBoxWhisker } from "./box-whisker.mjs";
+import { normalizeBarChart } from "./bar-chart.mjs";
+import { normalizeFillPattern } from "./hatch.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -29,6 +31,7 @@ function ensureArrays(doc) {
     "fills",
     "coordPlots",
     "boxWhiskers",
+    "barCharts",
   ];
   for (const k of keys) {
     if (!Array.isArray(doc[k])) doc[k] = [];
@@ -316,6 +319,21 @@ const HANDLERS = {
     return doc;
   },
 
+  /**
+   * Dedicated bar / column chart (categories + heights + axes + grid).
+   * yLabel is written along the vertical axis (rotate −90° or stacked glyphs).
+   * barPattern "hatch" draws parallel slanted strokes inside bars.
+   */
+  addBarChart(doc, op, nextId) {
+    const id = resolveId(op, nextId, "bc");
+    const bc = normalizeBarChart({ ...op, id }, { requireId: true });
+    if (doc.barCharts.some((x) => x.id === id)) {
+      throw new Error(`addBarChart: duplicate id ${id}`);
+    }
+    doc.barCharts.push(bc);
+    return doc;
+  },
+
   addEqualMark(doc, op, nextId) {
     const id = resolveId(op, nextId, "em");
     requireSegment(doc, op.segmentId, "addEqualMark");
@@ -481,7 +499,8 @@ const HANDLERS = {
   },
 
   /**
-   * Region fill. kind: "polygon" (default) | "sector" | "segment".
+   * Region fill. kind: "polygon" (default) | "sector" | "segment" | "polyArc" | "pathFill".
+   * pattern: "solid" (default) | "hatch" — hatch = parallel slanted strokes (exam bar shade).
    * polygon: pointIds ≥3
    * sector: centerId + startId + endId (+ optional circleId)
    * segment (circular): circleId|centerId + startId + endId (chord endpoints)
@@ -496,8 +515,21 @@ const HANDLERS = {
       op.kind === "pathFill"
         ? op.kind
         : "polygon";
-    const color = normalizeFillColor(op.color, "#666666");
-    const opacity = clampOpacity(op.opacity, 0.2);
+    const pattern = normalizeFillPattern(op.pattern);
+    const color = normalizeFillColor(
+      op.color,
+      pattern === "hatch" ? "#111111" : "#666666"
+    );
+    const opacity = clampOpacity(op.opacity, pattern === "hatch" ? 1 : 0.2);
+    const hatchSpacing =
+      op.hatchSpacing != null ? Math.max(2, Number(op.hatchSpacing) || 8) : undefined;
+    const withPattern = (f) => {
+      if (pattern === "hatch") {
+        f.pattern = "hatch";
+        if (hatchSpacing != null) f.hatchSpacing = hatchSpacing;
+      }
+      return f;
+    };
     if (kind === "pathFill") {
       // edges: [{type:"line",a,b} | {type:"arc",centerId,from,to, circleId?}, ...]
       // Typical exam slice: two arcs + one chord (order/orientation auto-chained when closable).
@@ -531,13 +563,15 @@ const HANDLERS = {
         }
       }
       const chained = chainPathFillEdges(edges);
-      doc.fills.push({
-        id,
-        kind: "pathFill",
-        edges: chained || edges,
-        color,
-        opacity,
-      });
+      doc.fills.push(
+        withPattern({
+          id,
+          kind: "pathFill",
+          edges: chained || edges,
+          color,
+          opacity,
+        })
+      );
       return doc;
     }
     if (kind === "polygon") {
@@ -550,7 +584,7 @@ const HANDLERS = {
       if (new Set(pointIds).size < 3) {
         throw new Error("addFill: need at least 3 distinct point ids");
       }
-      doc.fills.push({ id, kind: "polygon", pointIds, color, opacity });
+      doc.fills.push(withPattern({ id, kind: "polygon", pointIds, color, opacity }));
       return doc;
     }
     if (kind === "polyArc") {
@@ -579,7 +613,7 @@ const HANDLERS = {
         requireCircle(doc, op.circleId, "addFill(polyArc)");
         f.circleId = op.circleId;
       }
-      doc.fills.push(f);
+      doc.fills.push(withPattern(f));
       return doc;
     }
     if (kind === "sector") {
@@ -599,7 +633,7 @@ const HANDLERS = {
         requireCircle(doc, op.circleId, "addFill(sector)");
         f.circleId = op.circleId;
       }
-      doc.fills.push(f);
+      doc.fills.push(withPattern(f));
       return doc;
     }
     // circular segment
@@ -618,7 +652,7 @@ const HANDLERS = {
     };
     if (op.circleId) f.circleId = op.circleId;
     if (op.centerId) f.centerId = op.centerId;
-    doc.fills.push(f);
+    doc.fills.push(withPattern(f));
     return doc;
   },
 
@@ -1103,6 +1137,7 @@ const HANDLERS = {
       fill: "fills",
       coordPlot: "coordPlots",
       boxWhisker: "boxWhiskers",
+      barChart: "barCharts",
     };
     const key = map[type];
     if (!key) throw new Error(`remove: unknown type ${type}`);
@@ -1143,6 +1178,7 @@ HANDLERS.addLength = HANDLERS.addLengthLabel;
 HANDLERS.addArc = HANDLERS.addAngleArc;
 HANDLERS.addTemplate = HANDLERS.insertTemplate;
 HANDLERS.addBoxPlot = HANDLERS.addBoxWhisker;
+HANDLERS.addBar = HANDLERS.addBarChart;
 
 export const OP_NAMES = Object.keys(HANDLERS).sort();
 

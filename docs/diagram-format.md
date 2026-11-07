@@ -36,6 +36,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `fills` | array | 區域填色（封閉多邊形陰影） |
 | `coordPlots` | array | 簡易座標圖 |
 | `boxWhiskers` | array | 箱形圖（盒鬚圖）專用物件 |
+| `barCharts` | array | 棒形／柱狀統計圖專用物件 |
 | `exportCrop` | object\|null | 匯出裁切 `{minX,minY,maxX,maxY}`；重存時保留既有值，除非用家清除 |
 | `sectorMode` | `"arc"`\|`"sector"` | UI 扇弧模式；缺省 `"arc"` |
 | `fillMode` | `"polygon"`\|`"sector"`\|`"segment"` | UI 填色模式；缺省 `"polygon"` |
@@ -55,7 +56,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `savedAt` | number | 儲存時間戳（毫秒） |
 | `name` | string | 檔名提示 |
 
-儲存時固定輸出上述 **36** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.31"`）。
+儲存時固定輸出上述 **37** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.32"`）。
 
 ---
 
@@ -192,6 +193,36 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 - `showAxis`：有 `ticks` 時預設 true；無 ticks 則不畫軸
 - `outliers`：離群點座標（沿數值軸）；畫成空心圓
 
+### barCharts
+
+```json
+{
+  "id": "bc1",
+  "x": 120, "y": 320,
+  "plotW": 240, "plotH": 160,
+  "categories": ["P", "Q", "R"],
+  "values": [4, 7, 5],
+  "yMin": 0, "yMax": 8,
+  "yTicks": [0, 2, 4, 6, 8],
+  "xLabel": "School",
+  "yLabel": "Number of teachers",
+  "yLabelMode": "rotate",
+  "barPattern": "hatch",
+  "showGrid": true
+}
+```
+
+- 專用棒形圖（非 rect 拼裝）；`addBarChart`／別名 `addBar`
+- `(x,y)`＝資料區左下角（橫軸與縱軸交點；世界座標 +y 向下）
+- `categories[]` 與 `values[]`／`heights[]` 等長；`barPattern`：`hatch`（預設斜線）｜`solid`
+- `yLabel` 沿縱軸直寫：`yLabelMode` `rotate`（−90°，英文題常用）或 `stack`（逐字直排）
+- 水平格線與刻度：`yTicks` 或 `yStep`／自動nice；`showGrid` 預設 true
+
+### fills（斜線）
+
+- `pattern`: `"solid"`（預設）｜`"hatch"` — 同向斜短線（考試棒陰影）；可選 `hatchSpacing`
+- 斜線可套在 polygon／其他 kind；棒形圖亦可經 `barPattern:"hatch"` 直接畫
+
 ### coordPlots
 
 ```json
@@ -254,7 +285,9 @@ node tools/validate-diagram.mjs examples/cube-sketch.json
 
 純函式：`applyOps(doc, ops[]) → doc`（見 `src/diagram/`）。
 
-常用 op：`addPoint`、`addSegment`、`addLabel`、`addRightAngle`、`addAngleArc`／`addReflex`、`addParallelMark`、`addEqualMark`、`addLengthLabel`、`addCircle`、`addEllipse`、`addSector`、`addFill`（polygon｜sector｜segment）、`addShape`、`addFoot`、`addTangent`／`addRadius`／`addDiameter`／`addChord`、`alignPoints`／`distributePoints`／`equalizeSegments`、`addCoordPlot`、`addCurve`、`addBoxWhisker`／`addBoxPlot`、`setView`、`setMeta`／`setLayers`、`movePoint`、`remove`。詳見 [`agent-draw-playbook.md`](agent-draw-playbook.md)。
+常用 op：`addPoint`、`addSegment`、`addLabel`、`addRightAngle`、`addAngleArc`／`addReflex`、`addParallelMark`、`addEqualMark`、`addLengthLabel`、`addCircle`、`addEllipse`、`addSector`、`addFill`（polygon｜sector｜segment｜pathFill；`pattern` solid｜hatch）、`addShape`、`addFoot`、`addTangent`／`addRadius`／`addDiameter`／`addChord`、`alignPoints`／`distributePoints`／`equalizeSegments`、`addCoordPlot`、`addCurve`、`addBoxWhisker`／`addBoxPlot`、`addBarChart`／`addBar`、`setView`、`setMeta`／`setLayers`、`movePoint`、`remove`。詳見 [`agent-draw-playbook.md`](agent-draw-playbook.md)。
+
+`documentToSvg`／`tools/export-diagram.mjs` 會畫出 `coordPlots`（軸、箭頭、整數刻度、軸名、曲線）、`barCharts` 與 hatch 填色。
 
 CLI：
 
