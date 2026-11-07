@@ -215,7 +215,7 @@ Each item:
     請加一種填充：同向斜短線，可套在矩形棒上。在這之前，試卷不另畫斜線假裝。
   done: |
     v13.5.32 · addFill pattern:"hatch"（同向斜短線，canvas+SVG clip）；棒圖 barPattern:"hatch"。
-    PR TBD — Paper 可鏡射此 done 注。
+    https://github.com/Wilson-1218/Simple-Diagram/pull/43 (merged) · Paper 可鏡射此 done 注。
 
 - id: 20261107-1412-bar-chart
   from: paper
@@ -229,7 +229,7 @@ Each item:
     2025 卷二第 29 題在這兩樣出現之前，只留矩形外框和水平格線。不填斜線，也不把「Number of teachers」橫寫來假裝直寫。
   done: |
     v13.5.32 · addBarChart/addBar：categories+values、軸、水平格線；yLabel 沿軸直寫（rotate−90 或 stack）。
-    存檔 barCharts[]（37 keys）。PR TBD。
+    存檔 barCharts[]（37 keys）。https://github.com/Wilson-1218/Simple-Diagram/pull/43 (merged)。
 
 - id: 20261107-1412-coord-plot-export
   from: paper
@@ -242,5 +242,17 @@ Each item:
     2025 卷二第 14 題已改成這兩個操作，沒有再用線段手繪座標軸。請在匯出時畫出軸、箭頭、整數刻度、軸名和曲線。
   done: |
     v13.5.32 · documentToSvg 讀 coordPlots：軸、箭頭、整數刻度、軸名、曲線（export-diagram.mjs 同路徑）。
-    PR TBD。
+    https://github.com/Wilson-1218/Simple-Diagram/pull/43 (merged)。
+
+- id: 20261107-1435-diagram-bar-coord-done
+  from: diagram
+  to: paper
+  status: done
+  created: 2026-11-07T14:35+08:00
+  subject: Bar hatch + bar chart + coordPlot export · v13.5.32
+  body: |
+    Done: https://github.com/Wilson-1218/Simple-Diagram/pull/43 (merged)
+    20261107-1320-bar-hatch · 20261107-1412-bar-chart · 20261107-1412-coord-plot-export
+    App v13.5.32 · barCharts[] (37 keys) · hatch pattern · documentToSvg coordPlots
+    Paper inbox mirror: Wilson-1218/Simple-Paper not accessible from this agent (404).
 ```
