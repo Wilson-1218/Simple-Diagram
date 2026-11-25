@@ -5953,7 +5953,8 @@
     for (const s of parts.caps) strokeLine(s);
     if (parts.axis) strokeLine(parts.axis);
     for (const s of parts.tickMarks) strokeLine(s);
-    const fontPx = Math.max(11, lw * 7);
+    /* ~+2px vs prior floor 11 — closer to BarChart axis tick visual size */
+    const fontPx = Math.max(13, lw * 8);
     c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
     c.fillStyle = color;
     for (const t of parts.tickLabels || []) {
@@ -5961,6 +5962,8 @@
       c.textAlign = t.anchor === "end" ? "right" : t.anchor === "start" ? "left" : "center";
       c.textBaseline =
         t.baseline === "hanging" ? "top" : t.baseline === "auto" ? "alphabetic" : "middle";
+      paintTextHalo(c, t.text, p.x, p.y, fontPx);
+      c.fillStyle = color;
       c.fillText(t.text, p.x, p.y);
     }
     const r = Math.max(2.5, lw * 1.4);
@@ -6223,14 +6226,15 @@
     for (const s of parts.caps) out += line(s);
     if (parts.axis) out += line(parts.axis);
     for (const s of parts.tickMarks) out += line(s);
-    const fontPx = (Math.max(11, LINE_WIDTH * 7) * scale * 0.75).toFixed(1);
+    const fontPx = (Math.max(13, LINE_WIDTH * 8) * scale * 0.75).toFixed(1);
+    const halo = Math.max(3.5, Number(fontPx) * 0.28).toFixed(2);
     const fam = 'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
     for (const t of parts.tickLabels || []) {
       const p = toS(t.x, t.y);
       const anchor = t.anchor === "end" ? "end" : t.anchor === "start" ? "start" : "middle";
       const baseline =
         t.baseline === "hanging" ? "hanging" : t.baseline === "auto" ? "auto" : "middle";
-      out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
+      out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo}" stroke-linejoin="round" paint-order="stroke fill" ${fam} font-size="${fontPx}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
     }
     const or = Math.max(2.5, LINE_WIDTH * scale * 0.75 * 1.4);
     for (const o of parts.outliers) {
@@ -11952,7 +11956,7 @@ ${body}</svg>`;
     // Stable 37-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.34",
+      version: "13.5.35",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

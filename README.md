@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.34 · 穩定）
+## 目前版本 / Current version（v13.5.35 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.35** — EN 左欄 tool 水平 padding 覆蓋修正（Sector／Shape 不再省略）；盒鬚刻度字級略增＋光暈
 - **v13.5.34** — 點標／座標刻度光暈；座標軸正向外伸；盒鬚 `ticks` 可帶 label；棒圖 xLabel 間距；EN 左欄加寬；ai.html §8/§9
 - **v13.5.33** — `addTangent` 預設 aId 左／bId 右；暗色 hatch 對比；`side` above/below/left/right；角／長度標光暈；左欄略加寬
 - **v13.5.32** — 棒形圖 `addBarChart`／斜線填色 `pattern:"hatch"`；`documentToSvg` 匯出 `coordPlots`；存檔 37 鍵
