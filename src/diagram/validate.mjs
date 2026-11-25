@@ -376,6 +376,7 @@ export function validateDiagram(doc) {
         "coordsLock",
         "helpersShow",
         "helpersLock",
+        "solutionShow",
       ]) {
         if (d.layers[k] != null && typeof d.layers[k] !== "boolean") {
           warnings.push(`layers.${k} should be boolean`);

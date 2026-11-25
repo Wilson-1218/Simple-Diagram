@@ -1,7 +1,7 @@
 /** Empty Simple Diagram document (formatVersion 1). */
 
 export const CURRENT_FORMAT_VERSION = 1;
-export const APP_VERSION = "13.5.45";
+export const APP_VERSION = "13.5.46";
 
 export const DEFAULT_LAYERS = {
   gridShow: true,
@@ -11,6 +11,8 @@ export const DEFAULT_LAYERS = {
   helpersShow: true,
   /** Marks/labels layer defaults locked: follow geometry until unlocked. */
   helpersLock: true,
+  /** Solution-role geometry. False hides every role === "solution" element. */
+  solutionShow: true,
 };
 
 /** Stable top-level save key order (38 keys). Empty collections → []. */

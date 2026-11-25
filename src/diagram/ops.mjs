@@ -18,6 +18,8 @@ import { coordWorldFromAxis, normalizeCoordTicks } from "./coord-plot.mjs";
 import { parseInequality, solveFeasibleRegion } from "./feasible-region.mjs";
 import { buildPolyhedron } from "./polyhedron.mjs";
 import { applyBearing, applyPieChart, applyTriangleCenter } from "./exam-ops.mjs";
+import { appearanceFields, elementRole, stampAppearance } from "./appearance.mjs";
+import { DEFAULT_ARC_SIZE } from "./angle-arc.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -168,7 +170,7 @@ function circleGeom(doc, circleId, ctx) {
   return { cir, c, r };
 }
 
-function pushPoint(doc, nextId, x, y, idHint, marker, hidden) {
+function pushPoint(doc, nextId, x, y, idHint, marker, hidden, appearance) {
   const id = idHint
     ? resolveId({ id: idHint }, nextId, "p")
     : nextId("p");
@@ -176,28 +178,31 @@ function pushPoint(doc, nextId, x, y, idHint, marker, hidden) {
   const p = { id, x: Number(x), y: Number(y) };
   if (marker) p.marker = marker;
   if (hidden === true) p.hidden = true;
+  if (appearance) stampAppearance(p, appearance);
   doc.points.push(p);
   return p;
 }
 
-function pushSegment(doc, nextId, a, b, style, idHint) {
+function pushSegment(doc, nextId, a, b, style, idHint, appearance) {
   const id = idHint
     ? resolveId({ id: idHint }, nextId, "s")
     : nextId("s");
   if (doc.segments.some((s) => s.id === id)) throw new Error(`duplicate segment id ${id}`);
   if (a === b) throw new Error("segment ends must differ");
-  doc.segments.push({ id, a, b, style: styleOr(style, "solid") });
+  const seg = { id, a, b, style: styleOr(style, "solid") };
+  if (appearance) stampAppearance(seg, appearance);
+  doc.segments.push(seg);
   refreshAutoLabels(doc, [a, b]);
   return id;
 }
 
 /** Find existing segment between a–b (either order), or create one. */
-function ensureSegmentBetween(doc, nextId, a, b, style) {
+function ensureSegmentBetween(doc, nextId, a, b, style, appearance) {
   const existing = doc.segments.find(
     (s) => (s.a === a && s.b === b) || (s.a === b && s.b === a)
   );
   if (existing) return existing.id;
-  return pushSegment(doc, nextId, a, b, style);
+  return pushSegment(doc, nextId, a, b, style, undefined, appearance);
 }
 
 /**
@@ -454,6 +459,7 @@ const DEFAULT_LAYERS = {
   coordsLock: false,
   helpersShow: true,
   helpersLock: true,
+  solutionShow: true,
 };
 
 function normalizeLayers(raw) {
@@ -546,28 +552,31 @@ function placePlotPoint(doc, op, nextId, ctx) {
   const p = { id, x: w.x, y: w.y };
   if (op.marker) p.marker = op.marker;
   if (op.hidden === true) p.hidden = true;
+  stampAppearance(p, op);
   doc.points.push(p);
   maybeInlineLabel(doc, op, nextId, p, { legacyOxOy: true, stringify: true, passSize: true });
   const style = styleOr(op.projectStyle, "dashed");
-  if (op.projectX === true) addAxisProjection(doc, nextId, plot, p, "x", u, style, op.xTickLabel);
-  if (op.projectY === true) addAxisProjection(doc, nextId, plot, p, "y", v, style, op.yTickLabel);
+  if (op.projectX === true) addAxisProjection(doc, nextId, plot, p, "x", u, style, op.xTickLabel, op);
+  if (op.projectY === true) addAxisProjection(doc, nextId, plot, p, "y", v, style, op.yTickLabel, op);
   return doc;
 }
 
-function addAxisProjection(doc, nextId, plot, point, axis, math, style, tickLabel) {
+function addAxisProjection(doc, nextId, plot, point, axis, math, style, tickLabel, appearance) {
   const footW =
     axis === "x" ? coordWorldFromAxis(plot, math, 0) : coordWorldFromAxis(plot, 0, math);
-  const foot = pushPoint(doc, nextId, footW.x, footW.y, undefined, undefined, true);
-  if (foot.id !== point.id) pushSegment(doc, nextId, point.id, foot.id, style);
+  const foot = pushPoint(doc, nextId, footW.x, footW.y, undefined, undefined, true, appearance);
+  if (foot.id !== point.id) pushSegment(doc, nextId, point.id, foot.id, style, undefined, appearance);
   if (tickLabel != null && String(tickLabel) !== "") {
-    doc.labels.push({
+    const lab = {
       id: nextId("lab"),
       pointId: foot.id,
       text: String(tickLabel),
       ox: axis === "y" ? -18 : 0,
       oy: axis === "x" ? 16 : 0,
       size: doc.labelFontSize || 16,
-    });
+    };
+    if (appearance) stampAppearance(lab, appearance);
+    doc.labels.push(lab);
   }
 }
 
@@ -808,7 +817,7 @@ function applyFeasibleRegion(doc, op, nextId, ctx) {
     const pointIds = [];
     for (const v of solved.vertices) {
       const w = coordWorldFromAxis(plot, v.u, v.v);
-      pointIds.push(pushPoint(doc, nextId, w.x, w.y, undefined, undefined, true).id);
+      pointIds.push(pushPoint(doc, nextId, w.x, w.y, undefined, undefined, true, op).id);
     }
     const pattern = op.pattern == null || op.pattern === "" ? "hatch" : op.pattern;
     const fillOp = {
@@ -817,6 +826,7 @@ function applyFeasibleRegion(doc, op, nextId, ctx) {
       pattern,
       color: op.color,
       opacity: op.opacity,
+      ...appearanceFields(op),
     };
     if (op.id != null && op.id !== "") fillOp.id = op.id;
     if (op.hatchSpacing != null) fillOp.hatchSpacing = op.hatchSpacing;
@@ -831,6 +841,7 @@ function applyFeasibleRegion(doc, op, nextId, ctx) {
           text: String(op.label),
           align: "center",
           bold: true,
+          ...appearanceFields(op),
         },
         nextId
       );
@@ -841,13 +852,15 @@ function applyFeasibleRegion(doc, op, nextId, ctx) {
     const label = b.label
       ? { show: true, kind: "custom", customText: b.label, text: b.label }
       : undefined;
-    plot.curves.push({
+    const boundary = {
       id: nextId("curve"),
       type: b.type,
       params: { ...defaultCurveParams(b.type), ...b.params },
       label: defaultCurveLabel(label),
       ...curveExtras({ style: b.style }),
-    });
+    };
+    stampAppearance(boundary, op);
+    plot.curves.push(boundary);
   }
   return doc;
 }
@@ -1109,6 +1122,7 @@ function maybeInlineLabel(doc, op, nextId, point, opts = {}) {
   if (opts.passSize && op.size != null) lab.size = op.size;
   const dist = finiteOffset(op.offsetDist);
   if (dist != null && ox == null && oy == null) lab.offsetDist = dist;
+  Object.assign(lab, appearanceFields(op));
   HANDLERS.addLabel(doc, lab, nextId);
 }
 
@@ -1136,6 +1150,7 @@ const HANDLERS = {
     const p = { id, x, y };
     if (op.marker) p.marker = op.marker;
     if (op.hidden === true) p.hidden = true;
+    stampAppearance(p, op);
     doc.points.push(p);
     maybeInlineLabel(doc, op, nextId, p);
     return doc;
@@ -1151,12 +1166,14 @@ const HANDLERS = {
       (s) => (s.a === a && s.b === b) || (s.a === b && s.b === a)
     );
     if (dup) throw new Error(`addSegment: segment already exists between ${a} and ${b}`);
-    doc.segments.push({
+    const seg = {
       id,
       a,
       b,
       style: styleOr(op.style, "solid"),
-    });
+    };
+    stampAppearance(seg, op);
+    doc.segments.push(seg);
     refreshAutoLabels(doc, [a, b]);
     return doc;
   },
@@ -1193,6 +1210,7 @@ const HANDLERS = {
     } else {
       setAutoFlag(lab, false);
     }
+    stampAppearance(lab, op);
     doc.labels.push(lab);
     return doc;
   },
@@ -1215,7 +1233,9 @@ const HANDLERS = {
     if (align !== "left" && align !== "right" && align !== "center") align = "center";
     const bold = !!op.bold;
     if (!Array.isArray(doc.texts)) doc.texts = [];
-    doc.texts.push({ id, x, y, text, size, align, bold });
+    const row = { id, x, y, text, size, align, bold };
+    stampAppearance(row, op);
+    doc.texts.push(row);
     return doc;
   },
 
@@ -1233,6 +1253,7 @@ const HANDLERS = {
     };
     // Omitted mode stays the paper-sized 2D mark (today's geometry).
     if (rightAngleMode(op) === "3d") row.mode = "3d";
+    stampAppearance(row, op);
     doc.rightAngles.push(row);
     return doc;
   },
@@ -1243,16 +1264,22 @@ const HANDLERS = {
     const arm1 = requirePoint(doc, op.arm1, "addAngleArc");
     const arm2 = requirePoint(doc, op.arm2, "addAngleArc");
     /** @type {{ id: string, vertex: string, arm1: string, arm2: string, size: number, group: number, text: string, reflex: boolean, textRadiusOffset?: number, textOx?: number, textOy?: number }} */
+    let size = DEFAULT_ARC_SIZE;
+    if (op.size != null && op.size !== "") {
+      const n = Number(op.size);
+      if (Number.isFinite(n) && n > 0) size = n;
+    }
     const row = {
       id,
       vertex,
       arm1,
       arm2,
-      size: op.size != null ? Number(op.size) : doc.rightAngleSize || 10,
+      size,
       group: op.group ? 1 : 0,
       text: op.text != null ? String(op.text) : "",
       reflex: !!op.reflex,
     };
+    if (op.clamp === false || op.forceRadius === true) row.clamp = false;
     if (op.textRadiusOffset != null && Number.isFinite(Number(op.textRadiusOffset))) {
       row.textRadiusOffset = Number(op.textRadiusOffset);
     }
@@ -1262,6 +1289,7 @@ const HANDLERS = {
     if (op.textOy != null && Number.isFinite(Number(op.textOy))) {
       row.textOy = Number(op.textOy);
     }
+    stampAppearance(row, op);
     doc.angleArcs.push(row);
     return doc;
   },
@@ -1274,12 +1302,14 @@ const HANDLERS = {
   addParallelMark(doc, op, nextId) {
     const id = resolveId(op, nextId, "pm");
     requireSegment(doc, op.segmentId, "addParallelMark");
-    doc.parallelMarks.push({
+    const row = {
       id,
       segmentId: op.segmentId,
       group: op.group ? 1 : 0,
       side: op.side === -1 ? -1 : 1,
-    });
+    };
+    stampAppearance(row, op);
+    doc.parallelMarks.push(row);
     return doc;
   },
 
@@ -1315,12 +1345,14 @@ const HANDLERS = {
   addEqualMark(doc, op, nextId) {
     const id = resolveId(op, nextId, "em");
     requireSegment(doc, op.segmentId, "addEqualMark");
-    doc.equalMarks.push({
+    const row = {
       id,
       segmentId: op.segmentId,
       group: op.group ? 1 : 0,
       side: op.side === -1 ? -1 : 1,
-    });
+    };
+    stampAppearance(row, op);
+    doc.equalMarks.push(row);
     return doc;
   },
 
@@ -1362,6 +1394,7 @@ const HANDLERS = {
     if (op.size != null && Number.isFinite(Number(op.size))) {
       row.size = Math.min(48, Math.max(10, Math.round(Number(op.size))));
     }
+    stampAppearance(row, op);
     doc.lengthLabels.push(row);
     return doc;
   },
@@ -1412,17 +1445,21 @@ const HANDLERS = {
     }
     const footHint = op.footId != null ? op.footId : op.id;
     const marker = op.marker === false || op.marker === "" ? undefined : op.marker || "foot";
-    const foot = pushPoint(doc, nextId, fx, fy, footHint || undefined, marker);
+    const foot = pushPoint(doc, nextId, fx, fy, footHint || undefined, marker, undefined, op);
     if (op.label || op.labelText) {
       const text = op.labelText != null ? String(op.labelText) : String(op.label === true ? "H" : op.label);
-      HANDLERS.addLabel(doc, { pointId: foot.id, text, ox: -10, oy: -12 }, nextId);
+      HANDLERS.addLabel(
+        doc,
+        { pointId: foot.id, text, ox: -10, oy: -12, ...appearanceFields(op) },
+        nextId
+      );
     }
     const drawSeg = op.drawSegment !== false && op.segment !== false;
     if (drawSeg) {
       const style = styleOr(op.style, "solid");
       const segHint = op.altitudeId || (op.idPrefix ? `${op.idPrefix}alt` : undefined);
       try {
-        pushSegment(doc, nextId, fromId, foot.id, style, segHint);
+        pushSegment(doc, nextId, fromId, foot.id, style, segHint, op);
       } catch (err) {
         // Duplicate altitude is OK (reuse existing).
         if (!String(err.message || err).includes("already exists")) throw err;
@@ -1448,16 +1485,18 @@ const HANDLERS = {
       my,
       op.id != null && op.id !== "" ? op.id : undefined,
       marker,
-      op.hidden === true
+      op.hidden === true,
+      op
     );
     maybeInlineLabel(doc, op, nextId, mid);
     if (op.markEqual) {
       const group = op.equalGroup != null ? op.equalGroup : 0;
       const style = styleOr(op.style, "solid");
-      const s1 = ensureSegmentBetween(doc, nextId, aId, mid.id, style);
-      const s2 = ensureSegmentBetween(doc, nextId, mid.id, bId, style);
-      HANDLERS.addEqualMark(doc, { segmentId: s1, group }, nextId);
-      HANDLERS.addEqualMark(doc, { segmentId: s2, group }, nextId);
+      const look = appearanceFields(op);
+      const s1 = ensureSegmentBetween(doc, nextId, aId, mid.id, style, op);
+      const s2 = ensureSegmentBetween(doc, nextId, mid.id, bId, style, op);
+      HANDLERS.addEqualMark(doc, { segmentId: s1, group, ...look }, nextId);
+      HANDLERS.addEqualMark(doc, { segmentId: s2, group, ...look }, nextId);
     }
     return doc;
   },
@@ -1499,7 +1538,8 @@ const HANDLERS = {
       y,
       op.id != null && op.id !== "" ? op.id : undefined,
       marker,
-      op.hidden === true
+      op.hidden === true,
+      op
     );
     maybeInlineLabel(doc, op, nextId, p);
     return doc;
@@ -1535,8 +1575,8 @@ const HANDLERS = {
     const sorted = sortHitsStable(hits);
     const wantBoth = op.id2 != null && op.id2 !== "" && sorted.length >= 2;
     if (wantBoth) {
-      const first = pushPoint(doc, nextId, sorted[0].x, sorted[0].y, op.id, marker, hidden);
-      pushPoint(doc, nextId, sorted[1].x, sorted[1].y, op.id2, marker, hidden);
+      const first = pushPoint(doc, nextId, sorted[0].x, sorted[0].y, op.id, marker, hidden, op);
+      pushPoint(doc, nextId, sorted[1].x, sorted[1].y, op.id2, marker, hidden, op);
       maybeInlineLabel(doc, op, nextId, first);
       return doc;
     }
@@ -1553,7 +1593,8 @@ const HANDLERS = {
       chosen.y,
       op.id != null && op.id !== "" ? op.id : undefined,
       marker,
-      hidden
+      hidden,
+      op
     );
     maybeInlineLabel(doc, op, nextId, hit);
     return doc;
@@ -1569,6 +1610,7 @@ const HANDLERS = {
       throughId,
       style: styleOr(op.style, "solid"),
     };
+    stampAppearance(c, op);
     doc.circles.push(c);
     return doc;
   },
@@ -1586,6 +1628,7 @@ const HANDLERS = {
       style: styleOr(op.style, "solid"),
     };
     if (op.backDashed) e.backDashed = true;
+    stampAppearance(e, op);
     doc.ellipses.push(e);
     return doc;
   },
@@ -1596,14 +1639,16 @@ const HANDLERS = {
     const startId = requirePoint(doc, op.startId, "addSector");
     const endId = requirePoint(doc, op.endId, "addSector");
     const mode = op.mode === "sector" ? "sector" : "arc";
-    doc.sectors.push({
+    const row = {
       id,
       centerId,
       startId,
       endId,
       style: styleOr(op.style, "solid"),
       mode,
-    });
+    };
+    stampAppearance(row, op);
+    doc.sectors.push(row);
     return doc;
   },
 
@@ -1628,11 +1673,14 @@ const HANDLERS = {
         ? op.kind
         : "polygon";
     const pattern = normalizeFillPattern(op.pattern);
-    const color = normalizeFillColor(
-      op.color,
-      pattern === "hatch" ? "#111111" : "#666666"
-    );
-    const opacity = clampOpacity(op.opacity, pattern === "hatch" ? 1 : 0.2);
+    const explicitColor = op.color != null && String(op.color).trim() !== "";
+    const solutionFill = elementRole(op) === "solution" && !explicitColor;
+    const color = solutionFill
+      ? undefined
+      : normalizeFillColor(op.color, pattern === "hatch" ? "#111111" : "#666666");
+    const opacity = solutionFill
+      ? clampOpacity(op.opacity, pattern === "hatch" ? 1 : 0.25)
+      : clampOpacity(op.opacity, pattern === "hatch" ? 1 : 0.2);
     const hatchSpacing =
       op.hatchSpacing != null ? Math.max(2, Number(op.hatchSpacing) || 8) : undefined;
     const withPattern = (f) => {
@@ -1640,6 +1688,9 @@ const HANDLERS = {
         f.pattern = "hatch";
         if (hatchSpacing != null) f.hatchSpacing = hatchSpacing;
       }
+      if (solutionFill) delete f.color;
+      stampAppearance(f, op);
+      if (solutionFill) delete f.color;
       return f;
     };
     if (kind === "pathFill") {
@@ -1710,7 +1761,7 @@ const HANDLERS = {
             throw new Error("addFill(polygon): mathPoints must be finite");
           }
           const w = coordWorldFromAxis(plot, u, v);
-          pointIds.push(pushPoint(doc, nextId, w.x, w.y, undefined, undefined, true).id);
+          pointIds.push(pushPoint(doc, nextId, w.x, w.y, undefined, undefined, true, op).id);
         }
       } else {
         const raw = op.pointIds != null ? op.pointIds : op.points;
@@ -1975,7 +2026,7 @@ const HANDLERS = {
       ? pointById(doc, touchId)
       : pointOnCircle(geom.c, geom.r, ang);
     if (!touchId) {
-      touchId = pushPoint(doc, nextId, touch.x, touch.y, op.touchPointId).id;
+      touchId = pushPoint(doc, nextId, touch.x, touch.y, op.touchPointId, undefined, undefined, op).id;
     }
     const half = Math.abs(Number(op.halfLen != null ? op.halfLen : op.length != null ? Number(op.length) / 2 : 40));
     if (!(half > 1e-6)) throw new Error("addTangent: halfLen/length must be > 0");
@@ -1999,9 +2050,9 @@ const HANDLERS = {
         by = ty0;
       }
     }
-    const a = pushPoint(doc, nextId, ax, ay, op.aId);
-    const b = pushPoint(doc, nextId, bx, by, op.bId);
-    pushSegment(doc, nextId, a.id, b.id, op.style, op.id);
+    const a = pushPoint(doc, nextId, ax, ay, op.aId, undefined, undefined, op);
+    const b = pushPoint(doc, nextId, bx, by, op.bId, undefined, undefined, op);
+    pushSegment(doc, nextId, a.id, b.id, op.style, op.id, op);
     return doc;
   },
 
@@ -2012,11 +2063,11 @@ const HANDLERS = {
     if (!throughId) {
       const ang = resolveCircleAngle(doc, geom, op, "addRadius");
       const p = pointOnCircle(geom.c, geom.r, ang);
-      throughId = pushPoint(doc, nextId, p.x, p.y, op.throughPointId).id;
+      throughId = pushPoint(doc, nextId, p.x, p.y, op.throughPointId, undefined, undefined, op).id;
     } else {
       throughId = requirePoint(doc, throughId, "addRadius");
     }
-    pushSegment(doc, nextId, geom.cir.centerId, throughId, op.style, op.id);
+    pushSegment(doc, nextId, geom.cir.centerId, throughId, op.style, op.id, op);
     return doc;
   },
 
@@ -2026,9 +2077,9 @@ const HANDLERS = {
     const ang = resolveCircleAngle(doc, geom, op, "addDiameter");
     const p0 = pointOnCircle(geom.c, geom.r, ang);
     const p1 = pointOnCircle(geom.c, geom.r, ang + Math.PI);
-    const a = pushPoint(doc, nextId, p0.x, p0.y, op.aId);
-    const b = pushPoint(doc, nextId, p1.x, p1.y, op.bId);
-    pushSegment(doc, nextId, a.id, b.id, op.style, op.id);
+    const a = pushPoint(doc, nextId, p0.x, p0.y, op.aId, undefined, undefined, op);
+    const b = pushPoint(doc, nextId, p1.x, p1.y, op.bId, undefined, undefined, op);
+    pushSegment(doc, nextId, a.id, b.id, op.style, op.id, op);
     return doc;
   },
 
@@ -2044,7 +2095,7 @@ const HANDLERS = {
       else throw new Error("addChord: need startId or angle0/deg0");
       if (!Number.isFinite(ang0)) throw new Error("addChord: angle0 invalid");
       const p = pointOnCircle(geom.c, geom.r, ang0);
-      aId = pushPoint(doc, nextId, p.x, p.y, op.aId).id;
+      aId = pushPoint(doc, nextId, p.x, p.y, op.aId, undefined, undefined, op).id;
     } else aId = requirePoint(doc, aId, "addChord");
     if (!bId) {
       let ang1;
@@ -2053,9 +2104,9 @@ const HANDLERS = {
       else throw new Error("addChord: need endId or angle1/deg1");
       if (!Number.isFinite(ang1)) throw new Error("addChord: angle1 invalid");
       const p = pointOnCircle(geom.c, geom.r, ang1);
-      bId = pushPoint(doc, nextId, p.x, p.y, op.bId).id;
+      bId = pushPoint(doc, nextId, p.x, p.y, op.bId, undefined, undefined, op).id;
     } else bId = requirePoint(doc, bId, "addChord");
-    pushSegment(doc, nextId, aId, bId, op.style, op.id);
+    pushSegment(doc, nextId, aId, bId, op.style, op.id, op);
     return doc;
   },
 
@@ -2278,13 +2329,15 @@ const HANDLERS = {
     if (!Array.isArray(plot.curves)) plot.curves = [];
     const type = op.type === "log10" ? "log" : op.type || "line";
     const id = resolveId(op, nextId, "curve");
-    plot.curves.push({
+    const curve = {
       id,
       type,
       params: { ...defaultCurveParams(type), ...(op.params || {}) },
       label: defaultCurveLabel(op.label),
       ...curveExtras(op),
-    });
+    };
+    stampAppearance(curve, op);
+    plot.curves.push(curve);
     return doc;
   },
 

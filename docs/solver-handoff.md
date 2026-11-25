@@ -131,6 +131,17 @@
 
 ---
 
+## 解答角色與緊湊角弧（v13.5.46）
+
+- 題幹幾何不要帶 `role`。解答線、點、記號、填色用 `role:"solution"` 或 `solution:true`。可選 `color`；省略時白紙匯出為 `#dc2626`（暗色畫布 `#f87171`）。明確 `color` 優先。
+- `layers.solutionShow:false`（`setLayers`）隱藏全部 `role==="solution"`，元素仍留在 JSON。圖層選單有「解答」顯示勾選，預設開。
+- 垂足、內心／外心、方位、圓餅、中點、比例點、交點、切線、半徑、直徑、弦會把 solution 角色傳給展開出的點與線段。
+- `addAngleArc`／`addReflex` 的 `size` 預設 18，畫出來的半徑是 `min(size, max(10, 較短臂 × 0.30))`，除非 `clamp:false`。角文在有效半徑 + 11；小於 25° 再外推避開兩臂。
+- `addPieChart` 圓心弧 `size = round(max(12, min(16, r × 0.19)))`，可用 `arcSize`。同一塊又有類別 `label` 又有 `angleText` 或 `rightAngle`，且呼叫端沒設 `labelRadiusRatio` 時，類別標用 0.70（否則仍 0.62）。
+- `addBearing` 的 `arcSize` 預設 16，且 ≤ `northLen × 0.30`。
+
+---
+
 ## 版本釘選 / Version pin
 
 - 以 **main**／產品標籤 **v13.5.26**（穩定基線）為準；應用欄位 `version` 與 schema `formatVersion` 分開。
