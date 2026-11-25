@@ -20,6 +20,7 @@ function ensureArrays(doc) {
     "points",
     "segments",
     "labels",
+    "texts",
     "rightAngles",
     "angleArcs",
     "midTicks",
@@ -487,6 +488,28 @@ const HANDLERS = {
     const oy = op.oy != null ? Number(op.oy) : -14;
     const size = op.size != null ? Number(op.size) : doc.labelFontSize || 16;
     doc.labels.push({ id, pointId: op.pointId, text, ox, oy, size });
+    return doc;
+  },
+
+  /**
+   * Free-floating caption (not bound to a point).
+   * Required: x, y, text. Optional: id, size, align (center|left|right), bold.
+   */
+  addText(doc, op, nextId) {
+    const id = resolveId(op, nextId, "txt");
+    const x = Number(op.x);
+    const y = Number(op.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      throw new Error("addText: x,y must be finite");
+    }
+    if (op.text == null) throw new Error("addText: text required");
+    const text = String(op.text);
+    const size = op.size != null ? Number(op.size) : doc.labelFontSize || 16;
+    let align = op.align != null ? String(op.align).toLowerCase() : "center";
+    if (align !== "left" && align !== "right" && align !== "center") align = "center";
+    const bold = !!op.bold;
+    if (!Array.isArray(doc.texts)) doc.texts = [];
+    doc.texts.push({ id, x, y, text, size, align, bold });
     return doc;
   },
 
@@ -1509,6 +1532,7 @@ const HANDLERS = {
       point: "points",
       segment: "segments",
       label: "labels",
+      text: "texts",
       rightAngle: "rightAngles",
       angleArc: "angleArcs",
       midTick: "midTicks",
@@ -1563,6 +1587,7 @@ HANDLERS.addArc = HANDLERS.addAngleArc;
 HANDLERS.addTemplate = HANDLERS.insertTemplate;
 HANDLERS.addBoxPlot = HANDLERS.addBoxWhisker;
 HANDLERS.addBar = HANDLERS.addBarChart;
+HANDLERS.addCaption = HANDLERS.addText;
 
 export const OP_NAMES = Object.keys(HANDLERS).sort();
 

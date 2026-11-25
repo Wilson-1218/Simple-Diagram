@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "version": "13.5.37",
+  "version": "13.5.38",
   "app": "simple-diagram",
   "points": [
     {
@@ -65,6 +65,7 @@
       "size": 16
     }
   ],
+  "texts": [],
   "rightAngles": [
     {
       "id": "ra_0001",

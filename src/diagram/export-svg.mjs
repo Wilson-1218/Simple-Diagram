@@ -85,6 +85,10 @@ function boundsOf(doc, pad = 24) {
     const p = pts.get(lab.pointId);
     if (p) add(p.x + (lab.ox || 0), p.y + (lab.oy || 0));
   }
+  for (const tx of doc.texts || []) {
+    if (!tx || typeof tx !== "object") continue;
+    add(Number(tx.x), Number(tx.y));
+  }
   for (const cir of doc.circles || []) {
     const c = pts.get(cir.centerId);
     const t = pts.get(cir.throughId);
@@ -950,6 +954,18 @@ export function documentToSvg(doc, opts = {}) {
       const halo = Math.max(3.5, ink.mm(0.35), fs * 0.28);
       const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
       body += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(lab.text)}</text>\n`;
+    }
+    for (const tx of doc.texts || []) {
+      if (!tx || typeof tx !== "object") continue;
+      const s = toS(Number(tx.x), Number(tx.y));
+      const fs = ink.fontForSize(tx.size);
+      const halo = Math.max(3.5, ink.mm(0.35), fs * 0.28);
+      let align = String(tx.align || "center").toLowerCase();
+      if (align !== "left" && align !== "right") align = "center";
+      const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
+      const weight = tx.bold ? ' font-weight="bold"' : "";
+      const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="normal"${weight} font-size="${fs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle"`;
+      body += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(tx.text || "")}</text>\n`;
     }
   }
 

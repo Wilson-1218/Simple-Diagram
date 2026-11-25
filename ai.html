@@ -98,9 +98,11 @@
       <li>或 <code>{ "ops": [ … ] }</code></li>
       <li>或完整圖檔（含 <code>formatVersion</code>、<code>points</code>…）</li>
     </ul>
+    <p class="note">編輯器：<strong>Json ▾ → 複製目前 JSON</strong> 方便 AI 來回；貼上時可勾「追加至現有圖形／Append to current canvas」（預設關閉＝取代）。<strong>匯出 ▾ → 複製白底 PNG</strong>（Ctrl+Shift+C）。<br />
+      <span class="en">Editor: Json ▾ → Copy JSON; Paste JSON can Append (default off = Replace). Export ▾ → Copy PNG (White BG).</span></p>
     <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
       <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
-    <p class="note">已知 ops（43，含別名）：<code>addPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
+    <p class="note">已知 ops（45，含別名）：<code>addPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
     <p class="note"><strong>UI ↔ op</strong>：工具列 <strong>⊥ 座標</strong>＝<code>addCoordPlot</code>（＋<code>addCurve</code>）。沒有 <code>addCoordMark</code> 這類 op 名。<br />
       <span class="en">Rail tool <strong>⊥ 座標 / Axes</strong> maps to <code>addCoordPlot</code> (+ <code>addCurve</code>). There is no <code>addCoordMark</code>.</span></p>
 
@@ -112,11 +114,16 @@
       <li><code>setView</code>：<code>x</code>, <code>y</code>（視窗中心世界座標）, <code>scale</code> &gt; 0</li>
     </ul>
 
-    <h2>3. 標籤 / Labels</h2>
+    <h2>3. 標籤／自由文字 / Labels &amp; free text</h2>
     <p><code>addLabel</code>：必填 <code>pointId</code>, <code>text</code>；可選 <code>ox</code>, <code>oy</code>, <code>size</code>, <code>id</code>。</p>
     <ul>
       <li><code>ox</code>/<code>oy</code> = 相對該點的<strong>世界座標偏移</strong>（與 x/y 同單位；+y 向下）</li>
       <li>預設 <code>ox:0</code>, <code>oy:-14</code>；每點一個標籤（後寫覆蓋）</li>
+    </ul>
+    <p><code>addText</code>（別名 <code>addCaption</code>）：必填 <code>x</code>, <code>y</code>, <code>text</code>；可選 <code>id</code>, <code>size</code>, <code>align</code>（<code>center</code>｜<code>left</code>｜<code>right</code>，預設 center）, <code>bold</code>（預設 false）。</p>
+    <ul>
+      <li>自由文字，<strong>不</strong>綁 <code>pointId</code>；存於 <code>texts[]</code>；可選取／拖曳／刪除／匯出（含光暈）</li>
+      <li><span class="en">Free-floating caption — not bound to a point; select/drag/delete/export/halo work.</span></li>
     </ul>
 
     <h2>4. 基本幾何 / Core geometry</h2>
@@ -129,7 +136,7 @@
         <tr><td><code>addEllipse</code></td><td><code>centerId</code>, <code>rxId</code>, <code>ryId</code></td><td><code>style</code>, <code>backDashed</code>（3D 背弧）— 軸對齊</td></tr>
         <tr><td><code>addSector</code></td><td><code>centerId</code>, <code>startId</code>, <code>endId</code></td><td><code>mode</code>：<code>"arc"</code>（預設）｜<code>"sector"</code>（含兩半徑）</td></tr>
         <tr><td><code>movePoint</code></td><td><code>id</code>, <code>x</code>, <code>y</code></td><td><code>marker</code></td></tr>
-        <tr><td><code>remove</code></td><td><code>type</code>, <code>id</code></td><td>type：<code>point</code>｜<code>segment</code>｜<code>label</code>｜<code>circle</code>｜<code>ellipse</code>｜<code>sector</code>｜<code>fill</code>｜<code>coordPlot</code>｜<code>boxWhisker</code>｜<code>barChart</code>｜<code>rightAngle</code>｜<code>angleArc</code>｜<code>midTick</code>｜<code>parallelMark</code>｜<code>equalMark</code>｜<code>lengthLabel</code></td></tr>
+        <tr><td><code>remove</code></td><td><code>type</code>, <code>id</code></td><td>type：<code>point</code>｜<code>segment</code>｜<code>label</code>｜<code>text</code>｜<code>circle</code>｜<code>ellipse</code>｜<code>sector</code>｜<code>fill</code>｜<code>coordPlot</code>｜<code>boxWhisker</code>｜<code>barChart</code>｜<code>rightAngle</code>｜<code>angleArc</code>｜<code>midTick</code>｜<code>parallelMark</code>｜<code>equalMark</code>｜<code>lengthLabel</code></td></tr>
       </tbody>
     </table>
 
@@ -461,7 +468,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.37 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.38 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

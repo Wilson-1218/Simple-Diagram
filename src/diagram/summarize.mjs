@@ -25,6 +25,7 @@ export function summarizeDiagram(doc) {
       points: count(doc.points),
       segments: count(doc.segments),
       labels: count(doc.labels),
+      texts: count(doc.texts),
       circles: count(doc.circles),
       ellipses: count(doc.ellipses),
       sectors: count(doc.sectors),
@@ -57,6 +58,14 @@ export const OP_CATALOG = {
   },
   addSegment: { args: "id?, a, b, style?", note: "style: solid|dashed|dotted|dashdot" },
   addLabel: { args: "pointId, text, ox?, oy?, size?", note: "One label per point" },
+  addText: {
+    args: "x, y, text, id?, size?, align?, bold?",
+    note: "Free-floating caption (not bound to point); align center|left|right (default center); bold default false; alias addCaption",
+  },
+  addCaption: {
+    args: "x, y, text, id?, size?, align?, bold?",
+    note: "Alias of addText",
+  },
   addRightAngle: { args: "vertex, arm1, arm2, size?" },
   addAngleArc: { args: "vertex, arm1, arm2, group?, text?, reflex?" },
   addReflex: { args: "same as addAngleArc", note: "Forces reflex:true" },
