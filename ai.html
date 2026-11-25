@@ -85,7 +85,7 @@
       <li>記號</li>
       <li>填色 addFill</li>
       <li>addShape</li>
-      <li><strong>座標圖 addCoordPlot</strong></li>
+      <li><strong>座標圖 addCoordPlot</strong>（交點與曲線間面積 §10.8）</li>
       <li>對齊／圖層／視圖</li>
       <li>模板／macros</li>
       <li>範例</li>
@@ -102,7 +102,7 @@
       <span class="en">Editor: Json ▾ → Copy JSON; Paste JSON can Append (default off = Replace). Export ▾ → Copy PNG (White BG).</span></p>
     <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
       <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
-    <p class="note">已知 ops（55，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>add3DPolyhedron</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addFeasibleRegion</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>addTriangleCenter</code>/<code>addIncircle</code>/<code>addCircumcircle</code> <code>addBearing</code>/<code>addCompass</code> <code>addPieChart</code>/<code>addPie</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
+    <p class="note">已知 ops（58，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>add3DPolyhedron</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addCurveIntersection</code>/<code>addPlotIntersection</code> <code>addAreaBetweenCurves</code> <code>addFeasibleRegion</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>addTriangleCenter</code>/<code>addIncircle</code>/<code>addCircumcircle</code> <code>addBearing</code>/<code>addCompass</code> <code>addPieChart</code>/<code>addPie</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
     <p class="note"><strong>UI ↔ op</strong>：工具列 <strong>⊥ 座標</strong>＝<code>addCoordPlot</code>（＋<code>addCurve</code>）。沒有 <code>addCoordMark</code> 這類 op 名。<br />
       <span class="en">Rail tool <strong>⊥ 座標 / Axes</strong> maps to <code>addCoordPlot</code> (+ <code>addCurve</code>). There is no <code>addCoordMark</code>.</span></p>
 
@@ -244,7 +244,7 @@
       <strong>addLengthLabel <code>side</code></strong>：存檔仍為 ±1。字串依 a→b 法線 <code>(−dy, dx)</code>（side +1）對應世界方向：水平線 a→右 時 <code>below</code>＝+1、<code>above</code>＝−1；鉛垂線 a→下 時 <code>left</code>＝+1、<code>right</code>＝−1。角標／長度標／點標文字有紙白光暈（screen 用畫布底色）。<br />
       <strong>addBoxWhisker <code>ticks</code></strong>：純數字陣列＝只畫刻度；物件可帶標籤，例 <code>ticks: [{ "pos": 150, "label": "10" }, { "pos": 200, "label": "20" }]</code>。標籤在水平軸下方／垂直軸左側。五數摘要 <code>min/q1/median/q3/max</code> 與 <code>pos</code> 皆為<strong>世界座標</strong>（不是資料刻度自動對應）。<br />
       <span class="en"><code>addBoxWhisker</code>: dedicated boxplot — do not assemble from rects/segments. Tick positions are caller-supplied only; optional <code>{pos,label}</code>. <code>addBarChart</code>: dedicated bars + vertical axis title — do not fake with rects or horizontal y-title. Length <code>side</code> accepts above/below/left/right mapped via a→b normal (−dy,dx).</span><br />
-      <strong>role／color</strong>：<code>addPoint</code>、<code>addPlotPoint</code>、<code>addSegment</code>、<code>addCircle</code>、<code>addEllipse</code>、<code>addSector</code>、<code>addLabel</code>、<code>addText</code>、<code>addRightAngle</code>、<code>addAngleArc</code>、<code>addReflex</code>、<code>addParallelMark</code>、<code>addEqualMark</code>、<code>addLengthLabel</code>、<code>addFoot</code>、<code>addMidpoint</code>、<code>addRatioPoint</code>、<code>addIntersection</code>、<code>addTangent</code>、<code>addRadius</code>、<code>addDiameter</code>、<code>addChord</code>、<code>addCurve</code>、<code>addFill</code>、<code>addBearing</code> 可選 <code>role:"question"|"solution"</code>（預設 question，省略則不寫入）或 <code>solution:true</code>，以及 <code>color</code>。複合 op（垂足、內心、方位、圓餅、中點、比例點、交點、切線、半徑、直徑、弦）會把 <code>role:"solution"</code> 與明確 <code>color</code> 傳給展開出的點、線段與記號。未指定顏色的解答元素：淺色畫布與白紙 SVG／PNG 用 <code>#dc2626</code>，暗色畫布用 <code>#f87171</code>；實心填色為該紅、透明度 0.25，斜線填色為紅色筆畫。明確 <code>color</code> 一律優先。見 §11 <code>solutionShow</code>。</p>
+      <strong>role／color</strong>：<code>addPoint</code>、<code>addPlotPoint</code>、<code>addSegment</code>、<code>addCircle</code>、<code>addEllipse</code>、<code>addSector</code>、<code>addLabel</code>、<code>addText</code>、<code>addRightAngle</code>、<code>addAngleArc</code>、<code>addReflex</code>、<code>addParallelMark</code>、<code>addEqualMark</code>、<code>addLengthLabel</code>、<code>addFoot</code>、<code>addMidpoint</code>、<code>addRatioPoint</code>、<code>addIntersection</code>、<code>addTangent</code>、<code>addRadius</code>、<code>addDiameter</code>、<code>addChord</code>、<code>addCurve</code>、<code>addFill</code>、<code>addCurveIntersection</code>、<code>addAreaBetweenCurves</code>、<code>addBearing</code> 可選 <code>role:"question"|"solution"</code>（預設 question，省略則不寫入）或 <code>solution:true</code>，以及 <code>color</code>。複合 op（垂足、內心、方位、圓餅、中點、比例點、交點、切線、半徑、直徑、弦、曲線交點、兩曲線間面積）會把 <code>role:"solution"</code> 與明確 <code>color</code> 傳給展開出的點、線段與記號。未指定顏色的解答元素：淺色畫布與白紙 SVG／PNG 用 <code>#dc2626</code>，暗色畫布用 <code>#f87171</code>；實心填色為該紅、透明度 0.25，斜線填色為紅色筆畫。明確 <code>color</code> 一律優先。見 §11 <code>solutionShow</code>。</p>
 
     <h2>8. 填色 / <code>addFill</code></h2>
     <p>可選：<code>color</code>（預設 <code>#666666</code>；hatch 預設 <code>#111111</code>）, <code>opacity</code>（預設 0.2；hatch 預設 1）, <code>pattern</code>：<code>solid</code>（預設）｜<code>hatch</code>（同向斜短線，考試棒陰影）, <code>hatchSpacing</code>。白色挖空：<code>color:"#ffffff", opacity:1</code>（僅其他複合遮罩；<strong>兩弧＋一邊請用 pathFill</strong>）。暗色畫布上，未指定或預設深色 hatch（<code>#111111</code>/<code>#000000</code>）會以淺 slate（如 <code>#94a3b8</code>）顯示；白紙 SVG／PNG 匯出仍用 <code>#111111</code>。</p>
@@ -256,6 +256,7 @@
         <tr><td><code>segment</code></td><td><code>startId</code>, <code>endId</code> + (<code>circleId</code>|<code>centerId</code>)</td><td>弓形</td></tr>
         <tr><td><code>polyArc</code></td><td><code>pointIds</code> ≥2 + <code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>折線＋弧閉合</td></tr>
         <tr><td><code>pathFill</code></td><td><code>edges</code> ≥2</td><td><code>{type:"line",a,b}</code> 或 <code>{type:"arc",centerId,from,to,circleId?}</code>；兩弧＋弦可亂序，會自動接封閉。弧預設<strong>劣弧</strong>（minor）；邊不得自交</td></tr>
+        <tr><td><code>betweenCurves</code></td><td><code>curve1</code></td><td>與 <code>addAreaBetweenCurves</code> 相同（見 §10.8）。沒有這個 <code>kind</code> 時，填色仍走原來的頂點／不等式</td></tr>
       </tbody>
     </table>
     <pre><code>{ "op": "addFill", "kind": "pathFill", "opacity": 0.2, "edges": [
@@ -266,6 +267,7 @@
     <p class="note"><strong>pathFill</strong>：弧邊預設走劣弧；整圈路徑的邊<strong>不可自交</strong>（否則填色／匯出可能錯）。兩弧＋弦可亂序。<br />
       <span class="en">pathFill arc edges default to the minor arc; edges must not self-intersect.</span></p>
     <p><strong>可行區域</strong>：<code>addFill</code> 若帶 <code>inequalities</code>（該陣列必填）與可選 <code>plotId</code>，行為與 <code>addFeasibleRegion</code> 相同，預設 <code>pattern:"hatch"</code>。沒有 <code>inequalities</code> 時仍是原來的 <code>pointIds</code>／<code>mathPoints</code> 填色。參數與例子見 §10.7。</p>
+    <p><strong>兩曲線之間</strong>：<code>kind:"betweenCurves"</code> 與 <code>addAreaBetweenCurves</code> 相同。見 §10.8。</p>
 
     <h2>9. <code>addShape</code></h2>
     <p>一次放平面／立體圖形（UI「圖形」拖放的 JSON 版）。</p>
@@ -498,6 +500,36 @@
 }</pre>
     <p class="note"><span class="en"><code>addFeasibleRegion</code> / <code>addFill</code> with <code>inequalities</code> clip half-planes to a hatch polygon on the coord plot. Omit the field and the previous plot is unchanged. Strict inequalities stay closed for the fill and draw a dashed boundary. Axis lines x=0 and y=0 are not added as curves.</span></p>
 
+    <h3>10.8 曲線交點與曲線間面積 / Intersections and area</h3>
+    <p><code>addCurveIntersection</code>（別名 <code>addPlotIntersection</code>）把根做成 <code>addPlotPoint</code>。<code>addAreaBetweenCurves</code>，或 <code>addFill</code> 的 <code>kind:"betweenCurves"</code>，在兩條圖形之間做填色。省略 <code>plotId</code> 用最後一個座標圖。找不到圖、找不到曲線、沒有根：<code>console.warn</code> 並跳過，不拋錯。不呼叫這兩個 op、也不寫 <code>kind:"betweenCurves"</code> 時，舊座標圖與舊填色不變。</p>
+    <p><code>curve1</code>／<code>of1</code>、<code>curve2</code>／<code>of2</code> 可以是曲線 id、曲線索引、<code>"xAxis"</code>（y=0）、<code>"yAxis"</code>（x=0），或內聯曲線 <code>{ "type": "line", "params": { "m": 1, "c": 1 } }</code>。內聯曲線只用來求解，不會加進座標圖。<code>addAreaBetweenCurves</code> 的 <code>curve1</code> 必填；<code>curve2</code> 省略則是 <code>"xAxis"</code>。面積的 <code>curve2</code> 若是數字（含 <code>0</code>）表示水平線 y＝該數；也可以是 <code>{ "y": 2 }</code> 這類水平線物件。交點 op 的數字仍是曲線索引，不是水平線。</p>
+    <table>
+      <thead><tr><th>欄位</th><th>預設</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr><td><code>domain</code></td><td>視窗 <code>[xmin,xmax]</code> 與兩條曲線 <code>domain</code> 的交集</td><td>交點只在這段找。顛倒的端點會對調。對數從 <code>1e-4</code> 起算</td></tr>
+        <tr><td><code>id</code></td><td>自動</td><td>選中的第一個根。多個根但只給 <code>id</code> 時，用 <code>pick</code> 或 <code>nearU</code> 選一個</td></tr>
+        <tr><td><code>id2</code>／<code>ids</code></td><td>省略</td><td>其餘的根。<code>ids:["P","Q",…]</code> 依 u 升序對上；若 <code>|u1−u2|≤1e-4</code> 再依 v 升序。多出來的根不命名就略過</td></tr>
+        <tr><td><code>pick</code></td><td><code>"left"</code></td><td><code>"left"</code>／<code>"first"</code>／<code>0</code> 最小 u；<code>"right"</code>／<code>"last"</code>；<code>"second"</code>／<code>1</code>；<code>"top"</code> 最大 v；<code>"bottom"</code> 最小 v。超出範圍就警告並跳過</td></tr>
+        <tr><td><code>nearU</code></td><td>省略</td><td>有數字時優先於 <code>pick</code>，取 u 最接近的根</td></tr>
+        <tr><td>點的外觀</td><td>同 <code>addPlotPoint</code></td><td><code>label</code>、<code>ox</code>、<code>oy</code>、<code>hidden</code>、<code>projectX</code>、<code>projectY</code>、<code>projectStyle</code>、<code>xTickLabel</code>、<code>yTickLabel</code>、<code>role</code>、<code>color</code> 會傳到每一個選中的根</td></tr>
+      </tbody>
+    </table>
+    <p>直線、鉛直線、二次曲線用差的多項式代數求解（二次方程，必要時再拋光）。<code>sin</code>／<code>cos</code>／<code>tan</code>／<code>exp</code>／<code>log</code>／<code>ln</code> 在定義域上約 400 段取樣，變號則二分，並以牛頓把 <code>|f1−f2|</code> 收到 <code>1e-7</code> 以內。<code>tan</code> 跨過漸近線的正負號跳動不是根，會丟掉。圓這類非函數曲線不求，警告並跳過。</p>
+    <p>面積：寫了 <code>domain:[a,b]</code> 就在該段（再與視窗、曲線定義域求交）取 80 個步（落在 64–96），沿曲線 1 過去、沿曲線 2 回來，閉合成多邊形。頂點 <code>hidden:true</code>。省略 <code>domain</code> 時先求交點，至少要 2 個，否則警告並跳過；正好兩個就塗最左到最右，多於兩個就為每一段相鄰閉區間各塗一塊（中間再穿過的地方各自成區）。預設 <code>pattern:"hatch"</code>；省略 <code>hatchSpacing</code> 不寫入填色，繪製仍用 8。也可 <code>"solid"</code>、<code>opacity</code>、<code>color</code>、<code>role</code>。<code>label</code>（例如 <code>"R"</code>）放在面積形心，置中粗體 <code>addText</code>，沿用既有光暈。<code>role</code>／<code>color</code> 會傳到點、填色與形心文字。</p>
+<pre>[
+  { "op": "addCoordPlot", "id": "plot1", "ox": 280, "oy": 340, "unitPx": 40,
+    "xmin": -3, "xmax": 3, "ymin": -1, "ymax": 6,
+    "curves": [
+      { "id": "para", "type": "quad", "params": { "a": 1, "b": 0, "c": 0 } },
+      { "id": "ln", "type": "line", "params": { "m": 0, "c": 4 } }
+    ] },
+  { "op": "addCurveIntersection", "curve1": "para", "curve2": "ln",
+    "ids": ["P", "Q"], "role": "solution" },
+  { "op": "addAreaBetweenCurves", "curve1": "para", "curve2": "ln",
+    "label": "R", "role": "solution" }
+]</pre>
+    <p class="note"><span class="en"><code>addCurveIntersection</code> / <code>addPlotIntersection</code> places roots as plot points (u order; v breaks a 1e-4 tie). <code>addAreaBetweenCurves</code> and <code>addFill</code> <code>kind:"betweenCurves"</code> hatch between the graphs. Omit the ops and the previous plot and fills stay as they were. No plot or no roots: <code>console.warn</code> and skip.</span></p>
+
     <h3>10.5 最小座標例</h3>
 <pre>[
   {
@@ -647,7 +679,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.46 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.47 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

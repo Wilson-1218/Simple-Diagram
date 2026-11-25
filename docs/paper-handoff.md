@@ -303,6 +303,26 @@ PDF
 
 ---
 
+## 曲線交點與曲線間面積（v13.5.47）
+
+與 [`ai.html`](../ai.html) §10.8 同一契約。不呼叫這兩個 op 時，座標圖與填色與 v13.5.46 相同。
+
+| 呼叫 | 要點 |
+|---|---|
+| `addCurveIntersection`／`addPlotIntersection` | `plotId` 預設最後一張圖。根變成 `addPlotPoint`。沒有圖或沒有根：警告並跳過 |
+| 曲線 | id、索引、`"xAxis"`、`"yAxis"`，或內聯 `{type,params}`（不加進圖） |
+| 多個根 | `ids` 依 u 升序（`|Δu|≤1e-4` 再比 v）。只給 `id` 時用 `pick` 或 `nearU` |
+| `addAreaBetweenCurves` | `curve2` 預設 x 軸；數字 `0` 是 y=0。`domain` 取 80 步閉合；省略則塗交點之間。頂點隱藏。預設斜線，間距繪製為 8 |
+| `addFill` `kind:"betweenCurves"` | 與 `addAreaBetweenCurves` 相同。沒有這個 kind 時仍是原來的填色 |
+| `label` | 例如 `"R"`。面積形心上的置中粗體文字（既有光暈） |
+| `role:"solution"` | 傳到交點、填色頂點、填色與形心文字 |
+
+```json
+{ "op": "addCurveIntersection", "curve1": "para", "curve2": "ln", "ids": ["P", "Q"] }
+```
+
+---
+
 ## 版本釘選 / Version pin
 
 - 以 **main**／產品標籤 **v13.5.26**（穩定基線）為準；應用欄位 `version` 與 schema `formatVersion` 分開。

@@ -83,8 +83,8 @@ export const OP_CATALOG = {
     note: "Dedicated bar chart; yLabel along axis (rotate|stack); barPattern hatch|solid; alias addBar",
   },
   addFill: {
-    args: "kind?, pattern?, pointIds? | centerId+startId+endId | polyArc | pathFill edges | inequalities+plotId?, color?, opacity?, hatchSpacing?",
-    note: "kind polygon|sector|segment|polyArc|pathFill; pattern solid|hatch (slanted strokes). inequalities → feasible region (default hatch), same as addFeasibleRegion; mathPoints and feasible-region corners are hidden points",
+    args: "kind?, pattern?, pointIds? | centerId+startId+endId | polyArc | pathFill edges | inequalities+plotId? | betweenCurves, color?, opacity?, hatchSpacing?",
+    note: "kind polygon|sector|segment|polyArc|pathFill|betweenCurves; pattern solid|hatch (slanted strokes). inequalities → feasible region (default hatch), same as addFeasibleRegion; betweenCurves → addAreaBetweenCurves; mathPoints and feasible-region corners are hidden points",
   },
   addLengthLabel: {
     args: "segmentId, text?, side?, style?(text|dim|arcs), orient?(tilt|horizontal), size?",
@@ -154,6 +154,14 @@ export const OP_CATALOG = {
     note: "xTicks/yTicks replace that axis; xStep/yStep stride; xUnitPx/yUnitPx unequal scale; curve domain+style; feasibleRegion clips linear inequalities",
   },
   addCurve: { args: "plotId, type, params?, label?, domain?, style?", note: "type includes vline (params.x) for a vertical boundary" },
+  addCurveIntersection: {
+    args: "curve1|of1, curve2|of2, plotId?, id?, id2?, ids?, pick?, nearU?, domain?, label?, role?, color?",
+    note: "roots become addPlotPoint in u order (v breaks a 1e-4 u tie). line/vline/quad algebraic; sin/cos/tan/exp/log/ln sampled. missing plot or no roots warns and skips. alias addPlotIntersection",
+  },
+  addAreaBetweenCurves: {
+    args: "curve1|of1, curve2|of2?, plotId?, domain?, pattern?, hatchSpacing?, label?, role?, color?",
+    note: "hatch polygon between graphs (default spacing 8). domain samples that interval; omitted domain uses intersection intervals. curve2 defaults to xAxis; a number is y=that number. vertices hidden. alias addFill kind betweenCurves",
+  },
   addFeasibleRegion: {
     args: "inequalities, plotId?, pattern?, hatchSpacing?, color?, opacity?, label?, drawBoundaries?, domainClip?",
     note: "half-planes → hatch polygon (default) on the last coord plot; generated corners are hidden; missing plot warns and skips; strict < > is a dashed boundary",
