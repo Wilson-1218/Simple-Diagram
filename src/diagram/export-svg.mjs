@@ -36,6 +36,7 @@ import {
 } from "./bar-chart.mjs";
 import { normalizeFillPattern, hatchStrokesForPolygon, HATCH_INK_PAPER } from "./hatch.mjs";
 import { addCoordPlotBounds, svgCoordPlot } from "./coord-plot.mjs";
+import { svgTextInner } from "./math-text.mjs";
 
 /** Exam-figure default embed frame (Paper). */
 export const DEFAULT_FRAME_WIDTH_MM = 54;
@@ -952,8 +953,9 @@ export function documentToSvg(doc, opts = {}) {
       const s = toS(p.x + (lab.ox || 0), p.y + (lab.oy || 0));
       const fs = ink.fontForSize(lab.size);
       const halo = Math.max(3.5, ink.mm(0.35), fs * 0.28);
-      const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
-      body += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(lab.text)}</text>\n`;
+      const rich = svgTextInner(lab.text, true);
+      const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="${rich.fontStyle}" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
+      body += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${rich.inner}</text>\n`;
     }
     for (const tx of doc.texts || []) {
       if (!tx || typeof tx !== "object") continue;
@@ -964,8 +966,9 @@ export function documentToSvg(doc, opts = {}) {
       if (align !== "left" && align !== "right") align = "center";
       const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
       const weight = tx.bold ? ' font-weight="bold"' : "";
-      const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="normal"${weight} font-size="${fs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle"`;
-      body += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(tx.text || "")}</text>\n`;
+      const rich = svgTextInner(tx.text || "", false);
+      const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="${rich.fontStyle}"${weight} font-size="${fs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle"`;
+      body += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${rich.inner}</text>\n`;
     }
   }
 

@@ -90,9 +90,16 @@ export {
   coordPlotBounds,
   addCoordPlotBounds,
   coordAxisOverhangPx,
+  coordAxisScales,
   coordIntegerTicks,
   coordSampleOneCurve,
   coordEvalY,
   coordWorldFromAxis,
+  coordCurveDomain,
+  coordCurveStyle,
+  coordCurveLabelText,
+  normalizeCoordTicks,
+  coordTickText,
   svgCoordPlot,
 } from "./coord-plot.mjs";
+export { parseMathRuns, svgTextInner } from "./math-text.mjs";
