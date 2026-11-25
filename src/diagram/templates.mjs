@@ -499,6 +499,9 @@ export function assertTemplateCatalogIntegrity() {
  *   nextId?: function,
  *   labelSize?: number,
  *   rightAngleSize?: number,
+ *   idPrefix?: string,
+ *   label?: boolean,
+ *   labels?: boolean|string[],
  * }} [options]
  * @returns {object} the same doc
  */
@@ -534,6 +537,20 @@ export function applyBuiltinTemplate(doc, id, options = {}) {
     options.rightAngleSize != null
       ? Number(options.rightAngleSize)
       : doc.rightAngleSize || 10;
+  const idPrefix = options.idPrefix != null ? String(options.idPrefix) : "";
+  // Explicit false on either flag suppresses vertex letters (addShape solids).
+  const skipVertexLabels = options.labels === false || options.label === false;
+  const labelOverrides = Array.isArray(options.labels) ? options.labels : null;
+
+  function takeId(kind, hint) {
+    if (hint) {
+      if (typeof nextId.claim !== "function") {
+        throw new Error("applyBuiltinTemplate: nextId.claim required when idPrefix is set");
+      }
+      return nextId.claim(hint);
+    }
+    return nextId(kind);
+  }
 
   ensureArr(doc, "points");
   ensureArr(doc, "segments");
@@ -543,6 +560,7 @@ export function applyBuiltinTemplate(doc, id, options = {}) {
   ensureArr(doc, "rightAngles");
 
   const pointIds = [];
+  let pi = 0;
   for (const row of spec.pts || []) {
     const [ci, cj, lab, ox, oy, marker] = row;
     const x = Number(ci) * cell * scale + dx;
@@ -550,28 +568,40 @@ export function applyBuiltinTemplate(doc, id, options = {}) {
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
       throw new Error(`applyBuiltinTemplate(${id}): non-finite point`);
     }
-    const pid = nextId("p");
+    const pid = takeId("p", idPrefix ? `${idPrefix}${pi}` : "");
     const p = { id: pid, x, y };
     if (marker) p.marker = marker;
     doc.points.push(p);
     pointIds.push(pid);
-    if (lab != null && lab !== "") {
+    let text = null;
+    if (!skipVertexLabels) {
+      if (labelOverrides && labelOverrides[pi] != null && String(labelOverrides[pi]) !== "") {
+        text = String(labelOverrides[pi]);
+      } else if (lab != null && lab !== "") {
+        text = String(lab);
+      }
+    }
+    if (text != null) {
       doc.labels.push({
         id: nextId("lab"),
         pointId: pid,
-        text: String(lab),
+        text,
         ox: ox != null ? Number(ox) : 0,
         oy: oy != null ? Number(oy) : -14,
         size: labelSize,
       });
     }
+    pi += 1;
   }
 
+  let si = 0;
   for (const row of spec.segs || []) {
     const [i, j, st] = row;
+    const segIndex = si;
+    si += 1;
     if (pointIds[i] == null || pointIds[j] == null) continue;
     doc.segments.push({
-      id: nextId("s"),
+      id: takeId("s", idPrefix ? `${idPrefix}s${segIndex}` : ""),
       a: pointIds[i],
       b: pointIds[j],
       style: st || "solid",

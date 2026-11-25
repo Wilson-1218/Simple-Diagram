@@ -1097,6 +1097,9 @@ const HANDLERS = {
         nextId,
         labelSize: doc.labelFontSize,
         rightAngleSize: doc.rightAngleSize,
+        idPrefix: prefix,
+        label: op.label,
+        labels: op.labels,
       });
       return doc;
     }

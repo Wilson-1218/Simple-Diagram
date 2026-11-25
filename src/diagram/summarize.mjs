@@ -108,7 +108,7 @@ export const OP_CATALOG = {
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },
   addShape: {
     args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?",
-    note: "kind square|rect|…|circle|semicircle|cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone",
+    note: "kind square|rect|…|circle|semicircle|cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone; solids: idPrefix → vertices prefix0… and segments prefixs0…; labels:false or label:false skips vertex letters",
   },
   addTangent: { args: "circleId, touchId|angle|deg, halfLen|length, style?" },
   addRadius: { args: "circleId, throughId|angle|deg, style?" },
