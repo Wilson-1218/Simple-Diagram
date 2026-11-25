@@ -13,6 +13,7 @@ import { normalizeBarChart } from "./bar-chart.mjs";
 import { normalizeFillPattern } from "./hatch.mjs";
 import { normalizeLengthSide } from "./length-mark.mjs";
 import { coordWorldFromAxis, normalizeCoordTicks } from "./coord-plot.mjs";
+import { buildPolyhedron } from "./polyhedron.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -416,6 +417,9 @@ function curveExtras(c) {
     }
     extra.style = c.style;
   }
+  if (c.color != null && String(c.color).trim() !== "") {
+    extra.color = String(c.color).trim();
+  }
   if (c.domain != null) {
     if (!Array.isArray(c.domain) || c.domain.length < 2) {
       throw new Error("curve domain must be [uMin, uMax]");
@@ -534,14 +538,168 @@ function defaultCurveLabel(lab) {
     n: 0.55,
   };
   if (!lab || typeof lab !== "object") return d;
+  const customText =
+    lab.customText != null ? String(lab.customText) : lab.text != null ? String(lab.text) : "";
+  // Explicit kind:"formula" wins. Otherwise text / customText means a custom label.
+  let kind = "formula";
+  if (lab.kind === "formula") kind = "formula";
+  else if (lab.kind === "custom" || customText.trim() !== "") kind = "custom";
+  const show =
+    lab.show != null ? !!lab.show : kind === "custom" && customText.trim() !== "";
   return {
-    show: !!lab.show,
-    kind: lab.kind === "custom" ? "custom" : "formula",
+    show,
+    kind,
     formulaMode: lab.formulaMode === "numeric" ? "numeric" : "algebraic",
-    customText: lab.customText != null ? String(lab.customText) : "",
+    customText,
     t: Number.isFinite(Number(lab.t)) ? Math.min(1, Math.max(0, Number(lab.t))) : d.t,
     n: Number.isFinite(Number(lab.n)) ? Math.min(6, Math.max(-6, Number(lab.n))) : d.n,
   };
+}
+
+function rightAngleMode(op) {
+  if (!op || typeof op !== "object") return "2d";
+  if (op.skew === true || op.mode === "3d" || op.mode === "3D") return "3d";
+  return "2d";
+}
+
+function solidCellSpan(spec) {
+  let minC = Infinity;
+  let maxC = -Infinity;
+  let minR = Infinity;
+  let maxR = -Infinity;
+  for (const row of spec.pts || []) {
+    const c = Number(row[0]);
+    const r = Number(row[1]);
+    if (Number.isFinite(c)) {
+      minC = Math.min(minC, c);
+      maxC = Math.max(maxC, c);
+    }
+    if (Number.isFinite(r)) {
+      minR = Math.min(minR, r);
+      maxR = Math.max(maxR, r);
+    }
+  }
+  return {
+    cellW: Math.max(1, maxC - minC),
+    cellH: Math.max(1, maxR - minR),
+  };
+}
+
+function baseCenterOfSolid(kind, created) {
+  if (kind === "cone") {
+    const o = created[0];
+    return o ? { x: o.x, y: o.y } : null;
+  }
+  if (kind === "pyramid") {
+    const base = [0, 1, 2, 3].map((i) => created[i]).filter(Boolean);
+    if (base.length < 3) return null;
+    return {
+      x: base.reduce((s, p) => s + p.x, 0) / base.length,
+      y: base.reduce((s, p) => s + p.y, 0) / base.length,
+    };
+  }
+  return null;
+}
+
+/**
+ * Pyramid/cone apex offset, optional base center + dotted height,
+ * cylinder/cone water ellipse. Omitted fields leave the template alone.
+ */
+function finishSolidExtras(doc, nextId, kind, created, op, prefix) {
+  const spec = BUILTIN_TEMPLATES[kind];
+  if (!spec || !created.length) return;
+  const vIndex = (spec.pts || []).findIndex((row) => row[2] === "V");
+  const vPt = vIndex >= 0 ? created[vIndex] : null;
+  if (
+    vPt &&
+    (kind === "pyramid" || kind === "cone") &&
+    Array.isArray(op.apexOffset) &&
+    op.apexOffset.length >= 2
+  ) {
+    const dx = Number(op.apexOffset[0]);
+    const dy = Number(op.apexOffset[1]);
+    if (Number.isFinite(dx)) vPt.x += dx;
+    if (Number.isFinite(dy)) vPt.y += dy;
+  }
+  const wantCenter = op.includeBaseCenter === true || op.drawHeight === true;
+  if (wantCenter && vPt && (kind === "pyramid" || kind === "cone")) {
+    const pos = baseCenterOfSolid(kind, created);
+    if (pos) {
+      const center = pushPoint(doc, nextId, pos.x, pos.y, prefix ? `${prefix}O` : "O");
+      if (op.drawHeight === true) {
+        pushSegment(
+          doc,
+          nextId,
+          center.id,
+          vPt.id,
+          "dotted",
+          prefix ? `${prefix}sOV` : undefined
+        );
+      }
+    }
+  }
+  const level = Number(op.waterLevel);
+  if ((kind === "cylinder" || kind === "cone") && Number.isFinite(level) && level > 0 && level < 1) {
+    addWaterEllipse(doc, nextId, kind, created, level, prefix);
+  }
+}
+
+/** Horizontal water ellipse: local radius at height fraction t (0 bottom → 1 top/apex). */
+function addWaterEllipse(doc, nextId, kind, created, t, prefix) {
+  let cx;
+  let cy;
+  let rx;
+  let ry;
+  if (kind === "cylinder") {
+    const bottom = created[0];
+    const top = created[4];
+    const rxPt = created[1];
+    const ryPt = created[2];
+    if (!bottom || !top || !rxPt || !ryPt) return;
+    cx = bottom.x + (top.x - bottom.x) * t;
+    cy = bottom.y + (top.y - bottom.y) * t;
+    rx = Math.hypot(rxPt.x - bottom.x, rxPt.y - bottom.y);
+    ry = Math.hypot(ryPt.x - bottom.x, ryPt.y - bottom.y);
+  } else {
+    const base = created[0];
+    const apex = created[4];
+    const rxPt = created[1];
+    const ryPt = created[2];
+    if (!base || !apex || !rxPt || !ryPt) return;
+    const k = 1 - t;
+    cx = base.x + (apex.x - base.x) * t;
+    cy = base.y + (apex.y - base.y) * t;
+    rx = Math.hypot(rxPt.x - base.x, rxPt.y - base.y) * k;
+    ry = Math.hypot(ryPt.x - base.x, ryPt.y - base.y) * k;
+  }
+  if (!(rx > 0.5) || !(ry > 0.5)) return;
+  const c = pushPoint(doc, nextId, cx, cy, prefix ? `${prefix}wC` : undefined, undefined, true);
+  const rxP = pushPoint(
+    doc,
+    nextId,
+    cx + rx,
+    cy,
+    prefix ? `${prefix}wX` : undefined,
+    undefined,
+    true
+  );
+  const ryP = pushPoint(
+    doc,
+    nextId,
+    cx,
+    cy + ry,
+    prefix ? `${prefix}wY` : undefined,
+    undefined,
+    true
+  );
+  doc.ellipses.push({
+    id: nextId("ell"),
+    centerId: c.id,
+    rxId: rxP.id,
+    ryId: ryP.id,
+    style: "solid",
+    backDashed: true,
+  });
 }
 
 function resolveId(op, nextId, prefix) {
@@ -631,13 +789,16 @@ const HANDLERS = {
     requirePoint(doc, op.vertex, "addRightAngle");
     requirePoint(doc, op.arm1, "addRightAngle");
     requirePoint(doc, op.arm2, "addRightAngle");
-    doc.rightAngles.push({
+    const row = {
       id,
       vertex: op.vertex,
       arm1: op.arm1,
       arm2: op.arm2,
       size: op.size != null ? Number(op.size) : doc.rightAngleSize || 10,
-    });
+    };
+    // Omitted mode stays the paper-sized 2D mark (today's geometry).
+    if (rightAngleMode(op) === "3d") row.mode = "3d";
+    doc.rightAngles.push(row);
     return doc;
   },
 
@@ -1222,18 +1383,22 @@ const HANDLERS = {
 
     if (SHAPE_SOLID_TEMPLATE_IDS.includes(kind) && BUILTIN_TEMPLATES[kind]) {
       const spec = BUILTIN_TEMPLATES[kind];
-      let minC = Infinity;
-      let maxC = -Infinity;
-      for (const row of spec.pts || []) {
-        minC = Math.min(minC, Number(row[0]));
-        maxC = Math.max(maxC, Number(row[0]));
+      const span = solidCellSpan(spec);
+      const scale = w / (span.cellW * TEMPLATE_CELL_SIZE);
+      /** @type {number|undefined} */
+      let scaleY;
+      if (op.h != null && op.h !== "") {
+        const hAbs = Math.abs(Number(op.h));
+        if (Number.isFinite(hAbs) && hAbs > 1e-6) {
+          scaleY = hAbs / (span.cellH * TEMPLATE_CELL_SIZE);
+        }
       }
-      const cellW = Math.max(1, maxC - minC);
-      const scale = w / (cellW * TEMPLATE_CELL_SIZE);
+      const n0 = doc.points.length;
       applyBuiltinTemplate(doc, kind, {
         dx: x0,
         dy: y0,
         scale,
+        scaleY,
         nextId,
         labelSize: doc.labelFontSize,
         rightAngleSize: doc.rightAngleSize,
@@ -1241,6 +1406,7 @@ const HANDLERS = {
         label: op.label,
         labels: op.labels,
       });
+      finishSolidExtras(doc, nextId, kind, doc.points.slice(n0), op, prefix);
       return doc;
     }
 
@@ -1605,6 +1771,42 @@ const HANDLERS = {
    */
   addPlotPoint(doc, op, nextId) {
     return placePlotPoint(doc, op, nextId, "addPlotPoint");
+  },
+
+  /**
+   * Project a 3D polyhedron. Hidden edges come from face normals
+   * (not the solid-template dash pattern).
+   * vertices: { A: [x,y,z], ... }; faces CCW from the outside.
+   */
+  add3DPolyhedron(doc, op, nextId) {
+    const built = buildPolyhedron(op);
+    const prefix = op.idPrefix != null ? String(op.idPrefix) : "";
+    const idOf = new Map();
+    for (const p of built.placed) {
+      const pt = pushPoint(doc, nextId, p.x, p.y, `${prefix}${p.key}`);
+      idOf.set(p.key, pt.id);
+      if (p.text != null) {
+        doc.labels.push({
+          id: nextId("lab"),
+          pointId: pt.id,
+          text: p.text,
+          ox: p.ox,
+          oy: p.oy,
+          size: doc.labelFontSize || 16,
+        });
+      }
+    }
+    built.edges.forEach((e, i) => {
+      pushSegment(
+        doc,
+        nextId,
+        idOf.get(e.a),
+        idOf.get(e.b),
+        e.style,
+        prefix ? `${prefix}s${i}` : undefined
+      );
+    });
+    return doc;
   },
 
   /** Add / append a curve on an existing coord plot. */

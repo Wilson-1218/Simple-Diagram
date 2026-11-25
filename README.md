@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.40 · 穩定）
+## 目前版本 / Current version（v13.5.41 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.41** — 座標曲線預設 `#111111`；`label.text` 自訂上下標；立體 `h`／`apexOffset`／底心與點高／水位橢圓；`add3DPolyhedron`；3D 直角平行四邊形
 - **v13.5.40** — 座標圖：自訂刻度、`xStep`／不等比例、`addPlotPoint` 投影、曲線 domain／虛線、輕量上下標、`mathPoints` 填色
 - **v13.5.39** — `addShape` 立體套用 `idPrefix`（頂點 `K0`…、線段 `Ks0`…）；`labels:false`／`label:false` 略過頂點字母
 - **v13.5.38** — 匯出複製白底 PNG；貼上 JSON 追加模式；`addText`／`addCaption`；Json「複製目前 JSON」；存檔 38 鍵

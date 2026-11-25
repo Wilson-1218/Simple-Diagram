@@ -187,6 +187,37 @@ PDF
 
 ---
 
+## 立體、水位與 3D 直角（v13.5.41）
+
+與 [`ai.html`](../ai.html) §9 同一契約，供 Paper 直接呼叫。省略新欄位時，幾何與 v13.5.40 相同。
+
+| 呼叫 | 要點 |
+|---|---|
+| `addShape` 立體 `h` | 視覺高度（包圍盒）。省略＝只按 `w` 等比，頂點不變 |
+| `pyramid`／`cone` `apexOffset:[dx,dy]` | 世界單位平移頂點 V |
+| `includeBaseCenter:true` | 底心點 id＝`O`，或 `{idPrefix}O`（`K` → `KO`） |
+| `drawHeight:true` | 底心到 V 的點線 |
+| `cylinder`／`cone` `waterLevel` | `0<t<1`：該高度局部半徑的水平橢圓，後一半虛線、前一半實線 |
+| `addRightAngle` | 預設 `mode:"2d"`（紙上小標記）。`mode:"3d"` 或 `skew:true`：邊長 `size` 的平行四邊形，頂點為 `V+s·u1`、`V+s·u1+s·u2`、`V+s·u2` |
+| `add3DPolyhedron` | `vertices:{A:[x,y,z]}`、`faces`（外向逆時針）、`origin`、`scale`（預設 40）、`yawDeg`（預設 35）、`pitchDeg`（預設 20）、`idPrefix`、`labels`。正面（含輪廓）的邊實線，只屬背面的邊虛線。`idPrefix:"K"` → 點 `KA` |
+
+頂點順序：`cuboid`／`cube` 底 A,B,C,D、頂 E,F,G,H；`pyramid` 底 A,B,C,D、頂 V；`frustum` 下 A–D、上 E–H；`tetra` A 在上、B,C,D 底；`triPrism` 前 A,B,C、後 D,E,F；`rectPrism` A–F；`cylinder` 下心 O … 上心 O′；`cone` 底心 O … 頂 V。
+
+曲線：沒寫 `color` 的 `addCoordPlot` 線在白紙上是 `#111111`（不是白）。`label.text`（`customText` 的別名）且未寫 `kind:"formula"` 時當自訂文字，`L_1` 有下標。
+
+```json
+{ "op": "addShape", "kind": "pyramid", "x": 200, "y": 240, "w": 120, "h": 150,
+  "idPrefix": "K", "apexOffset": [40, 0], "includeBaseCenter": true, "drawHeight": true }
+```
+
+```json
+{ "op": "add3DPolyhedron", "origin": [280, 320], "scale": 36, "idPrefix": "K",
+  "vertices": { "A": [0,0,0], "B": [2,0,0], "C": [1,0,2], "V": [0,2,0] },
+  "faces": [["A","B","C"], ["A","B","V"], ["B","C","V"], ["C","A","V"]] }
+```
+
+---
+
 ## 版本釘選 / Version pin
 
 - 以 **main**／產品標籤 **v13.5.26**（穩定基線）為準；應用欄位 `version` 與 schema `formatVersion` 分開。

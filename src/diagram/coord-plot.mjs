@@ -176,6 +176,23 @@ export function coordCurveStyle(curve) {
   return "solid";
 }
 
+/** Paper / light-canvas ink. Never a fallback white. */
+export const COORD_CURVE_INK_PAPER = "#111111";
+/** Dark-canvas ink when the curve has no explicit color. */
+export const COORD_CURVE_INK_DARK = "#e6e8eb";
+
+/**
+ * Stroke for a curve. Missing color is paper black (or a light stroke on
+ * a dark canvas). A missing label or a single curve must not become white.
+ * @param {object} curve
+ * @param {"paper"|"dark"|undefined} theme
+ */
+export function coordCurveInk(curve, theme) {
+  const raw = curve && curve.color != null ? String(curve.color).trim() : "";
+  if (raw) return raw;
+  return theme === "dark" ? COORD_CURVE_INK_DARK : COORD_CURVE_INK_PAPER;
+}
+
 export function coordEvalY(curve, x, plot) {
   const p = curve.params || {};
   const type = curve.type || "none";
@@ -633,7 +650,8 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
     }
     if (d) {
       const dash = curveDashAttr(coordCurveStyle(curve), lw);
-      body += `<path d="${d}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linejoin="round"${dash} />\n`;
+      const stroke = escapeXml(coordCurveInk(curve, "paper"));
+      body += `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${lw}" stroke-linejoin="round"${dash} />\n`;
     }
   }
   for (const curve of curves) {
