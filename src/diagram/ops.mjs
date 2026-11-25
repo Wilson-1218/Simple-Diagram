@@ -187,6 +187,7 @@ function pushSegment(doc, nextId, a, b, style, idHint) {
   if (doc.segments.some((s) => s.id === id)) throw new Error(`duplicate segment id ${id}`);
   if (a === b) throw new Error("segment ends must differ");
   doc.segments.push({ id, a, b, style: styleOr(style, "solid") });
+  refreshAutoLabels(doc, [a, b]);
   return id;
 }
 
@@ -546,19 +547,7 @@ function placePlotPoint(doc, op, nextId, ctx) {
   if (op.marker) p.marker = op.marker;
   if (op.hidden === true) p.hidden = true;
   doc.points.push(p);
-  if (op.label != null && String(op.label) !== "") {
-    HANDLERS.addLabel(
-      doc,
-      {
-        pointId: id,
-        text: String(op.label),
-        ox: op.ox,
-        oy: op.oy,
-        size: op.size,
-      },
-      nextId
-    );
-  }
+  maybeInlineLabel(doc, op, nextId, p, { legacyOxOy: true, stringify: true, passSize: true });
   const style = styleOr(op.projectStyle, "dashed");
   if (op.projectX === true) addAxisProjection(doc, nextId, plot, p, "x", u, style, op.xTickLabel);
   if (op.projectY === true) addAxisProjection(doc, nextId, plot, p, "y", v, style, op.yTickLabel);
@@ -906,7 +895,221 @@ function examApi() {
     pushPoint,
     pushSegment,
     handlers: HANDLERS,
+    inlinePointLabel: maybeInlineLabel,
   };
+}
+
+/**
+ * Finite numeric offset, or null when the caller omitted it.
+ * `0` is explicit. Booleans, blanks, and non-finite values are omitted.
+ */
+function finiteOffset(v) {
+  if (typeof v === "boolean") return null;
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normAngle(a) {
+  const t = Math.PI * 2;
+  let x = a % t;
+  if (x < 0) x += t;
+  return x;
+}
+
+function pointRecord(doc, id) {
+  return (doc.points || []).find((p) => p.id === id) || null;
+}
+
+/** Angles of segments that end at pointId, from the point toward the other end. */
+function incidentSegmentAngles(doc, pointId) {
+  const p = pointRecord(doc, pointId);
+  if (!p) return [];
+  const angles = [];
+  for (const s of doc.segments || []) {
+    const otherId = s.a === pointId ? s.b : s.b === pointId ? s.a : null;
+    if (!otherId) continue;
+    const q = pointRecord(doc, otherId);
+    if (!q) continue;
+    const dx = q.x - p.x;
+    const dy = q.y - p.y;
+    if (Math.hypot(dx, dy) < 1e-9) continue;
+    angles.push(Math.atan2(dy, dx));
+  }
+  return angles;
+}
+
+/**
+ * Outward normals (center → point) for circles the point lies on.
+ * On-circle tolerance is max(1e-3, 1e-6·r) world units. Ellipses and sectors
+ * are not treated as circles.
+ */
+function circleOutwardAngles(doc, pointId) {
+  const p = pointRecord(doc, pointId);
+  if (!p) return [];
+  const out = [];
+  for (const cir of doc.circles || []) {
+    if (cir.centerId === pointId) continue;
+    const c = pointRecord(doc, cir.centerId);
+    const thr = pointRecord(doc, cir.throughId);
+    if (!c || !thr) continue;
+    const r = Math.hypot(thr.x - c.x, thr.y - c.y);
+    if (!(r > 1e-9)) continue;
+    const dx = p.x - c.x;
+    const dy = p.y - c.y;
+    const d = Math.hypot(dx, dy);
+    if (Math.abs(d - r) <= Math.max(1e-3, 1e-6 * r)) {
+      out.push(Math.atan2(dy, dx));
+    }
+  }
+  return out;
+}
+
+/** Unit-vector mean. Returns the first angle when the vectors cancel. */
+function averageAngle(angles) {
+  let x = 0;
+  let y = 0;
+  for (const a of angles) {
+    x += Math.cos(a);
+    y += Math.sin(a);
+  }
+  if (Math.hypot(x, y) < 1e-9) return angles[0];
+  return Math.atan2(y, x);
+}
+
+/**
+ * Bisector of the largest angular gap.
+ * Equal gaps (within 1e-9): prefer the more upward bisector (−y), then +x.
+ */
+function bisectLargestGap(angles) {
+  const sorted = angles.map(normAngle).sort((u, v) => u - v);
+  let bestGap = -1;
+  const mids = [];
+  for (let i = 0; i < sorted.length; i++) {
+    const cur = sorted[i];
+    const next = i + 1 < sorted.length ? sorted[i + 1] : sorted[0] + Math.PI * 2;
+    const gap = next - cur;
+    const mid = cur + gap / 2;
+    if (gap > bestGap + 1e-9) {
+      bestGap = gap;
+      mids.length = 0;
+      mids.push(mid);
+    } else if (Math.abs(gap - bestGap) <= 1e-9) {
+      mids.push(mid);
+    }
+  }
+  if (mids.length <= 1) return mids[0] || 0;
+  mids.sort((u, v) => {
+    const su = Math.sin(u);
+    const sv = Math.sin(v);
+    if (Math.abs(su - sv) > 1e-9) return su - sv;
+    return Math.cos(v) - Math.cos(u);
+  });
+  return mids[0];
+}
+
+function roundPolar(dist, theta) {
+  const round = (n) => {
+    const r = Math.round(n);
+    return r === 0 ? 0 : r;
+  };
+  return {
+    ox: round(dist * Math.cos(theta)),
+    oy: round(dist * Math.sin(theta)),
+  };
+}
+
+/** True when theta is not pointing against the preferred outward angle. */
+function pointsAlong(theta, preferred) {
+  if (preferred == null || !Number.isFinite(preferred)) return true;
+  return Math.cos(theta) * Math.cos(preferred) + Math.sin(theta) * Math.sin(preferred) >= -1e-9;
+}
+
+/**
+ * Smart label offset. Isolated points (no segment, not on a circle) stay (0, -14).
+ * A circle outward normal replaces a segment-based direction only when that
+ * direction would put the label inside the circle.
+ */
+function computeSmartLabelOffset(doc, pointId, dist) {
+  const angles = incidentSegmentAngles(doc, pointId);
+  const outward = circleOutwardAngles(doc, pointId);
+  const preferred = outward.length ? averageAngle(outward) : null;
+  if (angles.length >= 2) {
+    let theta = bisectLargestGap(angles);
+    if (preferred != null && !pointsAlong(theta, preferred)) theta = preferred;
+    return roundPolar(dist, theta);
+  }
+  if (angles.length === 1) {
+    let theta = angles[0] + Math.PI;
+    if (preferred != null && !pointsAlong(theta, preferred)) theta = preferred;
+    return roundPolar(dist, theta);
+  }
+  if (preferred != null) return roundPolar(dist, preferred);
+  return { ox: 0, oy: -14 };
+}
+
+/** Session flag. Not enumerable, so save JSON does not gain a private field. */
+function setAutoFlag(lab, value) {
+  Object.defineProperty(lab, "_autoOffset", {
+    value,
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  });
+}
+
+function labelIsAuto(lab) {
+  if (!lab || typeof lab !== "object") return false;
+  if (lab._autoOffset === false) return false;
+  if (lab._autoOffset === true || lab.autoOffset === true) {
+    setAutoFlag(lab, true);
+    lab.autoOffset = true;
+    return true;
+  }
+  return false;
+}
+
+/** Recompute labels marked auto. `onlyPointIds` limits the pass to new segment ends. */
+function refreshAutoLabels(doc, onlyPointIds) {
+  const limit = onlyPointIds ? new Set(onlyPointIds) : null;
+  for (const lab of doc.labels || []) {
+    if (!lab || (limit && !limit.has(lab.pointId))) continue;
+    if (!labelIsAuto(lab)) continue;
+    if (!pointRecord(doc, lab.pointId)) continue;
+    const stored = finiteOffset(lab.offsetDist);
+    const dist = stored != null ? stored : 16;
+    const off = computeSmartLabelOffset(doc, lab.pointId, dist);
+    lab.ox = off.ox;
+    lab.oy = off.oy;
+  }
+}
+
+/**
+ * Inline label on a construction op.
+ * `label: true` → text is the point id; a non-empty string is used as text.
+ * Hidden points are skipped. `labelOx` / `labelOy` are explicit; when
+ * `legacyOxOy` is set, numeric `ox` / `oy` are explicit too (triangle centres,
+ * plot points). Omitted numbers use the smart offset.
+ * `id2` intersections label only the point passed in.
+ */
+function maybeInlineLabel(doc, op, nextId, point, opts = {}) {
+  if (!point || point.hidden === true) return;
+  let text = null;
+  if (op.label === true) text = point.id;
+  else if (typeof op.label === "string" && op.label !== "") text = op.label;
+  else if (opts.stringify && op.label != null && String(op.label) !== "") text = String(op.label);
+  else return;
+  const lab = { pointId: point.id, text };
+  const prefixOx = finiteOffset(op.labelOx);
+  const prefixOy = finiteOffset(op.labelOy);
+  const ox = prefixOx != null ? prefixOx : opts.legacyOxOy ? finiteOffset(op.ox) : null;
+  const oy = prefixOy != null ? prefixOy : opts.legacyOxOy ? finiteOffset(op.oy) : null;
+  if (ox != null) lab.ox = ox;
+  if (oy != null) lab.oy = oy;
+  if (opts.passSize && op.size != null) lab.size = op.size;
+  const dist = finiteOffset(op.offsetDist);
+  if (dist != null && ox == null && oy == null) lab.offsetDist = dist;
+  HANDLERS.addLabel(doc, lab, nextId);
 }
 
 function resolveId(op, nextId, prefix) {
@@ -934,6 +1137,7 @@ const HANDLERS = {
     if (op.marker) p.marker = op.marker;
     if (op.hidden === true) p.hidden = true;
     doc.points.push(p);
+    maybeInlineLabel(doc, op, nextId, p);
     return doc;
   },
 
@@ -953,6 +1157,7 @@ const HANDLERS = {
       b,
       style: styleOr(op.style, "solid"),
     });
+    refreshAutoLabels(doc, [a, b]);
     return doc;
   },
 
@@ -962,10 +1167,33 @@ const HANDLERS = {
     const text = op.text != null ? String(op.text) : "";
     // One label per point (matches UI)
     doc.labels = doc.labels.filter((l) => l.pointId !== pointId);
-    const ox = op.ox != null ? Number(op.ox) : 0;
-    const oy = op.oy != null ? Number(op.oy) : -14;
+    const oxN = finiteOffset(op.ox);
+    const oyN = finiteOffset(op.oy);
+    // A number on either axis wins over auto / autoOffset and is never rewritten.
+    const explicit = oxN != null || oyN != null;
     const size = op.size != null ? Number(op.size) : doc.labelFontSize || 16;
-    doc.labels.push({ id, pointId, text, ox, oy, size });
+    const lab = {
+      id,
+      pointId,
+      text,
+      ox: explicit ? (oxN != null ? oxN : 0) : 0,
+      oy: explicit ? (oyN != null ? oyN : -14) : -14,
+      size,
+    };
+    if (!explicit) {
+      const distN = finiteOffset(op.offsetDist);
+      const dist = distN != null ? distN : 16;
+      const off = computeSmartLabelOffset(doc, pointId, dist);
+      lab.ox = off.ox;
+      lab.oy = off.oy;
+      // Durable flag. `_autoOffset` is rebuilt from this after a save drops the private field.
+      lab.autoOffset = true;
+      if (distN != null) lab.offsetDist = distN;
+      setAutoFlag(lab, true);
+    } else {
+      setAutoFlag(lab, false);
+    }
+    doc.labels.push(lab);
     return doc;
   },
 
@@ -1222,6 +1450,7 @@ const HANDLERS = {
       marker,
       op.hidden === true
     );
+    maybeInlineLabel(doc, op, nextId, mid);
     if (op.markEqual) {
       const group = op.equalGroup != null ? op.equalGroup : 0;
       const style = styleOr(op.style, "solid");
@@ -1263,7 +1492,7 @@ const HANDLERS = {
     const y = a.y + t * (b.y - a.y);
     const marker =
       op.marker === false || op.marker === "" ? undefined : op.marker || undefined;
-    pushPoint(
+    const p = pushPoint(
       doc,
       nextId,
       x,
@@ -1272,6 +1501,7 @@ const HANDLERS = {
       marker,
       op.hidden === true
     );
+    maybeInlineLabel(doc, op, nextId, p);
     return doc;
   },
 
@@ -1305,8 +1535,9 @@ const HANDLERS = {
     const sorted = sortHitsStable(hits);
     const wantBoth = op.id2 != null && op.id2 !== "" && sorted.length >= 2;
     if (wantBoth) {
-      pushPoint(doc, nextId, sorted[0].x, sorted[0].y, op.id, marker, hidden);
+      const first = pushPoint(doc, nextId, sorted[0].x, sorted[0].y, op.id, marker, hidden);
       pushPoint(doc, nextId, sorted[1].x, sorted[1].y, op.id2, marker, hidden);
+      maybeInlineLabel(doc, op, nextId, first);
       return doc;
     }
     const chosen =
@@ -1315,7 +1546,7 @@ const HANDLERS = {
       console.warn("addIntersection: no intersection after disambiguation; skipped");
       return doc;
     }
-    pushPoint(
+    const hit = pushPoint(
       doc,
       nextId,
       chosen.x,
@@ -1324,6 +1555,7 @@ const HANDLERS = {
       marker,
       hidden
     );
+    maybeInlineLabel(doc, op, nextId, hit);
     return doc;
   },
 
@@ -2267,6 +2499,7 @@ export function applyOps(doc, ops) {
       throw new Error(`ops[${i}] (${name}): ${msg}`);
     }
   }
+  refreshAutoLabels(out);
   return out;
 }
 

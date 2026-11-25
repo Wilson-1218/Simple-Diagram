@@ -114,7 +114,7 @@ function finitePoint(p) {
  */
 export function applyTriangleCenter(doc, op, nextId, api, defaults) {
   const ctx = defaults.opName || "addTriangleCenter";
-  const { requirePoint, pointById, pushPoint, handlers } = api;
+  const { requirePoint, pointById, pushPoint, handlers, inlinePointLabel } = api;
   if (op.a == null || op.b == null || op.c == null) {
     throw new Error(`${ctx}: a, b, c required`);
   }
@@ -161,12 +161,7 @@ export function applyTriangleCenter(doc, op, nextId, api, defaults) {
     undefined,
     op.hidden === true
   );
-  if (typeof op.label === "string" && op.label !== "") {
-    const lab = { pointId: center.id, text: op.label };
-    if (op.ox != null && op.ox !== "") lab.ox = Number(op.ox);
-    if (op.oy != null && op.oy !== "") lab.oy = Number(op.oy);
-    handlers.addLabel(doc, lab, nextId);
-  }
+  inlinePointLabel(doc, op, nextId, center, { legacyOxOy: true });
 
   let drawCircle =
     op.drawCircle != null && op.drawCircle !== "" ? asBool(op.drawCircle) : !!defaults.drawCircle;

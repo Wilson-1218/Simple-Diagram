@@ -115,11 +115,16 @@
     </ul>
 
     <h2>3. 標籤／自由文字 / Labels &amp; free text</h2>
-    <p><code>addLabel</code>：必填 <code>pointId</code>, <code>text</code>；可選 <code>ox</code>, <code>oy</code>, <code>size</code>, <code>id</code>。</p>
+    <p><code>addLabel</code>：必填 <code>pointId</code>, <code>text</code>；可選 <code>ox</code>, <code>oy</code>, <code>size</code>, <code>id</code>, <code>offsetDist</code>, <code>auto</code>／<code>autoOffset</code>。</p>
     <ul>
       <li><code>ox</code>/<code>oy</code> = 相對該點的<strong>世界座標偏移</strong>（與 x/y 同單位；+y 向下）</li>
-      <li>預設 <code>ox:0</code>, <code>oy:-14</code>；每點一個標籤（後寫覆蓋）</li>
+      <li>兩邊都沒給數字，或設 <code>auto:true</code>／<code>autoOffset:true</code>（而且 ox、oy 都不是數字）時，不使用固定 <code>(0,-14)</code>。距離 <code>dist = offsetDist ?? 16</code>。<code>ox = round(dist·cos θ)</code>，<code>oy = round(dist·sin θ)</code>。</li>
+      <li>方向：每條<strong>以該點為端點</strong>的線段，角度是從本點指向另一端的 <code>atan2(dy, dx)</code>。≥2 條取最大角隙（多邊形外角）再平分；角隙一樣大時取較向上（−y）的平分線，再取較向右。恰好 1 條取反方向（<code>θ+π</code>）。沒有線段、也不在圓上：維持 <code>(0, -14)</code>。</li>
+      <li>點在圓上（到圓心距離 ≈ 半徑，容差 <code>max(1e-3, 1e-6·r)</code>）時，圓心→點的向外法線是優先方向，讓標籤留在圓外。沒有線段時就沿這條法線（多圓取單位向量平均；互相抵消則用第一個）。有線段時，只有算出的方向朝圓內才改用法線。橢圓與扇形不算圓。</li>
+      <li>任一軸是數字（含 <code>0</code>）：結果上記 <code>_autoOffset:false</code>，該數字原樣保留，之後加線段也不改。沒給的那一軸仍用舊預設（ox→<code>0</code>、oy→<code>-14</code>）。沒有數字偏移時記 <code>_autoOffset:true</code>，並寫可存檔的 <code>autoOffset:true</code>。<code>_autoOffset</code> 不進 JSON；載入後由 <code>autoOffset</code> 重建再重算。<code>applyOps</code> 結束時，以及有新線段接到該點時，重算自動標籤。明確數字經存檔再載入不變。</li>
+      <li>每點一個標籤（後寫覆蓋）</li>
     </ul>
+    <p><code>addPoint</code>、<code>addMidpoint</code>、<code>addRatioPoint</code>、<code>addIntersection</code>、<code>addTriangleCenter</code>：<code>label:true</code>（文字＝點 id）或 <code>label</code> 為非空字串，且點不是 <code>hidden:true</code>，會順便建立 <code>addLabel</code>。可選 <code>labelOx</code>／<code>labelOy</code>；省略則走自動偏移。<code>addTriangleCenter</code> 既有的數字 <code>ox</code>／<code>oy</code> 仍算明確偏移。<code>addIntersection</code> 同時給 <code>id2</code> 時只標第一個點（穩定序的第一個）。</p>
     <p><code>addText</code>（別名 <code>addCaption</code>）：必填 <code>x</code>, <code>y</code>, <code>text</code>；可選 <code>id</code>, <code>size</code>, <code>align</code>（<code>center</code>｜<code>left</code>｜<code>right</code>，預設 center）, <code>bold</code>（預設 false）。</p>
     <p class="note"><strong>輕量數學文字</strong>（<code>addLabel</code>、<code>addText</code>、座標軸名 <code>axisLabelX</code>/<code>axisLabelY</code>、曲線 <code>label</code>）：字串含 <code>_</code> 或 <code>^</code> 才解析。<code>_5</code>／<code>_{16}</code> 下標，<code>^2</code>／<code>^{n}</code> 上標；<code>log</code> <code>ln</code> <code>sin</code> <code>cos</code> <code>tan</code> 直立，單字母變數斜體。沒有 <code>_</code>／<code>^</code> 的純文字（含中文、<code>"P"</code>）維持原本樣式，不會整段改斜體。<br />
       <span class="en">Light math runs only when the string contains <code>_</code> or <code>^</code>. Plain labels stay as they are today.</span></p>
@@ -132,7 +137,7 @@
     <table>
       <thead><tr><th>op</th><th>必填</th><th>可選 / tip</th></tr></thead>
       <tbody>
-        <tr><td><code>addPoint</code></td><td><code>x</code>, <code>y</code></td><td><code>id</code>, <code>marker</code>（<code>"x"</code>｜<code>"foot"</code>）, <code>hidden?: boolean</code>（預設 false；true → 點仍在 <code>doc.points</code> 供幾何，畫布／SVG／PNG <strong>不</strong>畫點標記）。亦可改用 <code>addPlotPoint</code> 的數學座標欄位（<code>plotId</code>, <code>u</code>/<code>v</code> 或 <code>mathX</code>/<code>mathY</code>, <code>projectX</code>/<code>projectY</code>…）；有 u/v 時以座標圖換算，不必再給 x,y</td></tr>
+        <tr><td><code>addPoint</code></td><td><code>x</code>, <code>y</code></td><td><code>id</code>, <code>marker</code>（<code>"x"</code>｜<code>"foot"</code>）, <code>hidden?: boolean</code>（預設 false；true → 點仍在 <code>doc.points</code> 供幾何，畫布／SVG／PNG <strong>不</strong>畫點標記，也不會因 <code>label</code> 產生標籤）。<code>label</code>：<code>true</code>（文字＝點 id）或非空字串，會建 <code>addLabel</code>（見 §3）；<code>labelOx</code>／<code>labelOy</code> 省略則自動外偏。亦可改用 <code>addPlotPoint</code> 的數學座標欄位（<code>plotId</code>, <code>u</code>/<code>v</code> 或 <code>mathX</code>/<code>mathY</code>, <code>projectX</code>/<code>projectY</code>…）；有 u/v 時以座標圖換算，不必再給 x,y。數學座標上的 <code>ox</code>/<code>oy</code> 仍是標籤偏移</td></tr>
         <tr><td><code>addPlotPoint</code></td><td><code>u</code>, <code>v</code>（別名 <code>mathX</code>, <code>mathY</code>）</td><td>見 §10.6。省略 <code>plotId</code> 用最後一個座標圖。找不到圖：<code>console.warn</code> 並跳過，不拋錯</td></tr>
         <tr><td><code>addSegment</code></td><td><code>a</code>, <code>b</code>（點 id）</td><td><code>id</code>, <code>style</code></td></tr>
         <tr><td><code>addCircle</code></td><td><code>centerId</code>, <code>throughId</code></td><td><code>id</code>, <code>style</code> — 半徑＝兩點距離</td></tr>
@@ -152,17 +157,17 @@
         <tr>
           <td><code>addMidpoint</code></td>
           <td><code>a</code>+<code>b</code> <em>或</em> <code>segmentId</code></td>
-          <td><code>id</code>, <code>marker</code>（同 addPoint）, <code>hidden?: boolean</code>（同 addPoint）, <code>markEqual</code>（預設 false；true → 建／標子線段 (a,id)+(id,b) 的 <code>addEqualMark</code>）, <code>equalGroup</code>（預設 0）, <code>style</code>（子線段）</td>
+          <td><code>id</code>, <code>marker</code>（同 addPoint）, <code>hidden?: boolean</code>（同 addPoint；true 不加標籤）, <code>label</code>／<code>labelOx</code>／<code>labelOy</code>（見 §3）, <code>markEqual</code>（預設 false；true → 建／標子線段 (a,id)+(id,b) 的 <code>addEqualMark</code>）, <code>equalGroup</code>（預設 0）, <code>style</code>（子線段）</td>
         </tr>
         <tr>
           <td><code>addRatioPoint</code></td>
           <td><code>a</code>+<code>b</code> <em>或</em> <code>segmentId</code>（方向 a→b）</td>
-          <td><code>id</code>, <code>marker</code>, <code>hidden?: boolean</code>；比例：<code>m</code>+<code>n</code>（P=(nA+mB)/(m+n)，m+n≠0）<em>或</em> <code>t</code>（P=A+t(B−A)）；兩者皆有時 <strong>t 優先</strong>；預設 t=0.5（可延伸線外）</td>
+          <td><code>id</code>, <code>marker</code>, <code>hidden?: boolean</code>（true 不加標籤）, <code>label</code>／<code>labelOx</code>／<code>labelOy</code>（見 §3）；比例：<code>m</code>+<code>n</code>（P=(nA+mB)/(m+n)，m+n≠0）<em>或</em> <code>t</code>（P=A+t(B−A)）；兩者皆有時 <strong>t 優先</strong>；預設 t=0.5（可延伸線外）</td>
         </tr>
         <tr>
           <td><code>addIntersection</code></td>
           <td><code>of1</code>, <code>of2</code></td>
-          <td>各為既有線段／圓 id，或內嵌 <code>{"type":"line","a":"A","b":"C"}</code>。<code>id</code>；兩交點時可 <code>id2</code>（穩定序：x 升，|Δx|≤1e-4 再 y 升）。<code>extendLines</code> 預設 true（無限線）；false → 交點須在線段 [0,1]。消歧（兩點且無 id2）：(1) <code>avoidPointId</code> 取較遠 (2) <code>nearPointId</code> 取較近 (3) <code>pick</code>：left／right／top｜above／bottom｜below／0｜first／1｜second（+y 向下）。支援 line×line、line×circle、circle×circle。無交點 → <code>console.warn</code> 並略過（不 throw）。<code>hidden?: boolean</code>（同 addPoint）</td>
+          <td>各為既有線段／圓 id，或內嵌 <code>{"type":"line","a":"A","b":"C"}</code>。<code>id</code>；兩交點時可 <code>id2</code>（穩定序：x 升，|Δx|≤1e-4 再 y 升）。<code>extendLines</code> 預設 true（無限線）；false → 交點須在線段 [0,1]。消歧（兩點且無 id2）：(1) <code>avoidPointId</code> 取較遠 (2) <code>nearPointId</code> 取較近 (3) <code>pick</code>：left／right／top｜above／bottom｜below／0｜first／1｜second（+y 向下）。支援 line×line、line×circle、circle×circle。無交點 → <code>console.warn</code> 並略過（不 throw）。<code>hidden?: boolean</code>（同 addPoint；true 不加標籤）。<code>label</code>／<code>labelOx</code>／<code>labelOy</code>（見 §3；有 <code>id2</code> 時只標穩定序的第一個點）</td>
         </tr>
         <tr>
           <td><code>addFoot</code></td>
@@ -193,7 +198,7 @@
       <li>內心 I = (a·A + b·B + c·C) / (a+b+c)，a=|BC|、b=|AC|、c=|AB|。畫圓時半徑是 I 到直線 AB 的距離，圓通過該垂足。<code>markTouchPoints:true</code> 或 <code>touchIds:["idAB","idBC","idCA"]</code>（僅內心）會留下 AB、BC、CA 上的可見切點；否則垂足 <code>hidden:true</code>。</li>
       <li>外心用垂直平分線交點；畫圓時圓通過頂點 <code>a</code>。共線則跳過，不建圓、也不建外心。</li>
       <li>重心是三頂點平均，共線仍建立。垂心是 A 高（⊥ BC）與 B 高（⊥ CA）的交點；共線則跳過。</li>
-      <li>可選中心 <code>id</code>、<code>hidden</code>、<code>label</code>、<code>ox</code>、<code>oy</code>。<code>drawCircle</code> 在兩個別名預設 true，其餘預設 false。<code>circleId</code>、<code>circleStyle</code> 只在有畫圓時使用。</li>
+      <li>可選中心 <code>id</code>、<code>hidden</code>、<code>label</code>（<code>true</code>＝文字為點 id，或非空字串；<code>hidden:true</code> 不加標籤）、<code>labelOx</code>／<code>labelOy</code>，以及既有的 <code>ox</code>／<code>oy</code>（數字＝明確偏移，見 §3）。<code>drawCircle</code> 在兩個別名預設 true，其餘預設 false。<code>circleId</code>、<code>circleStyle</code> 只在有畫圓時使用。</li>
     </ul>
     <p><code>addBearing</code>（別名 <code>addCompass</code>）。必填 <code>at</code>（別名 <code>pointId</code>）。<code>northLen</code> 預設 56，向北（−y）到隱藏箭尖；實線北段，箭尖另有兩小段實線箭頭。<code>northLabel</code> 預設 <code>"N"</code>；<code>false</code> 或 <code>""</code> 不標。<code>showCross</code> 預設 false：在 <code>at</code> 加向東、向西、向南的短虛線刻度。<code>to</code> 才畫方位弧。<code>from</code> 預設 <code>"N"</code>，亦可 <code>"S"</code>｜<code>"E"</code>｜<code>"W"</code>。<code>text</code> 例如 <code>"52°"</code>。<code>mode</code>：<code>"acute"</code>（預設，from 軸與 at→to 的劣角；N 52° E、S 38° W）｜<code>"cw"</code>（別名 <code>"true"</code>：一律從正北順時針量到 at→to；大於 180° 則 <code>reflex:true</code>）。<code>arcSize</code> 預設 22。見 §7。</p>
     <p><code>addPieChart</code>（別名 <code>addPie</code>）。必填 <code>x</code>、<code>y</code> 或 <code>centerId</code>，以及 <code>slices</code>（長度 ≥ 2）。<code>r</code> 預設 95。<code>startDeg</code> 預設 0（正東）；−90 是正北。<code>clockwise</code> 預設 true。<code>idPrefix</code> 可選。每一塊用 <code>angle</code>（度，原樣使用）或 <code>value</code>（依總和正規化成 360°）；每一塊都有 <code>angle</code> 時不當成 value。大於 180° 的塊，以及逆時針正好 180° 的塊，拆成兩份劣弧填色（既有扇形填色仍走劣弧）。整圓用一個 <code>addCircle</code> 當外框。<code>label</code> 放在角平分線上，半徑比例 <code>labelRadiusRatio</code> 預設 0.62，經 <code>addText</code>（沿用既有光暈）。<code>angleText</code> 在圓心加 <code>addAngleArc</code>（超過 180° 為優角）。<code>rightAngle:true</code> 為該塊加 <code>addRightAngle</code>。可選 <code>pattern</code>（<code>hatch</code>｜<code>solid</code>）與 <code>opacity</code>；未指定時實心用一組淺色、透明度 0.55。</p>
@@ -641,7 +646,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.44 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.45 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>
