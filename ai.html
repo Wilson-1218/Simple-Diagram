@@ -123,7 +123,7 @@
     <table>
       <thead><tr><th>op</th><th>必填</th><th>可選 / tip</th></tr></thead>
       <tbody>
-        <tr><td><code>addPoint</code></td><td><code>x</code>, <code>y</code></td><td><code>id</code>, <code>marker</code>（<code>"x"</code>｜<code>"foot"</code>）</td></tr>
+        <tr><td><code>addPoint</code></td><td><code>x</code>, <code>y</code></td><td><code>id</code>, <code>marker</code>（<code>"x"</code>｜<code>"foot"</code>）, <code>hidden?: boolean</code>（預設 false；true → 點仍在 <code>doc.points</code> 供幾何，畫布／SVG／PNG <strong>不</strong>畫點標記）</td></tr>
         <tr><td><code>addSegment</code></td><td><code>a</code>, <code>b</code>（點 id）</td><td><code>id</code>, <code>style</code></td></tr>
         <tr><td><code>addCircle</code></td><td><code>centerId</code>, <code>throughId</code></td><td><code>id</code>, <code>style</code> — 半徑＝兩點距離</td></tr>
         <tr><td><code>addEllipse</code></td><td><code>centerId</code>, <code>rxId</code>, <code>ryId</code></td><td><code>style</code>, <code>backDashed</code>（3D 背弧）— 軸對齊</td></tr>
@@ -142,17 +142,17 @@
         <tr>
           <td><code>addMidpoint</code></td>
           <td><code>a</code>+<code>b</code> <em>或</em> <code>segmentId</code></td>
-          <td><code>id</code>, <code>marker</code>（同 addPoint）, <code>markEqual</code>（預設 false；true → 建／標子線段 (a,id)+(id,b) 的 <code>addEqualMark</code>）, <code>equalGroup</code>（預設 0）, <code>style</code>（子線段）</td>
+          <td><code>id</code>, <code>marker</code>（同 addPoint）, <code>hidden?: boolean</code>（同 addPoint）, <code>markEqual</code>（預設 false；true → 建／標子線段 (a,id)+(id,b) 的 <code>addEqualMark</code>）, <code>equalGroup</code>（預設 0）, <code>style</code>（子線段）</td>
         </tr>
         <tr>
           <td><code>addRatioPoint</code></td>
           <td><code>a</code>+<code>b</code> <em>或</em> <code>segmentId</code>（方向 a→b）</td>
-          <td><code>id</code>, <code>marker</code>；比例：<code>m</code>+<code>n</code>（P=(nA+mB)/(m+n)，m+n≠0）<em>或</em> <code>t</code>（P=A+t(B−A)）；兩者皆有時 <strong>t 優先</strong>；預設 t=0.5（可延伸線外）</td>
+          <td><code>id</code>, <code>marker</code>, <code>hidden?: boolean</code>；比例：<code>m</code>+<code>n</code>（P=(nA+mB)/(m+n)，m+n≠0）<em>或</em> <code>t</code>（P=A+t(B−A)）；兩者皆有時 <strong>t 優先</strong>；預設 t=0.5（可延伸線外）</td>
         </tr>
         <tr>
           <td><code>addIntersection</code></td>
           <td><code>of1</code>, <code>of2</code></td>
-          <td>各為既有線段／圓 id，或內嵌 <code>{"type":"line","a":"A","b":"C"}</code>。<code>id</code>；兩交點時可 <code>id2</code>（穩定序：x 升，|Δx|≤1e-4 再 y 升）。<code>extendLines</code> 預設 true（無限線）；false → 交點須在線段 [0,1]。消歧（兩點且無 id2）：(1) <code>avoidPointId</code> 取較遠 (2) <code>nearPointId</code> 取較近 (3) <code>pick</code>：left／right／top｜above／bottom｜below／0｜first／1｜second（+y 向下）。支援 line×line、line×circle、circle×circle。無交點 → <code>console.warn</code> 並略過（不 throw）</td>
+          <td>各為既有線段／圓 id，或內嵌 <code>{"type":"line","a":"A","b":"C"}</code>。<code>id</code>；兩交點時可 <code>id2</code>（穩定序：x 升，|Δx|≤1e-4 再 y 升）。<code>extendLines</code> 預設 true（無限線）；false → 交點須在線段 [0,1]。消歧（兩點且無 id2）：(1) <code>avoidPointId</code> 取較遠 (2) <code>nearPointId</code> 取較近 (3) <code>pick</code>：left／right／top｜above／bottom｜below／0｜first／1｜second（+y 向下）。支援 line×line、line×circle、circle×circle。無交點 → <code>console.warn</code> 並略過（不 throw）。<code>hidden?: boolean</code>（同 addPoint）</td>
         </tr>
         <tr>
           <td><code>addFoot</code></td>
@@ -461,7 +461,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.36 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.37 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261125-release-v13.5.36" />
+  <meta name="simple-diagram-build" content="20261125-release-v13.5.37" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -2043,7 +2043,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.36</span>
+            <span class="brand-sub">v13.5.37</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -2763,7 +2763,7 @@ body.dark-canvas .coord-curve-row {
   let panning = false;
   let panLast = null;
 
-  /** @type {{id:string,x:number,y:number,marker?:string}[]} */
+  /** @type {{id:string,x:number,y:number,marker?:string,hidden?:boolean}[]} */
   let points = [];
   /** @type {{id:string,a:string,b:string,style:string}[]} */
   let segments = [];
@@ -6156,6 +6156,7 @@ body.dark-canvas .coord-curve-row {
     let best = null;
     let bestD = thresh;
     for (const p of points) {
+      if (p.hidden === true) continue;
       const d = dist(p, { x: wx, y: wy });
       if (d < bestD) {
         bestD = d;
@@ -9721,6 +9722,7 @@ body.dark-canvas .coord-curve-row {
   }
 
   function drawPoint(p, highlight) {
+    if (p.hidden === true) return;
     const s = worldToScreen(p.x, p.y);
     if (p.marker === "x" || p.marker === "foot") {
       const r = 5 * Math.min(view.scale, 1.5);
@@ -13142,6 +13144,7 @@ body.dark-canvas .coord-curve-row {
     draft = null;
     const hits = [];
     for (const p of points) {
+      if (p.hidden === true) continue;
       if (p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1) {
         hits.push({ type: "point", id: p.id });
       }
@@ -14128,6 +14131,7 @@ body.dark-canvas .coord-curve-row {
 
     if (!hideExportPoints) {
       for (const p of points) {
+        if (p.hidden === true) continue;
         const s = toS(p.x, p.y);
         if (p.marker === "x" || p.marker === "foot") {
           const r = 5 * scale * 0.7;
@@ -14531,6 +14535,7 @@ body.dark-canvas .coord-curve-row {
 
     if (!hideExportPoints) {
       for (const p of points) {
+        if (p.hidden === true) continue;
         const s = toS(p.x, p.y);
         if (p.marker === "x" || p.marker === "foot") {
           const r = 5 * scale * 0.7;
@@ -14569,7 +14574,7 @@ ${body}</svg>`;
     // Stable 37-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.36",
+      version: "13.5.37",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

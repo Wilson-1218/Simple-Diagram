@@ -2,6 +2,9 @@
 /**
  * Validate a Simple Diagram JSON file.
  *   node tools/validate-diagram.mjs path/to/diagram.json
+ *
+ * AI 零返修出圖鐵律（v13.5.36+）: ops must match latest ai.html; see
+ * docs/paper-handoff.md / docs/solver-handoff.md (construction ops, hidden:true, checklist).
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";

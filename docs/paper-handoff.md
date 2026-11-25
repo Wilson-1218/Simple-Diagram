@@ -62,6 +62,19 @@
 - MCP：`mcp/server.mjs`（stdio）；工具名以 README／playbook 為準
 - 模組：`src/diagram/`（`applyOps`、`validateDiagram`、`emptyDiagram`、…）
 
+### AI 零返修出圖鐵律（v13.5.36+）
+
+出圖 agents（含 Paper 題圖重繪、MCP／CLI）**必須**遵守：
+
+1. **唯一 schema**：以最新 [`ai.html`](../ai.html)（v13.5.36+）為準；**勿臆造**未列名的 op。
+2. **構造勿手算**：中點／比例／交點／垂足**禁止**手算浮點再 `addPoint`——必須用 `addMidpoint`、`addRatioPoint`、`addIntersection`（含 `avoidPointId`／`pick` 等消歧）、`addFoot`。僅作方向／輔助的點加 `"hidden": true`（幾何保留、不畫標記）。
+3. **輸出前檢查**：
+   - `addTangent`：`aId` 偏左／上、`bId` 偏右／下
+   - `addLengthLabel`：優先語意 `side`（above／below／left／right）
+   - `addLabel`：`ox`／`oy` 向外約 14–20px
+   - BoxWhisker 有數字刻度時 `ticks` 用 `{pos,label}` 物件
+   - 多次 `addShape` → `idPrefix` 或 `labels:false` 避免 id／標籤衝突
+
 ---
 
 ## 建議的 paper schema（極簡草稿）

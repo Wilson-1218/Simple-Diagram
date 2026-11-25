@@ -13,7 +13,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for box-whisker", () => {
-  assert.equal(APP_VERSION, "13.5.36");
+  assert.equal(APP_VERSION, "13.5.37");
 });
 
 test("stable top-level keys include boxWhiskers (37)", () => {

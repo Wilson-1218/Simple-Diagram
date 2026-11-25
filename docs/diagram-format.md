@@ -56,7 +56,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `savedAt` | number | 儲存時間戳（毫秒） |
 | `name` | string | 檔名提示 |
 
-儲存時固定輸出上述 **37** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.36"`）。
+儲存時固定輸出上述 **37** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.37"`）。
 
 ---
 
@@ -65,10 +65,11 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 ### points
 
 ```json
-{ "id": "A", "x": 100, "y": 200, "marker": "x" }
+{ "id": "A", "x": 100, "y": 200, "marker": "x", "hidden": false }
 ```
 
 - `marker` 可選：`"x"`｜`"foot"`（垂足等）
+- `hidden` 可選（預設 false）：`true` 時點仍參與幾何，畫布／SVG／PNG **不**畫點標記（方向輔助點用）
 
 ### segments
 
