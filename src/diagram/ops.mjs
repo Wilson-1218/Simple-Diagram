@@ -4,6 +4,8 @@ import {
   applyBuiltinTemplate,
   BUILTIN_TEMPLATE_IDS,
   BUILTIN_TEMPLATES,
+  registerShapeVertexAlias,
+  shapeAliasMap,
   SHAPE_SOLID_TEMPLATE_IDS,
   TEMPLATE_CELL_SIZE,
 } from "./templates.mjs";
@@ -68,10 +70,75 @@ function normalizeFillColor(c, fallback = "#666666") {
   throw new Error(`invalid fill color: ${c}`);
 }
 
+/**
+ * Canonical point id. A real point always wins, so an alias never steals
+ * an id the caller already created. Otherwise `{prefix}{Letter}` and a free
+ * bare letter A–V resolve to the shape vertex registered at creation.
+ * If the alias map was dropped, a single-letter label still resolves.
+ */
+function resolvePointId(doc, id) {
+  if (id == null || id === "") return null;
+  if (doc.points.some((p) => p.id === id)) return id;
+  if (typeof id !== "string") return null;
+  const aliases = doc.pointAliases;
+  if (aliases && typeof aliases === "object" && !Array.isArray(aliases)) {
+    const target = aliases[id];
+    if (typeof target === "string" && target !== id && doc.points.some((p) => p.id === target)) {
+      return target;
+    }
+  }
+  return inferVertexAlias(doc, id);
+}
+
+function inferVertexAlias(doc, key) {
+  const prefixed = /^(.*)([A-V])$/.exec(key);
+  if (prefixed && prefixed[1]) {
+    const prefix = prefixed[1];
+    const letter = prefixed[2];
+    const re = new RegExp(`^${escapeRegExp(prefix)}\\d+$`);
+    let found = null;
+    for (const p of doc.points) {
+      if (!re.test(p.id)) continue;
+      if (labelLetter(doc, p.id) === letter) found = p.id;
+    }
+    if (found) return found;
+  }
+  if (/^[A-V]$/.test(key)) {
+    let found = null;
+    for (const p of doc.points) {
+      if (labelLetter(doc, p.id) === key) found = p.id;
+    }
+    if (found) return found;
+  }
+  return null;
+}
+
+function labelLetter(doc, pointId) {
+  let letter = null;
+  for (const lab of doc.labels || []) {
+    if (!lab || lab.pointId !== pointId) continue;
+    const t = lab.text != null ? String(lab.text).trim() : "";
+    if (/^[A-V]$/.test(t)) letter = t;
+  }
+  return letter;
+}
+
+function escapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function findPoint(doc, id) {
+  const resolved = resolvePointId(doc, id);
+  if (!resolved) return null;
+  return doc.points.find((p) => p.id === resolved) || null;
+}
+
 function requirePoint(doc, id, ctx) {
-  if (!doc.points.some((p) => p.id === id)) {
+  const p = findPoint(doc, id);
+  if (!p) {
     throw new Error(`${ctx}: point not found: ${id}`);
   }
+  return p.id;
 }
 
 function requireSegment(doc, id, ctx) {
@@ -87,7 +154,7 @@ function requireCircle(doc, id, ctx) {
 }
 
 function pointById(doc, id) {
-  return doc.points.find((p) => p.id === id) || null;
+  return findPoint(doc, id);
 }
 
 function circleGeom(doc, circleId, ctx) {
@@ -142,17 +209,17 @@ function resolveEndpoints(doc, op, ctx) {
     const a = pointById(doc, seg.a);
     const b = pointById(doc, seg.b);
     if (!a || !b) throw new Error(`${ctx}: segment endpoints missing`);
-    return { aId: seg.a, bId: seg.b, a, b };
+    return { aId: a.id, bId: b.id, a, b };
   }
   if (op.a == null || op.b == null) {
     throw new Error(`${ctx}: need segmentId or a+b point ids`);
   }
-  requirePoint(doc, op.a, ctx);
-  requirePoint(doc, op.b, ctx);
-  if (op.a === op.b) throw new Error(`${ctx}: a and b must differ`);
-  const a = pointById(doc, op.a);
-  const b = pointById(doc, op.b);
-  return { aId: op.a, bId: op.b, a, b };
+  const aId = requirePoint(doc, op.a, ctx);
+  const bId = requirePoint(doc, op.b, ctx);
+  if (aId === bId) throw new Error(`${ctx}: a and b must differ`);
+  const a = pointById(doc, aId);
+  const b = pointById(doc, bId);
+  return { aId, bId, a, b };
 }
 
 /** Infinite-line intersection of AB and CD. Returns {x,y,t,u} or null. */
@@ -242,11 +309,11 @@ function resolveOfGeom(doc, of, ctx) {
   if (of == null) throw new Error(`${ctx}: of1/of2 required`);
   if (typeof of === "object") {
     if (of.type === "line") {
-      requirePoint(doc, of.a, ctx);
-      requirePoint(doc, of.b, ctx);
-      if (of.a === of.b) throw new Error(`${ctx}: line endpoints must differ`);
-      const a = pointById(doc, of.a);
-      const b = pointById(doc, of.b);
+      const aId = requirePoint(doc, of.a, ctx);
+      const bId = requirePoint(doc, of.b, ctx);
+      if (aId === bId) throw new Error(`${ctx}: line endpoints must differ`);
+      const a = pointById(doc, aId);
+      const b = pointById(doc, bId);
       return { kind: "line", a, b };
     }
     throw new Error(`${ctx}: inline of must be {type:"line",a,b}`);
@@ -751,7 +818,7 @@ function applyFeasibleRegion(doc, op, nextId, ctx) {
     const pointIds = [];
     for (const v of solved.vertices) {
       const w = coordWorldFromAxis(plot, v.u, v.v);
-      pointIds.push(pushPoint(doc, nextId, w.x, w.y).id);
+      pointIds.push(pushPoint(doc, nextId, w.x, w.y, undefined, undefined, true).id);
     }
     const pattern = op.pattern == null || op.pattern === "" ? "hatch" : op.pattern;
     const fillOp = {
@@ -862,17 +929,17 @@ const HANDLERS = {
   addSegment(doc, op, nextId) {
     const id = resolveId(op, nextId, "s");
     if (doc.segments.some((s) => s.id === id)) throw new Error(`addSegment: duplicate id ${id}`);
-    requirePoint(doc, op.a, "addSegment");
-    requirePoint(doc, op.b, "addSegment");
-    if (op.a === op.b) throw new Error("addSegment: a and b must differ");
+    const a = requirePoint(doc, op.a, "addSegment");
+    const b = requirePoint(doc, op.b, "addSegment");
+    if (a === b) throw new Error("addSegment: a and b must differ");
     const dup = doc.segments.some(
-      (s) => (s.a === op.a && s.b === op.b) || (s.a === op.b && s.b === op.a)
+      (s) => (s.a === a && s.b === b) || (s.a === b && s.b === a)
     );
-    if (dup) throw new Error(`addSegment: segment already exists between ${op.a} and ${op.b}`);
+    if (dup) throw new Error(`addSegment: segment already exists between ${a} and ${b}`);
     doc.segments.push({
       id,
-      a: op.a,
-      b: op.b,
+      a,
+      b,
       style: styleOr(op.style, "solid"),
     });
     return doc;
@@ -880,14 +947,14 @@ const HANDLERS = {
 
   addLabel(doc, op, nextId) {
     const id = resolveId(op, nextId, "lab");
-    requirePoint(doc, op.pointId, "addLabel");
+    const pointId = requirePoint(doc, op.pointId, "addLabel");
     const text = op.text != null ? String(op.text) : "";
     // One label per point (matches UI)
-    doc.labels = doc.labels.filter((l) => l.pointId !== op.pointId);
+    doc.labels = doc.labels.filter((l) => l.pointId !== pointId);
     const ox = op.ox != null ? Number(op.ox) : 0;
     const oy = op.oy != null ? Number(op.oy) : -14;
     const size = op.size != null ? Number(op.size) : doc.labelFontSize || 16;
-    doc.labels.push({ id, pointId: op.pointId, text, ox, oy, size });
+    doc.labels.push({ id, pointId, text, ox, oy, size });
     return doc;
   },
 
@@ -915,14 +982,14 @@ const HANDLERS = {
 
   addRightAngle(doc, op, nextId) {
     const id = resolveId(op, nextId, "ra");
-    requirePoint(doc, op.vertex, "addRightAngle");
-    requirePoint(doc, op.arm1, "addRightAngle");
-    requirePoint(doc, op.arm2, "addRightAngle");
+    const vertex = requirePoint(doc, op.vertex, "addRightAngle");
+    const arm1 = requirePoint(doc, op.arm1, "addRightAngle");
+    const arm2 = requirePoint(doc, op.arm2, "addRightAngle");
     const row = {
       id,
-      vertex: op.vertex,
-      arm1: op.arm1,
-      arm2: op.arm2,
+      vertex,
+      arm1,
+      arm2,
       size: op.size != null ? Number(op.size) : doc.rightAngleSize || 10,
     };
     // Omitted mode stays the paper-sized 2D mark (today's geometry).
@@ -933,15 +1000,15 @@ const HANDLERS = {
 
   addAngleArc(doc, op, nextId) {
     const id = resolveId(op, nextId, "arc");
-    requirePoint(doc, op.vertex, "addAngleArc");
-    requirePoint(doc, op.arm1, "addAngleArc");
-    requirePoint(doc, op.arm2, "addAngleArc");
+    const vertex = requirePoint(doc, op.vertex, "addAngleArc");
+    const arm1 = requirePoint(doc, op.arm1, "addAngleArc");
+    const arm2 = requirePoint(doc, op.arm2, "addAngleArc");
     /** @type {{ id: string, vertex: string, arm1: string, arm2: string, size: number, group: number, text: string, reflex: boolean, textRadiusOffset?: number, textOx?: number, textOy?: number }} */
     const row = {
       id,
-      vertex: op.vertex,
-      arm1: op.arm1,
-      arm2: op.arm2,
+      vertex,
+      arm1,
+      arm2,
       size: op.size != null ? Number(op.size) : doc.rightAngleSize || 10,
       group: op.group ? 1 : 0,
       text: op.text != null ? String(op.text) : "",
@@ -1063,9 +1130,9 @@ const HANDLERS = {
   addMidTick(doc, op, nextId) {
     const id = resolveId(op, nextId, "mt");
     requireSegment(doc, op.segmentId, "addMidTick");
-    if (op.pointId) requirePoint(doc, op.pointId, "addMidTick");
+    const pointId = op.pointId ? requirePoint(doc, op.pointId, "addMidTick") : null;
     const m = { id, segmentId: op.segmentId };
-    if (op.pointId) m.pointId = op.pointId;
+    if (pointId) m.pointId = pointId;
     doc.midTicks.push(m);
     return doc;
   },
@@ -1076,8 +1143,8 @@ const HANDLERS = {
    * and optional altitude segment (drawSegment default true).
    */
   addFoot(doc, op, nextId) {
-    requirePoint(doc, op.pointId, "addFoot");
-    const from = pointById(doc, op.pointId);
+    const fromId = requirePoint(doc, op.pointId, "addFoot");
+    const from = pointById(doc, fromId);
     let a;
     let b;
     if (op.segmentId) {
@@ -1116,7 +1183,7 @@ const HANDLERS = {
       const style = styleOr(op.style, "solid");
       const segHint = op.altitudeId || (op.idPrefix ? `${op.idPrefix}alt` : undefined);
       try {
-        pushSegment(doc, nextId, op.pointId, foot.id, style, segHint);
+        pushSegment(doc, nextId, fromId, foot.id, style, segHint);
       } catch (err) {
         // Duplicate altitude is OK (reuse existing).
         if (!String(err.message || err).includes("already exists")) throw err;
@@ -1251,12 +1318,12 @@ const HANDLERS = {
 
   addCircle(doc, op, nextId) {
     const id = resolveId(op, nextId, "cir");
-    requirePoint(doc, op.centerId, "addCircle");
-    requirePoint(doc, op.throughId, "addCircle");
+    const centerId = requirePoint(doc, op.centerId, "addCircle");
+    const throughId = requirePoint(doc, op.throughId, "addCircle");
     const c = {
       id,
-      centerId: op.centerId,
-      throughId: op.throughId,
+      centerId,
+      throughId,
       style: styleOr(op.style, "solid"),
     };
     doc.circles.push(c);
@@ -1265,14 +1332,14 @@ const HANDLERS = {
 
   addEllipse(doc, op, nextId) {
     const id = resolveId(op, nextId, "ell");
-    requirePoint(doc, op.centerId, "addEllipse");
-    requirePoint(doc, op.rxId, "addEllipse");
-    requirePoint(doc, op.ryId, "addEllipse");
+    const centerId = requirePoint(doc, op.centerId, "addEllipse");
+    const rxId = requirePoint(doc, op.rxId, "addEllipse");
+    const ryId = requirePoint(doc, op.ryId, "addEllipse");
     const e = {
       id,
-      centerId: op.centerId,
-      rxId: op.rxId,
-      ryId: op.ryId,
+      centerId,
+      rxId,
+      ryId,
       style: styleOr(op.style, "solid"),
     };
     if (op.backDashed) e.backDashed = true;
@@ -1282,15 +1349,15 @@ const HANDLERS = {
 
   addSector(doc, op, nextId) {
     const id = resolveId(op, nextId, "sec");
-    requirePoint(doc, op.centerId, "addSector");
-    requirePoint(doc, op.startId, "addSector");
-    requirePoint(doc, op.endId, "addSector");
+    const centerId = requirePoint(doc, op.centerId, "addSector");
+    const startId = requirePoint(doc, op.startId, "addSector");
+    const endId = requirePoint(doc, op.endId, "addSector");
     const mode = op.mode === "sector" ? "sector" : "arc";
     doc.sectors.push({
       id,
-      centerId: op.centerId,
-      startId: op.startId,
-      endId: op.endId,
+      centerId,
+      startId,
+      endId,
       style: styleOr(op.style, "solid"),
       mode,
     });
@@ -1342,18 +1409,18 @@ const HANDLERS = {
       for (const e of op.edges) {
         if (!e || typeof e !== "object") throw new Error("addFill(pathFill): bad edge");
         if (e.type === "line") {
-          requirePoint(doc, e.a, "addFill(pathFill line)");
-          requirePoint(doc, e.b, "addFill(pathFill line)");
-          edges.push({ type: "line", a: String(e.a), b: String(e.b) });
+          const a = requirePoint(doc, e.a, "addFill(pathFill line)");
+          const b = requirePoint(doc, e.b, "addFill(pathFill line)");
+          edges.push({ type: "line", a, b });
         } else if (e.type === "arc") {
-          requirePoint(doc, e.centerId, "addFill(pathFill arc)");
-          requirePoint(doc, e.from, "addFill(pathFill arc)");
-          requirePoint(doc, e.to, "addFill(pathFill arc)");
+          const centerId = requirePoint(doc, e.centerId, "addFill(pathFill arc)");
+          const from = requirePoint(doc, e.from, "addFill(pathFill arc)");
+          const to = requirePoint(doc, e.to, "addFill(pathFill arc)");
           const edge = {
             type: "arc",
-            centerId: String(e.centerId),
-            from: String(e.from),
-            to: String(e.to),
+            centerId,
+            from,
+            to,
           };
           if (e.circleId) {
             requireCircle(doc, e.circleId, "addFill(pathFill arc)");
@@ -1400,15 +1467,14 @@ const HANDLERS = {
             throw new Error("addFill(polygon): mathPoints must be finite");
           }
           const w = coordWorldFromAxis(plot, u, v);
-          pointIds.push(pushPoint(doc, nextId, w.x, w.y).id);
+          pointIds.push(pushPoint(doc, nextId, w.x, w.y, undefined, undefined, true).id);
         }
       } else {
         const raw = op.pointIds != null ? op.pointIds : op.points;
         if (!Array.isArray(raw) || raw.length < 3) {
           throw new Error("addFill(polygon): pointIds must be an array of ≥3 point ids");
         }
-        pointIds = raw.map((x) => String(x));
-        for (const pid of pointIds) requirePoint(doc, pid, "addFill");
+        pointIds = raw.map((x) => requirePoint(doc, x, "addFill"));
       }
       if (new Set(pointIds).size < 3) {
         throw new Error("addFill: need at least 3 distinct point ids");
@@ -1423,18 +1489,17 @@ const HANDLERS = {
       if (!Array.isArray(raw) || raw.length < 2) {
         throw new Error("addFill(polyArc): pointIds must be an array of ≥2 point ids");
       }
-      const pointIds = raw.map((x) => String(x));
-      for (const pid of pointIds) requirePoint(doc, pid, "addFill(polyArc)");
-      requirePoint(doc, op.centerId, "addFill(polyArc)");
-      requirePoint(doc, op.startId, "addFill(polyArc)");
-      requirePoint(doc, op.endId, "addFill(polyArc)");
+      const pointIds = raw.map((x) => requirePoint(doc, x, "addFill(polyArc)"));
+      const centerId = requirePoint(doc, op.centerId, "addFill(polyArc)");
+      const startId = requirePoint(doc, op.startId, "addFill(polyArc)");
+      const endId = requirePoint(doc, op.endId, "addFill(polyArc)");
       const f = {
         id,
         kind: "polyArc",
         pointIds,
-        centerId: op.centerId,
-        startId: op.startId,
-        endId: op.endId,
+        centerId,
+        startId,
+        endId,
         color,
         opacity,
       };
@@ -1446,15 +1511,15 @@ const HANDLERS = {
       return doc;
     }
     if (kind === "sector") {
-      requirePoint(doc, op.centerId, "addFill(sector)");
-      requirePoint(doc, op.startId, "addFill(sector)");
-      requirePoint(doc, op.endId, "addFill(sector)");
+      const centerId = requirePoint(doc, op.centerId, "addFill(sector)");
+      const startId = requirePoint(doc, op.startId, "addFill(sector)");
+      const endId = requirePoint(doc, op.endId, "addFill(sector)");
       const f = {
         id,
         kind: "sector",
-        centerId: op.centerId,
-        startId: op.startId,
-        endId: op.endId,
+        centerId,
+        startId,
+        endId,
         color,
         opacity,
       };
@@ -1466,21 +1531,21 @@ const HANDLERS = {
       return doc;
     }
     // circular segment
-    requirePoint(doc, op.startId, "addFill(segment)");
-    requirePoint(doc, op.endId, "addFill(segment)");
+    const startId = requirePoint(doc, op.startId, "addFill(segment)");
+    const endId = requirePoint(doc, op.endId, "addFill(segment)");
     if (op.circleId) requireCircle(doc, op.circleId, "addFill(segment)");
-    else if (op.centerId) requirePoint(doc, op.centerId, "addFill(segment)");
-    else throw new Error("addFill(segment): need circleId or centerId");
+    else if (op.centerId == null) throw new Error("addFill(segment): need circleId or centerId");
+    const centerId = op.centerId != null ? requirePoint(doc, op.centerId, "addFill(segment)") : null;
     const f = {
       id,
       kind: "segment",
-      startId: op.startId,
-      endId: op.endId,
+      startId,
+      endId,
       color,
       opacity,
     };
     if (op.circleId) f.circleId = op.circleId;
-    if (op.centerId) f.centerId = op.centerId;
+    if (centerId) f.centerId = centerId;
     doc.fills.push(withPattern(f));
     return doc;
   },
@@ -1543,11 +1608,12 @@ const HANDLERS = {
     }
 
     const labelPoint = (p, i) => {
-      if (!(op.label || op.labels)) return;
       const text =
-        Array.isArray(op.labels) && op.labels[i] != null
+        Array.isArray(op.labels) && op.labels[i] != null && String(op.labels[i]) !== ""
           ? String(op.labels[i])
           : String.fromCharCode(65 + i);
+      registerShapeVertexAlias(doc, prefix, text, p.id);
+      if (!(op.label || op.labels)) return;
       HANDLERS.addLabel(doc, { pointId: p.id, text, ox: -10, oy: -12 }, nextId);
     };
 
@@ -1660,11 +1726,11 @@ const HANDLERS = {
   addTangent(doc, op, nextId) {
     const geom = circleGeom(doc, op.circleId, "addTangent");
     const ang = resolveCircleAngle(doc, geom, op, "addTangent");
-    const touch =
-      op.touchId || op.pointId
-        ? pointById(doc, op.touchId || op.pointId)
-        : pointOnCircle(geom.c, geom.r, ang);
     let touchId = op.touchId || op.pointId || null;
+    if (touchId) touchId = requirePoint(doc, touchId, "addTangent");
+    const touch = touchId
+      ? pointById(doc, touchId)
+      : pointOnCircle(geom.c, geom.r, ang);
     if (!touchId) {
       touchId = pushPoint(doc, nextId, touch.x, touch.y, op.touchPointId).id;
     }
@@ -1705,7 +1771,7 @@ const HANDLERS = {
       const p = pointOnCircle(geom.c, geom.r, ang);
       throughId = pushPoint(doc, nextId, p.x, p.y, op.throughPointId).id;
     } else {
-      requirePoint(doc, throughId, "addRadius");
+      throughId = requirePoint(doc, throughId, "addRadius");
     }
     pushSegment(doc, nextId, geom.cir.centerId, throughId, op.style, op.id);
     return doc;
@@ -1736,7 +1802,7 @@ const HANDLERS = {
       if (!Number.isFinite(ang0)) throw new Error("addChord: angle0 invalid");
       const p = pointOnCircle(geom.c, geom.r, ang0);
       aId = pushPoint(doc, nextId, p.x, p.y, op.aId).id;
-    } else requirePoint(doc, aId, "addChord");
+    } else aId = requirePoint(doc, aId, "addChord");
     if (!bId) {
       let ang1;
       if (op.angle1 != null) ang1 = Number(op.angle1);
@@ -1745,7 +1811,7 @@ const HANDLERS = {
       if (!Number.isFinite(ang1)) throw new Error("addChord: angle1 invalid");
       const p = pointOnCircle(geom.c, geom.r, ang1);
       bId = pushPoint(doc, nextId, p.x, p.y, op.bId).id;
-    } else requirePoint(doc, bId, "addChord");
+    } else bId = requirePoint(doc, bId, "addChord");
     pushSegment(doc, nextId, aId, bId, op.style, op.id);
     return doc;
   },
@@ -1928,7 +1994,8 @@ const HANDLERS = {
   /**
    * Project a 3D polyhedron. Hidden edges come from face normals
    * (not the solid-template dash pattern).
-   * vertices: { A: [x,y,z], ... }; faces CCW from the outside.
+   * vertices: { A: [x,y,z], ... }. Face winding may be either way;
+   * normals are flipped outward from the vertex centroid.
    */
   add3DPolyhedron(doc, op, nextId) {
     const built = buildPolyhedron(op);
@@ -2028,7 +2095,7 @@ const HANDLERS = {
   },
 
   movePoint(doc, op) {
-    const p = doc.points.find((x) => x.id === op.id);
+    const p = findPoint(doc, op.id);
     if (!p) throw new Error(`movePoint: not found: ${op.id}`);
     const x = Number(op.x);
     const y = Number(op.y);
@@ -2069,8 +2136,9 @@ const HANDLERS = {
     };
     const key = map[type];
     if (!key) throw new Error(`remove: unknown type ${type}`);
+    const removeId = type === "point" ? resolvePointId(doc, id) || id : id;
     const before = doc[key].length;
-    doc[key] = doc[key].filter((x) => x.id !== id);
+    doc[key] = doc[key].filter((x) => x.id !== removeId);
     if (doc[key].length === before) throw new Error(`remove: ${type} ${id} not found`);
     return doc;
   },
@@ -2120,8 +2188,16 @@ export const OP_NAMES = Object.keys(HANDLERS).sort();
 export function applyOps(doc, ops) {
   if (ops == null) ops = [];
   if (!Array.isArray(ops)) throw new Error("ops must be an array");
+  const carried =
+    doc && doc.pointAliases && typeof doc.pointAliases === "object" && !Array.isArray(doc.pointAliases)
+      ? { ...doc.pointAliases }
+      : null;
   let out = ensureArrays(cloneDoc(doc || emptyDiagram()));
   if (out.formatVersion == null) out.formatVersion = 1;
+  if (carried) {
+    const aliases = shapeAliasMap(out);
+    Object.assign(aliases, carried);
+  }
   const nextId = createIdFactory(out, "id");
 
   for (let i = 0; i < ops.length; i++) {

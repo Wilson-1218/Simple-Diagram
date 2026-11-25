@@ -224,7 +224,7 @@
     <table>
       <thead><tr><th>kind</th><th>必填</th><th>tip</th></tr></thead>
       <tbody>
-        <tr><td><code>polygon</code>（預設）</td><td><code>pointIds</code> ≥3</td><td>亦接受 <code>points</code>。或 <code>mathPoints:[[u,v],…]</code>＋可選 <code>plotId</code>（預設最後一個座標圖），依該圖比例換成世界頂點後成為一般多邊形填色（<code>pattern</code> 仍可用 <code>hatch</code> 或實心／透明度）</td></tr>
+        <tr><td><code>polygon</code>（預設）</td><td><code>pointIds</code> ≥3</td><td>亦接受 <code>points</code>。或 <code>mathPoints:[[u,v],…]</code>＋可選 <code>plotId</code>（預設最後一個座標圖），依該圖比例換成世界頂點後成為一般多邊形填色（自動頂點預設 <code>hidden:true</code>，見 §10.6；<code>pattern</code> 仍可用 <code>hatch</code> 或實心／透明度）</td></tr>
         <tr><td><code>sector</code></td><td><code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>可選 <code>circleId</code></td></tr>
         <tr><td><code>segment</code></td><td><code>startId</code>, <code>endId</code> + (<code>circleId</code>|<code>centerId</code>)</td><td>弓形</td></tr>
         <tr><td><code>polyArc</code></td><td><code>pointIds</code> ≥2 + <code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>折線＋弧閉合</td></tr>
@@ -281,12 +281,14 @@
         <tr><td><code>cone</code></td><td>底心 O、右緣、下緣、左緣、頂點 V</td></tr>
       </tbody>
     </table>
+    <p><strong>字母別名</strong>：標籤是 A、B、C…、V，點 id 仍是 <code>K0</code>…。之後的 <code>addSegment</code>、<code>addRightAngle</code> 等接受 <code>{idPrefix}{字母}</code>（<code>KA</code>、<code>KC</code>、<code>KV</code>），對到該字母的頂點（角錐／長方體的 C 是 <code>K2</code>，角錐的 V 是 <code>K4</code>）。那個字母還不是已有點 id 時，裸字母 <code>A</code>…<code>V</code> 也對到這個圖形的頂點。呼叫端已經建立的點不會被換掉：先有點 <code>C</code> 時，<code>C</code> 仍是那個點，<code>KC</code> 仍是 C 頂點。有畫出的 <code>labels</code> 覆寫時，別名跟畫面上的字母；<code>labels:false</code> 時仍用模板字母。多個圖形共用同一個裸字母時，後放的圖形生效；前綴別名（<code>KC</code>／<code>LC</code>）各自對到自己的頂點。真正的點 id（例如底心 <code>KO</code>）永遠優先於同名別名。</p>
+    <p class="note"><span class="en"><code>idPrefix:"K"</code> keeps ids <code>K0</code>…. Later ops may pass <code>KC</code> or, when no point <code>C</code> exists, bare <code>C</code>. A caller-created point is never replaced. Shown label letters win; with <code>labels:false</code> the template letters (A…H, V) still alias.</span></p>
 
     <h3>9.2 <code>addRightAngle</code> 的 3D 標記</h3>
     <p>預設 <code>mode:"2d"</code>（可省略）：沿兩臂方向的紙上記號，邊長跟匯出墨水（約數毫米），與以往相同。<code>mode:"3d"</code> 或 <code>skew:true</code>：取 <code>(arm1−vertex)</code>、<code>(arm2−vertex)</code> 的單位向量，邊長 <code>size</code>（世界單位），畫出經過 <code>vertex + s·u1</code>、<code>vertex + s·u1 + s·u2</code>、<code>vertex + s·u2</code> 的平行四邊形。兩臂在畫面上不垂直時，這是斜的平行四邊形，不是那枚較小的 2D 方標記。</p>
 
     <h3>9.3 <code>add3DPolyhedron</code></h3>
-    <p>用面的外向法線決定實線／虛線，<strong>不要</strong>套用角錐模板那組寫死的隱藏邊。3D 軸：+X 右、+Y 上、+Z 朝觀察者（旋轉前）。<code>yawDeg</code> 繞 Y（預設 35），<code>pitchDeg</code> 再繞 X（預設 20，正值把 +Y 傾向觀察者）。<code>scale</code> 預設 40。<code>origin:[ox,oy]</code> 是投影後原點的世界座標。面要由外往內看時逆時針（右手定則）。旋轉後法線的視空間 Z &gt; 0 為正面。至少屬於一個正面的邊（含輪廓）為 <code>solid</code>；只屬於背面的邊為 <code>dashed</code>。</p>
+    <p>用面的外向法線決定實線／虛線，<strong>不要</strong>套用角錐模板那組寫死的隱藏邊。3D 軸：+X 右、+Y 上、+Z 朝觀察者（旋轉前）。<code>yawDeg</code> 繞 Y（預設 35），<code>pitchDeg</code> 再繞 X（預設 20，正值把 +Y 傾向觀察者）。<code>scale</code> 預設 40。<code>origin:[ox,oy]</code> 是投影後原點的世界座標。面可以順時針或逆時針。引擎用 Newell 算法線後，取全體頂點形心 G 與面心 Fc；若 <code>(Fc − G) · n &lt; 0</code> 就把 <code>n</code> 翻成朝外，所以不要求呼叫端把面收成逆時針。旋轉後，這條朝外法線的視空間 Z &gt; 0 為正面。至少屬於一個正面的邊（含輪廓）為 <code>solid</code>；只屬於背面的邊為 <code>dashed</code>。</p>
     <p><code>idPrefix:"K"</code> 時頂點 id 為 <code>KA</code>、<code>KB</code>…（前綴接上頂點名字），線段 <code>Ks0</code>…。<code>labels:false</code> 略過字母；省略則標頂點名字。</p>
 <pre>[
   {
@@ -309,7 +311,7 @@
     ]
   }
 ]</pre>
-    <p class="note"><span class="en">Irregular pyramids (apex not above the base center) use the same normal test — there is no hard-coded hidden-edge pattern. An edge on at least one front face, including the silhouette, is solid.</span></p>
+    <p class="note"><span class="en">Irregular pyramids (apex not above the base center) use the same normal test — there is no hard-coded hidden-edge pattern. Clockwise and counterclockwise faces are both corrected to outward normals. An edge on at least one front face, including the silhouette, is solid; a back-only edge stays dashed.</span></p>
 
     <h3>9.4 圓柱／圓錐水位</h3>
 <pre>[
@@ -432,6 +434,7 @@
     "opacity": 1
   }
 ]</pre>
+    <p><code>mathPoints</code> 自動產生的填色頂點預設 <code>hidden:true</code>，暗色畫布不會在角上畫白點；填色本身仍在。呼叫端自己建立的點（<code>pointIds</code>／<code>addPoint</code>／<code>addPlotPoint</code>）維持可見，除非該 op 自己寫了 <code>hidden:true</code>。</p>
     <p class="note"><code>showTickLabels: false</code> 時預設整數刻度消失，但上面的 <code>xTicks</code>/<code>yTicks</code> 仍會畫出。省略新欄位的舊圖，刻度與比例與以前相同。</p>
 
     <h3>10.7 可行區域 / Feasible region</h3>
@@ -451,7 +454,7 @@
     </table>
     <p>每條不等式正規化成半平面 <code>A u + B v ≤ C</code>（<code>&gt;=</code>／<code>&gt;</code> 變號）。字串接受 <code>&lt;= &gt;= &lt; &gt; ≤ ≥</code>、斜率式與一般式；<code>*</code> 可省略；分數寫 <code>3/2</code> 或 <code>(3/2)</code>。例：<code>y &lt;= 2x + 1</code>、<code>y &gt;= -0.5x + 3</code>、<code>y &lt; 1.5*x - 2</code>、<code>x + y &lt;= 5</code>、<code>3x - 2y &gt;= -6</code>、<code>2x + 3y - 12 &lt;= 0</code>、<code>x &gt;= 0</code>、<code>y &gt; 1</code>、<code>y &lt;= (3/2)x + 3</code>、<code>y &lt;= 3/2 x + 3</code>。</p>
     <p>物件：<code>{ "a": 1, "b": 1, "op": "&lt;=", "c": 5, "drawLine"?: true, "style"?: "solid"|"dashed", "label"?: "L_1" }</code> 表示 <code>a x + b y op c</code>。或 <code>{ "expr": "y &lt;= 2x + 1", "label": "L_1" }</code>。係數與 <code>expr</code> 同時有時用係數。</p>
-    <p>從 <code>domainClip</code> 的軸對齊矩形開始，Sutherland–Hodgman 逐條裁切。頂點 ≥ 3 且面積 &gt; 1e-6 才做成一般多邊形填色（頂點是普通點，與 <code>mathPoints</code> 相同）。世界座標 <code>x = ox + u·xUnitPx</code>、<code>y = oy − v·yUnitPx</code>（沒有分軸比例就用 <code>unitPx</code>）。空交集：警告且不加填色。嚴格 <code>&lt;</code> <code>&gt;</code> 仍按閉半平面裁，邊界改虛線。</p>
+    <p>從 <code>domainClip</code> 的軸對齊矩形開始，Sutherland–Hodgman 逐條裁切。頂點 ≥ 3 且面積 &gt; 1e-6 才做成一般多邊形填色。這些自動頂點與 <code>mathPoints</code> 一樣預設 <code>hidden:true</code>（不畫圓點，填色仍在）。世界座標 <code>x = ox + u·xUnitPx</code>、<code>y = oy − v·yUnitPx</code>（沒有分軸比例就用 <code>unitPx</code>）。空交集：警告且不加填色。嚴格 <code>&lt;</code> <code>&gt;</code> 仍按閉半平面裁，邊界改虛線。</p>
     <p><code>drawBoundaries: true</code>，或該條 <code>drawLine: true</code>，會加一條座標曲線，但<strong>不</strong>加軸線 x=0 或 y=0。<code>&lt;= &gt;= ≤ ≥</code> 實線；<code>&lt;</code> <code>&gt;</code> 虛線；寫了 <code>style</code> 就用它。斜線是 <code>type:"line"</code>；鉛直線（如 <code>x &lt;= 4</code>）是 <code>type:"vline"</code>、<code>params.x</code>。每條 <code>label</code>（如 <code>"L_1"</code>）成為曲線自訂文字，下標可用。曲線畫滿座標圖視窗。</p>
 <pre>{
   "op": "addCoordPlot",
@@ -617,7 +620,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.42 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.43 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

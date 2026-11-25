@@ -6,11 +6,12 @@
  * (positive pitch tips +Y toward the viewer).
  * Canvas: x right, y down. Projected (0,0,0) lands on origin.
  *
- * Faces are listed CCW when viewed from the outside (right-hand rule).
- * After yaw/pitch, a face is front-facing when its outward normal has
- * positive view-space Z. An edge is solid when it belongs to at least
- * one front face (including the silhouette); dashed when every face
- * that owns it is back-facing.
+ * Face winding may be clockwise or counterclockwise. Each face normal
+ * is flipped when it points toward the vertex centroid, so the stored
+ * normal is outward either way. After yaw/pitch, a face is front-facing
+ * when that outward normal has positive view-space Z. An edge is solid
+ * when it belongs to at least one front face (including the silhouette);
+ * dashed when every face that owns it is back-facing.
  */
 
 function finite(v, fallback) {
@@ -62,6 +63,31 @@ function newellNormal(points) {
 
 function edgeKey(a, b) {
   return a < b ? `${a}\0${b}` : `${b}\0${a}`;
+}
+
+function centroid(points) {
+  let x = 0;
+  let y = 0;
+  let z = 0;
+  for (const p of points) {
+    x += p.x;
+    y += p.y;
+    z += p.z;
+  }
+  const n = points.length || 1;
+  return { x: x / n, y: y / n, z: z / n };
+}
+
+/**
+ * Newell normal, then flip so it points from the vertex centroid G
+ * toward the face center Fc. Either winding then yields an outward normal.
+ */
+function outwardNormal(facePts, g) {
+  const n = newellNormal(facePts);
+  const fc = centroid(facePts);
+  const dot = (fc.x - g.x) * n.x + (fc.y - g.y) * n.y + (fc.z - g.z) * n.z;
+  if (dot < 0) return { x: -n.x, y: -n.y, z: -n.z };
+  return n;
 }
 
 /**
@@ -119,6 +145,8 @@ export function buildPolyhedron(op) {
     placed.push({ key, x: p.x, y: p.y });
   }
 
+  const g = centroid(keys.map((key) => view.get(key)));
+
   /** @type {Array<{ a: string, b: string, front: boolean }>} */
   const edgeOrder = [];
   /** @type {Map<string, { a: string, b: string, front: boolean }>} */
@@ -137,7 +165,7 @@ export function buildPolyhedron(op) {
       }
       pts.push(view.get(key));
     }
-    const n = newellNormal(pts);
+    const n = outwardNormal(pts, g);
     const front = n.z > 1e-8;
     for (let i = 0; i < face.length; i++) {
       const a = String(face[i]);
