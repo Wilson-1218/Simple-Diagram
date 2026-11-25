@@ -702,7 +702,9 @@ export function documentToSvg(doc, opts = {}) {
     for (const s of parts.caps) body += line(s);
     if (parts.axis) body += line(parts.axis);
     for (const s of parts.tickMarks) body += line(s);
-    const tickFs = ink.fontForSize(13);
+    /* Match BarChart tick size (14) + white paper halo */
+    const tickFs = ink.fontForSize(14);
+    const tickHalo = Math.max(3.5, ink.mm(0.35), tickFs * 0.28);
     const tickFam =
       'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
     for (const t of parts.tickLabels || []) {
@@ -714,7 +716,7 @@ export function documentToSvg(doc, opts = {}) {
           : t.baseline === "auto"
             ? "auto"
             : "middle";
-      body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${tickFam} font-size="${tickFs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
+      body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${tickHalo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" ${tickFam} font-size="${tickFs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
     }
     const or = ink.mm(0.55);
     for (const o of parts.outliers) {

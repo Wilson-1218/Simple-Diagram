@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261125-release-v13.5.34" />
+  <meta name="simple-diagram-build" content="20261125-release-v13.5.35" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -31,7 +31,7 @@
   --font-math: "STIX Two Text", "Times New Roman", "Noto Serif TC", serif;
   /* Tool rail: default 3 columns; user can drag-resize (2-col when narrow) */
   --rail-cols: 3;
-  /* 180px: EN Sector / Reflex / Equal / Chord (circlePart) without ellipsis */
+  /* 180px + tool pad override: EN Sector / Shape / Reflex / Equal / Chord */
   --rail-width: calc(180px * var(--tb, 1.2));
   --canvas-paper: #ffffff;
   --canvas-ink: #111111;
@@ -338,6 +338,11 @@ button {
   font-size: calc(12px * var(--tb));
   padding: calc(4px * var(--tb)) calc(7px * var(--tb));
   border-radius: calc(var(--radius) * var(--tb) * 0.85);
+}
+
+/* Beat `.tool-rail button` side pad so EN Sector/Shape are not ellipsized */
+.tool-rail button.tool {
+  padding: calc(2px * var(--tb)) 0;
 }
 
 button:hover {
@@ -2038,7 +2043,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.34</span>
+            <span class="brand-sub">v13.5.35</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -8561,7 +8566,8 @@ body.dark-canvas .coord-curve-row {
     for (const s of parts.caps) strokeLine(s);
     if (parts.axis) strokeLine(parts.axis);
     for (const s of parts.tickMarks) strokeLine(s);
-    const fontPx = Math.max(11, lw * 7);
+    /* ~+2px vs prior floor 11 — closer to BarChart axis tick visual size */
+    const fontPx = Math.max(13, lw * 8);
     c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
     c.fillStyle = color;
     for (const t of parts.tickLabels || []) {
@@ -8569,6 +8575,8 @@ body.dark-canvas .coord-curve-row {
       c.textAlign = t.anchor === "end" ? "right" : t.anchor === "start" ? "left" : "center";
       c.textBaseline =
         t.baseline === "hanging" ? "top" : t.baseline === "auto" ? "alphabetic" : "middle";
+      paintTextHalo(c, t.text, p.x, p.y, fontPx);
+      c.fillStyle = color;
       c.fillText(t.text, p.x, p.y);
     }
     const r = Math.max(2.5, lw * 1.4);
@@ -8831,14 +8839,15 @@ body.dark-canvas .coord-curve-row {
     for (const s of parts.caps) out += line(s);
     if (parts.axis) out += line(parts.axis);
     for (const s of parts.tickMarks) out += line(s);
-    const fontPx = (Math.max(11, LINE_WIDTH * 7) * scale * 0.75).toFixed(1);
+    const fontPx = (Math.max(13, LINE_WIDTH * 8) * scale * 0.75).toFixed(1);
+    const halo = Math.max(3.5, Number(fontPx) * 0.28).toFixed(2);
     const fam = 'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
     for (const t of parts.tickLabels || []) {
       const p = toS(t.x, t.y);
       const anchor = t.anchor === "end" ? "end" : t.anchor === "start" ? "start" : "middle";
       const baseline =
         t.baseline === "hanging" ? "hanging" : t.baseline === "auto" ? "auto" : "middle";
-      out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
+      out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo}" stroke-linejoin="round" paint-order="stroke fill" ${fam} font-size="${fontPx}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
     }
     const or = Math.max(2.5, LINE_WIDTH * scale * 0.75 * 1.4);
     for (const o of parts.outliers) {
@@ -14560,7 +14569,7 @@ ${body}</svg>`;
     // Stable 37-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.34",
+      version: "13.5.35",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

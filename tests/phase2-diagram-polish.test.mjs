@@ -13,7 +13,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for phase2 polish", () => {
-  assert.equal(APP_VERSION, "13.5.34");
+  assert.equal(APP_VERSION, "13.5.35");
 });
 
 test("addLabel SVG uses paint-order white halo", () => {

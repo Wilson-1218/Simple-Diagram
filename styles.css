@@ -23,7 +23,7 @@
   --font-math: "STIX Two Text", "Times New Roman", "Noto Serif TC", serif;
   /* Tool rail: default 3 columns; user can drag-resize (2-col when narrow) */
   --rail-cols: 3;
-  /* 180px: EN Sector / Reflex / Equal / Chord (circlePart) without ellipsis */
+  /* 180px + tool pad override: EN Sector / Shape / Reflex / Equal / Chord */
   --rail-width: calc(180px * var(--tb, 1.2));
   --canvas-paper: #ffffff;
   --canvas-ink: #111111;
@@ -330,6 +330,11 @@ button {
   font-size: calc(12px * var(--tb));
   padding: calc(4px * var(--tb)) calc(7px * var(--tb));
   border-radius: calc(var(--radius) * var(--tb) * 0.85);
+}
+
+/* Beat `.tool-rail button` side pad so EN Sector/Shape are not ellipsized */
+.tool-rail button.tool {
+  padding: calc(2px * var(--tb)) 0;
 }
 
 button:hover {
