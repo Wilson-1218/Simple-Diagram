@@ -934,6 +934,7 @@ export function documentToSvg(doc, opts = {}) {
 
   if (!hidePoints) {
     for (const p of pts.values()) {
+      if (p.hidden === true) continue;
       const s = toS(p.x, p.y);
       const pr = ink.mm(0.55).toFixed(2);
       body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${pr}" fill="#111" />\n`;

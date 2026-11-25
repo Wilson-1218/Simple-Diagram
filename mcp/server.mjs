@@ -59,7 +59,12 @@ const TOOLS = [
     description:
       "Create an empty Simple Diagram JSON (formatVersion 1). " +
       "Prefer this once, then apply_ops with many ops in one call. " +
-      "Do not simulate UI clicks — only emit document JSON + ops.",
+      "Do not simulate UI clicks — only emit document JSON + ops. " +
+      "AI 零返修出圖鐵律（v13.5.36+）: follow latest ai.html only (no invented ops); " +
+      "use addMidpoint/addRatioPoint/addIntersection(+avoidPointId|pick)/addFoot — never hand-float those; " +
+      "direction-only helpers → hidden:true; checklist: addTangent aId left/up bId right/down; " +
+      "addLengthLabel semantic side; addLabel ox/oy outward ~14–20px; " +
+      "BoxWhisker ticks as {pos,label} when numbers shown; multi addShape → idPrefix or labels:false.",
     inputSchema: {
       type: "object",
       properties: {
@@ -84,6 +89,9 @@ const TOOLS = [
       "Batch many ops in one call. Returns { doc, validation?, summary? }. " +
       "Defaults: validate=true, summarize=true (set false to shrink payload). " +
       "On error, returns { error, hint } with the failing op index. " +
+      "AI 零返修出圖鐵律（v13.5.36+）: sole schema = latest ai.html (no invented ops); " +
+      "no hand-computed floats for midpoint/ratio/intersection/foot — use construction ops + hidden:true for helpers; " +
+      "pre-check addTangent aId/bId, length side, label ox/oy, BoxWhisker {pos,label} ticks, multi-shape idPrefix|labels:false. " +
       "Known ops: " +
       OP_NAMES.join(", "),
     inputSchema: {
@@ -158,7 +166,9 @@ const TOOLS = [
   {
     name: "list_ops",
     description:
-      "List supported op names with short arg hints, formatVersion, app version, macros, templates, and examples.",
+      "List supported op names with short arg hints, formatVersion, app version, macros, templates, and examples. " +
+      "AI 零返修出圖鐵律（v13.5.36+）: treat this catalog + ai.html as sole schema; " +
+      "prefer construction ops over hand floats; hidden:true for direction-only points.",
     inputSchema: { type: "object", properties: {} },
   },
   {

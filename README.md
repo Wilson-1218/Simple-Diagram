@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.36 · 穩定）
+## 目前版本 / Current version（v13.5.37 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.37** — 點可選 `hidden:true`（幾何保留、不畫／不匯出標記）；Paper／Solver handoff＋MCP／CLI「AI 零返修出圖鐵律」
 - **v13.5.36** — 宣告式構造 ops：`addMidpoint`／`addRatioPoint`／`addIntersection`；ai.html §5 更新
 - **v13.5.35** — EN 左欄 tool 水平 padding 覆蓋修正（Sector／Shape 不再省略）；盒鬚刻度字級略增＋光暈
 - **v13.5.34** — 點標／座標刻度光暈；座標軸正向外伸；盒鬚 `ticks` 可帶 label；棒圖 xLabel 間距；EN 左欄加寬；ai.html §8/§9
@@ -122,7 +123,7 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 | 中文 | English |
 |---|---|
-| 試卷 PDF 還原／電子試卷（**Simple Paper**）請讀 [`docs/paper-handoff.md`](docs/paper-handoff.md)：OCR／layout、paper schema、題圖以 Diagram ops 重繪。 | Exam PDF digitization（**Simple Paper**）: see [`docs/paper-handoff.md`](docs/paper-handoff.md) for OCR／layout, paper schema, and redrawing figures via Diagram ops. |
+| 試卷 PDF 還原／電子試卷（**Simple Paper**）請讀 [`docs/paper-handoff.md`](docs/paper-handoff.md)：OCR／layout、paper schema、題圖以 Diagram ops 重繪；含 **AI 零返修出圖鐵律（v13.5.36+）**。 | Exam PDF digitization（**Simple Paper**）: see [`docs/paper-handoff.md`](docs/paper-handoff.md) for OCR／layout, paper schema, redrawing figures via Diagram ops, and **AI zero-rework iron rules (v13.5.36+)**. |
 
 ---
 
@@ -130,7 +131,7 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 | 中文 | English |
 |---|---|
-| 解題／上層 agent（如 **Simple Solution**，**產品暫緩**）請讀 [`docs/solver-handoff.md`](docs/solver-handoff.md)：角色分工、出圖管線、勿依賴 Agent Store。 | Solution／upper agents (e.g. **Simple Solution** — **solver product paused**): see [`docs/solver-handoff.md`](docs/solver-handoff.md) for role split, figure pipeline, and “don’t scrape Agent Store”. |
+| 解題／上層 agent（如 **Simple Solution**，**產品暫緩**）請讀 [`docs/solver-handoff.md`](docs/solver-handoff.md)：角色分工、出圖管線、勿依賴 Agent Store；同含 **AI 零返修出圖鐵律（v13.5.36+）**。 | Solution／upper agents (e.g. **Simple Solution** — **solver product paused**): see [`docs/solver-handoff.md`](docs/solver-handoff.md) for role split, figure pipeline, “don’t scrape Agent Store”, and **AI zero-rework iron rules (v13.5.36+)**. |
 
 ---
 

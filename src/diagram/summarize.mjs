@@ -51,7 +51,10 @@ export function summarizeDiagram(doc) {
 
 /** Brief catalog of ops for MCP list_ops / agents. */
 export const OP_CATALOG = {
-  addPoint: { args: "id?, x, y, marker?", note: "World coords; y down on canvas" },
+  addPoint: {
+    args: "id?, x, y, marker?, hidden?",
+    note: "World coords; y down on canvas; hidden:true keeps point for geometry but skips canvas/SVG/PNG marker",
+  },
   addSegment: { args: "id?, a, b, style?", note: "style: solid|dashed|dotted|dashdot" },
   addLabel: { args: "pointId, text, ox?, oy?, size?", note: "One label per point" },
   addRightAngle: { args: "vertex, arm1, arm2, size?" },
@@ -80,16 +83,16 @@ export const OP_CATALOG = {
     note: "orthogonal projection onto line; marker foot; altitude segment by default",
   },
   addMidpoint: {
-    args: "a+b | segmentId, id?, markEqual?, equalGroup?, marker?, style?",
-    note: "midpoint; markEqual creates/marks subsegments (a,M)+(M,b) with equal marks",
+    args: "a+b | segmentId, id?, markEqual?, equalGroup?, marker?, style?, hidden?",
+    note: "midpoint; markEqual creates/marks subsegments (a,M)+(M,b) with equal marks; hidden skips draw",
   },
   addRatioPoint: {
-    args: "a+b | segmentId, id?, t? | m+n, marker?",
-    note: "P=A+t(B−A); or P=(nA+mB)/(m+n); t wins over m:n; default t=0.5",
+    args: "a+b | segmentId, id?, t? | m+n, marker?, hidden?",
+    note: "P=A+t(B−A); or P=(nA+mB)/(m+n); t wins over m:n; default t=0.5; hidden skips draw",
   },
   addIntersection: {
-    args: "of1, of2, id?, id2?, extendLines?, avoidPointId?, nearPointId?, pick?, marker?",
-    note: "of = segment|circle id or {type:line,a,b}; line×line|line×circle|circle×circle; no throw if missing",
+    args: "of1, of2, id?, id2?, extendLines?, avoidPointId?, nearPointId?, pick?, marker?, hidden?",
+    note: "of = segment|circle id or {type:line,a,b}; line×line|line×circle|circle×circle; no throw if missing; hidden skips draw",
   },
   addCircle: { args: "centerId, throughId, style?" },
   addEllipse: { args: "centerId, rxId, ryId, style?, backDashed?" },

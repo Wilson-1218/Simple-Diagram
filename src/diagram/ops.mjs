@@ -96,13 +96,14 @@ function circleGeom(doc, circleId, ctx) {
   return { cir, c, r };
 }
 
-function pushPoint(doc, nextId, x, y, idHint, marker) {
+function pushPoint(doc, nextId, x, y, idHint, marker, hidden) {
   const id = idHint
     ? resolveId({ id: idHint }, nextId, "p")
     : nextId("p");
   if (doc.points.some((p) => p.id === id)) throw new Error(`duplicate point id ${id}`);
   const p = { id, x: Number(x), y: Number(y) };
   if (marker) p.marker = marker;
+  if (hidden === true) p.hidden = true;
   doc.points.push(p);
   return p;
 }
@@ -452,6 +453,7 @@ const HANDLERS = {
     }
     const p = { id, x, y };
     if (op.marker) p.marker = op.marker;
+    if (op.hidden === true) p.hidden = true;
     doc.points.push(p);
     return doc;
   },
@@ -713,7 +715,8 @@ const HANDLERS = {
       mx,
       my,
       op.id != null && op.id !== "" ? op.id : undefined,
-      marker
+      marker,
+      op.hidden === true
     );
     if (op.markEqual) {
       const group = op.equalGroup != null ? op.equalGroup : 0;
@@ -762,7 +765,8 @@ const HANDLERS = {
       x,
       y,
       op.id != null && op.id !== "" ? op.id : undefined,
-      marker
+      marker,
+      op.hidden === true
     );
     return doc;
   },
@@ -793,11 +797,12 @@ const HANDLERS = {
     }
     const marker =
       op.marker === false || op.marker === "" ? undefined : op.marker || undefined;
+    const hidden = op.hidden === true;
     const sorted = sortHitsStable(hits);
     const wantBoth = op.id2 != null && op.id2 !== "" && sorted.length >= 2;
     if (wantBoth) {
-      pushPoint(doc, nextId, sorted[0].x, sorted[0].y, op.id, marker);
-      pushPoint(doc, nextId, sorted[1].x, sorted[1].y, op.id2, marker);
+      pushPoint(doc, nextId, sorted[0].x, sorted[0].y, op.id, marker, hidden);
+      pushPoint(doc, nextId, sorted[1].x, sorted[1].y, op.id2, marker, hidden);
       return doc;
     }
     const chosen =
@@ -812,7 +817,8 @@ const HANDLERS = {
       chosen.x,
       chosen.y,
       op.id != null && op.id !== "" ? op.id : undefined,
-      marker
+      marker,
+      hidden
     );
     return doc;
   },

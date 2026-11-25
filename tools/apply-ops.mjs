@@ -6,6 +6,16 @@
  *   node tools/apply-ops.mjs --in a.json --ops ops.json --out b.json
  *   node tools/apply-ops.mjs --ops ops.json --out b.json   # starts from empty
  *   node tools/apply-ops.mjs --in a.json --ops ops.json --validate
+ *
+ * AI 零返修出圖鐵律（v13.5.36+）:
+ *   1. Sole schema = latest ai.html — no invented ops.
+ *   2. Midpoint/ratio/intersection/foot: use addMidpoint / addRatioPoint /
+ *      addIntersection (+avoidPointId|pick) / addFoot — never hand-float coords;
+ *      direction-only helpers → "hidden": true.
+ *   3. Pre-output: addTangent aId left/up bId right/down; addLengthLabel semantic side;
+ *      addLabel ox/oy outward ~14–20px; BoxWhisker ticks as {pos,label} when numbers shown;
+ *      multi addShape → idPrefix or labels:false.
+ * See docs/paper-handoff.md and docs/solver-handoff.md.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";

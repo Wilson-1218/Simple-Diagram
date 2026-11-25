@@ -150,7 +150,7 @@
   let panning = false;
   let panLast = null;
 
-  /** @type {{id:string,x:number,y:number,marker?:string}[]} */
+  /** @type {{id:string,x:number,y:number,marker?:string,hidden?:boolean}[]} */
   let points = [];
   /** @type {{id:string,a:string,b:string,style:string}[]} */
   let segments = [];
@@ -3543,6 +3543,7 @@
     let best = null;
     let bestD = thresh;
     for (const p of points) {
+      if (p.hidden === true) continue;
       const d = dist(p, { x: wx, y: wy });
       if (d < bestD) {
         bestD = d;
@@ -7108,6 +7109,7 @@
   }
 
   function drawPoint(p, highlight) {
+    if (p.hidden === true) return;
     const s = worldToScreen(p.x, p.y);
     if (p.marker === "x" || p.marker === "foot") {
       const r = 5 * Math.min(view.scale, 1.5);
@@ -10529,6 +10531,7 @@
     draft = null;
     const hits = [];
     for (const p of points) {
+      if (p.hidden === true) continue;
       if (p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1) {
         hits.push({ type: "point", id: p.id });
       }
@@ -11515,6 +11518,7 @@
 
     if (!hideExportPoints) {
       for (const p of points) {
+        if (p.hidden === true) continue;
         const s = toS(p.x, p.y);
         if (p.marker === "x" || p.marker === "foot") {
           const r = 5 * scale * 0.7;
@@ -11918,6 +11922,7 @@
 
     if (!hideExportPoints) {
       for (const p of points) {
+        if (p.hidden === true) continue;
         const s = toS(p.x, p.y);
         if (p.marker === "x" || p.marker === "foot") {
           const r = 5 * scale * 0.7;
@@ -11956,7 +11961,7 @@ ${body}</svg>`;
     // Stable 37-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.36",
+      version: "13.5.37",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

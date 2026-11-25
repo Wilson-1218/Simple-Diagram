@@ -7,6 +7,9 @@
  *   node tools/export-diagram.mjs --in diagram.json --out out.png --format png
  *   node tools/export-diagram.mjs --ops examples/ops-right-triangle.json --out /tmp/tri.svg
  *   node tools/export-diagram.mjs --macro drawFrustum --out /tmp/fr.svg
+ *
+ * AI 零返修出圖鐵律（v13.5.36+）: build ops per latest ai.html; points with hidden:true
+ * stay in geometry but are omitted from SVG/PNG markers. See docs/paper-handoff.md.
  */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve, extname } from "node:path";
