@@ -127,4 +127,13 @@ export {
   polygonAreaAndCentroid,
   isAxisBoundary,
 } from "./feasible-region.mjs";
+export {
+  intersectCurves,
+  sortIntersectionRoots,
+  adjacentClosedIntervals,
+  curveSearchDomain,
+  sampleBetweenRings,
+  CURVE_ROOT_SAMPLES,
+  CURVE_AREA_STEPS,
+} from "./curve-intersect.mjs";
 export { parseMathRuns, svgTextInner } from "./math-text.mjs";

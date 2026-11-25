@@ -15,7 +15,13 @@ import { normalizeBarChart } from "./bar-chart.mjs";
 import { normalizeFillPattern } from "./hatch.mjs";
 import { normalizeLengthSide } from "./length-mark.mjs";
 import { coordWorldFromAxis, normalizeCoordTicks } from "./coord-plot.mjs";
-import { parseInequality, solveFeasibleRegion } from "./feasible-region.mjs";
+import { parseInequality, polygonAreaAndCentroid, solveFeasibleRegion } from "./feasible-region.mjs";
+import {
+  adjacentClosedIntervals,
+  curveSearchDomain,
+  intersectCurves,
+  sampleBetweenRings,
+} from "./curve-intersect.mjs";
 import { buildPolyhedron } from "./polyhedron.mjs";
 import { applyBearing, applyPieChart, applyTriangleCenter } from "./exam-ops.mjs";
 import { appearanceFields, elementRole, stampAppearance } from "./appearance.mjs";
@@ -622,6 +628,318 @@ function defaultCurveLabel(lab) {
     t: Number.isFinite(Number(lab.t)) ? Math.min(1, Math.max(0, Number(lab.t))) : d.t,
     n: Number.isFinite(Number(lab.n)) ? Math.min(6, Math.max(-6, Number(lab.n))) : d.n,
   };
+}
+
+function materializeCurve(raw) {
+  const type = raw && raw.type === "log10" ? "log" : (raw && raw.type) || "line";
+  const curve = {
+    type,
+    params: { ...defaultCurveParams(type), ...((raw && raw.params) || {}) },
+  };
+  if (raw && raw.domain != null) curve.domain = raw.domain;
+  if (raw && raw.id != null) curve.id = raw.id;
+  return curve;
+}
+
+/**
+ * curve id, index, "xAxis" / "yAxis", or an inline curve.
+ * Area's curve2 treats a finite number as the horizontal line y = that number
+ * (including 0). An intersection index stays an index.
+ */
+function resolveCurveRef(plot, ref, horizontalIfNumber) {
+  if (ref == null || ref === "") return { missing: true };
+  if (typeof ref === "number") {
+    if (horizontalIfNumber) {
+      if (!Number.isFinite(ref)) return { bad: true };
+      return { curve: { type: "line", params: { m: 0, c: ref }, ephemeral: true } };
+    }
+    const curves = plot.curves || [];
+    if (!Number.isInteger(ref) || ref < 0 || !curves[ref]) return { missing: true };
+    return { curve: materializeCurve(curves[ref]) };
+  }
+  if (typeof ref === "string") {
+    const key = ref.trim();
+    const low = key.toLowerCase();
+    if (low === "xaxis" || low === "x-axis") {
+      return { curve: { type: "line", params: { m: 0, c: 0 }, ephemeral: true } };
+    }
+    if (low === "yaxis" || low === "y-axis") {
+      return { curve: { type: "vline", params: { x: 0 }, ephemeral: true } };
+    }
+    const curves = plot.curves || [];
+    const byId = curves.find((c) => c.id === key);
+    if (byId) return { curve: materializeCurve(byId) };
+    if (/^-?\d+$/.test(key)) {
+      const idx = Number(key);
+      if (idx >= 0 && curves[idx]) return { curve: materializeCurve(curves[idx]) };
+    }
+    return { missing: true };
+  }
+  if (typeof ref === "object" && !Array.isArray(ref)) {
+    if (ref.type != null) return { curve: { ...materializeCurve(ref), ephemeral: true } };
+    const yRaw = ref.y != null ? ref.y : ref.c != null && ref.type == null ? ref.c : null;
+    if (yRaw != null && ref.a == null && ref.type == null) {
+      const y = Number(yRaw);
+      const m = ref.m != null ? Number(ref.m) : 0;
+      if (!Number.isFinite(y) || !Number.isFinite(m)) return { bad: true };
+      return { curve: { type: "line", params: { m, c: y }, ephemeral: true } };
+    }
+  }
+  return { bad: true };
+}
+
+function curveRef(op, which) {
+  if (which === 1) return op.curve1 != null ? op.curve1 : op.of1;
+  return op.curve2 != null ? op.curve2 : op.of2;
+}
+
+function warnSkip(ctx, message, extra) {
+  if (extra) console.warn(`${ctx}: ${message}`, extra);
+  else console.warn(`${ctx}: ${message}`);
+}
+
+function pickIntersectionRoot(sorted, op) {
+  if (!sorted.length) return null;
+  if (op.nearU != null && op.nearU !== "") {
+    const target = Number(op.nearU);
+    if (Number.isFinite(target)) {
+      let best = sorted[0];
+      let bestD = Math.abs(sorted[0].u - target);
+      for (let i = 1; i < sorted.length; i++) {
+        const d = Math.abs(sorted[i].u - target);
+        if (d < bestD - 1e-12) {
+          best = sorted[i];
+          bestD = d;
+        }
+      }
+      return best;
+    }
+  }
+  const pick = op.pick;
+  if (pick === "top") {
+    return sorted.reduce((a, b) => (b.v > a.v ? b : a));
+  }
+  if (pick === "bottom") {
+    return sorted.reduce((a, b) => (b.v < a.v ? b : a));
+  }
+  let idx = 0;
+  if (pick == null || pick === "" || pick === "left" || pick === "first" || pick === "0" || pick === 0) {
+    idx = 0;
+  } else if (pick === "right" || pick === "last") {
+    idx = sorted.length - 1;
+  } else if (pick === "second" || pick === "1" || pick === 1) {
+    idx = 1;
+  } else if (String(pick).trim() !== "" && Number.isInteger(Number(pick))) {
+    idx = Number(pick);
+  }
+  if (idx < 0 || idx >= sorted.length) return undefined;
+  return sorted[idx];
+}
+
+function namedIntersectionRoots(sorted, op, ctx) {
+  const ids = Array.isArray(op.ids) ? op.ids.map((id) => String(id)).filter((id) => id !== "") : [];
+  if (ids.length) {
+    const n = Math.min(ids.length, sorted.length);
+    if (sorted.length > ids.length) {
+      warnSkip(ctx, "extra roots were not named; dropped", { roots: sorted.length, ids: ids.length });
+    }
+    return sorted.slice(0, n).map((root, i) => ({ ...root, id: ids[i] }));
+  }
+  const hasId2 = op.id2 != null && String(op.id2) !== "";
+  if (hasId2) {
+    if (sorted.length > 2) {
+      warnSkip(ctx, "extra roots were not named; dropped", { roots: sorted.length });
+    }
+    return sorted.slice(0, 2).map((root, i) => ({
+      ...root,
+      id: i === 0 ? op.id : op.id2,
+    }));
+  }
+  const chosen = pickIntersectionRoot(sorted, op);
+  if (chosen == null) {
+    warnSkip(ctx, "pick out of range; skipped", { pick: op.pick != null ? op.pick : null });
+    return [];
+  }
+  return [{ ...chosen, id: op.id }];
+}
+
+/**
+ * Roots of two curves on the last (or plotId) coord plot.
+ * Each chosen root is an addPlotPoint. Missing plot, missing curve, or no
+ * roots: console.warn and skip.
+ */
+function applyCurveIntersection(doc, op, nextId, ctx) {
+  const plot = resolveCoordPlot(doc, op.plotId);
+  if (!plot) {
+    warnSkip(ctx, "coord plot not found; skipped", {
+      plotId: op.plotId != null ? op.plotId : null,
+    });
+    return doc;
+  }
+  const left = resolveCurveRef(plot, curveRef(op, 1), false);
+  const right = resolveCurveRef(plot, curveRef(op, 2), false);
+  if (left.missing || right.missing || left.bad || right.bad || !left.curve || !right.curve) {
+    warnSkip(ctx, "curve not found; skipped");
+    return doc;
+  }
+  const domain = curveSearchDomain(plot, [left.curve, right.curve], op.domain);
+  if (domain.error) {
+    warnSkip(ctx, domain.error === "bad" ? "domain must be [uMin, uMax]; skipped" : "no roots; skipped");
+    return doc;
+  }
+  const solved = intersectCurves(left.curve, right.curve, plot, domain.u0, domain.u1);
+  if (solved.status === "unsupported") {
+    warnSkip(ctx, "unsupported curve; skipped");
+    return doc;
+  }
+  if (!solved.roots.length) {
+    warnSkip(ctx, "no roots; skipped");
+    return doc;
+  }
+  const chosen = namedIntersectionRoots(solved.roots, op, ctx);
+  for (const root of chosen) {
+    const pointOp = {
+      plotId: plot.id,
+      u: root.u,
+      v: root.v,
+    };
+    if (root.id != null && root.id !== "") pointOp.id = String(root.id);
+    for (const key of [
+      "label",
+      "ox",
+      "oy",
+      "hidden",
+      "projectX",
+      "projectY",
+      "projectStyle",
+      "xTickLabel",
+      "yTickLabel",
+      "marker",
+      "size",
+      "labelOx",
+      "labelOy",
+      "offsetDist",
+    ]) {
+      if (op[key] !== undefined) pointOp[key] = op[key];
+    }
+    Object.assign(pointOp, appearanceFields(op));
+    placePlotPoint(doc, pointOp, nextId, ctx);
+  }
+  return doc;
+}
+
+/**
+ * Hatch (default) between two graphs. domain samples that interval;
+ * omitted domain shades each adjacent intersection interval (leftmost to
+ * rightmost when there are exactly two). Needs two roots otherwise.
+ */
+function applyAreaBetweenCurves(doc, op, nextId, ctx) {
+  const plot = resolveCoordPlot(doc, op.plotId);
+  if (!plot) {
+    warnSkip(ctx, "coord plot not found; skipped", {
+      plotId: op.plotId != null ? op.plotId : null,
+    });
+    return doc;
+  }
+  const raw1 = curveRef(op, 1);
+  if (raw1 == null || raw1 === "") {
+    warnSkip(ctx, "curve1 required; skipped");
+    return doc;
+  }
+  const left = resolveCurveRef(plot, raw1, false);
+  const raw2 = curveRef(op, 2);
+  const right = raw2 == null || raw2 === "" ? resolveCurveRef(plot, "xAxis", true) : resolveCurveRef(plot, raw2, true);
+  if (left.missing || right.missing || left.bad || right.bad || !left.curve || !right.curve) {
+    warnSkip(ctx, "curve not found; skipped");
+    return doc;
+  }
+  if (left.curve.type === "vline" || right.curve.type === "vline") {
+    warnSkip(ctx, "vertical line has no area between curves; skipped");
+    return doc;
+  }
+  const explicit = op.domain != null;
+  const domain = curveSearchDomain(plot, [left.curve, right.curve], explicit ? op.domain : null);
+  if (domain.error) {
+    warnSkip(
+      ctx,
+      domain.error === "bad" ? "domain must be [uMin, uMax]; skipped" : "no roots; skipped"
+    );
+    return doc;
+  }
+  let spans;
+  if (explicit) {
+    spans = [[domain.u0, domain.u1]];
+  } else {
+    const solved = intersectCurves(left.curve, right.curve, plot, domain.u0, domain.u1);
+    if (solved.status === "unsupported") {
+      warnSkip(ctx, "unsupported curve; skipped");
+      return doc;
+    }
+    if (solved.roots.length < 2) {
+      warnSkip(ctx, "need at least two intersections; skipped", { roots: solved.roots.length });
+      return doc;
+    }
+    spans = adjacentClosedIntervals(solved.roots);
+    if (!spans.length) {
+      warnSkip(ctx, "need at least two intersections; skipped", { roots: solved.roots.length });
+      return doc;
+    }
+  }
+  const pattern = op.pattern == null || op.pattern === "" ? "hatch" : op.pattern;
+  let placed = 0;
+  let areaSum = 0;
+  let cu = 0;
+  let cv = 0;
+  for (const [a, b] of spans) {
+    const rings = sampleBetweenRings(left.curve, right.curve, plot, a, b);
+    for (const ring of rings) {
+      const pointIds = [];
+      for (const pt of ring) {
+        const w = coordWorldFromAxis(plot, pt.u, pt.v);
+        pointIds.push(pushPoint(doc, nextId, w.x, w.y, undefined, undefined, true, op).id);
+      }
+      if (new Set(pointIds).size < 3) continue;
+      const fillOp = {
+        kind: "polygon",
+        pointIds,
+        pattern,
+        color: op.color,
+        opacity: op.opacity,
+        ...appearanceFields(op),
+      };
+      if (placed === 0 && op.id != null && op.id !== "") fillOp.id = String(op.id);
+      if (op.hatchSpacing != null) fillOp.hatchSpacing = op.hatchSpacing;
+      HANDLERS.addFill(doc, fillOp, nextId);
+      const metrics = polygonAreaAndCentroid(ring);
+      if (metrics.centroid && Math.abs(metrics.area) > 1e-6) {
+        const weight = Math.abs(metrics.area);
+        areaSum += weight;
+        cu += metrics.centroid.u * weight;
+        cv += metrics.centroid.v * weight;
+      }
+      placed += 1;
+    }
+  }
+  if (!placed) {
+    warnSkip(ctx, "no area; skipped");
+    return doc;
+  }
+  if (op.label != null && String(op.label) !== "" && areaSum > 1e-6) {
+    const w = coordWorldFromAxis(plot, cu / areaSum, cv / areaSum);
+    HANDLERS.addText(
+      doc,
+      {
+        x: w.x,
+        y: w.y,
+        text: String(op.label),
+        align: "center",
+        bold: true,
+        ...appearanceFields(op),
+      },
+      nextId
+    );
+  }
+  return doc;
 }
 
 function rightAngleMode(op) {
@@ -1654,12 +1972,16 @@ const HANDLERS = {
 
   /**
    * Region fill. kind: "polygon" (default) | "sector" | "segment" | "polyArc" | "pathFill".
+   * kind "betweenCurves" is handled before this body (same as addAreaBetweenCurves).
    * pattern: "solid" (default) | "hatch" — hatch = parallel slanted strokes (exam bar shade).
    * polygon: pointIds ≥3
    * sector: centerId + startId + endId (+ optional circleId)
    * segment (circular): circleId|centerId + startId + endId (chord endpoints)
    */
   addFill(doc, op, nextId) {
+    if (op.kind === "betweenCurves") {
+      return applyAreaBetweenCurves(doc, op, nextId, "addFill");
+    }
     if (op.inequalities != null) {
       return applyFeasibleRegion(doc, op, nextId, "addFill");
     }
@@ -2341,6 +2663,19 @@ const HANDLERS = {
     return doc;
   },
 
+  /**
+   * Intersection of two coord curves. Alias addPlotIntersection.
+   * id names the chosen root; id2 or ids name the rest, in u order.
+   */
+  addCurveIntersection(doc, op, nextId) {
+    return applyCurveIntersection(doc, op, nextId, "addCurveIntersection");
+  },
+
+  /** Shade between two graphs. addFill kind "betweenCurves" is the same op. */
+  addAreaBetweenCurves(doc, op, nextId) {
+    return applyAreaBetweenCurves(doc, op, nextId, "addAreaBetweenCurves");
+  },
+
   setView(doc, op) {
     if (!doc.view || typeof doc.view !== "object") doc.view = { x: 0, y: 0, scale: 2 };
     if (op.x != null) doc.view.x = Number(op.x);
@@ -2508,6 +2843,8 @@ HANDLERS.addCircumcircle = (doc, op, nextId) =>
   });
 HANDLERS.addCompass = HANDLERS.addBearing;
 HANDLERS.addPie = HANDLERS.addPieChart;
+HANDLERS.addPlotIntersection = (doc, op, nextId) =>
+  applyCurveIntersection(doc, op, nextId, "addPlotIntersection");
 
 export const OP_NAMES = Object.keys(HANDLERS).sort();
 
