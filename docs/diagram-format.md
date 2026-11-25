@@ -23,6 +23,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `app` | string | 固定 `"simple-diagram"` |
 | `points` | array | 頂點 |
 | `segments` | array | 線段 |
+| `texts` | array | 自由文字（`addText`／`addCaption`） |
 | `labels` | array | 點標籤 |
 | `rightAngles` | array | 直角記號 |
 | `angleArcs` | array | 角弧／優角記號 |
@@ -56,7 +57,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `savedAt` | number | 儲存時間戳（毫秒） |
 | `name` | string | 檔名提示 |
 
-儲存時固定輸出上述 **37** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.37"`）。
+儲存時固定輸出上述 **38** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.38"`）。
 
 ---
 
@@ -86,6 +87,14 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 ```
 
 - 每個點通常一個標籤；`ox`/`oy` 為相對點的世界偏移
+
+### texts
+
+```json
+{ "id": "t1", "x": 200, "y": 80, "text": "圖一", "size": 16, "align": "center", "bold": false }
+```
+
+- 自由文字（不綁點）；`align`：`center`｜`left`｜`right`；`bold` 預設 false
 
 ### rightAngles
 

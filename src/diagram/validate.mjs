@@ -60,6 +60,7 @@ export function validateDiagram(doc) {
     "points",
     "segments",
     "labels",
+    "texts",
     "rightAngles",
     "angleArcs",
     "midTicks",
@@ -155,6 +156,27 @@ export function validateDiagram(doc) {
       }
       needPoint(l.pointId, `${path}.pointId`);
       if (typeof l.text !== "string") errors.push(`${path}.text must be a string`);
+    }
+  }
+
+  if (Array.isArray(d.texts)) {
+    for (let i = 0; i < d.texts.length; i++) {
+      const tx = d.texts[i];
+      const path = `texts[${i}]`;
+      if (!tx || typeof tx !== "object") {
+        errors.push(`${path} must be an object`);
+        continue;
+      }
+      if (typeof tx.text !== "string") errors.push(`${path}.text must be a string`);
+      if (!Number.isFinite(Number(tx.x)) || !Number.isFinite(Number(tx.y))) {
+        errors.push(`${path}.x/y must be finite numbers`);
+      }
+      if (tx.align != null) {
+        const a = String(tx.align).toLowerCase();
+        if (a !== "center" && a !== "left" && a !== "right") {
+          errors.push(`${path}.align must be center|left|right`);
+        }
+      }
     }
   }
 

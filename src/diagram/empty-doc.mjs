@@ -1,7 +1,7 @@
 /** Empty Simple Diagram document (formatVersion 1). */
 
 export const CURRENT_FORMAT_VERSION = 1;
-export const APP_VERSION = "13.5.37";
+export const APP_VERSION = "13.5.38";
 
 export const DEFAULT_LAYERS = {
   gridShow: true,
@@ -13,7 +13,7 @@ export const DEFAULT_LAYERS = {
   helpersLock: true,
 };
 
-/** Stable top-level save key order (37 keys). Empty collections → []. */
+/** Stable top-level save key order (38 keys). Empty collections → []. */
 export const STABLE_TOP_LEVEL_KEYS = [
   "formatVersion",
   "version",
@@ -21,6 +21,7 @@ export const STABLE_TOP_LEVEL_KEYS = [
   "points",
   "segments",
   "labels",
+  "texts",
   "rightAngles",
   "angleArcs",
   "midTicks",
@@ -65,6 +66,7 @@ export function emptyDiagram(overrides = {}) {
     points: [],
     segments: [],
     labels: [],
+    texts: [],
     rightAngles: [],
     angleArcs: [],
     midTicks: [],

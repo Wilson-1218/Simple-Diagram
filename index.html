@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261125-release-v13.5.37" />
+  <meta name="simple-diagram-build" content="20261125-release-v13.5.38" />
   <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261125-release-v13.5.37" />
+  <link rel="stylesheet" href="styles.css?v=20261125-release-v13.5.38" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.37</span>
+            <span class="brand-sub">v13.5.38</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -215,6 +215,7 @@
                 <button type="button" id="btnJsonMenu" class="menu-btn" title="貼上／儲存／開啟 JSON" data-i18n-title="tip_json_menu" aria-haspopup="true" aria-expanded="false" data-i18n="btn_json_menu">Json ▾</button>
                 <div class="menu-panel" id="jsonMenu" hidden>
                   <button type="button" id="btnPasteJson" title="貼上 AI／ops JSON" data-i18n-title="tip_paste_json" data-i18n="btn_paste_json">貼上 JSON</button>
+                  <button type="button" id="btnCopyJson" title="複製目前 JSON" data-i18n-title="tip_copy_json" data-i18n="btn_copy_json">複製目前 JSON</button>
                   <button type="button" id="btnSave" title="儲存 JSON" data-i18n-title="tip_save" data-i18n="btn_save">儲存</button>
                   <button type="button" id="btnLoad" title="開啟 JSON" data-i18n-title="tip_load" data-i18n="btn_load">開啟</button>
                 </div>
@@ -226,6 +227,7 @@
                   <button type="button" id="btnClearExportCrop" title="清除自選匯出範圍" data-i18n-title="tip_clear_crop" hidden data-i18n="btn_clear_crop">清除裁切</button>
                   <button type="button" id="btnExportPreview" title="預覽匯出效果（若有裁切則只預覽該區）" data-i18n-title="tip_preview" data-i18n="btn_preview">預覽匯出</button>
                   <button type="button" id="btnExportPng" title="匯出 PNG（Chrome／Edge 可選資料夾與檔名）" data-i18n-title="tip_export_png">PNG</button>
+                  <button type="button" id="btnCopyPngClipboard" title="複製白底 PNG（Ctrl+Shift+C）" data-i18n-title="tip_copy_png_clip" data-i18n="btn_copy_png_clip">複製白底 PNG</button>
                   <button type="button" id="btnExportSvg" title="匯出 SVG（Chrome／Edge 可選資料夾與檔名）" data-i18n-title="tip_export_svg">SVG</button>
                   <label class="check-opt menu-check" title="匯出 PNG／SVG 時隱藏頂點圓點（預設開啟）" data-i18n-title="tip_hide_pts">
                     <input type="checkbox" id="chkHideExportPoints" checked /> <span data-i18n="chk_hide_pts">匯出隱藏點</span>
@@ -579,7 +581,7 @@
       <p class="dialog-note paste-json-err" id="pasteJsonError" hidden></p>
       <label class="check-opt paste-json-merge">
         <input type="checkbox" id="pasteJsonMerge" />
-        <span data-i18n="paste_json_merge">加到目前圖形（不勾＝以貼上內容取代）</span>
+        <span data-i18n="paste_json_merge">追加至現有圖形</span>
       </label>
       <div class="dialog-actions">
         <button type="submit" value="ok" data-i18n="paste_json_apply">套用</button>
@@ -588,6 +590,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261125-release-v13.5.37"></script>
+  <script src="app.js?v=20261125-release-v13.5.38"></script>
 </body>
 </html>

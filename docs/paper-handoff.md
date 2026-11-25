@@ -72,8 +72,15 @@
    - `addTangent`：`aId` 偏左／上、`bId` 偏右／下
    - `addLengthLabel`：優先語意 `side`（above／below／left／right）
    - `addLabel`：`ox`／`oy` 向外約 14–20px
+   - 題圖說明／不綁點的文字用 `addText`／`addCaption`（`x,y,text`；可選 `align`／`bold`）——**不要**為說明文字捏造假點
    - BoxWhisker 有數字刻度時 `ticks` 用 `{pos,label}` 物件
    - 多次 `addShape` → `idPrefix` 或 `labels:false` 避免 id／標籤衝突
+
+### 瀏覽器往返（v13.5.38+）
+
+- **Json ▾ → 複製目前 JSON**：把現行圖檔拷到剪貼簿給 AI 來回改。
+- **貼上 JSON** 可勾「追加至現有圖形／Append to current canvas」（預設關＝取代）；追加 ops／`{ops:[…]}` 時套在現圖上、一批一個復原步驟。
+- **匯出 ▾ → 複製白底 PNG**（Ctrl+Shift+C）：白底 `#fff`、墨 `#111` 的 PNG 進剪貼簿。
 
 ---
 

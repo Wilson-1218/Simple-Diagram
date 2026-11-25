@@ -156,6 +156,8 @@
   let segments = [];
   /** @type {{id:string,pointId:string,text:string,ox:number,oy:number,size:number}[]} */
   let labels = [];
+  /** @type {{id:string,x:number,y:number,text:string,size:number,align?:string,bold?:boolean}[]} */
+  let texts = [];
   /** @type {{id:string,vertex:string,arm1:string,arm2:string,size:number}[]} */
   let rightAngles = [];
   /** @type {{id:string,vertex:string,arm1:string,arm2:string,size:number,group:number,text?:string}[]} */
@@ -510,8 +512,16 @@
       ai_guide_hint: " — 在 Chrome 把該頁分享給 Gemini，再回來「貼上 JSON」",
       paste_json_lead: "貼上 JSON",
       paste_json_note: "接受 ops 陣列或完整圖檔。AI 說明：ai.html（本站）",
-      paste_json_merge: "加到目前圖形（不勾＝以貼上內容取代）",
+      paste_json_merge: "追加至現有圖形",
       paste_json_apply: "套用",
+      btn_copy_json: "複製目前 JSON",
+      tip_copy_json: "複製目前圖形 JSON（給 AI 來回修改）",
+      copy_json_ok: "已複製目前 JSON",
+      copy_json_fail: "複製 JSON 失敗",
+      btn_copy_png_clip: "複製白底 PNG",
+      tip_copy_png_clip: "複製白底 PNG 到剪貼簿（Ctrl+Shift+C）",
+      copy_png_ok: "Copied white-BG PNG to clipboard!",
+      copy_png_fail: "複製白底 PNG 失敗",
       paste_json_ok_ops: "已套用 {n} 步 ops",
       paste_json_ok_doc: "已載入圖檔",
       paste_json_err_empty: "請貼上 JSON",
@@ -814,8 +824,16 @@
       ai_guide_hint: " — share that page with Gemini in Chrome, then Paste JSON here",
       paste_json_lead: "Paste JSON",
       paste_json_note: "Ops array or full document. AI guide: ai.html on this site",
-      paste_json_merge: "Merge onto current figure (off = replace)",
+      paste_json_merge: "Append to current canvas",
       paste_json_apply: "Apply",
+      btn_copy_json: "Copy JSON",
+      tip_copy_json: "Copy current diagram JSON (for AI round-trips)",
+      copy_json_ok: "Copied current JSON",
+      copy_json_fail: "Failed to copy JSON",
+      btn_copy_png_clip: "Copy PNG (White BG)",
+      tip_copy_png_clip: "Copy white-BG PNG to clipboard (Ctrl+Shift+C)",
+      copy_png_ok: "Copied white-BG PNG to clipboard!",
+      copy_png_fail: "Failed to copy white-BG PNG",
       paste_json_ok_ops: "Applied {n} ops",
       paste_json_ok_doc: "Document loaded",
       paste_json_err_empty: "Paste some JSON first",
@@ -988,6 +1006,8 @@
       btnClearAll: "btn_clear",
       btnJsonMenu: "btn_json_menu",
       btnPasteJson: "btn_paste_json",
+      btnCopyJson: "btn_copy_json",
+      btnCopyPngClipboard: "btn_copy_png_clip",
       btnSave: "btn_save",
       btnLoad: "btn_load",
       btnExportMenu: "btn_export_menu",
@@ -3373,6 +3393,7 @@
       points,
       segments,
       labels,
+      texts,
       rightAngles,
       angleArcs,
       midTicks,
@@ -3410,6 +3431,7 @@
       ...l,
       size: clampLabelSize(l.size || DEFAULT_LABEL_SIZE),
     }));
+    texts = (data.texts || []).map((tx) => normalizeTextRecord(tx)).filter(Boolean);
     rightAngles = (data.rightAngles || []).map((r) => ({
       ...r,
       size: r.size || DEFAULT_RA_SIZE,
@@ -3590,6 +3612,38 @@
     return null;
   }
 
+  function normalizeTextRecord(tx) {
+    if (!tx || typeof tx !== "object") return null;
+    const x = Number(tx.x);
+    const y = Number(tx.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    let align = tx.align != null ? String(tx.align).toLowerCase() : "center";
+    if (align !== "left" && align !== "right") align = "center";
+    return {
+      id: tx.id || uid(),
+      x,
+      y,
+      text: tx.text != null ? String(tx.text) : "",
+      size: clampLabelSize(tx.size || DEFAULT_LABEL_SIZE),
+      align,
+      bold: !!tx.bold,
+    };
+  }
+
+  function nearestTextHit(wx, wy) {
+    const thresh = 14 / view.scale;
+    let best = null;
+    let bestD = thresh;
+    for (const tx of texts) {
+      const d = dist({ x: wx, y: wy }, { x: tx.x, y: tx.y });
+      if (d < bestD) {
+        bestD = d;
+        best = tx;
+      }
+    }
+    return best;
+  }
+
   function nearestRightHit(wx, wy) {
     const thresh = 12 / view.scale;
     for (const ra of rightAngles) {
@@ -3655,6 +3709,7 @@
   function isHelpersLayerItem(type) {
     return (
       type === "label" ||
+      type === "text" ||
       type === "lengthLabel" ||
       type === "rightAngle" ||
       type === "angleArc" ||
@@ -3681,6 +3736,8 @@
     if (helpersOk) {
       const lab = nearestLabelHit(wx, wy);
       if (lab) return { type: "label", id: lab.id };
+      const tx = nearestTextHit(wx, wy);
+      if (tx) return { type: "text", id: tx.id };
       const ll = nearestLengthHit(wx, wy);
       if (ll) return { type: "lengthLabel", id: ll.id };
       const ra = nearestRightHit(wx, wy);
@@ -4186,6 +4243,7 @@
       !points.length &&
       !segments.length &&
       !labels.length &&
+      !texts.length &&
       !rightAngles.length &&
       !angleArcs.length &&
       !midTicks.length &&
@@ -4208,6 +4266,7 @@
     points = [];
     segments = [];
     labels = [];
+    texts = [];
     rightAngles = [];
     angleArcs = [];
     midTicks = [];
@@ -4275,6 +4334,8 @@
       lengthLabels = lengthLabels.filter((m) => m.segmentId !== id);
     } else if (type === "label") {
       labels = labels.filter((l) => l.id !== id);
+    } else if (type === "text") {
+      texts = texts.filter((tx) => tx.id !== id);
     } else if (type === "rightAngle") {
       rightAngles = rightAngles.filter((r) => r.id !== id);
     } else if (type === "angleArc") {
@@ -7155,6 +7216,35 @@
     c.restore();
   }
 
+  /** Free-floating caption: align + optional bold; white halo like labels. */
+  function paintFloatingText(c, tx, x, y, fontPx, fill, withHalo) {
+    c.save();
+    c.translate(x, y);
+    const weight = tx.bold ? "bold " : "";
+    c.font = `${weight}${fontPx}px "STIX Two Text", "Times New Roman", serif`;
+    c.textBaseline = "middle";
+    let align = String(tx.align || "center").toLowerCase();
+    if (align !== "left" && align !== "right") align = "center";
+    c.textAlign = align;
+    const text = tx.text != null ? String(tx.text) : "";
+    if (withHalo) {
+      c.lineJoin = "round";
+      c.strokeStyle = edHalo();
+      c.lineWidth = Math.max(3.5, fontPx * 0.28);
+      c.strokeText(text, 0, 0);
+    }
+    c.fillStyle = fill;
+    c.fillText(text, 0, 0);
+    c.restore();
+  }
+
+  function drawText(tx, highlight) {
+    if (!tx) return;
+    const s = worldToScreen(tx.x, tx.y);
+    const fontPx = labelScreenSize(tx);
+    paintFloatingText(ctx, tx, s.x, s.y, fontPx, edInk(highlight), true);
+  }
+
   /** Keep length text readable (not upside-down) while parallel to the edge. */
   function readableEdgeAngle(dx, dy) {
     let ang = Math.atan2(dy, dx);
@@ -9057,6 +9147,9 @@
       for (const lab of labels) {
         drawLabel(lab, isSelected("label", lab.id));
       }
+      for (const tx of texts) {
+        drawText(tx, isSelected("text", tx.id));
+      }
     }
 
     drawGuides();
@@ -9311,6 +9404,25 @@
           }
           drag = {
             kind: "labels",
+            items,
+            startWx: world.x,
+            startWy: world.y,
+            moved: false,
+          };
+        } else if (hit.type === "text") {
+          const items = selection
+            .filter((s) => s.type === "text")
+            .map((s) => {
+              const tx = texts.find((x) => x.id === s.id);
+              return tx ? { id: tx.id, x0: tx.x, y0: tx.y } : null;
+            })
+            .filter(Boolean);
+          if (!items.length) {
+            const tx = texts.find((x) => x.id === hit.id);
+            if (tx) items.push({ id: tx.id, x0: tx.x, y0: tx.y });
+          }
+          drag = {
+            kind: "texts",
             items,
             startWx: world.x,
             startWy: world.y,
@@ -10573,6 +10685,13 @@
         hits.push({ type: "fill", id: f.id });
       }
     }
+    if (layers.helpersShow && !layers.helpersLock) {
+      for (const tx of texts) {
+        if (tx.x >= x0 && tx.x <= x1 && tx.y >= y0 && tx.y <= y1) {
+          hits.push({ type: "text", id: tx.id });
+        }
+      }
+    }
     if (additive) {
       const map = new Map(selection.map((s) => [s.type + ":" + s.id, s]));
       for (const h of hits) map.set(h.type + ":" + h.id, h);
@@ -10653,6 +10772,24 @@
         if (lab) {
           lab.ox = item.ox0 + dx;
           lab.oy = item.oy0 + dy;
+        }
+      }
+      draw();
+      return;
+    }
+
+    if (drag && drag.kind === "texts") {
+      if (!drag.moved) {
+        pushHistory();
+        drag.moved = true;
+      }
+      const dx = world.x - drag.startWx;
+      const dy = world.y - drag.startWy;
+      for (const item of drag.items || []) {
+        const tx = texts.find((x) => x.id === item.id);
+        if (tx) {
+          tx.x = item.x0 + dx;
+          tx.y = item.y0 + dy;
         }
       }
       draw();
@@ -11065,7 +11202,8 @@
       !segments.length &&
       !coordPlots.length &&
       !boxWhiskers.length &&
-      !barCharts.length;
+      !barCharts.length &&
+      !texts.length;
     if (empty) return { minX: -100, minY: -100, maxX: 100, maxY: 100 };
     const b = {
       minX: Infinity,
@@ -11079,6 +11217,10 @@
       if (!p) continue;
       expandBounds(b, p.x + lab.ox - 8, p.y + lab.oy - 8);
       expandBounds(b, p.x + lab.ox + 8, p.y + lab.oy + 8);
+    }
+    for (const tx of texts) {
+      expandBounds(b, tx.x - 8, tx.y - 8);
+      expandBounds(b, tx.x + 8, tx.y + 8);
     }
     for (const cir of circles) {
       const c = pointById(cir.centerId);
@@ -11550,6 +11692,15 @@
         const fontPx = clampLabelSize(lab.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
         paintLabelText(c, lab.text, s.x, s.y, fontPx, "#111", true);
       }
+      for (const tx of texts) {
+        const s = toS(tx.x, tx.y);
+        const fontPx = clampLabelSize(tx.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
+        // Export always light paper; force white halo
+        const prev = darkCanvas;
+        darkCanvas = false;
+        paintFloatingText(c, tx, s.x, s.y, fontPx, "#111", true);
+        darkCanvas = prev;
+      }
     }
 
     darkCanvas = prevDark;
@@ -11566,6 +11717,36 @@
     } catch (err) {
       console.error(err);
       statusHint.textContent = "PNG 匯出失敗";
+    }
+  }
+
+  /** White-paper PNG → system clipboard (same path as PNG export @ 2–3×). */
+  async function copyWhiteBgPngToClipboard() {
+    try {
+      if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
+        throw new Error("clipboard unsupported");
+      }
+      const blob = await canvasToPngBlob(buildExportCanvas(2));
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      statusHint.textContent = t("copy_png_ok");
+    } catch (err) {
+      console.error(err);
+      statusHint.textContent = t("copy_png_fail");
+    }
+  }
+
+  async function copyCurrentJsonToClipboard() {
+    try {
+      const json = JSON.stringify(buildProjectData(), null, 2);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(json);
+      } else {
+        throw new Error("clipboard unsupported");
+      }
+      statusHint.textContent = t("copy_json_ok");
+    } catch (err) {
+      console.error(err);
+      statusHint.textContent = t("copy_json_fail");
     }
   }
 
@@ -11942,6 +12123,16 @@
         const halo = Math.max(3.5, fs * 0.28);
         body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(lab.text)}</text>\n`;
       }
+      for (const tx of texts) {
+        const s = toS(tx.x, tx.y);
+        const fs = clampLabelSize(tx.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
+        const halo = Math.max(3.5, fs * 0.28);
+        let align = String(tx.align || "center").toLowerCase();
+        if (align !== "left" && align !== "right") align = "center";
+        const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
+        const weight = tx.bold ? ' font-weight="bold"' : "";
+        body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="normal"${weight} font-size="${fs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(tx.text || "")}</text>\n`;
+      }
     }
 
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -11958,14 +12149,15 @@ ${body}</svg>`;
   const FORMAT_VERSION = 1;
 
   function buildProjectData() {
-    // Stable 37-key top-level save shape (empty collections as []).
+    // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.37",
+      version: "13.5.38",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
       labels: labels || [],
+      texts: texts || [],
       rightAngles: rightAngles || [],
       angleArcs: angleArcs || [],
       midTicks: midTicks || [],
@@ -12141,6 +12333,7 @@ ${body}</svg>`;
       !points.length &&
       !segments.length &&
       !labels.length &&
+      !texts.length &&
       !circles.length &&
       !ellipses.length &&
       !sectors.length &&
@@ -12206,6 +12399,7 @@ ${body}</svg>`;
       ...l,
       size: clampLabelSize(l.size || data.labelFontSize || DEFAULT_LABEL_SIZE),
     }));
+    texts = (data.texts || []).map((tx) => normalizeTextRecord(tx)).filter(Boolean);
     rightAngles = (data.rightAngles || []).map((r) => ({
       ...r,
       size: r.size || data.rightAngleSize || DEFAULT_RA_SIZE,
@@ -12389,6 +12583,7 @@ ${body}</svg>`;
       points: structuredClone(points),
       segments: structuredClone(segments),
       labels: structuredClone(labels),
+      texts: structuredClone(texts),
       rightAngles: structuredClone(rightAngles),
       angleArcs: structuredClone(angleArcs),
       midTicks: structuredClone(midTicks),
@@ -14883,6 +15078,11 @@ ${body}</svg>`;
       copySelection();
       return;
     }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "c") {
+      e.preventDefault();
+      copyWhiteBgPngToClipboard();
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key === "/") {
       e.preventDefault();
       openShortcuts();
@@ -15037,6 +15237,13 @@ ${body}</svg>`;
       openPasteJsonDialog();
     });
   }
+  const btnCopyJson = document.getElementById("btnCopyJson");
+  if (btnCopyJson) {
+    btnCopyJson.addEventListener("click", () => {
+      closeJsonMenu();
+      copyCurrentJsonToClipboard();
+    });
+  }
   if (pasteJsonCancel) {
     pasteJsonCancel.addEventListener("click", () => {
       if (pasteJsonDialog) pasteJsonDialog.close();
@@ -15071,6 +15278,13 @@ ${body}</svg>`;
     closeExportMenu();
     exportPng();
   });
+  const btnCopyPngClipboard = document.getElementById("btnCopyPngClipboard");
+  if (btnCopyPngClipboard) {
+    btnCopyPngClipboard.addEventListener("click", () => {
+      closeExportMenu();
+      copyWhiteBgPngToClipboard();
+    });
+  }
   document.getElementById("btnExportSvg").addEventListener("click", () => {
     closeExportMenu();
     exportSvg();
