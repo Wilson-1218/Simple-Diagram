@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261125-release-v13.5.40" />
+  <meta name="simple-diagram-build" content="20261125-release-v13.5.41" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -2043,7 +2043,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.40</span>
+            <span class="brand-sub">v13.5.41</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -7428,14 +7428,33 @@ body.dark-canvas .coord-curve-row {
     t = Math.min(1, Math.max(0, t));
     if (!Number.isFinite(n)) n = d.n;
     n = Math.min(6, Math.max(-6, n));
+    const customText =
+      lab.customText != null ? String(lab.customText) : lab.text != null ? String(lab.text) : "";
+    // Explicit kind:"formula" wins. text / customText without that kind is custom.
+    let kind = "formula";
+    if (lab.kind === "formula") kind = "formula";
+    else if (lab.kind === "custom" || customText.trim() !== "") kind = "custom";
+    const show = lab.show != null ? !!lab.show : kind === "custom" && customText.trim() !== "";
     return {
-      show: !!lab.show,
-      kind: lab.kind === "custom" ? "custom" : "formula",
+      show,
+      kind,
       formulaMode: lab.formulaMode === "numeric" ? "numeric" : "algebraic",
-      customText: lab.customText != null ? String(lab.customText) : "",
+      customText,
       t,
       n,
     };
+  }
+
+  /**
+   * Curve stroke. No color → #111111 on the light canvas / white export,
+   * a light stroke on the dark canvas. Never invent white for a missing
+   * label or a one-curve plot.
+   */
+  function coordCurveScreenInk(curve, highlight) {
+    if (highlight) return "#1a5fb4";
+    const raw = curve && curve.color != null ? String(curve.color).trim() : "";
+    if (raw) return raw;
+    return darkCanvas ? "#e6e8eb" : "#111111";
   }
 
   function makeCoordCurve(type, params, label) {
@@ -7754,6 +7773,8 @@ body.dark-canvas .coord-curve-row {
         }
         if (typ === "circle") c.params = syncCircleParams(c.params);
         c.label = normalizeCurveLabel(c.label);
+        if (c.color != null && String(c.color).trim() !== "") c.color = String(c.color).trim();
+        else delete c.color;
         if (c.style !== "solid" && c.style !== "dashed" && c.style !== "dotted") delete c.style;
         if (!Array.isArray(c.domain) || c.domain.length < 2) delete c.domain;
         else {
@@ -8501,6 +8522,10 @@ body.dark-canvas .coord-curve-row {
     }
 
     for (const curve of coordPlotCurves(plot)) {
+      // Axis-label halos leave strokeStyle on the paper/halo color (#fff on light).
+      c.strokeStyle = coordCurveScreenInk(curve, highlight);
+      c.lineWidth = lw;
+      c.lineJoin = "round";
       strokeCoordPolyline(c, toScreen, coordSampleOneCurve(plot, curve), coordCurveStyleOf(curve));
     }
     for (const curve of coordPlotCurves(plot)) {
@@ -9727,6 +9752,7 @@ body.dark-canvas .coord-curve-row {
         label: normalizeCurveLabel(c.label),
       };
       if (c.style === "solid" || c.style === "dashed" || c.style === "dotted") row.style = c.style;
+      if (c.color != null && String(c.color).trim() !== "") row.color = String(c.color).trim();
       if (Array.isArray(c.domain) && c.domain.length >= 2) row.domain = c.domain.slice();
       return row;
     });
@@ -9851,7 +9877,9 @@ body.dark-canvas .coord-curve-row {
           const dash = (STYLE_DASH[st] || []).map((n) => (n * scale * 0.75).toFixed(2)).join(" ");
           dashAttr = ` stroke-linecap="butt" stroke-dasharray="${dash}"`;
         }
-        body += `<path d="${d}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linejoin="round"${dashAttr} />\n`;
+        const explicit = curve && curve.color != null ? String(curve.color).trim() : "";
+        const ink = explicit || "#111111";
+        body += `<path d="${d}" fill="none" stroke="${ink}" stroke-width="${lw}" stroke-linejoin="round"${dashAttr} />\n`;
       }
     }
     for (const curve of coordPlotCurves(plot)) {
@@ -10260,28 +10288,63 @@ body.dark-canvas .coord-curve-row {
     paintLabelText(ctx, lab.text, s.x, s.y, labelScreenSize(lab), edInk(highlight), true);
   }
 
+  function rightAngleIs3d(ra) {
+    return !!(ra && (ra.mode === "3d" || ra.skew === true));
+  }
+
+  /** World-space parallelogram corners for a 3D right-angle mark. */
+  function rightAngleWorldCorners(v, a1, a2, size) {
+    let u1x = a1.x - v.x;
+    let u1y = a1.y - v.y;
+    let u2x = a2.x - v.x;
+    let u2y = a2.y - v.y;
+    const n1 = Math.hypot(u1x, u1y) || 1;
+    const n2 = Math.hypot(u2x, u2y) || 1;
+    u1x /= n1;
+    u1y /= n1;
+    u2x /= n2;
+    u2y /= n2;
+    const s = size;
+    return [
+      { x: v.x + u1x * s, y: v.y + u1y * s },
+      { x: v.x + u1x * s + u2x * s, y: v.y + u1y * s + u2y * s },
+      { x: v.x + u2x * s, y: v.y + u2y * s },
+    ];
+  }
+
   function drawRightAngle(ra, highlight) {
     const v = pointById(ra.vertex);
     const a1 = pointById(ra.arm1);
     const a2 = pointById(ra.arm2);
     if (!v || !a1 || !a2) return;
-    const sv = worldToScreen(v.x, v.y);
-    const s1 = worldToScreen(a1.x, a1.y);
-    const s2 = worldToScreen(a2.x, a2.y);
-    let ux = s1.x - sv.x,
-      uy = s1.y - sv.y;
-    let vx = s2.x - sv.x,
-      vy = s2.y - sv.y;
-    const lu = Math.hypot(ux, uy) || 1;
-    const lv = Math.hypot(vx, vy) || 1;
-    ux /= lu;
-    uy /= lu;
-    vx /= lv;
-    vy /= lv;
-    const size = (ra.size || rightAngleSize || DEFAULT_RA_SIZE) * Math.min(Math.max(view.scale, 0.6), 1.4);
-    const p1 = { x: sv.x + ux * size, y: sv.y + uy * size };
-    const p2 = { x: sv.x + ux * size + vx * size, y: sv.y + uy * size + vy * size };
-    const p3 = { x: sv.x + vx * size, y: sv.y + vy * size };
+    let p1;
+    let p2;
+    let p3;
+    if (rightAngleIs3d(ra)) {
+      const size = ra.size || rightAngleSize || DEFAULT_RA_SIZE;
+      const corners = rightAngleWorldCorners(v, a1, a2, size);
+      p1 = worldToScreen(corners[0].x, corners[0].y);
+      p2 = worldToScreen(corners[1].x, corners[1].y);
+      p3 = worldToScreen(corners[2].x, corners[2].y);
+    } else {
+      const sv = worldToScreen(v.x, v.y);
+      const s1 = worldToScreen(a1.x, a1.y);
+      const s2 = worldToScreen(a2.x, a2.y);
+      let ux = s1.x - sv.x,
+        uy = s1.y - sv.y;
+      let vx = s2.x - sv.x,
+        vy = s2.y - sv.y;
+      const lu = Math.hypot(ux, uy) || 1;
+      const lv = Math.hypot(vx, vy) || 1;
+      ux /= lu;
+      uy /= lu;
+      vx /= lv;
+      vy /= lv;
+      const size = (ra.size || rightAngleSize || DEFAULT_RA_SIZE) * Math.min(Math.max(view.scale, 0.6), 1.4);
+      p1 = { x: sv.x + ux * size, y: sv.y + uy * size };
+      p2 = { x: sv.x + ux * size + vx * size, y: sv.y + uy * size + vy * size };
+      p3 = { x: sv.x + vx * size, y: sv.y + vy * size };
+    }
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);
@@ -14473,24 +14536,37 @@ body.dark-canvas .coord-curve-row {
         const a1 = pointById(ra.arm1);
         const a2 = pointById(ra.arm2);
         if (!v || !a1 || !a2) continue;
-        const sv = toS(v.x, v.y);
-        const s1 = toS(a1.x, a1.y);
-        const s2 = toS(a2.x, a2.y);
-        let ux = s1.x - sv.x,
-          uy = s1.y - sv.y;
-        let vx = s2.x - sv.x,
-          vy = s2.y - sv.y;
-        const lu = Math.hypot(ux, uy) || 1;
-        const lv = Math.hypot(vx, vy) || 1;
-        ux /= lu;
-        uy /= lu;
-        vx /= lv;
-        vy /= lv;
-        const size = (ra.size || DEFAULT_RA_SIZE) * scale * 0.75;
+        let p1;
+        let p2;
+        let p3;
+        if (rightAngleIs3d(ra)) {
+          const corners = rightAngleWorldCorners(v, a1, a2, ra.size || DEFAULT_RA_SIZE);
+          p1 = toS(corners[0].x, corners[0].y);
+          p2 = toS(corners[1].x, corners[1].y);
+          p3 = toS(corners[2].x, corners[2].y);
+        } else {
+          const sv = toS(v.x, v.y);
+          const s1 = toS(a1.x, a1.y);
+          const s2 = toS(a2.x, a2.y);
+          let ux = s1.x - sv.x,
+            uy = s1.y - sv.y;
+          let vx = s2.x - sv.x,
+            vy = s2.y - sv.y;
+          const lu = Math.hypot(ux, uy) || 1;
+          const lv = Math.hypot(vx, vy) || 1;
+          ux /= lu;
+          uy /= lu;
+          vx /= lv;
+          vy /= lv;
+          const size = (ra.size || DEFAULT_RA_SIZE) * scale * 0.75;
+          p1 = { x: sv.x + ux * size, y: sv.y + uy * size };
+          p2 = { x: sv.x + ux * size + vx * size, y: sv.y + uy * size + vy * size };
+          p3 = { x: sv.x + vx * size, y: sv.y + vy * size };
+        }
         c.beginPath();
-        c.moveTo(sv.x + ux * size, sv.y + uy * size);
-        c.lineTo(sv.x + ux * size + vx * size, sv.y + uy * size + vy * size);
-        c.lineTo(sv.x + vx * size, sv.y + vy * size);
+        c.moveTo(p1.x, p1.y);
+        c.lineTo(p2.x, p2.y);
+        c.lineTo(p3.x, p3.y);
         c.strokeStyle = "#111";
         c.lineWidth = LINE_WIDTH * scale * 0.7;
         c.stroke();
@@ -14906,27 +14982,34 @@ body.dark-canvas .coord-curve-row {
       const a1 = pointById(ra.arm1);
       const a2 = pointById(ra.arm2);
       if (!v || !a1 || !a2) continue;
-      const sv = toS(v.x, v.y);
-      const s1 = toS(a1.x, a1.y);
-      const s2 = toS(a2.x, a2.y);
-      let ux = s1.x - sv.x,
-        uy = s1.y - sv.y;
-      let vx = s2.x - sv.x,
-        vy = s2.y - sv.y;
-      const lu = Math.hypot(ux, uy) || 1;
-      const lv = Math.hypot(vx, vy) || 1;
-      ux /= lu;
-      uy /= lu;
-      vx /= lv;
-      vy /= lv;
-      const size = (ra.size || DEFAULT_RA_SIZE) * scale * 0.75;
-      const p1x = sv.x + ux * size,
-        p1y = sv.y + uy * size;
-      const p2x = sv.x + ux * size + vx * size,
-        p2y = sv.y + uy * size + vy * size;
-      const p3x = sv.x + vx * size,
-        p3y = sv.y + vy * size;
-      body += `<polyline points="${p1x.toFixed(2)},${p1y.toFixed(2)} ${p2x.toFixed(2)},${p2y.toFixed(2)} ${p3x.toFixed(2)},${p3y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${(LINE_WIDTH * scale * 0.7).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" />\n`;
+      let p1;
+      let p2;
+      let p3;
+      if (rightAngleIs3d(ra)) {
+        const corners = rightAngleWorldCorners(v, a1, a2, ra.size || DEFAULT_RA_SIZE);
+        p1 = toS(corners[0].x, corners[0].y);
+        p2 = toS(corners[1].x, corners[1].y);
+        p3 = toS(corners[2].x, corners[2].y);
+      } else {
+        const sv = toS(v.x, v.y);
+        const s1 = toS(a1.x, a1.y);
+        const s2 = toS(a2.x, a2.y);
+        let ux = s1.x - sv.x,
+          uy = s1.y - sv.y;
+        let vx = s2.x - sv.x,
+          vy = s2.y - sv.y;
+        const lu = Math.hypot(ux, uy) || 1;
+        const lv = Math.hypot(vx, vy) || 1;
+        ux /= lu;
+        uy /= lu;
+        vx /= lv;
+        vy /= lv;
+        const size = (ra.size || DEFAULT_RA_SIZE) * scale * 0.75;
+        p1 = { x: sv.x + ux * size, y: sv.y + uy * size };
+        p2 = { x: sv.x + ux * size + vx * size, y: sv.y + uy * size + vy * size };
+        p3 = { x: sv.x + vx * size, y: sv.y + vy * size };
+      }
+      body += `<polyline points="${p1.x.toFixed(2)},${p1.y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)} ${p3.x.toFixed(2)},${p3.y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${(LINE_WIDTH * scale * 0.7).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" />\n`;
     }
 
     if (layers.helpersShow) for (const arc of angleArcs) {
@@ -15124,7 +15207,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.40",
+      version: "13.5.41",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

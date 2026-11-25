@@ -666,7 +666,19 @@ export function documentToSvg(doc, opts = {}) {
     const sc = toS(c.x, c.y);
     const rx = Math.abs(rxP.x - c.x) * scale;
     const ry = Math.abs(ryP.y - c.y) * scale;
-    body += `<ellipse cx="${sc.x.toFixed(2)}" cy="${sc.y.toFixed(2)}" rx="${rx.toFixed(2)}" ry="${ry.toFixed(2)}" fill="none" stroke="#111" stroke-width="${sw}" />\n`;
+    if (el.backDashed && (el.style === "solid" || !el.style)) {
+      // Front = lower half (solid); back = upper half (dashed). Canvas y grows down.
+      const xR = (sc.x + rx).toFixed(2);
+      const xL = (sc.x - rx).toFixed(2);
+      const yMid = sc.y.toFixed(2);
+      const rxA = rx.toFixed(2);
+      const ryA = ry.toFixed(2);
+      const dash = ink.dash("dashed").map((d) => d.toFixed(2)).join(" ");
+      body += `<path d="M${xR},${yMid} A${rxA},${ryA} 0 0 1 ${xL},${yMid}" fill="none" stroke="#111" stroke-width="${sw}" stroke-linecap="round" />\n`;
+      body += `<path d="M${xL},${yMid} A${rxA},${ryA} 0 0 1 ${xR},${yMid}" fill="none" stroke="#111" stroke-width="${sw}" stroke-linecap="butt" stroke-dasharray="${dash}" />\n`;
+    } else {
+      body += `<ellipse cx="${sc.x.toFixed(2)}" cy="${sc.y.toFixed(2)}" rx="${rx.toFixed(2)}" ry="${ry.toFixed(2)}" fill="none" stroke="#111" stroke-width="${sw}" />\n`;
+    }
   }
 
   for (const seg of doc.segments || []) {
@@ -811,32 +823,54 @@ export function documentToSvg(doc, opts = {}) {
       const a2 = pts.get(ra.arm2);
       if (!v || !a1 || !a2) continue;
       const sv = toS(v.x, v.y);
-      let u1x = a1.x - v.x,
-        u1y = a1.y - v.y;
-      let u2x = a2.x - v.x,
-        u2y = a2.y - v.y;
-      // Direction in SVG space (scale cancels for axis-aligned; general via toS delta).
-      const s1 = toS(v.x + u1x, v.y + u1y);
-      const s2 = toS(v.x + u2x, v.y + u2y);
-      let dx1 = s1.x - sv.x,
-        dy1 = s1.y - sv.y;
-      let dx2 = s2.x - sv.x,
-        dy2 = s2.y - sv.y;
-      const n1 = Math.hypot(dx1, dy1) || 1;
-      const n2 = Math.hypot(dx2, dy2) || 1;
-      dx1 /= n1;
-      dy1 /= n1;
-      dx2 /= n2;
-      dy2 /= n2;
-      // size 10 → ~2.6mm on paper; scales with attribute.
-      const sizeAttr = ra.size != null ? Number(ra.size) : 10;
-      const sizeUu = ink.mm(Math.max(2.2, (sizeAttr / 10) * 2.6));
-      const p1 = { x: sv.x + dx1 * sizeUu, y: sv.y + dy1 * sizeUu };
-      const p2 = {
-        x: sv.x + dx1 * sizeUu + dx2 * sizeUu,
-        y: sv.y + dy1 * sizeUu + dy2 * sizeUu,
-      };
-      const p3 = { x: sv.x + dx2 * sizeUu, y: sv.y + dy2 * sizeUu };
+      let p1;
+      let p2;
+      let p3;
+      const mode3d = ra.mode === "3d" || ra.skew === true;
+      if (mode3d) {
+        // World-unit parallelogram along the two arms (not the paper-mm square).
+        const size = ra.size != null && Number.isFinite(Number(ra.size)) ? Number(ra.size) : 10;
+        let u1x = a1.x - v.x;
+        let u1y = a1.y - v.y;
+        let u2x = a2.x - v.x;
+        let u2y = a2.y - v.y;
+        const n1 = Math.hypot(u1x, u1y) || 1;
+        const n2 = Math.hypot(u2x, u2y) || 1;
+        u1x /= n1;
+        u1y /= n1;
+        u2x /= n2;
+        u2y /= n2;
+        p1 = toS(v.x + size * u1x, v.y + size * u1y);
+        p2 = toS(v.x + size * u1x + size * u2x, v.y + size * u1y + size * u2y);
+        p3 = toS(v.x + size * u2x, v.y + size * u2y);
+      } else {
+        let u1x = a1.x - v.x,
+          u1y = a1.y - v.y;
+        let u2x = a2.x - v.x,
+          u2y = a2.y - v.y;
+        // Direction in SVG space (scale cancels for axis-aligned; general via toS delta).
+        const s1 = toS(v.x + u1x, v.y + u1y);
+        const s2 = toS(v.x + u2x, v.y + u2y);
+        let dx1 = s1.x - sv.x,
+          dy1 = s1.y - sv.y;
+        let dx2 = s2.x - sv.x,
+          dy2 = s2.y - sv.y;
+        const n1 = Math.hypot(dx1, dy1) || 1;
+        const n2 = Math.hypot(dx2, dy2) || 1;
+        dx1 /= n1;
+        dy1 /= n1;
+        dx2 /= n2;
+        dy2 /= n2;
+        // size 10 → ~2.6mm on paper; scales with attribute.
+        const sizeAttr = ra.size != null ? Number(ra.size) : 10;
+        const sizeUu = ink.mm(Math.max(2.2, (sizeAttr / 10) * 2.6));
+        p1 = { x: sv.x + dx1 * sizeUu, y: sv.y + dy1 * sizeUu };
+        p2 = {
+          x: sv.x + dx1 * sizeUu + dx2 * sizeUu,
+          y: sv.y + dy1 * sizeUu + dy2 * sizeUu,
+        };
+        p3 = { x: sv.x + dx2 * sizeUu, y: sv.y + dy2 * sizeUu };
+      }
       body += `<polyline points="${p1.x.toFixed(2)},${p1.y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)} ${p3.x.toFixed(2)},${p3.y.toFixed(2)}" fill="none" stroke="#111" stroke-width="${markLw}" />\n`;
     }
     for (const aa of doc.angleArcs || []) {

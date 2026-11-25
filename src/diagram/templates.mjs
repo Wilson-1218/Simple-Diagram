@@ -495,6 +495,7 @@ export function assertTemplateCatalogIntegrity() {
  *   dx?: number,
  *   dy?: number,
  *   scale?: number,
+ *   scaleY?: number,
  *   cellSize?: number,
  *   nextId?: function,
  *   labelSize?: number,
@@ -522,6 +523,8 @@ export function applyBuiltinTemplate(doc, id, options = {}) {
   if (!(scale > 0) || !Number.isFinite(scale)) {
     throw new Error("applyBuiltinTemplate: scale must be a positive finite number");
   }
+  const scaleYRaw = options.scaleY != null ? Number(options.scaleY) : scale;
+  const scaleY = scaleYRaw > 0 && Number.isFinite(scaleYRaw) ? scaleYRaw : scale;
   const cell =
     options.cellSize != null ? Number(options.cellSize) : TEMPLATE_CELL_SIZE;
   if (!(cell > 0) || !Number.isFinite(cell)) {
@@ -564,7 +567,7 @@ export function applyBuiltinTemplate(doc, id, options = {}) {
   for (const row of spec.pts || []) {
     const [ci, cj, lab, ox, oy, marker] = row;
     const x = Number(ci) * cell * scale + dx;
-    const y = Number(cj) * cell * scale + dy;
+    const y = Number(cj) * cell * scaleY + dy;
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
       throw new Error(`applyBuiltinTemplate(${id}): non-finite point`);
     }

@@ -66,7 +66,10 @@ export const OP_CATALOG = {
     args: "x, y, text, id?, size?, align?, bold?",
     note: "Alias of addText",
   },
-  addRightAngle: { args: "vertex, arm1, arm2, size?" },
+  addRightAngle: {
+    args: "vertex, arm1, arm2, size?, mode?, skew?",
+    note: 'mode "2d" (default) paper-sized square; mode "3d" or skew:true draws a parallelogram of side `size` along the two arms',
+  },
   addAngleArc: { args: "vertex, arm1, arm2, group?, text?, reflex?" },
   addReflex: { args: "same as addAngleArc", note: "Forces reflex:true" },
   addParallelMark: { args: "segmentId, group?, side?" },
@@ -107,8 +110,12 @@ export const OP_CATALOG = {
   addEllipse: { args: "centerId, rxId, ryId, style?, backDashed?" },
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },
   addShape: {
-    args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?",
-    note: "kind square|rect|…|circle|semicircle|cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone; solids: idPrefix → vertices prefix0… and segments prefixs0…; labels:false or label:false skips vertex letters",
+    args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?, apexOffset?, includeBaseCenter?, drawHeight?, waterLevel?",
+    note: "kind square|rect|…|circle|semicircle|cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone; solids: h is visual height (omit = today's proportions); pyramid/cone apexOffset [dx,dy], includeBaseCenter → O or {prefix}O, drawHeight dotted OV; cylinder/cone waterLevel in (0,1) splits an ellipse; idPrefix → vertices prefix0… and segments prefixs0…; labels:false or label:false skips vertex letters",
+  },
+  add3DPolyhedron: {
+    args: "vertices, faces, origin?, scale?, yawDeg?, pitchDeg?, idPrefix?, labels?",
+    note: "vertices {A:[x,y,z]}; faces CCW from outside; front edges (and silhouette) solid, back-only edges dashed; idPrefix K + A → KA",
   },
   addTangent: { args: "circleId, touchId|angle|deg, halfLen|length, style?" },
   addRadius: { args: "circleId, throughId|angle|deg, style?" },

@@ -102,7 +102,7 @@
       <span class="en">Editor: Json ▾ → Copy JSON; Paste JSON can Append (default off = Replace). Export ▾ → Copy PNG (White BG).</span></p>
     <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
       <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
-    <p class="note">已知 ops（46，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
+    <p class="note">已知 ops（47，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>add3DPolyhedron</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
     <p class="note"><strong>UI ↔ op</strong>：工具列 <strong>⊥ 座標</strong>＝<code>addCoordPlot</code>（＋<code>addCurve</code>）。沒有 <code>addCoordMark</code> 這類 op 名。<br />
       <span class="en">Rail tool <strong>⊥ 座標 / Axes</strong> maps to <code>addCoordPlot</code> (+ <code>addCurve</code>). There is no <code>addCoordMark</code>.</span></p>
 
@@ -203,7 +203,7 @@
     <table>
       <thead><tr><th>op</th><th>必填</th><th>可選</th></tr></thead>
       <tbody>
-        <tr><td><code>addRightAngle</code></td><td><code>vertex</code>, <code>arm1</code>, <code>arm2</code>（點 id）</td><td><code>size</code></td></tr>
+        <tr><td><code>addRightAngle</code></td><td><code>vertex</code>, <code>arm1</code>, <code>arm2</code>（點 id）</td><td><code>size</code>；<code>mode</code> <code>"2d"</code>（預設，紙上小方標記）｜<code>"3d"</code>；<code>skew:true</code> 等同 <code>mode:"3d"</code>（沿兩臂的平行四邊形，邊長＝<code>size</code> 世界單位）</td></tr>
         <tr><td><code>addAngleArc</code>＝<code>addArc</code></td><td>同上</td><td><code>size</code>, <code>group</code>（0 單／1 雙）, <code>text</code>, <code>reflex</code>；可選 <code>textRadiusOffset</code>, <code>textOx</code>, <code>textOy</code>（微調角標位置）</td></tr>
         <tr><td><code>addReflex</code></td><td>同角弧</td><td>強制 <code>reflex:true</code>（優角）</td></tr>
         <tr><td><code>addParallelMark</code>＝<code>addParallel</code></td><td><code>segmentId</code></td><td><code>group</code> 0/1, <code>side</code> ±1</td></tr>
@@ -247,7 +247,7 @@
         <tr><td><code>kind</code></td><td>見下</td></tr>
         <tr><td><code>x</code>, <code>y</code></td><td>必填。平面＝第一角／原點；立體＝放置偏移</td></tr>
         <tr><td><code>w</code> 或 <code>size</code></td><td>必填 &gt;0。平面＝寬；立體＝縮放寬度</td></tr>
-        <tr><td><code>h</code></td><td>平面高（可選＝w）。<strong>立體忽略 h</strong></td></tr>
+        <tr><td><code>h</code></td><td>平面高（可選＝w）。立體＝視覺高度（包圍盒高）；<strong>省略則維持現有比例</strong>（與只給 <code>w</code> 時的頂點相同）</td></tr>
         <tr><td><code>style</code>, <code>label</code>/<code>labels</code>, <code>idPrefix</code></td><td>可選</td></tr>
       </tbody>
     </table>
@@ -258,8 +258,63 @@
       <li><code>circle</code>：心 <code>(x,y)</code>，半徑點 <code>(x+w,y)</code></li>
       <li>別名：<code>prism</code>→<code>rectPrism</code>；<code>right</code>/<code>rightTriangle</code>→<code>rightTri</code></li>
       <li><strong>立體</strong>會自動建立頂點標籤（A…），並用虛線表示隱藏邊。省略 <code>label</code>／<code>labels</code> 時仍標字母。<code>idPrefix</code>（如 <code>"K"</code>）把頂點 id 改成 <code>K0</code>…、線段 id 改成 <code>Ks0</code>…（與平面形相同）。<code>labels:false</code> 或 <code>label:false</code> 略過頂點字母（兩者任一為 false 即略過）。</li>
+      <li><code>h</code>：所有立體 kinds 的視覺高度。省略時 x／y 用同一個縮放，頂點與 v13.5.40 相同。</li>
+      <li><code>pyramid</code>／<code>cone</code> 可選 <code>apexOffset:[dx,dy]</code>（世界單位）平移頂點 V，使它不必在底心正上方（例如移到某一底邊頂點上方，做成直角側棱）。</li>
+      <li><code>includeBaseCenter:true</code>（預設 false）在底心加點，id 為 <code>O</code>，有 <code>idPrefix</code> 時為 <code>{prefix}O</code>（<code>K</code> → <code>KO</code>）。<code>drawHeight:true</code> 從該點到 V 畫點線。</li>
+      <li><code>cylinder</code>／<code>cone</code> 可選 <code>waterLevel</code>（<code>0 &lt; waterLevel &lt; 1</code>）。0 在較低的底、1 在圓柱上底或圓錐頂點；該高度的局部半徑畫水平橢圓，後一半虛線、前一半實線。</li>
     </ul>
-    <p class="note"><span class="en">Solids auto-create vertex letters + hidden (dashed) edges. <code>idPrefix</code> prefixes vertex ids (<code>K0</code>…) and segment ids (<code>Ks0</code>…), same as plane shapes. <code>labels:false</code> or <code>label:false</code> skips those letters.</span></p>
+    <p class="note"><span class="en">Solids auto-create vertex letters + hidden (dashed) edges. <code>idPrefix</code> prefixes vertex ids (<code>K0</code>…) and segment ids (<code>Ks0</code>…). Omit <code>h</code> to keep today's proportions. <code>apexOffset</code>, <code>includeBaseCenter</code> (<code>KO</code>), <code>drawHeight</code>, and <code>waterLevel</code> are optional.</span></p>
+
+    <h3>9.1 立體頂點順序（引擎實際命名）</h3>
+    <p>索引 0 起，與 <code>idPrefix</code> 的 <code>K0</code>… 對齊。畫布 +y 向下，所以模板裡較小的格子 y 在圖上較高。</p>
+    <table>
+      <thead><tr><th>kind</th><th>順序</th></tr></thead>
+      <tbody>
+        <tr><td><code>cuboid</code>／<code>cube</code></td><td>底 A,B,C,D，頂 E,F,G,H</td></tr>
+        <tr><td><code>rectPrism</code></td><td>A,B,C,D,E,F（六頂點草圖：A–D 一面，E 在 A 之上、F 在 B 之上）</td></tr>
+        <tr><td><code>frustum</code></td><td>下底 A,B,C,D，上底 E,F,G,H</td></tr>
+        <tr><td><code>tetra</code></td><td>A 為上方頂點，B,C,D 為底</td></tr>
+        <tr><td><code>pyramid</code></td><td>底 A,B,C,D，頂點 V</td></tr>
+        <tr><td><code>triPrism</code></td><td>前三角 A,B,C，後三角 D,E,F</td></tr>
+        <tr><td><code>cylinder</code></td><td>下橢圓心 O、右緣、下緣、左緣，上橢圓心 O′、右緣、下緣、左緣（只標 O 與 O′）</td></tr>
+        <tr><td><code>cone</code></td><td>底心 O、右緣、下緣、左緣、頂點 V</td></tr>
+      </tbody>
+    </table>
+
+    <h3>9.2 <code>addRightAngle</code> 的 3D 標記</h3>
+    <p>預設 <code>mode:"2d"</code>（可省略）：沿兩臂方向的紙上記號，邊長跟匯出墨水（約數毫米），與以往相同。<code>mode:"3d"</code> 或 <code>skew:true</code>：取 <code>(arm1−vertex)</code>、<code>(arm2−vertex)</code> 的單位向量，邊長 <code>size</code>（世界單位），畫出經過 <code>vertex + s·u1</code>、<code>vertex + s·u1 + s·u2</code>、<code>vertex + s·u2</code> 的平行四邊形。兩臂在畫面上不垂直時，這是斜的平行四邊形，不是那枚較小的 2D 方標記。</p>
+
+    <h3>9.3 <code>add3DPolyhedron</code></h3>
+    <p>用面的外向法線決定實線／虛線，<strong>不要</strong>套用角錐模板那組寫死的隱藏邊。3D 軸：+X 右、+Y 上、+Z 朝觀察者（旋轉前）。<code>yawDeg</code> 繞 Y（預設 35），<code>pitchDeg</code> 再繞 X（預設 20，正值把 +Y 傾向觀察者）。<code>scale</code> 預設 40。<code>origin:[ox,oy]</code> 是投影後原點的世界座標。面要由外往內看時逆時針（右手定則）。旋轉後法線的視空間 Z &gt; 0 為正面。至少屬於一個正面的邊（含輪廓）為 <code>solid</code>；只屬於背面的邊為 <code>dashed</code>。</p>
+    <p><code>idPrefix:"K"</code> 時頂點 id 為 <code>KA</code>、<code>KB</code>…（前綴接上頂點名字），線段 <code>Ks0</code>…。<code>labels:false</code> 略過字母；省略則標頂點名字。</p>
+<pre>[
+  {
+    "op": "add3DPolyhedron",
+    "origin": [280, 320],
+    "scale": 36,
+    "yawDeg": 32,
+    "pitchDeg": 18,
+    "idPrefix": "K",
+    "vertices": {
+      "A": [0, 0, 0], "B": [2, 0, 0], "C": [2, 0, 2], "D": [0, 0, 2],
+      "V": [0, 2, 0]
+    },
+    "faces": [
+      ["A", "D", "C", "B"],
+      ["A", "B", "V"],
+      ["B", "C", "V"],
+      ["C", "D", "V"],
+      ["D", "A", "V"]
+    ]
+  }
+]</pre>
+    <p class="note"><span class="en">Irregular pyramids (apex not above the base center) use the same normal test — there is no hard-coded hidden-edge pattern. An edge on at least one front face, including the silhouette, is solid.</span></p>
+
+    <h3>9.4 圓柱／圓錐水位</h3>
+<pre>[
+  { "op": "addShape", "kind": "cylinder", "x": 200, "y": 240, "w": 120, "h": 160, "waterLevel": 0.5 },
+  { "op": "addShape", "kind": "cone", "x": 420, "y": 240, "w": 120, "apexOffset": [36, 0], "waterLevel": 0.5, "includeBaseCenter": true, "drawHeight": true, "idPrefix": "K" }
+]</pre>
 
     <h2>10. 座標圖 / Coordinate plots ★</h2>
     <p><strong>When</strong>：畫函數／圓／三角曲線。先 <code>addCoordPlot</code>，再可 <code>addCurve</code> 追加。<br />
@@ -303,6 +358,7 @@
         <tr><td><code>sin</code> <code>cos</code> <code>tan</code></td><td><code>A:1</code>, <code>B:1</code>, <code>C:0</code>, <code>D:0</code></td><td>y = A·f(Bx+C)+D；x 單位見 <code>xAngleUnit</code></td></tr>
         <tr><td>每條曲線可選 <code>domain</code></td><td><code>[uMin, uMax]</code></td><td>只畫 <code>uMin ≤ x ≤ uMax</code>。省略則維持原本的視窗範圍</td></tr>
         <tr><td>每條曲線可選 <code>style</code></td><td><code>solid</code>（預設）｜<code>dashed</code>｜<code>dotted</code></td><td>寫進曲線並匯出（虛線帶 stroke-dasharray）</td></tr>
+        <tr><td>每條曲線可選 <code>color</code></td><td>省略</td><td>沒有 <code>color</code> 時，淺色畫布與白紙 SVG／PNG 用 <code>#111111</code>，暗色畫布用淺色筆畫（<code>#e6e8eb</code>）。缺標籤或只有一條曲線也不會變成白色</td></tr>
       </tbody>
     </table>
     <p><strong>circle params</strong>：</p>
@@ -317,9 +373,9 @@
       <thead><tr><th>欄位</th><th>說明</th></tr></thead>
       <tbody>
         <tr><td><code>show</code></td><td>bool，預設 false</td></tr>
-        <tr><td><code>kind</code></td><td><code>"formula"</code>（預設）｜<code>"custom"</code></td></tr>
+        <tr><td><code>kind</code></td><td><code>"formula"</code>（預設）｜<code>"custom"</code>。未寫 <code>kind</code> 但給了 <code>text</code> 或 <code>customText</code> 時視為 <code>"custom"</code>。寫明 <code>kind:"formula"</code> 仍用公式</td></tr>
         <tr><td><code>formulaMode</code></td><td><code>"algebraic"</code>｜<code>"numeric"</code></td></tr>
-        <tr><td><code>customText</code></td><td>kind=custom 時文字</td></tr>
+        <tr><td><code>customText</code>／<code>text</code></td><td><code>text</code> 是 <code>customText</code> 的別名。可含 <code>_</code>／<code>^</code>（<code>L_1</code> → L 下標 1）</td></tr>
         <tr><td><code>t</code>, <code>n</code></td><td>沿曲線位置／法向偏移（t∈[0,1]，n∈[−6,6]）</td></tr>
       </tbody>
     </table>
@@ -444,7 +500,7 @@
 
     <h2>13. 範例 / Examples</h2>
     <h3>13.0 最小 <code>addShape</code>（立體）</h3>
-    <p class="note">一筆建立方體線框：<code>x,y</code>＝放置偏移，<code>w</code>＝縮放寬（固體忽略 <code>h</code>）。</p>
+    <p class="note">一筆建立方體線框：<code>x,y</code>＝放置偏移，<code>w</code>＝縮放寬。立體 <code>h</code> 可選，省略則維持預設比例。</p>
 <pre>[
   { "op": "addShape", "kind": "cube", "x": 200, "y": 200, "w": 100 }
 ]</pre>
@@ -523,7 +579,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.40 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.41 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>
