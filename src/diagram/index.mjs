@@ -63,6 +63,9 @@ export {
 } from "./path-fill.mjs";
 export {
   normalizeBoxWhisker,
+  normalizeBoxWhiskerTicks,
+  boxWhiskerTickPos,
+  boxWhiskerTickLabel,
   boxWhiskerParts,
   addBoxWhiskerBounds,
 } from "./box-whisker.mjs";
@@ -86,6 +89,7 @@ export {
 export {
   coordPlotBounds,
   addCoordPlotBounds,
+  coordAxisOverhangPx,
   coordIntegerTicks,
   coordSampleOneCurve,
   coordEvalY,

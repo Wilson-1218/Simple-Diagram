@@ -23,7 +23,8 @@
   --font-math: "STIX Two Text", "Times New Roman", "Noto Serif TC", serif;
   /* Tool rail: default 3 columns; user can drag-resize (2-col when narrow) */
   --rail-cols: 3;
-  --rail-width: calc(166px * var(--tb, 1.2));
+  /* 180px: EN Sector / Reflex / Equal / Chord (circlePart) without ellipsis */
+  --rail-width: calc(180px * var(--tb, 1.2));
   --canvas-paper: #ffffff;
   --canvas-ink: #111111;
   --canvas-grid: rgba(0, 0, 0, 0.08);
@@ -366,7 +367,7 @@ button:disabled {
   width: var(--rail-width);
   min-width: calc(108px * var(--tb));
   max-width: calc(240px * var(--tb));
-  padding: calc(4px * var(--tb)) calc(3px * var(--tb));
+  padding: calc(4px * var(--tb)) calc(2px * var(--tb));
   gap: calc(4px * var(--tb));
   background: var(--bar);
   border-right: 1px solid var(--bar-border);
@@ -438,7 +439,7 @@ body.is-rail-resizing * {
   min-width: 0;
   min-height: calc(32px * var(--tb));
   gap: calc(1px * var(--tb));
-  padding: calc(2px * var(--tb)) calc(1px * var(--tb));
+  padding: calc(2px * var(--tb)) 0;
   pointer-events: auto;
 }
 

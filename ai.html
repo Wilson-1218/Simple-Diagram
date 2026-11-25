@@ -178,13 +178,14 @@
         <tr><td><code>addEqualMark</code>＝<code>addEqual</code></td><td><code>segmentId</code></td><td><code>group</code>, <code>side</code></td></tr>
         <tr><td><code>addLengthLabel</code>＝<code>addLength</code></td><td><code>segmentId</code></td><td><code>text</code>, <code>side</code>（±1 或 <code>above</code>｜<code>below</code>｜<code>left</code>｜<code>right</code>）, <code>style</code>（text｜dim｜arcs｜ends）, <code>stroke</code>（arcs：solid｜dashed｜dotted，預設 dotted）, <code>orient</code>（tilt｜horizontal）, <code>size</code></td></tr>
         <tr><td><code>addMidTick</code></td><td><code>segmentId</code></td><td><code>pointId</code>（比例分點短劃）</td></tr>
-        <tr><td><code>addBoxWhisker</code>＝<code>addBoxPlot</code></td><td>水平：<code>y,min,q1,median,q3,max</code>；垂直另加 <code>orientation:"v"</code>＋<code>x</code></td><td><code>outliers[]</code>, <code>ticks[]</code>（呼叫端位置，不自動等分）, <code>boxHeight</code>, <code>cap</code>, <code>showAxis</code>, <code>axisY</code>/<code>axisX</code></td></tr>
+        <tr><td><code>addBoxWhisker</code>＝<code>addBoxPlot</code></td><td>水平：<code>y,min,q1,median,q3,max</code>；垂直另加 <code>orientation:"v"</code>＋<code>x</code></td><td><code>outliers[]</code>, <code>ticks[]</code>（數字＝僅刻度；或 <code>{pos,label?}</code>／<code>{x|y,label?}</code>；標籤畫在軸外側；<code>min/q1/median/q3/max</code> 皆為世界座標）, <code>boxHeight</code>, <code>cap</code>, <code>showAxis</code>, <code>axisY</code>/<code>axisX</code></td></tr>
         <tr><td><code>addBarChart</code>＝<code>addBar</code></td><td><code>x</code>, <code>y</code>（資料區左下）, <code>categories[]</code>, <code>values[]</code>｜<code>heights[]</code></td><td><code>plotW</code>/<code>plotH</code>, <code>yMin</code>/<code>yMax</code>, <code>yTicks</code>/<code>yStep</code>, <code>xLabel</code>, <code>yLabel</code>（沿軸直寫）, <code>yLabelMode</code> <code>rotate</code>｜<code>stack</code>, <code>barPattern</code> <code>hatch</code>｜<code>solid</code>, <code>showGrid</code></td></tr>
       </tbody>
     </table>
     <p class="note"><code>arm1</code>/<code>arm2</code> 是角兩邊上的<strong>點</strong> id，不是線段 id。<br />
-      <strong>addLengthLabel <code>side</code></strong>：存檔仍為 ±1。字串依 a→b 法線 <code>(−dy, dx)</code>（side +1）對應世界方向：水平線 a→右 時 <code>below</code>＝+1、<code>above</code>＝−1；鉛垂線 a→下 時 <code>left</code>＝+1、<code>right</code>＝−1。角標／長度標文字有紙白光暈（screen 用畫布底色）。<br />
-      <span class="en"><code>addBoxWhisker</code>: dedicated boxplot — do not assemble from rects/segments. Tick positions are caller-supplied only. <code>addBarChart</code>: dedicated bars + vertical axis title — do not fake with rects or horizontal y-title. Length <code>side</code> accepts above/below/left/right mapped via a→b normal (−dy,dx).</span></p>
+      <strong>addLengthLabel <code>side</code></strong>：存檔仍為 ±1。字串依 a→b 法線 <code>(−dy, dx)</code>（side +1）對應世界方向：水平線 a→右 時 <code>below</code>＝+1、<code>above</code>＝−1；鉛垂線 a→下 時 <code>left</code>＝+1、<code>right</code>＝−1。角標／長度標／點標文字有紙白光暈（screen 用畫布底色）。<br />
+      <strong>addBoxWhisker <code>ticks</code></strong>：純數字陣列＝只畫刻度；物件可帶標籤，例 <code>ticks: [{ "pos": 150, "label": "10" }, { "pos": 200, "label": "20" }]</code>。標籤在水平軸下方／垂直軸左側。五數摘要 <code>min/q1/median/q3/max</code> 與 <code>pos</code> 皆為<strong>世界座標</strong>（不是資料刻度自動對應）。<br />
+      <span class="en"><code>addBoxWhisker</code>: dedicated boxplot — do not assemble from rects/segments. Tick positions are caller-supplied only; optional <code>{pos,label}</code>. <code>addBarChart</code>: dedicated bars + vertical axis title — do not fake with rects or horizontal y-title. Length <code>side</code> accepts above/below/left/right mapped via a→b normal (−dy,dx).</span></p>
 
     <h2>8. 填色 / <code>addFill</code></h2>
     <p>可選：<code>color</code>（預設 <code>#666666</code>；hatch 預設 <code>#111111</code>）, <code>opacity</code>（預設 0.2；hatch 預設 1）, <code>pattern</code>：<code>solid</code>（預設）｜<code>hatch</code>（同向斜短線，考試棒陰影）, <code>hatchSpacing</code>。白色挖空：<code>color:"#ffffff", opacity:1</code>（僅其他複合遮罩；<strong>兩弧＋一邊請用 pathFill</strong>）。暗色畫布上，未指定或預設深色 hatch（<code>#111111</code>/<code>#000000</code>）會以淺 slate（如 <code>#94a3b8</code>）顯示；白紙 SVG／PNG 匯出仍用 <code>#111111</code>。</p>
@@ -195,7 +196,7 @@
         <tr><td><code>sector</code></td><td><code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>可選 <code>circleId</code></td></tr>
         <tr><td><code>segment</code></td><td><code>startId</code>, <code>endId</code> + (<code>circleId</code>|<code>centerId</code>)</td><td>弓形</td></tr>
         <tr><td><code>polyArc</code></td><td><code>pointIds</code> ≥2 + <code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>折線＋弧閉合</td></tr>
-        <tr><td><code>pathFill</code></td><td><code>edges</code> ≥2</td><td><code>{type:"line",a,b}</code> 或 <code>{type:"arc",centerId,from,to,circleId?}</code>；兩弧＋弦可亂序，會自動接封閉</td></tr>
+        <tr><td><code>pathFill</code></td><td><code>edges</code> ≥2</td><td><code>{type:"line",a,b}</code> 或 <code>{type:"arc",centerId,from,to,circleId?}</code>；兩弧＋弦可亂序，會自動接封閉。弧預設<strong>劣弧</strong>（minor）；邊不得自交</td></tr>
       </tbody>
     </table>
     <pre><code>{ "op": "addFill", "kind": "pathFill", "opacity": 0.2, "edges": [
@@ -203,6 +204,8 @@
   { "type": "arc", "centerId": "O2", "from": "C", "to": "B" },
   { "type": "arc", "centerId": "O1", "from": "B", "to": "A" }
 ] }</code></pre>
+    <p class="note"><strong>pathFill</strong>：弧邊預設走劣弧；整圈路徑的邊<strong>不可自交</strong>（否則填色／匯出可能錯）。兩弧＋弦可亂序。<br />
+      <span class="en">pathFill arc edges default to the minor arc; edges must not self-intersect.</span></p>
 
     <h2>9. <code>addShape</code></h2>
     <p>一次放平面／立體圖形（UI「圖形」拖放的 JSON 版）。</p>
@@ -222,7 +225,9 @@
       <li><code>rightTri</code>：直角在 <code>(x,y)</code>，水平腿 <code>w</code>、向下腿 <code>h</code></li>
       <li><code>circle</code>：心 <code>(x,y)</code>，半徑點 <code>(x+w,y)</code></li>
       <li>別名：<code>prism</code>→<code>rectPrism</code>；<code>right</code>/<code>rightTriangle</code>→<code>rightTri</code></li>
+      <li><strong>立體</strong>會自動建立頂點標籤，並用虛線表示隱藏邊。多個立體／點 id 衝突時，用 <code>idPrefix</code> 區隔，或設 <code>labels:false</code>（／不傳 <code>label</code>）避免重複字母標籤。</li>
     </ul>
+    <p class="note"><span class="en">Solids auto-create vertex labels + hidden (dashed) edges. Multi-shape / id clash → use <code>idPrefix</code> or <code>labels:false</code>.</span></p>
 
     <h2>10. 座標圖 / Coordinate plots ★</h2>
     <p><strong>When</strong>：畫函數／圓／三角曲線。先 <code>addCoordPlot</code>，再可 <code>addCurve</code> 追加。<br />
@@ -434,7 +439,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.33 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.34 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

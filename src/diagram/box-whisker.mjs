@@ -19,6 +19,47 @@ function finiteNums(arr) {
 }
 
 /**
+ * Normalize ticks: bare numbers stay ticks-only; objects accept
+ * `{ pos, label? }` or `{ x|y, label? }` (label drawn outside the mark).
+ * @param {unknown} raw
+ * @returns {Array<number|{pos:number,label?:string}>}
+ */
+export function normalizeBoxWhiskerTicks(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const t of raw) {
+    if (t != null && typeof t === "object" && !Array.isArray(t)) {
+      const pos = Number(
+        t.pos != null ? t.pos : t.x != null ? t.x : t.y != null ? t.y : NaN
+      );
+      if (!Number.isFinite(pos)) continue;
+      if (t.label != null && String(t.label) !== "") {
+        out.push({ pos, label: String(t.label) });
+      } else {
+        out.push(pos);
+      }
+      continue;
+    }
+    const n = Number(t);
+    if (Number.isFinite(n)) out.push(n);
+  }
+  return out;
+}
+
+/** @param {number|{pos:number,label?:string}} t */
+export function boxWhiskerTickPos(t) {
+  return typeof t === "object" && t != null ? Number(t.pos) : Number(t);
+}
+
+/** @param {number|{pos:number,label?:string}} t */
+export function boxWhiskerTickLabel(t) {
+  if (typeof t === "object" && t != null && t.label != null && String(t.label) !== "") {
+    return String(t.label);
+  }
+  return null;
+}
+
+/**
  * Normalize / validate a box-whisker record for persist + render.
  * @param {Record<string, unknown>} raw
  * @param {{ requireId?: boolean }} [opts]
@@ -50,7 +91,7 @@ export function normalizeBoxWhisker(raw, opts = {}) {
   const boxHeight = Math.max(4, num(raw.boxHeight, 36));
   const cap = Math.max(2, num(raw.cap, boxHeight * 0.35));
   const outliers = finiteNums(raw.outliers);
-  const ticks = finiteNums(raw.ticks);
+  const ticks = normalizeBoxWhiskerTicks(raw.ticks);
   const showAxis =
     raw.showAxis != null ? !!raw.showAxis : ticks.length > 0;
 
@@ -106,6 +147,7 @@ export function normalizeBoxWhisker(raw, opts = {}) {
  *   outliers: {x:number,y:number}[],
  *   axis: {x1:number,y1:number,x2:number,y2:number}|null,
  *   tickMarks: {x1:number,y1:number,x2:number,y2:number}[],
+ *   tickLabels: {x:number,y:number,text:string,anchor:string,baseline:string}[],
  * }}
  */
 export function boxWhiskerParts(bw) {
@@ -113,6 +155,7 @@ export function boxWhiskerParts(bw) {
   const half = h / 2;
   const cap = bw.cap;
   const tickLen = Math.max(3, h * 0.22);
+  const labelGap = Math.max(3, tickLen * 0.55);
 
   if (bw.orientation === "v") {
     const x = bw.x;
@@ -134,21 +177,38 @@ export function boxWhiskerParts(bw) {
     const outliers = bw.outliers.map((v) => ({ x, y: v }));
     let axis = null;
     const tickMarks = [];
+    const tickLabels = [];
     if (bw.showAxis && bw.ticks.length) {
       const axisX =
         bw.axisX != null ? bw.axisX : x + half + Math.max(10, h * 0.35);
-      const ys = bw.ticks.slice().sort((a, b) => a - b);
+      const ys = bw.ticks
+        .map(boxWhiskerTickPos)
+        .filter((n) => Number.isFinite(n))
+        .sort((a, b) => a - b);
       axis = { x1: axisX, y1: ys[0], x2: axisX, y2: ys[ys.length - 1] };
-      for (const ty of bw.ticks) {
+      for (const t of bw.ticks) {
+        const ty = boxWhiskerTickPos(t);
+        if (!Number.isFinite(ty)) continue;
         tickMarks.push({
           x1: axisX - tickLen / 2,
           y1: ty,
           x2: axisX + tickLen / 2,
           y2: ty,
         });
+        const lab = boxWhiskerTickLabel(t);
+        if (lab) {
+          // Left of vertical axis
+          tickLabels.push({
+            x: axisX - tickLen / 2 - labelGap,
+            y: ty,
+            text: lab,
+            anchor: "end",
+            baseline: "middle",
+          });
+        }
       }
     }
-    return { box, median, whiskers, caps, outliers, axis, tickMarks };
+    return { box, median, whiskers, caps, outliers, axis, tickMarks, tickLabels };
   }
 
   // Horizontal
@@ -171,21 +231,38 @@ export function boxWhiskerParts(bw) {
   const outliers = bw.outliers.map((v) => ({ x: v, y }));
   let axis = null;
   const tickMarks = [];
+  const tickLabels = [];
   if (bw.showAxis && bw.ticks.length) {
     const axisY =
       bw.axisY != null ? bw.axisY : y + half + Math.max(10, h * 0.35);
-    const xs = bw.ticks.slice().sort((a, b) => a - b);
+    const xs = bw.ticks
+      .map(boxWhiskerTickPos)
+      .filter((n) => Number.isFinite(n))
+      .sort((a, b) => a - b);
     axis = { x1: xs[0], y1: axisY, x2: xs[xs.length - 1], y2: axisY };
-    for (const tx of bw.ticks) {
+    for (const t of bw.ticks) {
+      const tx = boxWhiskerTickPos(t);
+      if (!Number.isFinite(tx)) continue;
       tickMarks.push({
         x1: tx,
         y1: axisY - tickLen / 2,
         x2: tx,
         y2: axisY + tickLen / 2,
       });
+      const lab = boxWhiskerTickLabel(t);
+      if (lab) {
+        // Below horizontal axis
+        tickLabels.push({
+          x: tx,
+          y: axisY + tickLen / 2 + labelGap,
+          text: lab,
+          anchor: "middle",
+          baseline: "hanging",
+        });
+      }
     }
   }
-  return { box, median, whiskers, caps, outliers, axis, tickMarks };
+  return { box, median, whiskers, caps, outliers, axis, tickMarks, tickLabels };
 }
 
 /** Expand world bounds to cover a box-whisker. */
@@ -201,5 +278,6 @@ export function addBoxWhiskerBounds(bw, add) {
     add(p.axis.x1, p.axis.y1);
     add(p.axis.x2, p.axis.y2);
   }
+  for (const t of p.tickLabels || []) add(t.x, t.y);
   for (const o of p.outliers) add(o.x, o.y);
 }
