@@ -190,6 +190,7 @@ export const COORD_CURVE_INK_DARK = "#e6e8eb";
 export function coordCurveInk(curve, theme) {
   const raw = curve && curve.color != null ? String(curve.color).trim() : "";
   if (raw) return raw;
+  if (curve && curve.role === "solution") return theme === "dark" ? "#f87171" : "#dc2626";
   return theme === "dark" ? COORD_CURVE_INK_DARK : COORD_CURVE_INK_PAPER;
 }
 
@@ -672,7 +673,8 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
     const rich = svgTextInner(lab.text, true);
     const fs = Number(fontPx);
     const labHalo = Math.max(3.5, fs * 0.28).toFixed(2);
-    body += `<text x="${sp.x.toFixed(2)}" y="${sp.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${labHalo}" stroke-linejoin="round" paint-order="stroke fill" ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="middle" dominant-baseline="middle">${rich.inner}</text>\n`;
+    const labInk = escapeXml(coordCurveInk(curve, "paper"));
+    body += `<text x="${sp.x.toFixed(2)}" y="${sp.y.toFixed(2)}" fill="${labInk}" stroke="#ffffff" stroke-width="${labHalo}" stroke-linejoin="round" paint-order="stroke fill" ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="middle" dominant-baseline="middle">${rich.inner}</text>\n`;
   }
   return body;
 }

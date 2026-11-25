@@ -20,6 +20,9 @@
  *   the radii, not a ring of outer arcs.
  */
 
+import { appearanceFields } from "./appearance.mjs";
+import { bearingArcSize, pieArcSize } from "./angle-arc.mjs";
+
 const KIND = {
   incentre: "incentre",
   incenter: "incentre",
@@ -152,6 +155,7 @@ export function applyTriangleCenter(doc, op, nextId, api, defaults) {
     return doc;
   }
 
+  const look = appearanceFields(op);
   const center = pushPoint(
     doc,
     nextId,
@@ -159,7 +163,8 @@ export function applyTriangleCenter(doc, op, nextId, api, defaults) {
     pos.y,
     op.id != null && op.id !== "" ? op.id : undefined,
     undefined,
-    op.hidden === true
+    op.hidden === true,
+    op
   );
   inlinePointLabel(doc, op, nextId, center, { legacyOxOy: true });
 
@@ -201,24 +206,24 @@ export function applyTriangleCenter(doc, op, nextId, api, defaults) {
       const ids = [];
       for (let i = 0; i < 3; i++) {
         const hint = touchIds ? touchIds[i] : undefined;
-        const p = pushPoint(doc, nextId, feet[i].x, feet[i].y, hint, undefined, false);
+        const p = pushPoint(doc, nextId, feet[i].x, feet[i].y, hint, undefined, false, op);
         ids.push(p.id);
       }
       throughId = ids[0];
     } else {
-      const p = pushPoint(doc, nextId, feet[0].x, feet[0].y, undefined, undefined, true);
+      const p = pushPoint(doc, nextId, feet[0].x, feet[0].y, undefined, undefined, true, op);
       throughId = p.id;
     }
   }
 
   if (drawCircle && kind === "incentre" && throughId) {
-    const circle = { centerId: center.id, throughId };
+    const circle = { centerId: center.id, throughId, ...look };
     if (op.circleId != null && op.circleId !== "") circle.id = String(op.circleId);
     if (op.circleStyle != null && op.circleStyle !== "") circle.style = op.circleStyle;
     handlers.addCircle(doc, circle, nextId);
   }
   if (drawCircle && kind === "circumcentre") {
-    const circle = { centerId: center.id, throughId: aId };
+    const circle = { centerId: center.id, throughId: aId, ...look };
     if (op.circleId != null && op.circleId !== "") circle.id = String(op.circleId);
     if (op.circleStyle != null && op.circleStyle !== "") circle.style = op.circleStyle;
     handlers.addCircle(doc, circle, nextId);
@@ -226,7 +231,7 @@ export function applyTriangleCenter(doc, op, nextId, api, defaults) {
   return doc;
 }
 
-function addArrowHead(doc, nextId, api, tip, ux, uy, northLen) {
+function addArrowHead(doc, nextId, api, tip, ux, uy, northLen, appearance) {
   const { pushPoint, pushSegment } = api;
   const scale = Math.min(1, northLen / 40);
   const back = 9 * scale;
@@ -236,10 +241,10 @@ function addArrowHead(doc, nextId, api, tip, ux, uy, northLen) {
   const by = tip.y - uy * back;
   const px = -uy;
   const py = ux;
-  const left = pushPoint(doc, nextId, bx + px * half, by + py * half, undefined, undefined, true);
-  const right = pushPoint(doc, nextId, bx - px * half, by - py * half, undefined, undefined, true);
-  pushSegment(doc, nextId, tip.id, left.id, "solid");
-  pushSegment(doc, nextId, tip.id, right.id, "solid");
+  const left = pushPoint(doc, nextId, bx + px * half, by + py * half, undefined, undefined, true, appearance);
+  const right = pushPoint(doc, nextId, bx - px * half, by - py * half, undefined, undefined, true, appearance);
+  pushSegment(doc, nextId, tip.id, left.id, "solid", undefined, appearance);
+  pushSegment(doc, nextId, tip.id, right.id, "solid", undefined, appearance);
 }
 
 function bearingMode(v, ctx) {
@@ -272,6 +277,7 @@ const AXIS = {
 export function applyBearing(doc, op, nextId, api) {
   const ctx = "addBearing";
   const { requirePoint, pointById, pushPoint, pushSegment, handlers } = api;
+  const look = appearanceFields(op);
   const atRaw = op.at != null ? op.at : op.pointId;
   if (atRaw == null || atRaw === "") throw new Error(`${ctx}: at required`);
   const atId = requirePoint(doc, atRaw, ctx);
@@ -298,16 +304,16 @@ export function applyBearing(doc, op, nextId, api) {
     }
   }
 
-  const tip = pushPoint(doc, nextId, at.x, at.y - northLen, undefined, undefined, true);
-  pushSegment(doc, nextId, atId, tip.id, "solid");
-  addArrowHead(doc, nextId, api, tip, 0, -1, northLen);
+  const tip = pushPoint(doc, nextId, at.x, at.y - northLen, undefined, undefined, true, op);
+  pushSegment(doc, nextId, atId, tip.id, "solid", undefined, op);
+  addArrowHead(doc, nextId, api, tip, 0, -1, northLen, op);
 
   const hideNorth =
     op.northLabel === false || op.northLabel === "" || op.northLabel === "false";
   if (!hideNorth) {
     const text = op.northLabel == null ? "N" : String(op.northLabel);
     if (text) {
-      handlers.addLabel(doc, { pointId: tip.id, text, ox: 0, oy: -14 }, nextId);
+      handlers.addLabel(doc, { pointId: tip.id, text, ox: 0, oy: -14, ...look }, nextId);
     }
   }
 
@@ -315,12 +321,12 @@ export function applyBearing(doc, op, nextId, api) {
   const axisId = { N: tip.id };
   if (op.showCross === true || op.showCross === "true") {
     const tick = 14;
-    const east = pushPoint(doc, nextId, at.x + tick, at.y, undefined, undefined, true);
-    const west = pushPoint(doc, nextId, at.x - tick, at.y, undefined, undefined, true);
-    const south = pushPoint(doc, nextId, at.x, at.y + tick, undefined, undefined, true);
-    pushSegment(doc, nextId, atId, east.id, "dashed");
-    pushSegment(doc, nextId, atId, west.id, "dashed");
-    pushSegment(doc, nextId, atId, south.id, "dashed");
+    const east = pushPoint(doc, nextId, at.x + tick, at.y, undefined, undefined, true, op);
+    const west = pushPoint(doc, nextId, at.x - tick, at.y, undefined, undefined, true, op);
+    const south = pushPoint(doc, nextId, at.x, at.y + tick, undefined, undefined, true, op);
+    pushSegment(doc, nextId, atId, east.id, "dashed", undefined, op);
+    pushSegment(doc, nextId, atId, west.id, "dashed", undefined, op);
+    pushSegment(doc, nextId, atId, south.id, "dashed", undefined, op);
     axisId.E = east.id;
     axisId.W = west.id;
     axisId.S = south.id;
@@ -339,7 +345,8 @@ export function applyBearing(doc, op, nextId, api) {
       at.y + dir.y * northLen,
       undefined,
       undefined,
-      true
+      true,
+      op
     );
     armId = p.id;
   }
@@ -369,8 +376,7 @@ export function applyBearing(doc, op, nextId, api) {
     }
   }
 
-  let arcSize = op.arcSize != null && op.arcSize !== "" ? Number(op.arcSize) : 22;
-  if (!Number.isFinite(arcSize) || !(arcSize > 0)) arcSize = 22;
+  const arcSize = bearingArcSize(northLen, op.arcSize);
   const text = op.text != null ? String(op.text) : "";
   handlers.addAngleArc(
     doc,
@@ -381,6 +387,7 @@ export function applyBearing(doc, op, nextId, api) {
       text,
       size: arcSize,
       reflex,
+      ...look,
     },
     nextId
   );
@@ -433,6 +440,8 @@ function angleKey(angle) {
 export function applyPieChart(doc, op, nextId, api) {
   const ctx = "addPieChart";
   const { requirePoint, pointById, pushPoint, pushSegment, handlers } = api;
+  const look = appearanceFields(op);
+  const callerSetRatio = op.labelRadiusRatio != null && op.labelRadiusRatio !== "";
   const drafted = sliceSpans(op.slices, ctx);
   const positive = [];
   const normalize = drafted.some((row) => row.normalize);
@@ -491,7 +500,7 @@ export function applyPieChart(doc, op, nextId, api) {
 
   if (createdCenter) {
     const hint = prefix ? `${prefix}C` : undefined;
-    const center = pushPoint(doc, nextId, cx, cy, hint, undefined, true);
+    const center = pushPoint(doc, nextId, cx, cy, hint, undefined, true, op);
     centerId = center.id;
   }
 
@@ -509,7 +518,8 @@ export function applyPieChart(doc, op, nextId, api) {
       cy + r * Math.sin(angle),
       hint,
       undefined,
-      true
+      true,
+      op
     );
     rimByKey.set(key, p.id);
     return p.id;
@@ -536,25 +546,28 @@ export function applyPieChart(doc, op, nextId, api) {
     const id = rimAt(a);
     if (id === centerId || spoke.has(id)) continue;
     spoke.add(id);
-    pushSegment(doc, nextId, centerId, id, "solid");
+    pushSegment(doc, nextId, centerId, id, "solid", undefined, op);
   }
 
   const total = boundaryAngles[boundaryAngles.length - 1] - boundaryAngles[0];
   const closed = Math.abs(Math.abs(total) - Math.PI * 2) < 1e-4;
   if (closed && spoke.size > 0) {
     const throughId = rimAt(boundaryAngles[0]);
-    handlers.addCircle(doc, { centerId, throughId }, nextId);
+    handlers.addCircle(doc, { centerId, throughId, ...look }, nextId);
   }
 
   for (const row of placed) {
     const patternRaw = row.slice.pattern != null ? row.slice.pattern : op.pattern;
     const pattern = patternRaw != null && patternRaw !== "" ? String(patternRaw) : "solid";
     const hatch = pattern.trim().toLowerCase() === "hatch";
-    const color =
-      row.slice.color != null && row.slice.color !== ""
-        ? row.slice.color
-        : op.color != null && op.color !== ""
-          ? op.color
+    const explicitSliceColor = row.slice.color != null && row.slice.color !== "";
+    const explicitOpColor = op.color != null && op.color !== "";
+    const color = explicitSliceColor
+      ? row.slice.color
+      : explicitOpColor
+        ? op.color
+        : look.role === "solution"
+          ? undefined
           : hatch
             ? undefined
             : PIE_COLORS[row.index % PIE_COLORS.length];
@@ -571,29 +584,35 @@ export function applyPieChart(doc, op, nextId, api) {
       const startId = rimAt(p0);
       const endId = rimAt(p1);
       if (startId === endId) continue;
-      const fill = { kind: "sector", centerId, startId, endId, pattern };
+      const fill = { kind: "sector", centerId, startId, endId, pattern, ...look };
       if (color != null) fill.color = color;
-      if (opacity != null) fill.opacity = opacity;
+      if (opacity != null && !(look.role === "solution" && color == null && (row.slice.opacity == null || row.slice.opacity === "") && (op.opacity == null || op.opacity === ""))) {
+        fill.opacity = opacity;
+      }
       handlers.addFill(doc, fill, nextId);
       if (!closed) {
-        handlers.addSector(doc, { centerId, startId, endId, mode: "arc" }, nextId);
+        handlers.addSector(doc, { centerId, startId, endId, mode: "arc", ...look }, nextId);
       }
     }
 
-    const labelRatio =
-      row.slice.labelRadiusRatio != null && row.slice.labelRadiusRatio !== ""
-        ? Number(row.slice.labelRadiusRatio)
-        : ratio;
-    const useRatio = Number.isFinite(labelRatio) ? labelRatio : ratio;
+    const sliceSetRatio = row.slice.labelRadiusRatio != null && row.slice.labelRadiusRatio !== "";
+    const hasCategory = typeof row.slice.label === "string" && row.slice.label !== "";
+    const hasAngleText =
+      row.slice.angleText != null && row.slice.angleText !== false && row.slice.angleText !== "";
+    const splitLabel =
+      hasCategory && (hasAngleText || row.slice.rightAngle === true) && !sliceSetRatio && !callerSetRatio;
+    const labelRatio = sliceSetRatio ? Number(row.slice.labelRadiusRatio) : splitLabel ? 0.7 : ratio;
+    const useRatio = Number.isFinite(labelRatio) ? labelRatio : splitLabel ? 0.7 : ratio;
     if (typeof row.slice.label === "string" && row.slice.label !== "") {
       const mid = row.a0 + row.sweep / 2;
-      handlers.addText(
+        handlers.addText(
         doc,
         {
           x: cx + useRatio * r * Math.cos(mid),
           y: cy + useRatio * r * Math.sin(mid),
           text: row.slice.label,
           align: "center",
+          ...look,
         },
         nextId
       );
@@ -615,8 +634,9 @@ export function applyPieChart(doc, op, nextId, api) {
           arm1: row.startId,
           arm2: row.endId,
           text,
-          size: Math.min(28, Math.max(12, r * 0.28)),
+          size: pieArcSize(r, op.arcSize),
           reflex: Math.abs(row.deg) > 180 + 1e-6,
+          ...look,
         },
         nextId
       );
@@ -625,7 +645,7 @@ export function applyPieChart(doc, op, nextId, api) {
     if (row.slice.rightAngle === true && row.startId && row.endId && row.startId !== row.endId) {
       handlers.addRightAngle(
         doc,
-        { vertex: centerId, arm1: row.startId, arm2: row.endId },
+        { vertex: centerId, arm1: row.startId, arm2: row.endId, ...look },
         nextId
       );
     }

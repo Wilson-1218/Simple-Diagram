@@ -49,7 +49,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `activeParallelGroup` | 0\|1 | UI：單／雙平行 |
 | `activeEqualGroup` | 0\|1 | UI：單／雙等長 |
 | `activeArcGroup` | 0\|1 | UI：單／雙角弧 |
-| `layers` | object | 六布林：`gridShow`、`gridLock`、`coordsShow`、`coordsLock`、`helpersShow`、`helpersLock`（`gridShow` 與吸附開關聯動；`gridLock` 檔案相容保留） |
+| `layers` | object | 布林：`gridShow`、`gridLock`、`coordsShow`、`coordsLock`、`helpersShow`、`helpersLock`、`solutionShow`（預設 true；false 隱藏 `role:"solution"`。缺鍵視為 true。`gridShow` 與吸附開關聯動；`gridLock` 檔案相容保留） |
 | `gridSnap` | boolean | 網格吸附 |
 | `gridMode` | `"square"`\|`"triangle"` | 網格種類 |
 | `hideExportPoints` | boolean | 匯出隱藏頂點 |
@@ -57,7 +57,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `savedAt` | number | 儲存時間戳（毫秒） |
 | `name` | string | 檔名提示 |
 
-儲存時固定輸出上述 **38** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.45"`）。
+儲存時固定輸出上述 **38** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.46"`）。
 
 ---
 

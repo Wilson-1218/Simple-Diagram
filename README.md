@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.45 · 穩定）
+## 目前版本 / Current version（v13.5.46 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.46** — 角弧預設更緊（`size` 18，依臂長夾限）；圓餅角文與類別標分開；`role`／`solution`／`color` 與圖層 `solutionShow`
 - **v13.5.45** — `addLabel` 省略 ox／oy 時依角隙向外放；`addPoint` 等可帶 `label`
 - **v13.5.44** — `addTriangleCenter`／`addIncircle`／`addCircumcircle`；`addBearing`／`addCompass`；`addPieChart`／`addPie`
 - **v13.5.43** — `addShape` 頂點字母別名（`KC`、裸 `C`）；`add3DPolyhedron` 順／逆時針都翻成朝外法線；可行區域與 `mathPoints` 的自動頂點預設隱藏

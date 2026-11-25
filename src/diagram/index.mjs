@@ -9,6 +9,21 @@ export {
 export { collectIds, createIdFactory } from "./ids.mjs";
 export { validateDiagram } from "./validate.mjs";
 export { applyOps, OP_NAMES, opHandlers } from "./ops.mjs";
+export {
+  DEFAULT_ARC_SIZE,
+  effectiveArcRadius,
+  arcTextRadius,
+  arcDraw,
+  pieArcSize,
+  bearingArcSize,
+} from "./angle-arc.mjs";
+export {
+  SOLUTION_INK,
+  SOLUTION_INK_DARK,
+  SOLUTION_FILL_OPACITY,
+  elementStroke,
+  resolveFillPaint,
+} from "./appearance.mjs";
 export { summarizeDiagram, OP_CATALOG } from "./summarize.mjs";
 export {
   BUILTIN_TEMPLATES,

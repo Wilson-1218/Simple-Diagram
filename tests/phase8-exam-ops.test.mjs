@@ -32,8 +32,8 @@ function withWarns(fn) {
   }
 }
 
-test("APP_VERSION is 13.5.45", () => {
-  assert.equal(APP_VERSION, "13.5.45");
+test("APP_VERSION is 13.5.46", () => {
+  assert.equal(APP_VERSION, "13.5.46");
 });
 
 test("OP_NAMES includes triangle, bearing, and pie ops", () => {
@@ -185,7 +185,7 @@ test("addBearing draws the north segment, N, and an arc; cw over 180 uses reflex
   assert.equal(doc.angleArcs[0].arm2, "Q");
   assert.equal(doc.angleArcs[0].text, "52°");
   assert.equal(doc.angleArcs[0].reflex, false);
-  assert.equal(doc.angleArcs[0].size, 22);
+  assert.equal(doc.angleArcs[0].size, 16);
   assert.equal(doc.segments.some((s) => s.style === "dashed"), false);
   const svg = documentToSvg(doc);
   assert.ok(svg.includes("52"));
@@ -224,7 +224,7 @@ test("addPieChart splits by angle and by value, places a label, and marks a righ
   ]);
   assert.equal(validateDiagram(doc).ok, true, validateDiagram(doc).errors.join("; "));
   const r = 95;
-  const ratio = 0.62;
+  const ratio = 0.7;
   const mid = Math.PI / 4;
   const label = doc.texts.find((t) => t.text === "Q1");
   assert.ok(label);

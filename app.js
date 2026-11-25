@@ -246,6 +246,8 @@
     helpersShow: true,
     /** 記號圖層預設鎖定：標籤／記號隨點線走；解鎖後才可單獨拖移 */
     helpersLock: true,
+    /** role === "solution" 的幾何。關掉則畫布與匯出都不畫。 */
+    solutionShow: true,
   };
   /** @type {"arc"|"sector"} */
   let sectorMode = "arc";
@@ -377,7 +379,7 @@
       length_stroke_dashed: "虛線",
       length_stroke_dotted: "點線",
       btn_layers: "圖層 ▾", layers_title: "圖層", layers_grid: "網格", layers_coords: "座標",
-      layers_helpers: "記號", layers_show: "顯示", layers_lock: "鎖定",
+      layers_helpers: "記號", layers_solution: "解答", layers_show: "顯示", layers_lock: "鎖定",
       tip_layers: "圖層：網格開關＋格種；座標／記號顯示與鎖定（記號預設鎖定）",
       tip_shape_bar: "常用圖形",
       tip_shape_square: "正方形：對角拖曳",
@@ -688,7 +690,7 @@
       length_stroke_dashed: "Dashed",
       length_stroke_dotted: "Dotted",
       btn_layers: "Layers ▾", layers_title: "Layers", layers_grid: "Grid", layers_coords: "Axes",
-      layers_helpers: "Marks", layers_show: "Show", layers_lock: "Lock",
+      layers_helpers: "Marks", layers_solution: "Solution", layers_show: "Show", layers_lock: "Lock",
       tip_layers: "Layers: grid on/off + style; axes/marks show & lock (marks default locked)",
       tip_shape_bar: "Common shapes",
       tip_shape_square: "Square: drag from corner",
@@ -1121,6 +1123,48 @@
   function edInk(highlight) {
     if (highlight) return darkCanvas ? "#7ec8f0" : "#1a4a6e";
     return darkCanvas ? "#e6e8eb" : "#111";
+  }
+  /** Solution layer. Omitted role is question and always draws. */
+  function solutionShown(el) {
+    if (!el || el.role !== "solution") return true;
+    return layers.solutionShow !== false;
+  }
+  /** Explicit color wins. Solution without a color is red (lighter on a dark canvas). */
+  function inkFor(el, highlight) {
+    if (el && el.color != null && String(el.color).trim() !== "") return String(el.color).trim();
+    if (el && el.role === "solution") return darkCanvas ? "#f87171" : "#dc2626";
+    return edInk(highlight);
+  }
+  /** White SVG/PNG ink. Export stays on paper even when the editor canvas is dark. */
+  function paperInk(el) {
+    if (el && el.color != null && String(el.color).trim() !== "") return String(el.color).trim();
+    if (el && el.role === "solution") return "#dc2626";
+    return "#111";
+  }
+  function fillPaint(fill, dark) {
+    const hatch = String(fill && fill.pattern ? fill.pattern : "").toLowerCase() === "hatch";
+    const explicit = fill && fill.color != null && String(fill.color).trim() !== "";
+    const opacityGiven =
+      fill && fill.opacity != null && fill.opacity !== "" && Number.isFinite(Number(fill.opacity));
+    if (explicit) {
+      return {
+        color: String(fill.color).trim(),
+        opacity: opacityGiven ? Number(fill.opacity) : hatch ? 1 : 0.2,
+        hatch,
+      };
+    }
+    if (fill && fill.role === "solution") {
+      return {
+        color: dark ? "#f87171" : "#dc2626",
+        opacity: opacityGiven ? Number(fill.opacity) : hatch ? 1 : 0.25,
+        hatch,
+      };
+    }
+    return {
+      color: hatch ? "#111111" : "#666666",
+      opacity: opacityGiven ? Number(fill.opacity) : hatch ? 1 : 0.2,
+      hatch,
+    };
   }
   function edPaper() {
     return darkCanvas ? "#1e2329" : "#ffffff";
@@ -1936,6 +1980,7 @@
       const k = el.dataset.layerShow;
       if (k === "coords") el.checked = !!layers.coordsShow;
       else if (k === "helpers") el.checked = !!layers.helpersShow;
+      else if (k === "solution") el.checked = layers.solutionShow !== false;
     });
     document.querySelectorAll("[data-layer-lock]").forEach((el) => {
       const k = el.dataset.layerLock;
@@ -2211,6 +2256,7 @@
   function nearestFillHit(wx, wy) {
     for (let i = fills.length - 1; i >= 0; i--) {
       const f = fills[i];
+      if (!solutionShown(f)) continue;
       if (pointInFill(f, wx, wy)) return f;
     }
     return null;
@@ -2325,9 +2371,11 @@
   }
 
   function drawFillShape(fill, selected, toScreenFn) {
+    if (!solutionShown(fill)) return;
     const toS = toScreenFn || ((x, y) => worldToScreen(x, y));
     if (!buildFillPath(ctx, fill, toS)) return;
-    const isHatch = String(fill.pattern || "").toLowerCase() === "hatch";
+    const paint = fillPaint(fill, darkCanvas);
+    const isHatch = paint.hatch;
     if (isHatch) {
       ctx.save();
       ctx.clip();
@@ -2347,8 +2395,8 @@
       }
       const strokes = hatchStrokesInRectScreen(minX, minY, maxX - minX, maxY - minY, spacing);
       // Dark screen: remap default-dark hatch (#111/#000) to light slate; export stays paper ink
-      ctx.strokeStyle = hatchInkForScreen(fill.color);
-      ctx.globalAlpha = Number.isFinite(Number(fill.opacity)) ? Number(fill.opacity) : 1;
+      ctx.strokeStyle = hatchInkForScreen(paint.color);
+      ctx.globalAlpha = paint.opacity;
       ctx.lineWidth = Math.max(1, LINE_WIDTH * 0.85);
       ctx.setLineDash([]);
       for (const s of strokes) {
@@ -2359,7 +2407,7 @@
       }
       ctx.restore();
     } else {
-      ctx.fillStyle = hexToRgba(fill.color, fill.opacity);
+      ctx.fillStyle = hexToRgba(paint.color, paint.opacity);
       ctx.fill();
     }
     if (selected) {
@@ -3483,6 +3531,7 @@
         coordsLock: !!data.layers.coordsLock,
         helpersShow: data.layers.helpersShow != null ? !!data.layers.helpersShow : true,
         helpersLock: data.layers.helpersLock != null ? !!data.layers.helpersLock : true,
+        solutionShow: data.layers.solutionShow != null ? !!data.layers.solutionShow : true,
       };
       syncLayersUI();
     }
@@ -3565,7 +3614,7 @@
     let best = null;
     let bestD = thresh;
     for (const p of points) {
-      if (p.hidden === true) continue;
+      if (p.hidden === true || !solutionShown(p)) continue;
       const d = dist(p, { x: wx, y: wy });
       if (d < bestD) {
         bestD = d;
@@ -3590,6 +3639,7 @@
     let best = null;
     let bestD = thresh;
     for (const seg of segments) {
+      if (!solutionShown(seg)) continue;
       const a = pointById(seg.a);
       const b = pointById(seg.b);
       if (!a || !b) continue;
@@ -3605,6 +3655,7 @@
   function nearestLabelHit(wx, wy) {
     const thresh = 14 / view.scale;
     for (const lab of labels) {
+      if (!solutionShown(lab)) continue;
       const p = pointById(lab.pointId);
       if (!p) continue;
       if (dist({ x: wx, y: wy }, { x: p.x + lab.ox, y: p.y + lab.oy }) < thresh) return lab;
@@ -3635,6 +3686,7 @@
     let best = null;
     let bestD = thresh;
     for (const tx of texts) {
+      if (!solutionShown(tx)) continue;
       const d = dist({ x: wx, y: wy }, { x: tx.x, y: tx.y });
       if (d < bestD) {
         bestD = d;
@@ -3647,6 +3699,7 @@
   function nearestRightHit(wx, wy) {
     const thresh = 12 / view.scale;
     for (const ra of rightAngles) {
+      if (!solutionShown(ra)) continue;
       const v = pointById(ra.vertex);
       if (!v) continue;
       if (dist({ x: wx, y: wy }, v) < thresh * 1.5) return ra;
@@ -3659,19 +3712,12 @@
     let best = null;
     let bestD = thresh;
     for (const arc of angleArcs) {
-      const v = pointById(arc.vertex);
-      const a1 = pointById(arc.arm1);
-      const a2 = pointById(arc.arm2);
-      if (!v || !a1 || !a2) continue;
-      const r = ((arc.size || DEFAULT_RA_SIZE) * ANGLE_ARC_R) / view.scale;
-      // sample mid-angle point on arc
-      const ang1 = Math.atan2(a1.y - v.y, a1.x - v.x);
-      const ang2 = Math.atan2(a2.y - v.y, a2.x - v.x);
-      const delta = angleSweepDelta(ang1, ang2, !!arc.reflex);
-      const mid = ang1 + delta / 2;
-      const rr = r * (arc.reflex ? 1.15 : 1);
-      const px = v.x + Math.cos(mid) * rr;
-      const py = v.y + Math.sin(mid) * rr;
+      if (!solutionShown(arc)) continue;
+      const g = angleArcWorld(arc);
+      if (!g) continue;
+      const mid = g.ang1 + g.delta / 2;
+      const px = g.v.x + Math.cos(mid) * g.effectiveR;
+      const py = g.v.y + Math.sin(mid) * g.effectiveR;
       const d = dist({ x: wx, y: wy }, { x: px, y: py });
       if (d < bestD) {
         bestD = d;
@@ -3686,6 +3732,7 @@
     let best = null;
     let bestD = thresh;
     for (const m of list) {
+      if (!solutionShown(m)) continue;
       const seg = segmentById(m.segmentId);
       if (!seg) continue;
       const a = pointById(seg.a);
@@ -3880,6 +3927,7 @@
     let best = null;
     let bestD = thresh;
     for (const cir of circles) {
+      if (!solutionShown(cir)) continue;
       const c = pointById(cir.centerId);
       const thr = pointById(cir.throughId);
       if (!c || !thr) continue;
@@ -3940,6 +3988,7 @@
     let best = null;
     let bestD = thresh;
     for (const el of ellipses) {
+      if (!solutionShown(el)) continue;
       const dims = ellipseDims(el);
       if (!dims) continue;
       const { c, rx, ry } = dims;
@@ -3964,6 +4013,7 @@
     let best = null;
     let bestD = thresh;
     for (const sec of sectors) {
+      if (!solutionShown(sec)) continue;
       const g = sectorGeom(sec);
       if (!g) continue;
       const dx = wx - g.c.x;
@@ -3997,6 +4047,7 @@
     let best = null;
     let bestD = thresh;
     for (const ll of lengthLabels) {
+      if (!solutionShown(ll)) continue;
       const seg = segmentById(ll.segmentId);
       if (!seg) continue;
       const a = pointById(seg.a);
@@ -4768,6 +4819,44 @@
     return delta;
   }
 
+  /**
+   * Compact arc in world units. Keep in sync with src/diagram/angle-arc.mjs.
+   * effectiveR = min(size, max(10, minArm * 0.30)) unless clamp === false.
+   * Text sits near effectiveR + 11, nudged out when the drawn angle is under 25°.
+   */
+  function angleArcWorld(arc) {
+    const v = pointById(arc.vertex);
+    const a1 = pointById(arc.arm1);
+    const a2 = pointById(arc.arm2);
+    if (!v || !a1 || !a2) return null;
+    const arm = Math.min(
+      Math.hypot(a1.x - v.x, a1.y - v.y),
+      Math.hypot(a2.x - v.x, a2.y - v.y)
+    );
+    let requested = Number(arc.size);
+    if (!(requested > 0)) requested = 18;
+    const force = arc.clamp === false;
+    const effectiveR = force ? requested : Math.min(requested, Math.max(10, arm * 0.3));
+    const ang1 = Math.atan2(a1.y - v.y, a1.x - v.x);
+    const ang2 = Math.atan2(a2.y - v.y, a2.x - v.x);
+    const delta = angleSweepDelta(ang1, ang2, !!arc.reflex);
+    const off =
+      arc.textRadiusOffset != null && Number.isFinite(Number(arc.textRadiusOffset))
+        ? Number(arc.textRadiusOffset)
+        : 0;
+    let textR = effectiveR + 11 + off;
+    const text = String(arc.text || "").trim();
+    if (text) {
+      const abs = Math.abs(delta);
+      const deg = (abs * 180) / Math.PI;
+      if (deg > 0.25 && deg < 25) {
+        const sin = Math.sin(abs / 2);
+        if (sin > 1e-4) textR = Math.max(textR, 10 / sin);
+      }
+    }
+    return { v, effectiveR, ang1, delta, textR, hasText: !!text };
+  }
+
 
   // ——— Coordinate plots (simple exam axes + multi-curve overlays) ———
   let pendingCoordEditId = null;
@@ -4840,6 +4929,7 @@
     if (highlight) return "#1a5fb4";
     const raw = curve && curve.color != null ? String(curve.color).trim() : "";
     if (raw) return raw;
+    if (curve && curve.role === "solution") return darkCanvas ? "#f87171" : "#dc2626";
     return darkCanvas ? "#e6e8eb" : "#111111";
   }
 
@@ -5919,6 +6009,7 @@
     }
 
     for (const curve of coordPlotCurves(plot)) {
+      if (!solutionShown(curve)) continue;
       // Axis-label halos leave strokeStyle on the paper/halo color (#fff on light).
       c.strokeStyle = coordCurveScreenInk(curve, highlight);
       c.lineWidth = lw;
@@ -5926,6 +6017,7 @@
       strokeCoordPolyline(c, toScreen, coordSampleOneCurve(plot, curve), coordCurveStyleOf(curve));
     }
     for (const curve of coordPlotCurves(plot)) {
+      if (!solutionShown(curve)) continue;
       const text = coordCurveLabelText(curve, plot);
       if (!text) continue;
       const wp = coordCurveLabelWorldPos(plot, curve);
@@ -7256,6 +7348,7 @@
       body += svgMathTextTag(ly, yPos.x + 4, yPos.y - 2, fontPx, haloAttrs, "start", "auto", true);
     }
     for (const curve of coordPlotCurves(plot)) {
+      if (!solutionShown(curve)) continue;
       let d = "";
       let pen = false;
       for (const pt of coordSampleOneCurve(plot, curve)) {
@@ -7277,11 +7370,12 @@
           dashAttr = ` stroke-linecap="butt" stroke-dasharray="${dash}"`;
         }
         const explicit = curve && curve.color != null ? String(curve.color).trim() : "";
-        const ink = explicit || "#111111";
+        const ink = explicit || (curve && curve.role === "solution" ? "#dc2626" : "#111111");
         body += `<path d="${d}" fill="none" stroke="${ink}" stroke-width="${lw}" stroke-linejoin="round"${dashAttr} />\n`;
       }
     }
     for (const curve of coordPlotCurves(plot)) {
+      if (!solutionShown(curve)) continue;
       const text = coordCurveLabelText(curve, plot);
       if (!text) continue;
       const wp = coordCurveLabelWorldPos(plot, curve);
@@ -7296,27 +7390,11 @@
 
   /** Screen-space mid-angle label position just outside the arc. */
   function angleArcLabelScreenPos(arc) {
-    const v = pointById(arc.vertex);
-    const a1 = pointById(arc.arm1);
-    const a2 = pointById(arc.arm2);
-    if (!v || !a1 || !a2) return null;
-    const sv = worldToScreen(v.x, v.y);
-    const s1 = worldToScreen(a1.x, a1.y);
-    const s2 = worldToScreen(a2.x, a2.y);
-    const ang1 = Math.atan2(s1.y - sv.y, s1.x - sv.x);
-    const ang2 = Math.atan2(s2.y - sv.y, s2.x - sv.x);
-    const delta = angleSweepDelta(ang1, ang2, !!arc.reflex);
-    const mid = ang1 + delta / 2;
-    const count = (arc.group || 0) === 0 ? 1 : 2;
-    const sc = Math.min(Math.max(view.scale, 0.6), 1.4);
-    const baseR =
-      (arc.size || rightAngleSize || DEFAULT_RA_SIZE) * ANGLE_ARC_R * sc;
-    const outerR = baseR + (count - 1) * 6 * sc;
-    const rOff =
-      arc.textRadiusOffset != null && Number.isFinite(Number(arc.textRadiusOffset))
-        ? Number(arc.textRadiusOffset) * view.scale
-        : 0;
-    const labelR = outerR + 12 * sc + rOff;
+    const g = angleArcWorld(arc);
+    if (!g) return null;
+    const sv = worldToScreen(g.v.x, g.v.y);
+    const mid = g.ang1 + g.delta / 2;
+    const labelR = g.textR * view.scale;
     const ox =
       arc.textOx != null && Number.isFinite(Number(arc.textOx))
         ? Number(arc.textOx) * view.scale
@@ -7346,9 +7424,10 @@
   }
 
   // ——— Draw ———
-  function applyStrokeStyle(style, width) {
-    ctx.strokeStyle = edInk(false);
-    ctx.fillStyle = edInk(false);
+  function applyStrokeStyle(style, width, el) {
+    const ink = inkFor(el, false);
+    ctx.strokeStyle = ink;
+    ctx.fillStyle = ink;
     ctx.lineWidth = width;
     // Round caps close dash gaps and make dashed look almost solid — use butt for non-solid.
     ctx.lineCap = style === "solid" || !style ? "round" : "butt";
@@ -7358,14 +7437,15 @@
   }
 
   function drawSegment(seg, highlight) {
+    if (!solutionShown(seg)) return;
     const a = pointById(seg.a);
     const b = pointById(seg.b);
     if (!a || !b) return;
     const sa = worldToScreen(a.x, a.y);
     const sb = worldToScreen(b.x, b.y);
     const w = (seg.style === "solid" ? LINE_WIDTH : LINE_WIDTH * 0.92) * Math.min(view.scale, 1.8);
-    applyStrokeStyle(seg.style, w);
-    if (highlight) {
+    applyStrokeStyle(seg.style, w, seg);
+    if (highlight && !(seg.color || seg.role === "solution")) {
       ctx.strokeStyle = "#1a4a6e";
       ctx.lineWidth = w + 1.2;
       ctx.setLineDash([]);
@@ -7373,7 +7453,7 @@
       ctx.moveTo(sa.x, sa.y);
       ctx.lineTo(sb.x, sb.y);
       ctx.stroke();
-      applyStrokeStyle(seg.style, w);
+      applyStrokeStyle(seg.style, w, seg);
     }
     ctx.beginPath();
     ctx.moveTo(sa.x, sa.y);
@@ -7383,11 +7463,12 @@
   }
 
   function drawPoint(p, highlight) {
-    if (p.hidden === true) return;
+    if (p.hidden === true || !solutionShown(p)) return;
     const s = worldToScreen(p.x, p.y);
+    const ink = inkFor(p, highlight);
     if (p.marker === "x" || p.marker === "foot") {
       const r = 5 * Math.min(view.scale, 1.5);
-      ctx.strokeStyle = edInk(highlight);
+      ctx.strokeStyle = ink;
       ctx.lineWidth = 1.2;
       ctx.setLineDash([]);
       ctx.beginPath();
@@ -7401,7 +7482,7 @@
     const r = POINT_R * Math.min(view.scale, 1.6);
     ctx.beginPath();
     ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
-    ctx.fillStyle = edInk(highlight);
+    ctx.fillStyle = ink;
     ctx.setLineDash([]);
     ctx.fill();
   }
@@ -7636,10 +7717,10 @@
   }
 
   function drawText(tx, highlight) {
-    if (!tx) return;
+    if (!tx || !solutionShown(tx)) return;
     const s = worldToScreen(tx.x, tx.y);
     const fontPx = labelScreenSize(tx);
-    paintFloatingText(ctx, tx, s.x, s.y, fontPx, edInk(highlight), true);
+    paintFloatingText(ctx, tx, s.x, s.y, fontPx, inkFor(tx, highlight), true);
   }
 
   /** Keep length text readable (not upside-down) while parallel to the edge. */
@@ -7681,10 +7762,11 @@
   }
 
   function drawLabel(lab, highlight) {
+    if (!solutionShown(lab)) return;
     const p = pointById(lab.pointId);
     if (!p) return;
     const s = worldToScreen(p.x + lab.ox, p.y + lab.oy);
-    paintLabelText(ctx, lab.text, s.x, s.y, labelScreenSize(lab), edInk(highlight), true);
+    paintLabelText(ctx, lab.text, s.x, s.y, labelScreenSize(lab), inkFor(lab, highlight), true);
   }
 
   function rightAngleIs3d(ra) {
@@ -7712,6 +7794,7 @@
   }
 
   function drawRightAngle(ra, highlight) {
+    if (!solutionShown(ra)) return;
     const v = pointById(ra.vertex);
     const a1 = pointById(ra.arm1);
     const a2 = pointById(ra.arm2);
@@ -7748,7 +7831,7 @@
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);
     ctx.lineTo(p3.x, p3.y);
-    ctx.strokeStyle = edInk(highlight);
+    ctx.strokeStyle = inkFor(ra, highlight);
     ctx.lineWidth = LINE_WIDTH * 0.9;
     ctx.setLineDash([]);
     ctx.stroke();
@@ -7756,38 +7839,27 @@
 
   /** Circular arc spanning the smaller angle between two arms (exam style). */
   function drawAngleArc(arc, highlight) {
-    const v = pointById(arc.vertex);
-    const a1 = pointById(arc.arm1);
-    const a2 = pointById(arc.arm2);
-    if (!v || !a1 || !a2) return;
-    const sv = worldToScreen(v.x, v.y);
-    const s1 = worldToScreen(a1.x, a1.y);
-    const s2 = worldToScreen(a2.x, a2.y);
-    const ang1 = Math.atan2(s1.y - sv.y, s1.x - sv.x);
-    const ang2 = Math.atan2(s2.y - sv.y, s2.x - sv.x);
-    const delta = angleSweepDelta(ang1, ang2, !!arc.reflex);
-    const baseR =
-      (arc.size || rightAngleSize || DEFAULT_RA_SIZE) *
-      ANGLE_ARC_R *
-      (arc.reflex ? 1.15 : 1) *
-      Math.min(Math.max(view.scale, 0.6), 1.4);
+    if (!solutionShown(arc)) return;
+    const g = angleArcWorld(arc);
+    if (!g) return;
+    const sv = worldToScreen(g.v.x, g.v.y);
+    const baseR = g.effectiveR * view.scale;
     const count = (arc.group || 0) === 0 ? 1 : 2;
-    ctx.strokeStyle = edInk(highlight);
+    ctx.strokeStyle = inkFor(arc, highlight);
     ctx.lineWidth = LINE_WIDTH * ANGLE_ARC_LW;
     ctx.lineCap = "round";
     ctx.setLineDash([]);
     for (let i = 0; i < count; i++) {
-      const r = baseR + i * 6 * Math.min(Math.max(view.scale, 0.6), 1.4);
+      const r = baseR + i * 5 * view.scale;
       ctx.beginPath();
-      ctx.arc(sv.x, sv.y, r, ang1, ang1 + delta, delta < 0);
+      ctx.arc(sv.x, sv.y, r, g.ang1, g.ang1 + g.delta, g.delta < 0);
       ctx.stroke();
     }
-    const text = (arc.text || "").trim();
-    if (text) {
+    if (g.hasText) {
       const pos = angleArcLabelScreenPos(arc);
       if (pos) {
         const fontPx = clampLabelSize(labelFontSize) * Math.min(Math.max(view.scale, 0.7), 1.5);
-        paintLabelText(ctx, text, pos.x, pos.y, fontPx, edInk(highlight), true);
+        paintLabelText(ctx, (arc.text || "").trim(), pos.x, pos.y, fontPx, inkFor(arc, highlight), true);
       }
     }
   }
@@ -8066,6 +8138,7 @@
   }
 
   function drawMidTick(mt) {
+    if (!solutionShown(mt)) return;
     // Ratio division ticks only (midpoint tool has no tick)
     const seg = segmentById(mt.segmentId);
     if (!seg) return;
@@ -8076,7 +8149,7 @@
     ctx.beginPath();
     ctx.moveTo(f.sm.x - f.nx * tick, f.sm.y - f.ny * tick);
     ctx.lineTo(f.sm.x + f.nx * tick, f.sm.y + f.ny * tick);
-    ctx.strokeStyle = edInk(false);
+    ctx.strokeStyle = inkFor(mt, false);
     ctx.lineWidth = LINE_WIDTH * 1.15;
     ctx.setLineDash([]);
     ctx.stroke();
@@ -8084,6 +8157,7 @@
 
   /** Parallel chevron(s) — axis along segment in draw space. */
   function drawParallelMark(mark, highlight) {
+    if (!solutionShown(mark)) return;
     const seg = segmentById(mark.segmentId);
     if (!seg) return;
     const tAlong = markTAlong("parallel", mark.segmentId, mark.group);
@@ -8100,7 +8174,7 @@
       size,
       gap
     );
-    ctx.strokeStyle = edInk(highlight);
+    ctx.strokeStyle = inkFor(mark, highlight);
     ctx.lineWidth = LINE_WIDTH * 1.55;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -8117,6 +8191,7 @@
 
   /** Congruent length ticks — ⊥ segment in draw space: p ± n*(len/2). */
   function drawEqualMark(mark, highlight) {
+    if (!solutionShown(mark)) return;
     const seg = segmentById(mark.segmentId);
     if (!seg) return;
     const tAlong = markTAlong("equal", mark.segmentId, mark.group);
@@ -8132,7 +8207,7 @@
       halfLen,
       gap
     );
-    ctx.strokeStyle = edInk(highlight);
+    ctx.strokeStyle = inkFor(mark, highlight);
     ctx.lineWidth = LINE_WIDTH * 1.55;
     ctx.lineCap = "round";
     ctx.setLineDash([]);
@@ -8581,8 +8656,9 @@
   }
 
   function drawLengthLabel(ll, highlight) {
+    if (!solutionShown(ll)) return;
     const scaleMul = Math.min(Math.max(view.scale, 0.6), 1.4);
-    paintLengthLabelOn(ctx, ll, worldToScreen, scaleMul, edInk(highlight), true);
+    paintLengthLabelOn(ctx, ll, worldToScreen, scaleMul, inkFor(ll, highlight), true);
   }
 
   function syncLengthFloatUI() {
@@ -8698,6 +8774,7 @@
   }
 
   function drawCircle(cir, highlight) {
+    if (!solutionShown(cir)) return;
     const c = pointById(cir.centerId);
     const thr = pointById(cir.throughId);
     if (!c || !thr) return;
@@ -8707,7 +8784,7 @@
     const style = circleStyle(cir);
     ctx.beginPath();
     ctx.arc(sc.x, sc.y, r, 0, Math.PI * 2);
-    ctx.strokeStyle = edInk(highlight);
+    ctx.strokeStyle = inkFor(cir, highlight);
     ctx.lineWidth = LINE_WIDTH * 0.95;
     const dash = STYLE_DASH[style] || [];
     ctx.setLineDash(dash.map((d) => d));
@@ -8747,6 +8824,7 @@
   }
 
   function drawEllipse(el, highlight) {
+    if (!solutionShown(el)) return;
     const dims = ellipseDims(el);
     if (!dims) return;
     const { c, rx, ry } = dims;
@@ -8762,19 +8840,20 @@
       sry,
       ellipseStyle(el),
       !!el.backDashed,
-      edInk(highlight),
+      inkFor(el, highlight),
       LINE_WIDTH * 0.95
     );
   }
 
   function drawSector(sec, highlight) {
+    if (!solutionShown(sec)) return;
     const g = sectorGeom(sec);
     if (!g) return;
     const sc = worldToScreen(g.c.x, g.c.y);
     const sr = g.r * view.scale;
     if (sr < 0.5) return;
     const style = sectorStyle(sec);
-    const color = edInk(highlight);
+    const color = inkFor(sec, highlight);
     const dash = STYLE_DASH[style] || [];
     ctx.strokeStyle = color;
     ctx.lineWidth = LINE_WIDTH * 0.95;
@@ -11786,6 +11865,7 @@
     c.fillRect(0, 0, off.width, off.height);
 
     for (const f of fills) {
+      if (!solutionShown(f)) continue;
       if (!buildFillPath(c, f, toS)) continue;
       if (String(f.pattern || "").toLowerCase() === "hatch") {
         c.save();
@@ -11802,8 +11882,9 @@
           }
         }
         const strokes = hatchStrokesInRectScreen(minX, minY, maxX - minX, maxY - minY, spacing);
-        c.strokeStyle = f.color || "#111";
-        c.globalAlpha = Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 1;
+        const paint = fillPaint(f, false);
+        c.strokeStyle = paint.color;
+        c.globalAlpha = paint.opacity;
         c.lineWidth = Math.max(1, LINE_WIDTH * scale * 0.75 * 0.85);
         c.setLineDash([]);
         for (const s of strokes) {
@@ -11814,12 +11895,14 @@
         }
         c.restore();
       } else {
-        c.fillStyle = hexToRgba(f.color, f.opacity);
+        const paint = fillPaint(f, false);
+        c.fillStyle = hexToRgba(paint.color, paint.opacity);
         c.fill();
       }
     }
 
     for (const seg of segments) {
+      if (!solutionShown(seg)) continue;
       const a = pointById(seg.a);
       const bp = pointById(seg.b);
       if (!a || !bp) continue;
@@ -11828,7 +11911,7 @@
       c.beginPath();
       c.moveTo(sa.x, sa.y);
       c.lineTo(sb.x, sb.y);
-      c.strokeStyle = "#111";
+      c.strokeStyle = paperInk(seg);
       c.lineWidth = (seg.style === "solid" ? LINE_WIDTH : LINE_WIDTH * 0.92) * scale * 0.75;
       c.lineCap = seg.style === "solid" || !seg.style ? "round" : "butt";
       const dash = STYLE_DASH[seg.style] || [];
@@ -11972,34 +12055,28 @@
       }
 
       for (const arc of angleArcs) {
-        const v = pointById(arc.vertex);
-        const a1 = pointById(arc.arm1);
-        const a2 = pointById(arc.arm2);
-        if (!v || !a1 || !a2) continue;
-        const sv = toS(v.x, v.y);
-        const s1 = toS(a1.x, a1.y);
-        const s2 = toS(a2.x, a2.y);
-        const ang1 = Math.atan2(s1.y - sv.y, s1.x - sv.x);
-        const ang2 = Math.atan2(s2.y - sv.y, s2.x - sv.x);
-        const delta = angleSweepDelta(ang1, ang2, !!arc.reflex);
-        const baseR = (arc.size || DEFAULT_RA_SIZE) * ANGLE_ARC_R * (arc.reflex ? 1.15 : 1) * scale * 0.75;
+        if (!solutionShown(arc)) continue;
+        const g = angleArcWorld(arc);
+        if (!g) continue;
+        const sv = toS(g.v.x, g.v.y);
+        const baseR = g.effectiveR * scale;
         const count = (arc.group || 0) === 0 ? 1 : 2;
-        c.strokeStyle = "#111";
+        c.strokeStyle = paperInk(arc);
         c.lineWidth = LINE_WIDTH * ANGLE_ARC_LW_EXPORT * scale;
         c.lineCap = "round";
         for (let i = 0; i < count; i++) {
           c.beginPath();
-          c.arc(sv.x, sv.y, baseR + i * 6 * scale * 0.75, ang1, ang1 + delta, delta < 0);
+          c.arc(sv.x, sv.y, baseR + i * 5 * scale, g.ang1, g.ang1 + g.delta, g.delta < 0);
           c.stroke();
         }
-        const text = (arc.text || "").trim();
-        if (text) {
-          const mid = ang1 + delta / 2;
-          const labelR = baseR + (count - 1) * 6 * scale * 0.75 + 12 * scale * 0.75;
-          const lx = sv.x + Math.cos(mid) * labelR;
-          const ly = sv.y + Math.sin(mid) * labelR;
+        if (g.hasText) {
+          const mid = g.ang1 + g.delta / 2;
+          const ox = arc.textOx != null && Number.isFinite(Number(arc.textOx)) ? Number(arc.textOx) * scale : 0;
+          const oy = arc.textOy != null && Number.isFinite(Number(arc.textOy)) ? Number(arc.textOy) * scale : 0;
+          const lx = sv.x + Math.cos(mid) * g.textR * scale + ox;
+          const ly = sv.y + Math.sin(mid) * g.textR * scale + oy;
           const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
-          paintLabelText(c, text, lx, ly, fontPx, "#111", true);
+          paintLabelText(c, (arc.text || "").trim(), lx, ly, fontPx, paperInk(arc), true);
         }
       }
     }
@@ -12266,6 +12343,7 @@
     let body = "";
     let hatchClipSeq = 0;
     for (const f of fills) {
+      if (!solutionShown(f)) continue;
       const d = fillToSvgPath(f, toS);
       if (!d) continue;
       if (String(f.pattern || "").toLowerCase() === "hatch") {
@@ -12285,14 +12363,17 @@
         body += `<clipPath id="${clipId}"><path d="${d}" /></clipPath>\n`;
         body += `<g clip-path="url(#${clipId})">\n`;
         for (const s of strokes) {
-          body += `<line x1="${s.x1.toFixed(2)}" y1="${s.y1.toFixed(2)}" x2="${s.x2.toFixed(2)}" y2="${s.y2.toFixed(2)}" stroke="${f.color || "#111"}" stroke-width="${lw}" stroke-linecap="butt" />\n`;
+          const paint = fillPaint(f, false);
+          body += `<line x1="${s.x1.toFixed(2)}" y1="${s.y1.toFixed(2)}" x2="${s.x2.toFixed(2)}" y2="${s.y2.toFixed(2)}" stroke="${paint.color}" stroke-width="${lw}" stroke-linecap="butt" />\n`;
         }
         body += `</g>\n`;
       } else {
-        body += `<path d="${d}" fill="${hexToRgba(f.color, f.opacity)}" stroke="none" />\n`;
+        const paint = fillPaint(f, false);
+        body += `<path d="${d}" fill="${hexToRgba(paint.color, paint.opacity)}" stroke="none" />\n`;
       }
     }
     for (const seg of segments) {
+      if (!solutionShown(seg)) continue;
       const a = pointById(seg.a);
       const bp = pointById(seg.b);
       if (!a || !bp) continue;
@@ -12300,7 +12381,7 @@
       const sb = toS(bp.x, bp.y);
       const lw = (seg.style === "solid" ? LINE_WIDTH : LINE_WIDTH * 0.92) * scale * 0.75;
       const cap = seg.style === "solid" || !seg.style ? "round" : "butt";
-      body += `<line x1="${sa.x.toFixed(2)}" y1="${sa.y.toFixed(2)}" x2="${sb.x.toFixed(2)}" y2="${sb.y.toFixed(2)}" stroke="#111" stroke-width="${lw.toFixed(2)}" stroke-linecap="${cap}"${dashAttr(seg.style)} />\n`;
+      body += `<line x1="${sa.x.toFixed(2)}" y1="${sa.y.toFixed(2)}" x2="${sb.x.toFixed(2)}" y2="${sb.y.toFixed(2)}" stroke="${paperInk(seg)}" stroke-width="${lw.toFixed(2)}" stroke-linecap="${cap}"${dashAttr(seg.style)} />\n`;
     }
 
     if (layers.helpersShow) for (const mt of midTicks) {
@@ -12412,38 +12493,28 @@
     }
 
     if (layers.helpersShow) for (const arc of angleArcs) {
-      const v = pointById(arc.vertex);
-      const a1 = pointById(arc.arm1);
-      const a2 = pointById(arc.arm2);
-      if (!v || !a1 || !a2) continue;
-      const sv = toS(v.x, v.y);
-      const s1 = toS(a1.x, a1.y);
-      const s2 = toS(a2.x, a2.y);
-      const ang1 = Math.atan2(s1.y - sv.y, s1.x - sv.x);
-      const ang2 = Math.atan2(s2.y - sv.y, s2.x - sv.x);
-      const delta = angleSweepDelta(ang1, ang2, !!arc.reflex);
-      const baseR = (arc.size || DEFAULT_RA_SIZE) * ANGLE_ARC_R * (arc.reflex ? 1.15 : 1) * scale * 0.75;
+      if (!solutionShown(arc)) continue;
+      const g = angleArcWorld(arc);
+      if (!g) continue;
+      const sv = toS(g.v.x, g.v.y);
+      const baseR = g.effectiveR * scale;
       const count = (arc.group || 0) === 0 ? 1 : 2;
       const lw = (LINE_WIDTH * ANGLE_ARC_LW_EXPORT * scale).toFixed(2);
+      const arcInk = paperInk(arc);
       for (let i = 0; i < count; i++) {
-        const r = baseR + i * 6 * scale * 0.75;
-        const x0 = sv.x + Math.cos(ang1) * r;
-        const y0 = sv.y + Math.sin(ang1) * r;
-        const x1 = sv.x + Math.cos(ang1 + delta) * r;
-        const y1 = sv.y + Math.sin(ang1 + delta) * r;
-        const large = Math.abs(delta) > Math.PI ? 1 : 0;
-        const sweep = delta > 0 ? 1 : 0;
-        body += `<path d="M${x0.toFixed(2)},${y0.toFixed(2)} A${r.toFixed(2)},${r.toFixed(2)} 0 ${large} ${sweep} ${x1.toFixed(2)},${y1.toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round" />\n`;
+        const r = baseR + i * 5 * scale;
+        const x0 = sv.x + Math.cos(g.ang1) * r;
+        const y0 = sv.y + Math.sin(g.ang1) * r;
+        const x1 = sv.x + Math.cos(g.ang1 + g.delta) * r;
+        const y1 = sv.y + Math.sin(g.ang1 + g.delta) * r;
+        const large = Math.abs(g.delta) > Math.PI ? 1 : 0;
+        const sweep = g.delta > 0 ? 1 : 0;
+        body += `<path d="M${x0.toFixed(2)},${y0.toFixed(2)} A${r.toFixed(2)},${r.toFixed(2)} 0 ${large} ${sweep} ${x1.toFixed(2)},${y1.toFixed(2)}" fill="none" stroke="${arcInk}" stroke-width="${lw}" stroke-linecap="round" />\n`;
       }
       const text = (arc.text || "").trim();
       if (text) {
-        const mid = ang1 + delta / 2;
-        const rOff =
-          arc.textRadiusOffset != null && Number.isFinite(Number(arc.textRadiusOffset))
-            ? Number(arc.textRadiusOffset) * scale
-            : 0;
-        const labelR =
-          baseR + (count - 1) * 6 * scale * 0.75 + 12 * scale * 0.75 + rOff;
+        const mid = g.ang1 + g.delta / 2;
+        const labelR = g.textR * scale;
         const ox =
           arc.textOx != null && Number.isFinite(Number(arc.textOx))
             ? Number(arc.textOx) * scale
@@ -12456,7 +12527,7 @@
         const ly = sv.y + Math.sin(mid) * labelR + oy;
         const fs = clampLabelSize(labelFontSize) * scale * 0.75;
         const halo = Math.max(3.5, fs * 0.28);
-        body += `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(text)}</text>\n`;
+        body += `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" fill="${arcInk}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(text)}</text>\n`;
       }
     }
 
@@ -12606,7 +12677,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.45",
+      version: "13.5.46",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
@@ -12637,6 +12708,7 @@ ${body}</svg>`;
         coordsLock: !!layers.coordsLock,
         helpersShow: !!layers.helpersShow,
         helpersLock: !!layers.helpersLock,
+        solutionShow: layers.solutionShow !== false,
       },
       nextLetter,
       labelFontSize,
@@ -12912,6 +12984,7 @@ ${body}</svg>`;
         coordsLock: !!data.layers.coordsLock,
         helpersShow: data.layers.helpersShow != null ? !!data.layers.helpersShow : true,
         helpersLock: data.layers.helpersLock != null ? !!data.layers.helpersLock : true,
+        solutionShow: data.layers.solutionShow != null ? !!data.layers.solutionShow : true,
       };
     }
     nextLetter = data.nextLetter || "A";
@@ -16270,6 +16343,7 @@ ${body}</svg>`;
       const k = el.dataset.layerShow;
       if (k === "coords") applyLayersPatch({ coordsShow: !!el.checked });
       else if (k === "helpers") applyLayersPatch({ helpersShow: !!el.checked });
+      else if (k === "solution") applyLayersPatch({ solutionShow: !!el.checked });
     });
   });
   document.querySelectorAll("[data-layer-lock]").forEach((el) => {
