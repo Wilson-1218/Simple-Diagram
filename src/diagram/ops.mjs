@@ -117,6 +117,238 @@ function pushSegment(doc, nextId, a, b, style, idHint) {
   return id;
 }
 
+/** Find existing segment between a–b (either order), or create one. */
+function ensureSegmentBetween(doc, nextId, a, b, style) {
+  const existing = doc.segments.find(
+    (s) => (s.a === a && s.b === b) || (s.a === b && s.b === a)
+  );
+  if (existing) return existing.id;
+  return pushSegment(doc, nextId, a, b, style);
+}
+
+/**
+ * Resolve endpoints from `a`+`b` point ids or `segmentId`.
+ * @returns {{ aId: string, bId: string, a: object, b: object }}
+ */
+function resolveEndpoints(doc, op, ctx) {
+  if (op.segmentId) {
+    requireSegment(doc, op.segmentId, ctx);
+    const seg = doc.segments.find((s) => s.id === op.segmentId);
+    const a = pointById(doc, seg.a);
+    const b = pointById(doc, seg.b);
+    if (!a || !b) throw new Error(`${ctx}: segment endpoints missing`);
+    return { aId: seg.a, bId: seg.b, a, b };
+  }
+  if (op.a == null || op.b == null) {
+    throw new Error(`${ctx}: need segmentId or a+b point ids`);
+  }
+  requirePoint(doc, op.a, ctx);
+  requirePoint(doc, op.b, ctx);
+  if (op.a === op.b) throw new Error(`${ctx}: a and b must differ`);
+  const a = pointById(doc, op.a);
+  const b = pointById(doc, op.b);
+  return { aId: op.a, bId: op.b, a, b };
+}
+
+/** Infinite-line intersection of AB and CD. Returns {x,y,t,u} or null. */
+function lineLineIntersection(a, b, c, d) {
+  const x1 = a.x;
+  const y1 = a.y;
+  const x2 = b.x;
+  const y2 = b.y;
+  const x3 = c.x;
+  const y3 = c.y;
+  const x4 = d.x;
+  const y4 = d.y;
+  const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+  if (Math.abs(den) < 1e-9) return null;
+  const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+  const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+  return { x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1), t, u };
+}
+
+/**
+ * Line AB × circle (center c, radius r). Returns [{x,y,t}, …] (0–2).
+ */
+function lineCircleIntersections(a, b, c, r) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const fx = a.x - c.x;
+  const fy = a.y - c.y;
+  const A = dx * dx + dy * dy;
+  if (!(A > 1e-18)) return [];
+  const B = 2 * (fx * dx + fy * dy);
+  const C = fx * fx + fy * fy - r * r;
+  const disc = B * B - 4 * A * C;
+  if (disc < -1e-12) return [];
+  const hits = [];
+  if (Math.abs(disc) <= 1e-12) {
+    const t = -B / (2 * A);
+    hits.push({ x: a.x + t * dx, y: a.y + t * dy, t });
+  } else {
+    const s = Math.sqrt(disc);
+    const t0 = (-B - s) / (2 * A);
+    const t1 = (-B + s) / (2 * A);
+    hits.push({ x: a.x + t0 * dx, y: a.y + t0 * dy, t: t0 });
+    hits.push({ x: a.x + t1 * dx, y: a.y + t1 * dy, t: t1 });
+  }
+  return hits;
+}
+
+/**
+ * Circle × circle. Returns [{x,y}, …] (0–2).
+ */
+function circleCircleIntersections(c0, r0, c1, r1) {
+  const dx = c1.x - c0.x;
+  const dy = c1.y - c0.y;
+  const d = Math.hypot(dx, dy);
+  if (!(d > 1e-12)) return []; // coincident centers
+  if (d > r0 + r1 + 1e-9) return [];
+  if (d < Math.abs(r0 - r1) - 1e-9) return [];
+  const a = (r0 * r0 - r1 * r1 + d * d) / (2 * d);
+  const h2 = r0 * r0 - a * a;
+  const h = h2 < 0 && h2 > -1e-12 ? 0 : Math.sqrt(Math.max(0, h2));
+  const mx = c0.x + (a * dx) / d;
+  const my = c0.y + (a * dy) / d;
+  if (h < 1e-9) return [{ x: mx, y: my }];
+  const rx = (-dy * h) / d;
+  const ry = (dx * h) / d;
+  return [
+    { x: mx + rx, y: my + ry },
+    { x: mx - rx, y: my - ry },
+  ];
+}
+
+const HIT_X_EPS = 1e-4;
+
+/** Stable order: x asc; |Δx|≤1e-4 → y asc. */
+function sortHitsStable(hits) {
+  return hits.slice().sort((p, q) => {
+    if (Math.abs(p.x - q.x) > HIT_X_EPS) return p.x - q.x;
+    return p.y - q.y;
+  });
+}
+
+/**
+ * Resolve of1/of2: segment/circle id string, or inline {type:"line",a,b}.
+ * @returns {{ kind: "line", a: object, b: object } | { kind: "circle", c: object, r: number }}
+ */
+function resolveOfGeom(doc, of, ctx) {
+  if (of == null) throw new Error(`${ctx}: of1/of2 required`);
+  if (typeof of === "object") {
+    if (of.type === "line") {
+      requirePoint(doc, of.a, ctx);
+      requirePoint(doc, of.b, ctx);
+      if (of.a === of.b) throw new Error(`${ctx}: line endpoints must differ`);
+      const a = pointById(doc, of.a);
+      const b = pointById(doc, of.b);
+      return { kind: "line", a, b };
+    }
+    throw new Error(`${ctx}: inline of must be {type:"line",a,b}`);
+  }
+  const id = String(of);
+  const seg = doc.segments.find((s) => s.id === id);
+  if (seg) {
+    const a = pointById(doc, seg.a);
+    const b = pointById(doc, seg.b);
+    if (!a || !b) throw new Error(`${ctx}: segment ${id} endpoints missing`);
+    return { kind: "line", a, b };
+  }
+  const cir = doc.circles.find((c) => c.id === id);
+  if (cir) {
+    const g = circleGeom(doc, id, ctx);
+    return { kind: "circle", c: g.c, r: g.r };
+  }
+  throw new Error(`${ctx}: of id not a segment or circle: ${id}`);
+}
+
+function tOnSegment(t, extendLines) {
+  if (extendLines) return true;
+  return t >= -1e-9 && t <= 1 + 1e-9;
+}
+
+/**
+ * Compute intersection hits between two resolved geometries.
+ * @returns {{ x: number, y: number, t?: number, u?: number }[]}
+ */
+function computeIntersections(g1, g2, extendLines) {
+  if (g1.kind === "line" && g2.kind === "line") {
+    const hit = lineLineIntersection(g1.a, g1.b, g2.a, g2.b);
+    if (!hit) return [];
+    if (!tOnSegment(hit.t, extendLines) || !tOnSegment(hit.u, extendLines)) {
+      return [];
+    }
+    return [hit];
+  }
+  if (g1.kind === "line" && g2.kind === "circle") {
+    return lineCircleIntersections(g1.a, g1.b, g2.c, g2.r).filter((h) =>
+      tOnSegment(h.t, extendLines)
+    );
+  }
+  if (g1.kind === "circle" && g2.kind === "line") {
+    return lineCircleIntersections(g2.a, g2.b, g1.c, g1.r).filter((h) =>
+      tOnSegment(h.t, extendLines)
+    );
+  }
+  if (g1.kind === "circle" && g2.kind === "circle") {
+    return circleCircleIntersections(g1.c, g1.r, g2.c, g2.r);
+  }
+  return [];
+}
+
+/**
+ * Pick one hit when two exist and id2 is not set.
+ * Priority: avoidPointId → nearPointId → pick.
+ */
+function disambiguateHit(hits, op, doc) {
+  const sorted = sortHitsStable(hits);
+  if (sorted.length <= 1) return sorted[0] || null;
+  if (op.avoidPointId) {
+    requirePoint(doc, op.avoidPointId, "addIntersection");
+    const ref = pointById(doc, op.avoidPointId);
+    let best = sorted[0];
+    let bestD = -1;
+    for (const h of sorted) {
+      const d = Math.hypot(h.x - ref.x, h.y - ref.y);
+      if (d > bestD) {
+        bestD = d;
+        best = h;
+      }
+    }
+    return best;
+  }
+  if (op.nearPointId) {
+    requirePoint(doc, op.nearPointId, "addIntersection");
+    const ref = pointById(doc, op.nearPointId);
+    let best = sorted[0];
+    let bestD = Infinity;
+    for (const h of sorted) {
+      const d = Math.hypot(h.x - ref.x, h.y - ref.y);
+      if (d < bestD) {
+        bestD = d;
+        best = h;
+      }
+    }
+    return best;
+  }
+  const pick = op.pick != null ? String(op.pick).toLowerCase() : "first";
+  if (pick === "left") {
+    return sorted.slice().sort((p, q) => p.x - q.x || p.y - q.y)[0];
+  }
+  if (pick === "right") {
+    return sorted.slice().sort((p, q) => q.x - p.x || p.y - q.y)[0];
+  }
+  if (pick === "top" || pick === "above") {
+    return sorted.slice().sort((p, q) => p.y - q.y || p.x - q.x)[0];
+  }
+  if (pick === "bottom" || pick === "below") {
+    return sorted.slice().sort((p, q) => q.y - p.y || p.x - q.x)[0];
+  }
+  if (pick === "1" || pick === "second") return sorted[1];
+  // 0 | first | default
+  return sorted[0];
+}
+
 function pointOnCircle(c, r, angle) {
   return { x: c.x + r * Math.cos(angle), y: c.y + r * Math.sin(angle) };
 }
@@ -462,6 +694,126 @@ const HANDLERS = {
         if (!String(err.message || err).includes("already exists")) throw err;
       }
     }
+    return doc;
+  },
+
+  /**
+   * Midpoint of a–b or of segmentId. Optional equal-length marks on subsegments.
+   * Example: { op:"addMidpoint", id:"M", segmentId:"AB", markEqual:true, equalGroup:0 }
+   */
+  addMidpoint(doc, op, nextId) {
+    const { aId, bId, a, b } = resolveEndpoints(doc, op, "addMidpoint");
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    const marker =
+      op.marker === false || op.marker === "" ? undefined : op.marker || undefined;
+    const mid = pushPoint(
+      doc,
+      nextId,
+      mx,
+      my,
+      op.id != null && op.id !== "" ? op.id : undefined,
+      marker
+    );
+    if (op.markEqual) {
+      const group = op.equalGroup != null ? op.equalGroup : 0;
+      const style = styleOr(op.style, "solid");
+      const s1 = ensureSegmentBetween(doc, nextId, aId, mid.id, style);
+      const s2 = ensureSegmentBetween(doc, nextId, mid.id, bId, style);
+      HANDLERS.addEqualMark(doc, { segmentId: s1, group }, nextId);
+      HANDLERS.addEqualMark(doc, { segmentId: s2, group }, nextId);
+    }
+    return doc;
+  },
+
+  /**
+   * Ratio / section point on a→b (or segmentId).
+   * t wins over m:n; default t=0.5. P = A + t(B−A); or P = (nA + mB)/(m+n).
+   * Example: { op:"addRatioPoint", id:"G", a:"A", b:"M", m:2, n:1 }
+   */
+  addRatioPoint(doc, op, nextId) {
+    const { a, b } = resolveEndpoints(doc, op, "addRatioPoint");
+    let t;
+    if (op.t != null) {
+      t = Number(op.t);
+      if (!Number.isFinite(t)) throw new Error("addRatioPoint: t must be finite");
+    } else if (op.m != null || op.n != null) {
+      const m = Number(op.m);
+      const n = Number(op.n);
+      if (!Number.isFinite(m) || !Number.isFinite(n)) {
+        throw new Error("addRatioPoint: m and n must be finite");
+      }
+      const sum = m + n;
+      if (Math.abs(sum) < 1e-15) {
+        throw new Error("addRatioPoint: m+n must not be 0");
+      }
+      // P = (n*A + m*B)/(m+n) ⇒ t = m/(m+n)
+      t = m / sum;
+    } else {
+      t = 0.5;
+    }
+    const x = a.x + t * (b.x - a.x);
+    const y = a.y + t * (b.y - a.y);
+    const marker =
+      op.marker === false || op.marker === "" ? undefined : op.marker || undefined;
+    pushPoint(
+      doc,
+      nextId,
+      x,
+      y,
+      op.id != null && op.id !== "" ? op.id : undefined,
+      marker
+    );
+    return doc;
+  },
+
+  /**
+   * Intersection of two segments/circles (or inline lines).
+   * of1/of2: segment|circle id, or {type:"line",a,b}.
+   * extendLines default true; false → hit must lie on segment [0,1].
+   * Two hits + id2 → both in stable order (x asc, |Δx|≤1e-4 → y asc).
+   * Else disambiguate: avoidPointId → nearPointId → pick.
+   * Missing intersection → console.warn + skip (no throw).
+   */
+  addIntersection(doc, op, nextId) {
+    if (op.of1 == null || op.of2 == null) {
+      throw new Error("addIntersection: of1 and of2 required");
+    }
+    const g1 = resolveOfGeom(doc, op.of1, "addIntersection");
+    const g2 = resolveOfGeom(doc, op.of2, "addIntersection");
+    const extendLines = op.extendLines !== false;
+    const hits = computeIntersections(g1, g2, extendLines);
+    if (!hits.length) {
+      console.warn("addIntersection: no intersection; skipped", {
+        of1: op.of1,
+        of2: op.of2,
+        extendLines,
+      });
+      return doc;
+    }
+    const marker =
+      op.marker === false || op.marker === "" ? undefined : op.marker || undefined;
+    const sorted = sortHitsStable(hits);
+    const wantBoth = op.id2 != null && op.id2 !== "" && sorted.length >= 2;
+    if (wantBoth) {
+      pushPoint(doc, nextId, sorted[0].x, sorted[0].y, op.id, marker);
+      pushPoint(doc, nextId, sorted[1].x, sorted[1].y, op.id2, marker);
+      return doc;
+    }
+    const chosen =
+      sorted.length === 1 ? sorted[0] : disambiguateHit(sorted, op, doc);
+    if (!chosen) {
+      console.warn("addIntersection: no intersection after disambiguation; skipped");
+      return doc;
+    }
+    pushPoint(
+      doc,
+      nextId,
+      chosen.x,
+      chosen.y,
+      op.id != null && op.id !== "" ? op.id : undefined,
+      marker
+    );
     return doc;
   },
 

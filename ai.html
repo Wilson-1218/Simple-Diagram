@@ -80,7 +80,7 @@
       <li>座標與視窗</li>
       <li>標籤 ox/oy</li>
       <li>基本幾何</li>
-      <li>構造（含 UI-only）</li>
+      <li>構造（中點／比例／交點／垂足）</li>
       <li>圓件／切線</li>
       <li>記號</li>
       <li>填色 addFill</li>
@@ -100,7 +100,7 @@
     </ul>
     <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
       <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
-    <p class="note">已知 ops（40，含別名）：<code>addPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
+    <p class="note">已知 ops（43，含別名）：<code>addPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
     <p class="note"><strong>UI ↔ op</strong>：工具列 <strong>⊥ 座標</strong>＝<code>addCoordPlot</code>（＋<code>addCurve</code>）。沒有 <code>addCoordMark</code> 這類 op 名。<br />
       <span class="en">Rail tool <strong>⊥ 座標 / Axes</strong> maps to <code>addCoordPlot</code> (+ <code>addCurve</code>). There is no <code>addCoordMark</code>.</span></p>
 
@@ -134,24 +134,46 @@
     </table>
 
     <h2>5. 構造 / Construction</h2>
+    <p class="note"><strong>優先用宣告式構造 op</strong>（<code>addMidpoint</code>／<code>addRatioPoint</code>／<code>addIntersection</code>／<code>addFoot</code>），勿手算座標再 <code>addPoint</code>。<br />
+      <span class="en">Prefer these construction ops over hand-calculated coordinates.</span></p>
     <table>
-      <thead><tr><th>需求</th><th>JSON 做法</th></tr></thead>
+      <thead><tr><th>op</th><th>必填</th><th>可選 / tip</th></tr></thead>
       <tbody>
         <tr>
-          <td><strong>垂足 foot</strong></td>
-          <td><code>addFoot</code>：必填 <code>pointId</code> +（<code>segmentId</code> <em>或</em> 線兩端 <code>a</code>/<code>b</code>）。可選 <code>footId</code>, <code>drawSegment</code>（預設 true＝畫高）, <code>style</code>, <code>label</code>/<code>labelText</code>, <code>marker</code>（預設 <code>"foot"</code>；<code>false</code> 關閉）</td>
+          <td><code>addMidpoint</code></td>
+          <td><code>a</code>+<code>b</code> <em>或</em> <code>segmentId</code></td>
+          <td><code>id</code>, <code>marker</code>（同 addPoint）, <code>markEqual</code>（預設 false；true → 建／標子線段 (a,id)+(id,b) 的 <code>addEqualMark</code>）, <code>equalGroup</code>（預設 0）, <code>style</code>（子線段）</td>
         </tr>
         <tr>
-          <td>中點／比例分點</td>
-          <td><strong>無專用 op</strong>。自行算座標 <code>addPoint</code> + <code>addLabel</code>。比例記號：先建點，再 <code>addMidTick</code> <code>{segmentId, pointId}</code>（短劃；中點工具本身不畫劃）</td>
+          <td><code>addRatioPoint</code></td>
+          <td><code>a</code>+<code>b</code> <em>或</em> <code>segmentId</code>（方向 a→b）</td>
+          <td><code>id</code>, <code>marker</code>；比例：<code>m</code>+<code>n</code>（P=(nA+mB)/(m+n)，m+n≠0）<em>或</em> <code>t</code>（P=A+t(B−A)）；兩者皆有時 <strong>t 優先</strong>；預設 t=0.5（可延伸線外）</td>
         </tr>
         <tr>
-          <td>兩線交點／水平線／鉛垂線</td>
-          <td><strong>無專用 op</strong>（UI only）。交點：算交點座標後 <code>addPoint</code>。水平／鉛垂：<code>addPoint</code> + <code>addSegment</code>（同 y 或同 x）</td>
+          <td><code>addIntersection</code></td>
+          <td><code>of1</code>, <code>of2</code></td>
+          <td>各為既有線段／圓 id，或內嵌 <code>{"type":"line","a":"A","b":"C"}</code>。<code>id</code>；兩交點時可 <code>id2</code>（穩定序：x 升，|Δx|≤1e-4 再 y 升）。<code>extendLines</code> 預設 true（無限線）；false → 交點須在線段 [0,1]。消歧（兩點且無 id2）：(1) <code>avoidPointId</code> 取較遠 (2) <code>nearPointId</code> 取較近 (3) <code>pick</code>：left／right／top｜above／bottom｜below／0｜first／1｜second（+y 向下）。支援 line×line、line×circle、circle×circle。無交點 → <code>console.warn</code> 並略過（不 throw）</td>
+        </tr>
+        <tr>
+          <td><code>addFoot</code></td>
+          <td><code>pointId</code> +（<code>segmentId</code> <em>或</em> <code>a</code>/<code>b</code>）</td>
+          <td><code>footId</code>/<code>id</code>, <code>drawSegment</code>（預設 true＝畫高）, <code>style</code>, <code>label</code>/<code>labelText</code>, <code>marker</code>（預設 <code>"foot"</code>；<code>false</code> 關閉）</td>
         </tr>
       </tbody>
     </table>
-    <p class="warn">UI-only（無同名 JSON op）：交點 <code>intersect</code>、中點工具 <code>midTick</code>、比例 <code>ratio</code>、水平 <code>horizontal</code>、鉛垂 <code>perpendicular</code> — 用座標算出後 <code>addPoint</code>/<code>addSegment</code>。<br />
+    <p class="note">例：</p>
+<pre>[
+  { "op": "addPoint", "id": "A", "x": 100, "y": 200 },
+  { "op": "addPoint", "id": "B", "x": 400, "y": 200 },
+  { "op": "addSegment", "id": "AB", "a": "A", "b": "B" },
+  { "op": "addMidpoint", "id": "M", "segmentId": "AB", "markEqual": true, "equalGroup": 0 },
+  { "op": "addRatioPoint", "id": "G", "a": "A", "b": "M", "m": 2, "n": 1 },
+  { "op": "addPoint", "id": "C", "x": 250, "y": 80 },
+  { "op": "addSegment", "id": "BC", "a": "B", "b": "C" },
+  { "op": "addCircle", "id": "c1", "centerId": "A", "throughId": "B" },
+  { "op": "addIntersection", "id": "D", "of1": "BC", "of2": "c1", "avoidPointId": "B" }
+]</pre>
+    <p class="warn">仍為 UI-only（無同名 JSON op）：水平 <code>horizontal</code>、鉛垂 <code>perpendicular</code> — 用 <code>addPoint</code>+<code>addSegment</code>（同 y／同 x）。工具列中點／比例／交點已有對應 JSON op，勿再手算。<br />
       <strong>不是</strong> UI-only：<strong>⊥ 座標</strong> → 用 <code>addCoordPlot</code> / <code>addCurve</code>（見 §10）。勿臆造 <code>addCoord</code>／<code>addCoordMark</code>。</p>
 
     <h2>6. 圓件／切線 / Circle parts</h2>
@@ -439,7 +461,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.35 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.36 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>
