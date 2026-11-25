@@ -218,6 +218,33 @@ PDF
 
 ---
 
+## 可行區域（v13.5.42）
+
+與 [`ai.html`](../ai.html) §10.7、§8 同一契約。省略 `feasibleRegion`／`inequalities` 時，座標圖與填色與 v13.5.41 相同。
+
+| 呼叫 | 要點 |
+|---|---|
+| `addCoordPlot.feasibleRegion` | 一個區域物件；`feasibleRegions` 為陣列。兩個都給就都畫 |
+| `addFeasibleRegion` | 必填 `inequalities`。`plotId` 預設最後一張座標圖 |
+| `addFill` + `inequalities` | 與 `addFeasibleRegion` 相同。沒有該欄位時仍是原來的多邊形／扇形填色 |
+| `pattern` | 預設 `"hatch"`，也可 `"solid"`。`hatchSpacing` 預設 8 |
+| `label` | 例如 `"R"`。凸多邊形面積形心上的置中粗體文字（既有光暈；`_`／`^` 走輕量數學文字） |
+| `drawBoundaries` | 預設 false。true，或某一條 `drawLine:true`，為非軸邊界加曲線 |
+| `domainClip` | `[uMin, uMax, vMin, vMax]`，預設該圖 `[xmin, xmax, ymin, ymax]` |
+
+不等式（字串或 `{a,b,op,c}`／`{expr}`）收成半平面 `A u + B v ≤ C`。`<= >= < > ≤ ≥`、一般式與斜率式、可省略的 `*`、分數 `3/2` 與 `(3/2)` 都可以。解不出的那一條只警告並跳過。從視窗矩形做 Sutherland–Hodgman 裁切；空交集不加填色。`<` `>` 仍按閉半平面填色，邊界用虛線；`<=` `>=` 用實線。x=0 與 y=0 不加曲線。鉛直邊界是曲線 `type:"vline"`。
+
+```json
+{ "op": "addCoordPlot", "id": "plot1", "ox": 260, "oy": 360, "unitPx": 36,
+  "xmin": -1, "xmax": 6, "ymin": -1, "ymax": 7,
+  "feasibleRegion": {
+    "inequalities": ["y <= 1.5x + 3", "2x + 3y <= 22", "y >= 0"],
+    "pattern": "hatch", "hatchSpacing": 8, "label": "R", "drawBoundaries": true
+  } }
+```
+
+---
+
 ## 版本釘選 / Version pin
 
 - 以 **main**／產品標籤 **v13.5.26**（穩定基線）為準；應用欄位 `version` 與 schema `formatVersion` 分開。

@@ -4779,6 +4779,7 @@
 
   function defaultCurveParams(type) {
     if (type === "line") return { m: -1, c: 4 };
+    if (type === "vline") return { x: 0 };
     if (type === "quad") return { a: 1, b: 0, c: 0 };
     if (type === "log") return { a: 1, base: 10 };
     if (type === "ln") return { a: 1 };
@@ -4891,6 +4892,10 @@
     const p = curve.params || {};
     const type = curve.type || "line";
     const alg = mode !== "numeric";
+    if (type === "vline") {
+      if (alg) return "x = k";
+      return "x = " + coordFmtNum(p.x ?? 0);
+    }
     if (type === "line") {
       if (alg) return "y = mx+c";
       const m = p.m ?? 1;
@@ -5455,6 +5460,13 @@
         }
       }
       return pts;
+    }
+    if (type === "vline") {
+      const x = Number((curve.params || {}).x);
+      if (!Number.isFinite(x)) return pts;
+      if (dom && (x < dom[0] - 1e-9 || x > dom[1] + 1e-9)) return pts;
+      if (x < plot.xmin - 1e-9 || x > plot.xmax + 1e-9) return pts;
+      return [coordWorldFromAxis(plot, x, plot.ymin), coordWorldFromAxis(plot, x, plot.ymax)];
     }
     const needsPosX = type === "log" || type === "log10" || type === "ln";
     const isTrig = type === "sin" || type === "cos" || type === "tan";
@@ -6633,6 +6645,7 @@
 
   function coordParamFieldsForType(type, params) {
     if (type === "line") return [["m", "m"], ["c", "c"]];
+    if (type === "vline") return [["x", "x"]];
     if (type === "quad") return [["a", "a"], ["b", "b"], ["c", "c"]];
     if (type === "log" || type === "log10") return [["a", "a"], ["base", t("coord_log_base")]];
     if (type === "ln") return [["a", "a"]];
@@ -6658,6 +6671,7 @@
   function coordTypeOptionsHtml(selected) {
     const opts = [
       ["line", "y = mx + c"],
+      ["vline", "x = k"],
       ["quad", "y = ax² + bx + c"],
       ["log", "y = a·log_b(x)"],
       ["ln", "y = a·ln(x)"],
@@ -12592,7 +12606,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.41",
+      version: "13.5.42",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

@@ -83,8 +83,8 @@ export const OP_CATALOG = {
     note: "Dedicated bar chart; yLabel along axis (rotate|stack); barPattern hatch|solid; alias addBar",
   },
   addFill: {
-    args: "kind?, pattern?, pointIds? | centerId+startId+endId | polyArc | pathFill edges, color?, opacity?, hatchSpacing?",
-    note: "kind polygon|sector|segment|polyArc|pathFill; pattern solid|hatch (slanted strokes)",
+    args: "kind?, pattern?, pointIds? | centerId+startId+endId | polyArc | pathFill edges | inequalities+plotId?, color?, opacity?, hatchSpacing?",
+    note: "kind polygon|sector|segment|polyArc|pathFill; pattern solid|hatch (slanted strokes). inequalities → feasible region (default hatch), same as addFeasibleRegion",
   },
   addLengthLabel: {
     args: "segmentId, text?, side?, style?(text|dim|arcs), orient?(tilt|horizontal), size?",
@@ -122,10 +122,14 @@ export const OP_CATALOG = {
   addDiameter: { args: "circleId, throughId|angle|deg, style?" },
   addChord: { args: "circleId, startId+endId | deg0+deg1 | angle0+angle1, style?" },
   addCoordPlot: {
-    args: "ox, oy, unitPx?, xUnitPx?, yUnitPx?, xStep?, yStep?, xTicks?, yTicks?, window?, curves?",
-    note: "xTicks/yTicks replace that axis; xStep/yStep stride; xUnitPx/yUnitPx unequal scale; curve domain+style",
+    args: "ox, oy, unitPx?, xUnitPx?, yUnitPx?, xStep?, yStep?, xTicks?, yTicks?, window?, curves?, feasibleRegion? | feasibleRegions?",
+    note: "xTicks/yTicks replace that axis; xStep/yStep stride; xUnitPx/yUnitPx unequal scale; curve domain+style; feasibleRegion clips linear inequalities",
   },
-  addCurve: { args: "plotId, type, params?, label?, domain?, style?" },
+  addCurve: { args: "plotId, type, params?, label?, domain?, style?", note: "type includes vline (params.x) for a vertical boundary" },
+  addFeasibleRegion: {
+    args: "inequalities, plotId?, pattern?, hatchSpacing?, color?, opacity?, label?, drawBoundaries?, domainClip?",
+    note: "half-planes → hatch polygon (default) on the last coord plot; missing plot warns and skips; strict < > is a dashed boundary",
+  },
   addPlotPoint: {
     args: "plotId?, u|mathX, v|mathY, label?, ox?, oy?, projectX?, projectY?, projectStyle?, xTickLabel?, yTickLabel?",
     note: "world x=ox+u*xUnitPx, y=oy-v*yUnitPx; missing plot warns and skips; projections persist as segments+labels",

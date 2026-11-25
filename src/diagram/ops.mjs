@@ -13,6 +13,7 @@ import { normalizeBarChart } from "./bar-chart.mjs";
 import { normalizeFillPattern } from "./hatch.mjs";
 import { normalizeLengthSide } from "./length-mark.mjs";
 import { coordWorldFromAxis, normalizeCoordTicks } from "./coord-plot.mjs";
+import { parseInequality, solveFeasibleRegion } from "./feasible-region.mjs";
 import { buildPolyhedron } from "./polyhedron.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
@@ -515,6 +516,7 @@ function addAxisProjection(doc, nextId, plot, point, axis, math, style, tickLabe
 
 function defaultCurveParams(type) {
   if (type === "line") return { m: -1, c: 4 };
+  if (type === "vline") return { x: 0 };
   if (type === "quad") return { a: 1, b: 0, c: 0 };
   if (type === "log" || type === "log10") return { a: 1, base: 10 };
   if (type === "ln") return { a: 1 };
@@ -700,6 +702,133 @@ function addWaterEllipse(doc, nextId, kind, created, t, prefix) {
     style: "solid",
     backDashed: true,
   });
+}
+
+function finiteOr(v, fallback) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+/**
+ * Clip inequalities to a polygon fill on a coord plot.
+ * Missing plot warns and skips. An unparseable inequality warns and is skipped.
+ * Strict inequalities clip as closed half-planes; their boundary stroke is dashed.
+ */
+function applyFeasibleRegion(doc, op, nextId, ctx) {
+  if (!Array.isArray(op.inequalities)) {
+    throw new Error(`${ctx}: inequalities required`);
+  }
+  const plot = resolveCoordPlot(doc, op.plotId);
+  if (!plot) {
+    console.warn(`${ctx}: coord plot not found; skipped`, {
+      plotId: op.plotId != null ? op.plotId : null,
+    });
+    return doc;
+  }
+  const planes = [];
+  for (const raw of op.inequalities) {
+    const plane = parseInequality(raw);
+    if (!plane) {
+      console.warn(`${ctx}: unparseable inequality; skipped`, { inequality: raw });
+      continue;
+    }
+    planes.push(plane);
+  }
+  if (!planes.length) {
+    console.warn(`${ctx}: no valid inequalities; skipped`);
+    return doc;
+  }
+  const bounds = feasibleDomain(plot, op.domainClip, ctx);
+  if (!bounds) return doc;
+  const solved = solveFeasibleRegion(bounds, planes, {
+    drawBoundaries: op.drawBoundaries === true,
+  });
+  if (solved.empty) {
+    console.warn(`${ctx}: empty feasible region; skipped fill`, {
+      plotId: plot.id,
+    });
+  } else {
+    const pointIds = [];
+    for (const v of solved.vertices) {
+      const w = coordWorldFromAxis(plot, v.u, v.v);
+      pointIds.push(pushPoint(doc, nextId, w.x, w.y).id);
+    }
+    const pattern = op.pattern == null || op.pattern === "" ? "hatch" : op.pattern;
+    const fillOp = {
+      kind: "polygon",
+      pointIds,
+      pattern,
+      color: op.color,
+      opacity: op.opacity,
+    };
+    if (op.id != null && op.id !== "") fillOp.id = op.id;
+    if (op.hatchSpacing != null) fillOp.hatchSpacing = op.hatchSpacing;
+    HANDLERS.addFill(doc, fillOp, nextId);
+    if (op.label != null && String(op.label) !== "" && solved.centroid) {
+      const w = coordWorldFromAxis(plot, solved.centroid.u, solved.centroid.v);
+      HANDLERS.addText(
+        doc,
+        {
+          x: w.x,
+          y: w.y,
+          text: String(op.label),
+          align: "center",
+          bold: true,
+        },
+        nextId
+      );
+    }
+  }
+  if (!Array.isArray(plot.curves)) plot.curves = [];
+  for (const b of solved.boundaries) {
+    const label = b.label
+      ? { show: true, kind: "custom", customText: b.label, text: b.label }
+      : undefined;
+    plot.curves.push({
+      id: nextId("curve"),
+      type: b.type,
+      params: { ...defaultCurveParams(b.type), ...b.params },
+      label: defaultCurveLabel(label),
+      ...curveExtras({ style: b.style }),
+    });
+  }
+  return doc;
+}
+
+function feasibleDomain(plot, raw, ctx) {
+  let uMin = finiteOr(plot.xmin, -2);
+  let uMax = finiteOr(plot.xmax, 6);
+  let vMin = finiteOr(plot.ymin, -2);
+  let vMax = finiteOr(plot.ymax, 6);
+  if (raw != null) {
+    const ok =
+      Array.isArray(raw) &&
+      raw.length >= 4 &&
+      raw.slice(0, 4).every((n) => Number.isFinite(Number(n)));
+    if (!ok) {
+      console.warn(`${ctx}: domainClip must be [uMin, uMax, vMin, vMax]; using plot window`);
+    } else {
+      uMin = Number(raw[0]);
+      uMax = Number(raw[1]);
+      vMin = Number(raw[2]);
+      vMax = Number(raw[3]);
+    }
+  }
+  if (uMin > uMax) {
+    const t = uMin;
+    uMin = uMax;
+    uMax = t;
+  }
+  if (vMin > vMax) {
+    const t = vMin;
+    vMin = vMax;
+    vMax = t;
+  }
+  if (!(uMax - uMin > 1e-12) || !(vMax - vMin > 1e-12)) {
+    console.warn(`${ctx}: domain clip has no area; skipped`);
+    return null;
+  }
+  return { uMin, uMax, vMin, vMax };
 }
 
 function resolveId(op, nextId, prefix) {
@@ -1176,6 +1305,9 @@ const HANDLERS = {
    * segment (circular): circleId|centerId + startId + endId (chord endpoints)
    */
   addFill(doc, op, nextId) {
+    if (op.inequalities != null) {
+      return applyFeasibleRegion(doc, op, nextId, "addFill");
+    }
     const id = resolveId(op, nextId, "fill");
     if (doc.fills.some((f) => f.id === id)) throw new Error(`addFill: duplicate id ${id}`);
     const kind =
@@ -1761,7 +1893,27 @@ const HANDLERS = {
       }
     }
     doc.coordPlots.push(plot);
+    const regions = [];
+    if (op.feasibleRegion != null) regions.push(op.feasibleRegion);
+    if (Array.isArray(op.feasibleRegions)) {
+      for (const region of op.feasibleRegions) regions.push(region);
+    }
+    for (const region of regions) {
+      if (!region || typeof region !== "object" || Array.isArray(region)) {
+        console.warn("addCoordPlot: feasible region must be an object; skipped");
+        continue;
+      }
+      applyFeasibleRegion(doc, { ...region, plotId: plot.id }, nextId, "addCoordPlot");
+    }
     return doc;
+  },
+
+  /**
+   * Feasible region of linear inequalities on a coord plot.
+   * Same options as addCoordPlot.feasibleRegion and addFill inequalities.
+   */
+  addFeasibleRegion(doc, op, nextId) {
+    return applyFeasibleRegion(doc, op, nextId, "addFeasibleRegion");
   },
 
   /**
