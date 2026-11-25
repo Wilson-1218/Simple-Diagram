@@ -71,7 +71,7 @@
 3. **輸出前檢查**：
    - `addTangent`：`aId` 偏左／上、`bId` 偏右／下
    - `addLengthLabel`：優先語意 `side`（above／below／left／right）
-   - `addLabel`：`ox`／`oy` 向外約 14–20px
+   - `addLabel`：省略 `ox`／`oy`（或 `auto`／`autoOffset:true`）時依入射線段最大角隙向外放，距離預設 16；點在圓上則留在圓外。給了數字就原樣保留。`label:true` 可寫在 `addPoint`／`addMidpoint`／`addRatioPoint`／`addIntersection`／`addTriangleCenter` 上（見 [`ai.html`](../ai.html) §3）
    - 題圖說明／不綁點的文字用 `addText`／`addCaption`（`x,y,text`；可選 `align`／`bold`）——**不要**為說明文字捏造假點
    - BoxWhisker 有數字刻度時 `ticks` 用 `{pos,label}` 物件
    - 多次 `addShape` → `idPrefix` 或 `labels:false` 避免 id／標籤衝突
@@ -281,6 +281,24 @@ PDF
 ```json
 { "op": "addPieChart", "x": 420, "y": 240, "r": 95,
   "slices": [ { "angle": 90, "label": "Q1", "rightAngle": true }, { "angle": 270, "label": "rest" } ] }
+```
+
+---
+
+## 自動標籤外偏（v13.5.45）
+
+與 [`ai.html`](../ai.html) §3 同一契約。明確寫了數字 `ox` 或 `oy` 的標籤，位置與舊檔一樣，不會被之後的線段改寫。
+
+| 呼叫 | 要點 |
+|---|---|
+| `addLabel` 省略 ox、oy | 不再用固定 `(0,-14)`。≥2 條端點線段：最大角隙的平分線；1 條：反方向；孤立點：仍是 `(0,-14)`。距離 `offsetDist` 預設 16，四捨五入成整數 |
+| 點在圓上 | 圓心→點的向外法線優先，標籤留在圓外。只在算出的方向朝圓內時才改用法線 |
+| 明確數字 | 任一軸是數字（含 0）即 `_autoOffset:false`，該數字不變。沒給的那一軸仍是 ox→0、oy→−14 |
+| 自動旗標 | 結果上記 `_autoOffset`。存檔只留 `autoOffset:true`（`_autoOffset` 不進 JSON），載入後由此重建並重算。`applyOps` 結束，以及新線段接到該點時重算，所以標籤可以寫在線段之前。明確數字不寫旗標，存檔再載入不變 |
+| 順便標籤 | `addPoint`／`addMidpoint`／`addRatioPoint`／`addIntersection`／`addTriangleCenter` 的 `label:true`（文字＝點 id）或非空字串。`hidden:true` 不加。可選 `labelOx`／`labelOy`。三角形中心的 `ox`／`oy` 仍算明確數字。`id2` 只標第一個交點 |
+
+```json
+{ "op": "addPoint", "id": "A", "x": 80, "y": 40, "label": true }
 ```
 
 ---
