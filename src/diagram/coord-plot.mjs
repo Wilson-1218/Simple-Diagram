@@ -12,8 +12,27 @@ export function coordWorldFromAxis(plot, u, v) {
   return { x: plot.ox + u * plot.unitPx, y: plot.oy - v * plot.unitPx };
 }
 
+/**
+ * When tick labels are on, extend axes past xmax/ymax so the last digit
+ * does not collide with the arrow / axis name. Returns px overhangs.
+ * @param {object} plot
+ * @returns {{ pos: number, neg: number }}
+ */
+export function coordAxisOverhangPx(plot) {
+  const unitPx = num(plot && plot.unitPx, 40);
+  const showTickMarks =
+    plot && plot.showTicks !== false && plot.showTickLabels !== false;
+  if (!showTickMarks) return { pos: 0, neg: 0 };
+  // ~0.6·unitPx ≈ 24px at unitPx=40; clamp to 24–28
+  const pos = Math.max(24, Math.min(28, unitPx * 0.6));
+  const neg = 12; // small negative overhang 10–14px
+  return { pos, neg };
+}
+
 export function coordPlotBounds(plot) {
-  const pad = (plot.unitPx || 40) * 0.55;
+  const unitPx = plot.unitPx || 40;
+  const oh = coordAxisOverhangPx(plot);
+  const pad = unitPx * 0.55 + Math.max(oh.pos, oh.neg);
   const corners = [
     coordWorldFromAxis(plot, plot.xmin, plot.ymin),
     coordWorldFromAxis(plot, plot.xmax, plot.ymin),
@@ -30,6 +49,11 @@ export function coordPlotBounds(plot) {
     maxX = Math.max(maxX, c.x);
     maxY = Math.max(maxY, c.y);
   }
+  // Axis overhang: +x right, +y up (world −y), −x left, −y down
+  minX -= oh.neg;
+  maxX += oh.pos;
+  minY -= oh.pos; // +y arrow goes up → smaller world y
+  maxY += oh.neg;
   return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
 }
 
@@ -196,10 +220,11 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
   const ymax = num(plot.ymax, 6);
 
   const o = toS(ox, oy);
-  const xNeg = toS(ox + xmin * unitPx, oy);
-  const xPos = toS(ox + xmax * unitPx, oy);
-  const yNeg = toS(ox, oy - ymin * unitPx);
-  const yPos = toS(ox, oy - ymax * unitPx);
+  const oh = coordAxisOverhangPx(plot);
+  const xNeg = toS(ox + xmin * unitPx - oh.neg, oy);
+  const xPos = toS(ox + xmax * unitPx + oh.pos, oy);
+  const yNeg = toS(ox, oy - ymin * unitPx + oh.neg);
+  const yPos = toS(ox, oy - ymax * unitPx - oh.pos);
 
   let body = "";
   body += `<line x1="${xNeg.x.toFixed(2)}" y1="${xNeg.y.toFixed(2)}" x2="${xPos.x.toFixed(2)}" y2="${xPos.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" stroke-linecap="round" />\n`;
@@ -225,20 +250,23 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
   const showTickMarks = plot.showTicks !== false && plot.showTickLabels !== false;
   const fam =
     'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
+  const fsNum = Number(fontPx);
+  const halo = Math.max(3.5, fsNum * 0.28).toFixed(2);
+  const haloAttrs = `fill="#111" stroke="#ffffff" stroke-width="${halo}" stroke-linejoin="round" paint-order="stroke fill"`;
 
   if (showTickMarks) {
     for (const u of coordIntegerTicks(xmin, xmax)) {
       const p = toS(ox + u * unitPx, oy);
       body += `<line x1="${p.x.toFixed(2)}" y1="${(p.y - tickLen).toFixed(2)}" x2="${p.x.toFixed(2)}" y2="${(p.y + tickLen).toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
       if (!coordNearZero(u)) {
-        body += `<text x="${p.x.toFixed(2)}" y="${(p.y + tickLen + 1).toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="hanging">${escapeXml(String(u))}</text>\n`;
+        body += `<text x="${p.x.toFixed(2)}" y="${(p.y + tickLen + 1).toFixed(2)}" ${haloAttrs} ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="hanging">${escapeXml(String(u))}</text>\n`;
       }
     }
     for (const v of coordIntegerTicks(ymin, ymax)) {
       const p = toS(ox, oy - v * unitPx);
       body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
       if (!coordNearZero(v)) {
-        body += `<text x="${(p.x - tickLen - 2).toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(String(v))}</text>\n`;
+        body += `<text x="${(p.x - tickLen - 2).toFixed(2)}" y="${p.y.toFixed(2)}" ${haloAttrs} ${fam} font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(String(v))}</text>\n`;
       }
     }
   }

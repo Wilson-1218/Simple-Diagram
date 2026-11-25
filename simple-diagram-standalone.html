@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261125-release-v13.5.33" />
+  <meta name="simple-diagram-build" content="20261125-release-v13.5.34" />
   <title>Simple Diagram · Wilson</title>
   <style>
 :root {
@@ -31,7 +31,8 @@
   --font-math: "STIX Two Text", "Times New Roman", "Noto Serif TC", serif;
   /* Tool rail: default 3 columns; user can drag-resize (2-col when narrow) */
   --rail-cols: 3;
-  --rail-width: calc(166px * var(--tb, 1.2));
+  /* 180px: EN Sector / Reflex / Equal / Chord (circlePart) without ellipsis */
+  --rail-width: calc(180px * var(--tb, 1.2));
   --canvas-paper: #ffffff;
   --canvas-ink: #111111;
   --canvas-grid: rgba(0, 0, 0, 0.08);
@@ -374,7 +375,7 @@ button:disabled {
   width: var(--rail-width);
   min-width: calc(108px * var(--tb));
   max-width: calc(240px * var(--tb));
-  padding: calc(4px * var(--tb)) calc(3px * var(--tb));
+  padding: calc(4px * var(--tb)) calc(2px * var(--tb));
   gap: calc(4px * var(--tb));
   background: var(--bar);
   border-right: 1px solid var(--bar-border);
@@ -446,7 +447,7 @@ body.is-rail-resizing * {
   min-width: 0;
   min-height: calc(32px * var(--tb));
   gap: calc(1px * var(--tb));
-  padding: calc(2px * var(--tb)) calc(1px * var(--tb));
+  padding: calc(2px * var(--tb)) 0;
   pointer-events: auto;
 }
 
@@ -2037,7 +2038,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.33</span>
+            <span class="brand-sub">v13.5.34</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -3784,7 +3785,7 @@ body.dark-canvas .coord-curve-row {
     const pref = readRailWidthPref();
     if (pref != null) applyRailWidth(pref, false);
     else if (toolRailEl) {
-      const w = toolRailEl.getBoundingClientRect().width || Math.round(166 * 1.2);
+      const w = toolRailEl.getBoundingClientRect().width || Math.round(180 * 1.2);
       applyRailWidth(w, false);
     }
     if (!railResizeEl || !toolRailEl) return;
@@ -7406,6 +7407,13 @@ body.dark-canvas .coord-curve-row {
     return (c < 0 ? "−" : "+") + (abs === 1 && sym ? sym : coordFmtNum(abs) + (sym || ""));
   }
 
+  /** Binary +/− with thin spaces for numeric formulaMode (unicode minus). */
+  function coordSignedJoin(hasPrev, coef, body) {
+    const absBody = body;
+    if (!hasPrev) return (coef < 0 ? "−" : "") + absBody;
+    return (coef < 0 ? " − " : " + ") + absBody;
+  }
+
   function coordCurveFormulaText(curve, mode, optPlot) {
     const p = curve.params || {};
     const type = curve.type || "line";
@@ -7415,12 +7423,12 @@ body.dark-canvas .coord-curve-row {
       const m = p.m ?? 1;
       const c = p.c ?? 0;
       let s = "y = ";
-      if (Math.abs(m) < 1e-12) s += coordFmtNum(c);
+      if (Math.abs(m) < 1e-12) s += (c < 0 ? "−" : "") + coordFmtNum(Math.abs(c));
       else {
         if (Math.abs(m - 1) < 1e-12) s += "x";
         else if (Math.abs(m + 1) < 1e-12) s += "−x";
-        else s += coordFmtNum(m) + "x";
-        if (Math.abs(c) >= 1e-12) s += (c < 0 ? "−" : "+") + coordFmtNum(Math.abs(c));
+        else s += (m < 0 ? "−" : "") + coordFmtNum(Math.abs(m)) + "x";
+        if (Math.abs(c) >= 1e-12) s += coordSignedJoin(true, c, coordFmtNum(Math.abs(c)));
       }
       return s;
     }
@@ -7433,16 +7441,15 @@ body.dark-canvas .coord-curve-row {
       if (Math.abs(a) >= 1e-12) {
         if (Math.abs(a - 1) < 1e-12) parts.push("x²");
         else if (Math.abs(a + 1) < 1e-12) parts.push("−x²");
-        else parts.push(coordFmtNum(a) + "x²");
+        else parts.push((a < 0 ? "−" : "") + coordFmtNum(Math.abs(a)) + "x²");
       }
       if (Math.abs(b) >= 1e-12) {
-        const sign = parts.length ? (b < 0 ? "−" : "+") : b < 0 ? "−" : "";
         const abs = Math.abs(b);
-        parts.push(sign + (abs === 1 ? "x" : coordFmtNum(abs) + "x"));
+        const body = abs === 1 ? "x" : coordFmtNum(abs) + "x";
+        parts.push(coordSignedJoin(parts.length > 0, b, body));
       }
       if (Math.abs(c) >= 1e-12 || !parts.length) {
-        const sign = parts.length ? (c < 0 ? "−" : "+") : c < 0 ? "−" : "";
-        parts.push(sign + coordFmtNum(Math.abs(c)));
+        parts.push(coordSignedJoin(parts.length > 0, c, coordFmtNum(Math.abs(c))));
       }
       return "y = " + parts.join("");
     }
@@ -7500,10 +7507,10 @@ body.dark-canvas .coord-curve-row {
       const E = Number.isFinite(Number(p.E)) ? Number(p.E) : -2 * k;
       const F = Number.isFinite(Number(p.F)) ? Number(p.F) : h * h + k * k - r2;
       let s = "x²+y²";
-      if (Math.abs(D) >= 1e-12) s += (D < 0 ? "−" : "+") + coordFmtNum(Math.abs(D)) + "x";
-      if (Math.abs(E) >= 1e-12) s += (E < 0 ? "−" : "+") + coordFmtNum(Math.abs(E)) + "y";
-      if (Math.abs(F) >= 1e-12) s += (F < 0 ? "−" : "+") + coordFmtNum(Math.abs(F));
-      return s + "=0";
+      if (Math.abs(D) >= 1e-12) s += coordSignedJoin(true, D, coordFmtNum(Math.abs(D)) + "x");
+      if (Math.abs(E) >= 1e-12) s += coordSignedJoin(true, E, coordFmtNum(Math.abs(E)) + "y");
+      if (Math.abs(F) >= 1e-12) s += coordSignedJoin(true, F, coordFmtNum(Math.abs(F)));
+      return s + " = 0";
     }
     if (type === "sin" || type === "cos" || type === "tan") {
       const fn = type;
@@ -7525,14 +7532,14 @@ body.dark-canvas .coord-curve-row {
       let arg = "";
       if (Math.abs(B - 1) < 1e-12) arg += "x";
       else if (Math.abs(B + 1) < 1e-12) arg += "−x";
-      else arg += coordFmtNum(B) + "x";
+      else arg += (B < 0 ? "−" : "") + coordFmtNum(Math.abs(B)) + "x";
       if (type !== "tan" && Math.abs(C) >= 1e-12) {
-        arg += (C < 0 ? "−" : "+") + coordFmtNum(Math.abs(C));
+        arg += coordSignedJoin(true, C, coordFmtNum(Math.abs(C)));
       }
       s += deg ? "(" + arg + ")°" : arg;
       s += ")";
       if (type !== "tan" && Math.abs(D) >= 1e-12) {
-        s += (D < 0 ? "−" : "+") + coordFmtNum(Math.abs(D));
+        s += coordSignedJoin(true, D, coordFmtNum(Math.abs(D)));
       }
       return s;
     }
@@ -7766,8 +7773,19 @@ body.dark-canvas .coord-curve-row {
     return { x: plot.ox + u * plot.unitPx, y: plot.oy - v * plot.unitPx };
   }
 
+  function coordAxisOverhangPx(plot) {
+    const unitPx = plot.unitPx || 40;
+    const showTickMarks = plot.showTicks !== false && plot.showTickLabels !== false;
+    if (!showTickMarks) return { pos: 0, neg: 0 };
+    return {
+      pos: Math.max(24, Math.min(28, unitPx * 0.6)),
+      neg: 12,
+    };
+  }
+
   function coordPlotBounds(plot) {
-    const pad = plot.unitPx * 0.55;
+    const oh = coordAxisOverhangPx(plot);
+    const pad = plot.unitPx * 0.55 + Math.max(oh.pos, oh.neg);
     const corners = [
       coordWorldFromAxis(plot, plot.xmin, plot.ymin),
       coordWorldFromAxis(plot, plot.xmax, plot.ymin),
@@ -7781,6 +7799,10 @@ body.dark-canvas .coord-curve-row {
       if (c.x > maxX) maxX = c.x;
       if (c.y > maxY) maxY = c.y;
     }
+    minX -= oh.neg;
+    maxX += oh.pos;
+    minY -= oh.pos;
+    maxY += oh.neg;
     return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
   }
 
@@ -8027,16 +8049,25 @@ body.dark-canvas .coord-curve-row {
     return p.text;
   }
 
+  function paintTextHalo(c, text, x, y, fontPx) {
+    c.lineJoin = "round";
+    c.strokeStyle = edHalo();
+    c.lineWidth = Math.max(3.5, fontPx * 0.28);
+    c.strokeText(text, x, y);
+  }
+
   /** Canvas: draw plain or stacked-fraction tick label; (x,yTop) = top-center of label. */
   function paintCoordTickLabel(c, parts, x, yTop, fontPx, color) {
     const font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
     c.font = font;
     c.fillStyle = color;
-    c.strokeStyle = color;
     c.textAlign = "center";
     if (!parts || parts.kind !== "frac") {
       c.textBaseline = "top";
-      c.fillText((parts && parts.text) || "", x, yTop);
+      const t = (parts && parts.text) || "";
+      paintTextHalo(c, t, x, yTop, fontPx);
+      c.fillStyle = color;
+      c.fillText(t, x, yTop);
       return;
     }
     const gap = Math.max(1, fontPx * 0.1);
@@ -8048,10 +8079,13 @@ body.dark-canvas .coord-curve-row {
     const numBaseline = yTop + fontPx * 0.88;
     const barY = yTop + fontPx + gap;
     const denBaseline = barY + gap + fontPx * 0.88;
+    paintTextHalo(c, parts.num, x, numBaseline, fontPx);
+    c.fillStyle = color;
     c.fillText(parts.num, x, numBaseline);
     const prevCap = c.lineCap;
     const prevW = c.lineWidth;
     c.beginPath();
+    c.strokeStyle = color;
     c.lineWidth = Math.max(1, fontPx * 0.07);
     c.lineCap = "butt";
     c.moveTo(x - barW / 2, barY);
@@ -8059,6 +8093,8 @@ body.dark-canvas .coord-curve-row {
     c.stroke();
     c.lineCap = prevCap;
     c.lineWidth = prevW;
+    paintTextHalo(c, parts.den, x, denBaseline, fontPx);
+    c.fillStyle = color;
     c.fillText(parts.den, x, denBaseline);
   }
 
@@ -8066,9 +8102,11 @@ body.dark-canvas .coord-curve-row {
   function svgCoordTickLabel(parts, x, yTop, fontPx, fill) {
     const fs = Number(fontPx);
     const fam = 'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
+    const halo = Math.max(3.5, fs * 0.28).toFixed(2);
+    const haloAttrs = `fill="${fill}" stroke="#ffffff" stroke-width="${halo}" stroke-linejoin="round" paint-order="stroke fill"`;
     if (!parts || parts.kind !== "frac") {
       const t = (parts && parts.text) || "";
-      return `<text x="${x.toFixed(2)}" y="${yTop.toFixed(2)}" fill="${fill}" ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="hanging">${escapeXml(t)}</text>\n`;
+      return `<text x="${x.toFixed(2)}" y="${yTop.toFixed(2)}" ${haloAttrs} ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="hanging">${escapeXml(t)}</text>\n`;
     }
     const gap = Math.max(1, fs * 0.1);
     const barPad = fs * 0.18;
@@ -8081,9 +8119,9 @@ body.dark-canvas .coord-curve-row {
     const denY = barY + gap + fs * 0.88;
     const sw = Math.max(1, fs * 0.07).toFixed(2);
     let out = "";
-    out += `<text x="${x.toFixed(2)}" y="${numY.toFixed(2)}" fill="${fill}" ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="alphabetic">${escapeXml(parts.num)}</text>\n`;
+    out += `<text x="${x.toFixed(2)}" y="${numY.toFixed(2)}" ${haloAttrs} ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="alphabetic">${escapeXml(parts.num)}</text>\n`;
     out += `<line x1="${(x - barW / 2).toFixed(2)}" y1="${barY.toFixed(2)}" x2="${(x + barW / 2).toFixed(2)}" y2="${barY.toFixed(2)}" stroke="${fill}" stroke-width="${sw}" stroke-linecap="butt" />\n`;
-    out += `<text x="${x.toFixed(2)}" y="${denY.toFixed(2)}" fill="${fill}" ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="alphabetic">${escapeXml(parts.den)}</text>\n`;
+    out += `<text x="${x.toFixed(2)}" y="${denY.toFixed(2)}" ${haloAttrs} ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="alphabetic">${escapeXml(parts.den)}</text>\n`;
     return out;
   }
 
@@ -8196,10 +8234,11 @@ body.dark-canvas .coord-curve-row {
     if (!plot) return;
     const color = highlight ? "#1a5fb4" : ink || "#111";
     const o = toScreen(plot.ox, plot.oy);
-    const xNeg = toScreen(plot.ox + plot.xmin * plot.unitPx, plot.oy);
-    const xPos = toScreen(plot.ox + plot.xmax * plot.unitPx, plot.oy);
-    const yNeg = toScreen(plot.ox, plot.oy - plot.ymin * plot.unitPx);
-    const yPos = toScreen(plot.ox, plot.oy - plot.ymax * plot.unitPx);
+    const oh = coordAxisOverhangPx(plot);
+    const xNeg = toScreen(plot.ox + plot.xmin * plot.unitPx - oh.neg, plot.oy);
+    const xPos = toScreen(plot.ox + plot.xmax * plot.unitPx + oh.pos, plot.oy);
+    const yNeg = toScreen(plot.ox, plot.oy - plot.ymin * plot.unitPx + oh.neg);
+    const yPos = toScreen(plot.ox, plot.oy - plot.ymax * plot.unitPx - oh.pos);
     c.strokeStyle = color;
     c.fillStyle = color;
     c.lineWidth = lw;
@@ -8239,10 +8278,13 @@ body.dark-canvas .coord-curve-row {
         c.stroke();
         if (!coordNearZero(v)) {
           c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
-          c.fillStyle = color;
           c.textAlign = "right";
           c.textBaseline = "middle";
-          c.fillText(String(v), p.x - tickLen - 2, p.y);
+          const tx = String(v);
+          const lx = p.x - tickLen - 2;
+          paintTextHalo(c, tx, lx, p.y, fontPx);
+          c.fillStyle = color;
+          c.fillText(tx, lx, p.y);
         }
       }
     }
@@ -8250,6 +8292,8 @@ body.dark-canvas .coord-curve-row {
       c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
       c.textAlign = "right";
       c.textBaseline = "top";
+      paintTextHalo(c, "O", o.x - 4, o.y + 3, fontPx);
+      c.fillStyle = color;
       c.fillText("O", o.x - 4, o.y + 3);
     }
     const lx = (plot.axisLabelX || "x").trim();
@@ -8258,12 +8302,16 @@ body.dark-canvas .coord-curve-row {
       c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
       c.textAlign = "left";
       c.textBaseline = "top";
+      paintTextHalo(c, lx, xPos.x + 4, xPos.y + 2, fontPx);
+      c.fillStyle = color;
       c.fillText(lx, xPos.x + 4, xPos.y + 2);
     }
     if (ly) {
       c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
       c.textAlign = "left";
       c.textBaseline = "bottom";
+      paintTextHalo(c, ly, yPos.x + 4, yPos.y - 2, fontPx);
+      c.fillStyle = color;
       c.fillText(ly, yPos.x + 4, yPos.y - 2);
     }
 
@@ -8287,6 +8335,33 @@ body.dark-canvas .coord-curve-row {
   }
 
   /** Persist/render box-whisker (mirrors src/diagram/box-whisker.mjs). */
+  function normalizeBoxWhiskerTicksLocal(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const t of raw) {
+      if (t != null && typeof t === "object" && !Array.isArray(t)) {
+        const pos = Number(
+          t.pos != null ? t.pos : t.x != null ? t.x : t.y != null ? t.y : NaN
+        );
+        if (!Number.isFinite(pos)) continue;
+        if (t.label != null && String(t.label) !== "") out.push({ pos, label: String(t.label) });
+        else out.push(pos);
+        continue;
+      }
+      const n = Number(t);
+      if (Number.isFinite(n)) out.push(n);
+    }
+    return out;
+  }
+  function boxWhiskerTickPosLocal(t) {
+    return typeof t === "object" && t != null ? Number(t.pos) : Number(t);
+  }
+  function boxWhiskerTickLabelLocal(t) {
+    if (typeof t === "object" && t != null && t.label != null && String(t.label) !== "") {
+      return String(t.label);
+    }
+    return null;
+  }
   function normalizeBoxWhiskerRecord(raw) {
     if (!raw || typeof raw !== "object") return null;
     const orientation =
@@ -8300,9 +8375,7 @@ body.dark-canvas .coord-curve-row {
     const outliers = Array.isArray(raw.outliers)
       ? raw.outliers.map(Number).filter((n) => Number.isFinite(n))
       : [];
-    const ticks = Array.isArray(raw.ticks)
-      ? raw.ticks.map(Number).filter((n) => Number.isFinite(n))
-      : [];
+    const ticks = normalizeBoxWhiskerTicksLocal(raw.ticks);
     const showAxis = raw.showAxis != null ? !!raw.showAxis : ticks.length > 0;
     const out = {
       id: typeof raw.id === "string" ? raw.id : "",
@@ -8337,6 +8410,7 @@ body.dark-canvas .coord-curve-row {
     const half = h / 2;
     const cap = bw.cap;
     const tickLen = Math.max(3, h * 0.22);
+    const labelGap = Math.max(3, tickLen * 0.55);
     if (bw.orientation === "v") {
       const x = bw.x;
       const box = { x: x - half, y: bw.q1, w: h, h: bw.q3 - bw.q1 };
@@ -8352,21 +8426,37 @@ body.dark-canvas .coord-curve-row {
       const outliers = bw.outliers.map((v) => ({ x, y: v }));
       let axis = null;
       const tickMarks = [];
+      const tickLabels = [];
       if (bw.showAxis && bw.ticks.length) {
         const axisX =
           bw.axisX != null ? bw.axisX : x + half + Math.max(10, h * 0.35);
-        const ys = bw.ticks.slice().sort((a, b) => a - b);
+        const ys = bw.ticks
+          .map(boxWhiskerTickPosLocal)
+          .filter((n) => Number.isFinite(n))
+          .sort((a, b) => a - b);
         axis = { x1: axisX, y1: ys[0], x2: axisX, y2: ys[ys.length - 1] };
-        for (const ty of bw.ticks) {
+        for (const t of bw.ticks) {
+          const ty = boxWhiskerTickPosLocal(t);
+          if (!Number.isFinite(ty)) continue;
           tickMarks.push({
             x1: axisX - tickLen / 2,
             y1: ty,
             x2: axisX + tickLen / 2,
             y2: ty,
           });
+          const lab = boxWhiskerTickLabelLocal(t);
+          if (lab) {
+            tickLabels.push({
+              x: axisX - tickLen / 2 - labelGap,
+              y: ty,
+              text: lab,
+              anchor: "end",
+              baseline: "middle",
+            });
+          }
         }
       }
-      return { box, median, whiskers, caps, outliers, axis, tickMarks };
+      return { box, median, whiskers, caps, outliers, axis, tickMarks, tickLabels };
     }
     const y = bw.y;
     const box = { x: bw.q1, y: y - half, w: bw.q3 - bw.q1, h };
@@ -8382,21 +8472,37 @@ body.dark-canvas .coord-curve-row {
     const outliers = bw.outliers.map((v) => ({ x: v, y }));
     let axis = null;
     const tickMarks = [];
+    const tickLabels = [];
     if (bw.showAxis && bw.ticks.length) {
       const axisY =
         bw.axisY != null ? bw.axisY : y + half + Math.max(10, h * 0.35);
-      const xs = bw.ticks.slice().sort((a, b) => a - b);
+      const xs = bw.ticks
+        .map(boxWhiskerTickPosLocal)
+        .filter((n) => Number.isFinite(n))
+        .sort((a, b) => a - b);
       axis = { x1: xs[0], y1: axisY, x2: xs[xs.length - 1], y2: axisY };
-      for (const tx of bw.ticks) {
+      for (const t of bw.ticks) {
+        const tx = boxWhiskerTickPosLocal(t);
+        if (!Number.isFinite(tx)) continue;
         tickMarks.push({
           x1: tx,
           y1: axisY - tickLen / 2,
           x2: tx,
           y2: axisY + tickLen / 2,
         });
+        const lab = boxWhiskerTickLabelLocal(t);
+        if (lab) {
+          tickLabels.push({
+            x: tx,
+            y: axisY + tickLen / 2 + labelGap,
+            text: lab,
+            anchor: "middle",
+            baseline: "hanging",
+          });
+        }
       }
     }
-    return { box, median, whiskers, caps, outliers, axis, tickMarks };
+    return { box, median, whiskers, caps, outliers, axis, tickMarks, tickLabels };
   }
 
   function boxWhiskerBounds(bw) {
@@ -8419,6 +8525,7 @@ body.dark-canvas .coord-curve-row {
       add(p.axis.x1, p.axis.y1);
       add(p.axis.x2, p.axis.y2);
     }
+    for (const t of p.tickLabels || []) add(t.x, t.y);
     for (const o of p.outliers) add(o.x, o.y);
     return b;
   }
@@ -8454,6 +8561,16 @@ body.dark-canvas .coord-curve-row {
     for (const s of parts.caps) strokeLine(s);
     if (parts.axis) strokeLine(parts.axis);
     for (const s of parts.tickMarks) strokeLine(s);
+    const fontPx = Math.max(11, lw * 7);
+    c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
+    c.fillStyle = color;
+    for (const t of parts.tickLabels || []) {
+      const p = toScreen(t.x, t.y);
+      c.textAlign = t.anchor === "end" ? "right" : t.anchor === "start" ? "left" : "center";
+      c.textBaseline =
+        t.baseline === "hanging" ? "top" : t.baseline === "auto" ? "alphabetic" : "middle";
+      c.fillText(t.text, p.x, p.y);
+    }
     const r = Math.max(2.5, lw * 1.4);
     for (const o of parts.outliers) {
       const s = toScreen(o.x, o.y);
@@ -8556,7 +8673,17 @@ body.dark-canvas .coord-curve-row {
       bars, grid, hatch, tickMarks, tickLabels, catLabels,
       axisX: { x1: bc.x, y1: bc.y, x2: bc.x + bc.plotW, y2: bc.y },
       axisY: { x1: bc.x, y1: bc.y, x2: bc.x, y2: topY },
-      xLabel: bc.xLabel ? { x: bc.x + bc.plotW / 2, y: bc.y + Math.max(28, bc.plotH * 0.14), text: bc.xLabel } : null,
+      xLabel: bc.xLabel
+        ? {
+            x: bc.x + bc.plotW / 2,
+            y:
+              bc.y +
+              Math.max(12, bc.plotH * 0.06) +
+              Math.max(16, Math.min(22, bc.plotH * 0.08)) +
+              9,
+            text: bc.xLabel,
+          }
+        : null,
       yLabel: bc.yLabel ? { x: bc.x - Math.max(36, bc.plotW * 0.12), y: topY + bc.plotH / 2, text: bc.yLabel, mode: bc.yLabelMode } : null,
     };
   }
@@ -8704,6 +8831,15 @@ body.dark-canvas .coord-curve-row {
     for (const s of parts.caps) out += line(s);
     if (parts.axis) out += line(parts.axis);
     for (const s of parts.tickMarks) out += line(s);
+    const fontPx = (Math.max(11, LINE_WIDTH * 7) * scale * 0.75).toFixed(1);
+    const fam = 'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
+    for (const t of parts.tickLabels || []) {
+      const p = toS(t.x, t.y);
+      const anchor = t.anchor === "end" ? "end" : t.anchor === "start" ? "start" : "middle";
+      const baseline =
+        t.baseline === "hanging" ? "hanging" : t.baseline === "auto" ? "auto" : "middle";
+      out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
+    }
     const or = Math.max(2.5, LINE_WIDTH * scale * 0.75 * 1.4);
     for (const o of parts.outliers) {
       const s = toS(o.x, o.y);
@@ -9404,10 +9540,11 @@ body.dark-canvas .coord-curve-row {
     let body = "";
     const lw = (LINE_WIDTH * scale * 0.75).toFixed(2);
     const o = toS(plot.ox, plot.oy);
-    const xNeg = toS(plot.ox + plot.xmin * plot.unitPx, plot.oy);
-    const xPos = toS(plot.ox + plot.xmax * plot.unitPx, plot.oy);
-    const yNeg = toS(plot.ox, plot.oy - plot.ymin * plot.unitPx);
-    const yPos = toS(plot.ox, plot.oy - plot.ymax * plot.unitPx);
+    const oh = coordAxisOverhangPx(plot);
+    const xNeg = toS(plot.ox + plot.xmin * plot.unitPx - oh.neg, plot.oy);
+    const xPos = toS(plot.ox + plot.xmax * plot.unitPx + oh.pos, plot.oy);
+    const yNeg = toS(plot.ox, plot.oy - plot.ymin * plot.unitPx + oh.neg);
+    const yPos = toS(plot.ox, plot.oy - plot.ymax * plot.unitPx - oh.pos);
     body += `<line x1="${xNeg.x.toFixed(2)}" y1="${xNeg.y.toFixed(2)}" x2="${xPos.x.toFixed(2)}" y2="${xPos.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" stroke-linecap="round" />\n`;
     body += `<line x1="${yNeg.x.toFixed(2)}" y1="${yNeg.y.toFixed(2)}" x2="${yPos.x.toFixed(2)}" y2="${yPos.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" stroke-linecap="round" />\n`;
     const arrow = Math.max(7, LINE_WIDTH * scale * 2.4);
@@ -9423,6 +9560,9 @@ body.dark-canvas .coord-curve-row {
     body += arrowPath(xPos.x, xPos.y, Math.atan2(xPos.y - o.y, xPos.x - o.x));
     body += arrowPath(yPos.x, yPos.y, Math.atan2(yPos.y - o.y, yPos.x - o.x));
     const fontPx = (clampLabelSize(labelFontSize) * scale * 0.75).toFixed(1);
+    const fsNum = Number(fontPx);
+    const halo = Math.max(3.5, fsNum * 0.28).toFixed(2);
+    const haloAttrs = `fill="#111" stroke="#ffffff" stroke-width="${halo}" stroke-linejoin="round" paint-order="stroke fill"`;
     const tickLen = Math.max(4, LINE_WIDTH * scale * 1.6);
     // 「顯示軸上數值」off → hide tick marks too (axis lines + O stay)
     const showTickMarks = plot.showTicks !== false && plot.showTickLabels !== false;
@@ -9438,20 +9578,20 @@ body.dark-canvas .coord-curve-row {
         const p = toS(plot.ox, plot.oy - v * plot.unitPx);
         body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
         if (!coordNearZero(v)) {
-          body += `<text x="${(p.x - tickLen - 2).toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(String(v))}</text>\n`;
+          body += `<text x="${(p.x - tickLen - 2).toFixed(2)}" y="${p.y.toFixed(2)}" ${haloAttrs} font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(String(v))}</text>\n`;
         }
       }
     }
     if (plot.showOrigin !== false) {
-      body += `<text x="${(o.x - 4).toFixed(2)}" y="${(o.y + 3).toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="end" dominant-baseline="hanging">O</text>\n`;
+      body += `<text x="${(o.x - 4).toFixed(2)}" y="${(o.y + 3).toFixed(2)}" ${haloAttrs} font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="end" dominant-baseline="hanging">O</text>\n`;
     }
     const lx = (plot.axisLabelX || "x").trim();
     const ly = (plot.axisLabelY || "y").trim();
     if (lx) {
-      body += `<text x="${(xPos.x + 4).toFixed(2)}" y="${(xPos.y + 2).toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="start" dominant-baseline="hanging">${escapeXml(lx)}</text>\n`;
+      body += `<text x="${(xPos.x + 4).toFixed(2)}" y="${(xPos.y + 2).toFixed(2)}" ${haloAttrs} font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="start" dominant-baseline="hanging">${escapeXml(lx)}</text>\n`;
     }
     if (ly) {
-      body += `<text x="${(yPos.x + 4).toFixed(2)}" y="${(yPos.y - 2).toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="start" dominant-baseline="auto">${escapeXml(ly)}</text>\n`;
+      body += `<text x="${(yPos.x + 4).toFixed(2)}" y="${(yPos.y - 2).toFixed(2)}" ${haloAttrs} font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="start" dominant-baseline="auto">${escapeXml(ly)}</text>\n`;
     }
     for (const curve of coordPlotCurves(plot)) {
       let d = "";
@@ -9477,9 +9617,8 @@ body.dark-canvas .coord-curve-row {
       const wp = coordCurveLabelWorldPos(plot, curve);
       const sp = toS(wp.x, wp.y);
       const fs = clampLabelSize(labelFontSize) * scale * 0.75;
-      const halo = Math.max(3, fs * 0.28);
-      body += `<text x="${sp.x.toFixed(2)}" y="${sp.y.toFixed(2)}" fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(text)}</text>\n`;
-      body += `<text x="${sp.x.toFixed(2)}" y="${sp.y.toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(text)}</text>\n`;
+      const halo = Math.max(3.5, fs * 0.28);
+      body += `<text x="${sp.x.toFixed(2)}" y="${sp.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(text)}</text>\n`;
     }
     return body;
   }
@@ -9610,7 +9749,7 @@ body.dark-canvas .coord-curve-row {
     if (withHalo) {
       c.lineJoin = "round";
       c.strokeStyle = edHalo();
-      c.lineWidth = Math.max(3, fontPx * 0.28);
+      c.lineWidth = Math.max(3.5, fontPx * 0.28);
       c.strokeText(text, 0, 0);
     }
     c.fillStyle = fill;
@@ -10505,7 +10644,7 @@ body.dark-canvas .coord-curve-row {
       out += `<path d="${markPath(sb)}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round" stroke-linejoin="round"/>\n`;
     }
     const deg = (ang * 180) / Math.PI;
-    const halo = Math.max(3, fontPx * 0.28);
+    const halo = Math.max(3.5, fontPx * 0.28);
     let lx = labelX;
     let ly = labelY;
     if (style === "ends") {
@@ -10517,8 +10656,7 @@ body.dark-canvas .coord-curve-row {
     const common =
       `transform="${tf}" text-anchor="middle" dominant-baseline="middle" ` +
       `font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx.toFixed(1)}"`;
-    out += `<text ${common} fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round">${escapeXml(ll.text || "")}</text>\n`;
-    out += `<text ${common} fill="#111">${escapeXml(ll.text || "")}</text>\n`;
+    out += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(ll.text || "")}</text>\n`;
     return out;
   }
 
@@ -14284,7 +14422,7 @@ body.dark-canvas .coord-curve-row {
         const lx = sv.x + Math.cos(mid) * labelR + ox;
         const ly = sv.y + Math.sin(mid) * labelR + oy;
         const fs = clampLabelSize(labelFontSize) * scale * 0.75;
-        const halo = Math.max(3, fs * 0.28);
+        const halo = Math.max(3.5, fs * 0.28);
         body += `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(text)}</text>\n`;
       }
     }
@@ -14400,9 +14538,8 @@ body.dark-canvas .coord-curve-row {
         if (!p) continue;
         const s = toS(p.x + lab.ox, p.y + lab.oy);
         const fs = clampLabelSize(lab.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
-        const halo = Math.max(3, fs * 0.28);
-        body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(lab.text)}</text>\n`;
-        body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(lab.text)}</text>\n`;
+        const halo = Math.max(3.5, fs * 0.28);
+        body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(lab.text)}</text>\n`;
       }
     }
 
@@ -14423,7 +14560,7 @@ ${body}</svg>`;
     // Stable 37-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.33",
+      version: "13.5.34",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

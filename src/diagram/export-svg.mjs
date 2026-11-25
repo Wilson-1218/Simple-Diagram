@@ -386,7 +386,7 @@ function svgLengthLabel(ll, doc, pts, toS, ink) {
   const common =
     `transform="${tf}" text-anchor="middle" dominant-baseline="middle" ` +
     `font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx.toFixed(1)}"`;
-  const halo = Math.max(ink.mm(0.35), fontPx * 0.28);
+  const halo = Math.max(3.5, ink.mm(0.35), fontPx * 0.28);
   // White-paper halo (stroke under fill via paint-order)
   out += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(ll.text || "")}</text>\n`;
   return out;
@@ -702,6 +702,20 @@ export function documentToSvg(doc, opts = {}) {
     for (const s of parts.caps) body += line(s);
     if (parts.axis) body += line(parts.axis);
     for (const s of parts.tickMarks) body += line(s);
+    const tickFs = ink.fontForSize(13);
+    const tickFam =
+      'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
+    for (const t of parts.tickLabels || []) {
+      const p = toS(t.x, t.y);
+      const anchor = t.anchor === "end" ? "end" : t.anchor === "start" ? "start" : "middle";
+      const baseline =
+        t.baseline === "hanging"
+          ? "hanging"
+          : t.baseline === "auto"
+            ? "auto"
+            : "middle";
+      body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${tickFam} font-size="${tickFs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
+    }
     const or = ink.mm(0.55);
     for (const o of parts.outliers) {
       const s = toS(o.x, o.y);
@@ -863,7 +877,7 @@ export function documentToSvg(doc, opts = {}) {
             : 0;
         const tx = sv.x + Math.cos(mid) * tr + ox;
         const ty = sv.y + Math.sin(mid) * tr + oy;
-        const halo = Math.max(ink.mm(0.35), fs * 0.28);
+        const halo = Math.max(3.5, ink.mm(0.35), fs * 0.28);
         const common =
           `x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
         body += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(aa.text)}</text>\n`;
@@ -930,10 +944,9 @@ export function documentToSvg(doc, opts = {}) {
       if (!p) continue;
       const s = toS(p.x + (lab.ox || 0), p.y + (lab.oy || 0));
       const fs = ink.fontForSize(lab.size);
-      const halo = Math.max(ink.mm(0.35), fs * 0.28);
+      const halo = Math.max(3.5, ink.mm(0.35), fs * 0.28);
       const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
-      body += `<text ${common} fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round">${escapeXml(lab.text)}</text>\n`;
-      body += `<text ${common} fill="#111">${escapeXml(lab.text)}</text>\n`;
+      body += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(lab.text)}</text>\n`;
     }
   }
 

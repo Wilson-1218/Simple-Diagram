@@ -215,9 +215,11 @@ export function barChartParts(bc) {
 
   let xLabel = null;
   if (bc.xLabel) {
+    // Sit ~8–10px below category labels (cat uses max(12, 0.06*plotH))
+    const catY = bc.y + Math.max(12, bc.plotH * 0.06);
     xLabel = {
       x: bc.x + bc.plotW / 2,
-      y: bc.y + Math.max(28, bc.plotH * 0.14),
+      y: catY + Math.max(16, Math.min(22, bc.plotH * 0.08)) + 9,
       text: bc.xLabel,
     };
   }
