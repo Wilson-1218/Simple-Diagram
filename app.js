@@ -5139,6 +5139,14 @@
         }
         if (typ === "circle") c.params = syncCircleParams(c.params);
         c.label = normalizeCurveLabel(c.label);
+        if (c.style !== "solid" && c.style !== "dashed" && c.style !== "dotted") delete c.style;
+        if (!Array.isArray(c.domain) || c.domain.length < 2) delete c.domain;
+        else {
+          const a = Number(c.domain[0]);
+          const b = Number(c.domain[1]);
+          if (!Number.isFinite(a) || !Number.isFinite(b)) delete c.domain;
+          else c.domain = [a, b];
+        }
       }
     }
     if (plot.showTickLabels == null) plot.showTickLabels = true;
@@ -5181,6 +5189,8 @@
         type: c && c.type,
         params: { ...((c && c.params) || {}) },
         label: c && c.label ? { ...c.label } : undefined,
+        style: c && c.style,
+        domain: c && c.domain ? c.domain.slice() : undefined,
       }));
     } else {
       delete plot.curves;
@@ -5223,14 +5233,28 @@
     return { xmin, xmax, ymin, ymax };
   }
 
+  function coordPlotScales(plot) {
+    const unit = Number(plot && plot.unitPx);
+    const base = Number.isFinite(unit) && unit > 0 ? unit : 40;
+    const xu = plot && plot.xUnitPx != null ? Number(plot.xUnitPx) : base;
+    const yu = plot && plot.yUnitPx != null ? Number(plot.yUnitPx) : base;
+    return {
+      unitPx: base,
+      xUnitPx: xu > 0 ? xu : base,
+      yUnitPx: yu > 0 ? yu : base,
+    };
+  }
+
   function coordWorldFromAxis(plot, u, v) {
-    return { x: plot.ox + u * plot.unitPx, y: plot.oy - v * plot.unitPx };
+    const s = coordPlotScales(plot);
+    return { x: plot.ox + u * s.xUnitPx, y: plot.oy - v * s.yUnitPx };
   }
 
   function coordAxisOverhangPx(plot) {
-    const unitPx = plot.unitPx || 40;
-    const showTickMarks = plot.showTicks !== false && plot.showTickLabels !== false;
-    if (!showTickMarks) return { pos: 0, neg: 0 };
+    const unitPx = (plot && plot.unitPx) || 40;
+    const showDefault = plot && plot.showTicks !== false && plot.showTickLabels !== false;
+    const explicit = !!(plot && (Array.isArray(plot.xTicks) || Array.isArray(plot.yTicks)));
+    if (!showDefault && !explicit) return { pos: 0, neg: 0 };
     return {
       pos: Math.max(24, Math.min(28, unitPx * 0.6)),
       neg: 12,
@@ -5391,6 +5415,7 @@
     const type = curve.type || "none";
     if (!type || type === "none") return [];
     const pts = [];
+    const dom = coordCurveDomainOf(curve);
     if (type === "circle") {
       const p = curve.params || {};
       const h = p.h ?? 0;
@@ -5401,7 +5426,8 @@
         const ang = (i / n) * Math.PI * 2;
         const u = h + r * Math.cos(ang);
         const v = k + r * Math.sin(ang);
-        if (u < plot.xmin || u > plot.xmax || v < plot.ymin || v > plot.ymax) {
+        const outsideDom = dom && (u < dom[0] - 1e-9 || u > dom[1] + 1e-9);
+        if (outsideDom || u < plot.xmin || u > plot.xmax || v < plot.ymin || v > plot.ymax) {
           pts.push(null);
         } else {
           pts.push(coordWorldFromAxis(plot, u, v));
@@ -5412,8 +5438,13 @@
     const needsPosX = type === "log" || type === "log10" || type === "ln";
     const isTrig = type === "sin" || type === "cos" || type === "tan";
     const n = isTrig ? 280 : 160;
-    const x0 = Math.max(plot.xmin, needsPosX ? 1e-4 : plot.xmin);
-    const x1 = plot.xmax;
+    let x0 = plot.xmin;
+    let x1 = plot.xmax;
+    if (dom) {
+      x0 = Math.max(x0, dom[0]);
+      x1 = Math.min(x1, dom[1]);
+    }
+    if (needsPosX) x0 = Math.max(x0, 1e-4);
     if (x1 <= x0) return pts;
     let prevV = null;
     for (let i = 0; i <= n; i++) {
@@ -5440,13 +5471,66 @@
     return Array.isArray(plot.curves) ? plot.curves : [];
   }
 
-  function coordIntegerTicks(min, max) {
+  function coordCurveDomainOf(curve) {
+    const d = curve && curve.domain;
+    if (!Array.isArray(d) || d.length < 2) return null;
+    const a = Number(d[0]);
+    const b = Number(d[1]);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+    return a <= b ? [a, b] : [b, a];
+  }
+
+  function coordCurveStyleOf(curve) {
+    const s = curve && curve.style;
+    return s === "dashed" || s === "dotted" || s === "solid" ? s : "solid";
+  }
+
+  /** null when omitted; otherwise the ticks to draw (may be empty). */
+  function normalizeCoordTicks(raw) {
+    if (!Array.isArray(raw)) return null;
     const out = [];
-    const a = Math.ceil(min - 1e-9);
-    const b = Math.floor(max + 1e-9);
-    for (let i = a; i <= b; i++) {
-      if (i === 0) continue;
-      out.push(i);
+    for (const t of raw) {
+      if (t != null && typeof t === "object" && !Array.isArray(t)) {
+        const pos = Number(
+          t.pos != null ? t.pos : t.x != null ? t.x : t.y != null ? t.y : NaN
+        );
+        if (!Number.isFinite(pos)) continue;
+        const item = { pos };
+        if (t.label != null && String(t.label) !== "") item.label = String(t.label);
+        out.push(item);
+      } else {
+        const n = Number(t);
+        if (Number.isFinite(n)) out.push({ pos: n });
+      }
+    }
+    return out;
+  }
+
+  function coordTickText(tick) {
+    if (!tick) return "";
+    if (tick.label != null && String(tick.label) !== "") return String(tick.label);
+    const p = Number(tick.pos);
+    if (!Number.isFinite(p)) return "";
+    if (Math.abs(p - Math.round(p)) < 1e-8) return String(Math.round(p));
+    return String(Math.round(p * 1e6) / 1e6);
+  }
+
+  function coordPositiveStep(v) {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  }
+
+  function coordIntegerTicks(min, max, step) {
+    const stepN = coordPositiveStep(step);
+    const out = [];
+    const k0 = Math.ceil((min - 1e-9) / stepN);
+    const k1 = Math.floor((max + 1e-9) / stepN);
+    for (let k = k0; k <= k1; k++) {
+      let v = k * stepN;
+      if (Math.abs(v) < 1e-8) continue;
+      if (Math.abs(v - Math.round(v)) < 1e-8) v = Math.round(v);
+      else v = Math.round(v * 1e9) / 1e9;
+      out.push(v);
     }
     return out;
   }
@@ -5622,8 +5706,16 @@
 
   /** X-axis tick values + label parts (plain / π stacked frac / °). */
   function coordXAxisTickEntries(plot) {
+    const explicit = normalizeCoordTicks(plot.xTicks);
+    if (explicit) {
+      return explicit.map((t) => ({
+        u: t.pos,
+        parts: { kind: "text", text: coordTickText(t) },
+        explicit: true,
+      }));
+    }
     if (!coordAngleAxisOn(plot)) {
-      return coordIntegerTicks(plot.xmin, plot.xmax).map((u) => ({
+      return coordIntegerTicks(plot.xmin, plot.xmax, plot.xStep).map((u) => ({
         u,
         parts: { kind: "text", text: String(u) },
       }));
@@ -5666,7 +5758,16 @@
     c.stroke();
   }
 
-  function strokeCoordPolyline(c, toScreen, pts) {
+  function strokeCoordPolyline(c, toScreen, pts, style) {
+    const prevDash = c.getLineDash();
+    const prevCap = c.lineCap;
+    if (style === "dashed" || style === "dotted") {
+      c.setLineDash(STYLE_DASH[style] || []);
+      c.lineCap = "butt";
+    } else {
+      c.setLineDash([]);
+      c.lineCap = "round";
+    }
     c.beginPath();
     let pen = false;
     for (const pt of pts) {
@@ -5681,18 +5782,21 @@
       } else c.lineTo(s.x, s.y);
     }
     c.stroke();
+    c.setLineDash(prevDash);
+    c.lineCap = prevCap;
   }
 
   /** Draw one coord plot. toScreen(wx,wy)->{x,y}; lw in screen px. */
   function paintCoordPlot(c, plot, toScreen, lw, fontPx, ink, highlight) {
     if (!plot) return;
+    const scales = coordPlotScales(plot);
     const color = highlight ? "#1a5fb4" : ink || "#111";
     const o = toScreen(plot.ox, plot.oy);
     const oh = coordAxisOverhangPx(plot);
-    const xNeg = toScreen(plot.ox + plot.xmin * plot.unitPx - oh.neg, plot.oy);
-    const xPos = toScreen(plot.ox + plot.xmax * plot.unitPx + oh.pos, plot.oy);
-    const yNeg = toScreen(plot.ox, plot.oy - plot.ymin * plot.unitPx + oh.neg);
-    const yPos = toScreen(plot.ox, plot.oy - plot.ymax * plot.unitPx - oh.pos);
+    const xNeg = toScreen(plot.ox + plot.xmin * scales.xUnitPx - oh.neg, plot.oy);
+    const xPos = toScreen(plot.ox + plot.xmax * scales.xUnitPx + oh.pos, plot.oy);
+    const yNeg = toScreen(plot.ox, plot.oy - plot.ymin * scales.yUnitPx + oh.neg);
+    const yPos = toScreen(plot.ox, plot.oy - plot.ymax * scales.yUnitPx - oh.pos);
     c.strokeStyle = color;
     c.fillStyle = color;
     c.lineWidth = lw;
@@ -5710,22 +5814,44 @@
     strokeArrowHead(c, yPos.x, yPos.y, Math.atan2(yPos.y - o.y, yPos.x - o.x), arrow);
 
     const tickLen = Math.max(4, lw * 2.2);
-    // 「顯示軸上數值」off → hide tick marks too (axis lines + O stay)
-    const showTickMarks = plot.showTicks !== false && plot.showTickLabels !== false;
-    if (showTickMarks) {
-      for (const tick of coordXAxisTickEntries(plot)) {
-        const p = toScreen(plot.ox + tick.u * plot.unitPx, plot.oy);
+    // 「顯示軸上數值」off → hide default tick marks (axis lines + O stay).
+    // Explicit xTicks/yTicks still draw marks and labels.
+    const showDefaultTicks = plot.showTicks !== false && plot.showTickLabels !== false;
+    const xEntries = coordXAxisTickEntries(plot);
+    const yExplicit = normalizeCoordTicks(plot.yTicks);
+    const drawX = xEntries.length && (xEntries[0].explicit || showDefaultTicks);
+    if (drawX) {
+      for (const tick of xEntries) {
+        const p = toScreen(plot.ox + tick.u * scales.xUnitPx, plot.oy);
         c.beginPath();
         c.moveTo(p.x, p.y - tickLen);
         c.lineTo(p.x, p.y + tickLen);
         c.stroke();
         // Skip ≈0 label — origin "O" already marks the origin (avoid "O0").
-        if (!coordNearZero(tick.u)) {
-          paintCoordTickLabel(c, tick.parts, p.x, p.y + tickLen + 1, fontPx, color);
+        // Explicit ticks always keep their label.
+        if (tick.explicit || !coordNearZero(tick.u)) {
+          if (tick.explicit && tick.parts && tick.parts.kind === "text" && mathTextHasScript(tick.parts.text)) {
+            paintMathOrPlain(c, tick.parts.text, p.x, p.y + tickLen + 1, fontPx, color, true, "center", "top", false, true);
+          } else {
+            paintCoordTickLabel(c, tick.parts, p.x, p.y + tickLen + 1, fontPx, color);
+          }
         }
       }
-      for (const v of coordIntegerTicks(plot.ymin, plot.ymax)) {
-        const p = toScreen(plot.ox, plot.oy - v * plot.unitPx);
+    }
+    if (yExplicit) {
+      for (const t of yExplicit) {
+        const p = toScreen(plot.ox, plot.oy - t.pos * scales.yUnitPx);
+        c.beginPath();
+        c.moveTo(p.x - tickLen, p.y);
+        c.lineTo(p.x + tickLen, p.y);
+        c.stroke();
+        const tx = coordTickText(t);
+        if (!tx) continue;
+        paintMathOrPlain(c, tx, p.x - tickLen - 2, p.y, fontPx, color, true, "right", "middle", false, true);
+      }
+    } else if (showDefaultTicks) {
+      for (const v of coordIntegerTicks(plot.ymin, plot.ymax, plot.yStep)) {
+        const p = toScreen(plot.ox, plot.oy - v * scales.yUnitPx);
         c.beginPath();
         c.moveTo(p.x - tickLen, p.y);
         c.lineTo(p.x + tickLen, p.y);
@@ -5753,24 +5879,14 @@
     const lx = (plot.axisLabelX || "x").trim();
     const ly = (plot.axisLabelY || "y").trim();
     if (lx) {
-      c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
-      c.textAlign = "left";
-      c.textBaseline = "top";
-      paintTextHalo(c, lx, xPos.x + 4, xPos.y + 2, fontPx);
-      c.fillStyle = color;
-      c.fillText(lx, xPos.x + 4, xPos.y + 2);
+      paintMathOrPlain(c, lx, xPos.x + 4, xPos.y + 2, fontPx, color, true, "left", "top", false, true);
     }
     if (ly) {
-      c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
-      c.textAlign = "left";
-      c.textBaseline = "bottom";
-      paintTextHalo(c, ly, yPos.x + 4, yPos.y - 2, fontPx);
-      c.fillStyle = color;
-      c.fillText(ly, yPos.x + 4, yPos.y - 2);
+      paintMathOrPlain(c, ly, yPos.x + 4, yPos.y - 2, fontPx, color, true, "left", "bottom", false, true);
     }
 
     for (const curve of coordPlotCurves(plot)) {
-      strokeCoordPolyline(c, toScreen, coordSampleOneCurve(plot, curve));
+      strokeCoordPolyline(c, toScreen, coordSampleOneCurve(plot, curve), coordCurveStyleOf(curve));
     }
     for (const curve of coordPlotCurves(plot)) {
       const text = coordCurveLabelText(curve, plot);
@@ -6340,15 +6456,15 @@
       ctx.fill();
       ctx.stroke();
     }
-    // light frame
-    const x0 = plot.ox + plot.xmin * plot.unitPx;
-    const x1 = plot.ox + plot.xmax * plot.unitPx;
-    const y0 = plot.oy - plot.ymin * plot.unitPx;
-    const y1 = plot.oy - plot.ymax * plot.unitPx;
-    const a = worldToScreen(x0, y0);
-    const b = worldToScreen(x1, y0);
-    const c = worldToScreen(x1, y1);
-    const d = worldToScreen(x0, y1);
+    // light frame (respects xUnitPx / yUnitPx)
+    const sw = coordWorldFromAxis(plot, plot.xmin, plot.ymin);
+    const se = coordWorldFromAxis(plot, plot.xmax, plot.ymin);
+    const ne = coordWorldFromAxis(plot, plot.xmax, plot.ymax);
+    const nw = coordWorldFromAxis(plot, plot.xmin, plot.ymax);
+    const a = worldToScreen(sw.x, sw.y);
+    const b = worldToScreen(se.x, se.y);
+    const c = worldToScreen(ne.x, ne.y);
+    const d = worldToScreen(nw.x, nw.y);
     ctx.setLineDash([4, 3]);
     ctx.strokeStyle = "rgba(26,95,180,0.55)";
     ctx.lineWidth = 1;
@@ -6386,6 +6502,23 @@
   }
 
   function applyCoordResizeFromPointer(plot, drag, wx, wy) {
+    if (plot.xUnitPx != null || plot.yUnitPx != null) {
+      const sc = coordPlotScales(plot);
+      const au = drag.u;
+      const av = drag.v;
+      let nextX = sc.xUnitPx;
+      let nextY = sc.yUnitPx;
+      if (Math.abs(au) > 1e-6 && Math.abs(av) < 1e-6) nextX = (wx - plot.ox) / au;
+      else if (Math.abs(av) > 1e-6 && Math.abs(au) < 1e-6) nextY = (plot.oy - wy) / av;
+      else {
+        if (Math.abs(au) > 1e-6) nextX = (wx - plot.ox) / au;
+        if (Math.abs(av) > 1e-6) nextY = (plot.oy - wy) / av;
+      }
+      const clampU = (n) => Math.min(220, Math.max(10, n));
+      if (Number.isFinite(nextX) && nextX > 0) plot.xUnitPx = clampU(nextX);
+      if (Number.isFinite(nextY) && nextY > 0) plot.yUnitPx = clampU(nextY);
+      return;
+    }
     const u0 = drag.unit0 || plot.unitPx || 40;
     const au = drag.u;
     const av = drag.v;
@@ -6419,12 +6552,12 @@
         bestD = d;
         best = plot;
       }
-      const x0 = plot.ox + plot.xmin * plot.unitPx;
-      const x1 = plot.ox + plot.xmax * plot.unitPx;
-      const y0 = plot.oy - plot.ymin * plot.unitPx;
-      const y1 = plot.oy - plot.ymax * plot.unitPx;
-      const dX = distToSegment({ x: wx, y: wy }, { x: x0, y: plot.oy }, { x: x1, y: plot.oy });
-      const dY = distToSegment({ x: wx, y: wy }, { x: plot.ox, y: y0 }, { x: plot.ox, y: y1 });
+      const x0 = coordWorldFromAxis(plot, plot.xmin, 0);
+      const x1 = coordWorldFromAxis(plot, plot.xmax, 0);
+      const y0 = coordWorldFromAxis(plot, 0, plot.ymin);
+      const y1 = coordWorldFromAxis(plot, 0, plot.ymax);
+      const dX = distToSegment({ x: wx, y: wy }, { x: x0.x, y: x0.y }, { x: x1.x, y: x1.y });
+      const dY = distToSegment({ x: wx, y: wy }, { x: y0.x, y: y0.y }, { x: y1.x, y: y1.y });
       if (dX < bestD) {
         bestD = dX;
         best = plot;
@@ -6727,12 +6860,17 @@
       const sel = row.querySelector("select[data-curve-type]");
       const type = (sel && sel.value) || "line";
       const prev = coordDialogCurves.find((c) => c.id === id);
-      next.push({
+      const rowCurve = {
         id,
         type,
         params: readCurveParamsFromRow(row, type),
         label: readCurveLabelFromRow(row, prev && prev.label),
-      });
+      };
+      if (prev && (prev.style === "solid" || prev.style === "dashed" || prev.style === "dotted")) {
+        rowCurve.style = prev.style;
+      }
+      if (prev && Array.isArray(prev.domain)) rowCurve.domain = prev.domain.slice();
+      next.push(rowCurve);
     });
     coordDialogCurves = next;
   }
@@ -6882,6 +7020,8 @@
         ? syncCircleParams({ ...defaultCurveParams(c.type), ...(c.params || {}) })
         : { ...defaultCurveParams(c.type), ...(c.params || {}) },
       label: normalizeCurveLabel(c.label),
+      style: c.style,
+      domain: Array.isArray(c.domain) ? c.domain.slice() : undefined,
     }));
     renderCoordCurvesList();
     const dlg = document.getElementById("coordDialog");
@@ -6964,12 +7104,17 @@
     // One checkbox: numbers + tick marks together (axes / O unchanged)
     plot.showTickLabels = !tickChk || !!tickChk.checked;
     plot.showTicks = plot.showTickLabels;
-    plot.curves = coordDialogCurves.map((c) => ({
-      id: c.id || uid(),
-      type: c.type,
-      params: c.type === "circle" ? syncCircleParams({ ...c.params }) : { ...c.params },
-      label: normalizeCurveLabel(c.label),
-    }));
+    plot.curves = coordDialogCurves.map((c) => {
+      const row = {
+        id: c.id || uid(),
+        type: c.type,
+        params: c.type === "circle" ? syncCircleParams({ ...c.params }) : { ...c.params },
+        label: normalizeCurveLabel(c.label),
+      };
+      if (c.style === "solid" || c.style === "dashed" || c.style === "dotted") row.style = c.style;
+      if (Array.isArray(c.domain) && c.domain.length >= 2) row.domain = c.domain.slice();
+      return row;
+    });
     ensureCoordPlot(plot);
     delete plot.curveType;
     history[histIndex] = snapshot();
@@ -6997,12 +7142,13 @@
   function svgCoordPlot(plot, toS, scale) {
     let body = "";
     const lw = (LINE_WIDTH * scale * 0.75).toFixed(2);
+    const scales = coordPlotScales(plot);
     const o = toS(plot.ox, plot.oy);
     const oh = coordAxisOverhangPx(plot);
-    const xNeg = toS(plot.ox + plot.xmin * plot.unitPx - oh.neg, plot.oy);
-    const xPos = toS(plot.ox + plot.xmax * plot.unitPx + oh.pos, plot.oy);
-    const yNeg = toS(plot.ox, plot.oy - plot.ymin * plot.unitPx + oh.neg);
-    const yPos = toS(plot.ox, plot.oy - plot.ymax * plot.unitPx - oh.pos);
+    const xNeg = toS(plot.ox + plot.xmin * scales.xUnitPx - oh.neg, plot.oy);
+    const xPos = toS(plot.ox + plot.xmax * scales.xUnitPx + oh.pos, plot.oy);
+    const yNeg = toS(plot.ox, plot.oy - plot.ymin * scales.yUnitPx + oh.neg);
+    const yPos = toS(plot.ox, plot.oy - plot.ymax * scales.yUnitPx - oh.pos);
     body += `<line x1="${xNeg.x.toFixed(2)}" y1="${xNeg.y.toFixed(2)}" x2="${xPos.x.toFixed(2)}" y2="${xPos.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" stroke-linecap="round" />\n`;
     body += `<line x1="${yNeg.x.toFixed(2)}" y1="${yNeg.y.toFixed(2)}" x2="${yPos.x.toFixed(2)}" y2="${yPos.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" stroke-linecap="round" />\n`;
     const arrow = Math.max(7, LINE_WIDTH * scale * 2.4);
@@ -7022,18 +7168,36 @@
     const halo = Math.max(3.5, fsNum * 0.28).toFixed(2);
     const haloAttrs = `fill="#111" stroke="#ffffff" stroke-width="${halo}" stroke-linejoin="round" paint-order="stroke fill"`;
     const tickLen = Math.max(4, LINE_WIDTH * scale * 1.6);
-    // 「顯示軸上數值」off → hide tick marks too (axis lines + O stay)
-    const showTickMarks = plot.showTicks !== false && plot.showTickLabels !== false;
-    if (showTickMarks) {
-      for (const tick of coordXAxisTickEntries(plot)) {
-        const p = toS(plot.ox + tick.u * plot.unitPx, plot.oy);
+    // 「顯示軸上數值」off → hide default tick marks (axis lines + O stay).
+    // Explicit xTicks/yTicks still draw marks and labels.
+    const showDefaultTicks = plot.showTicks !== false && plot.showTickLabels !== false;
+    const xEntries = coordXAxisTickEntries(plot);
+    const yExplicit = normalizeCoordTicks(plot.yTicks);
+    const drawX = xEntries.length && (xEntries[0].explicit || showDefaultTicks);
+    if (drawX) {
+      for (const tick of xEntries) {
+        const p = toS(plot.ox + tick.u * scales.xUnitPx, plot.oy);
         body += `<line x1="${p.x.toFixed(2)}" y1="${(p.y - tickLen).toFixed(2)}" x2="${p.x.toFixed(2)}" y2="${(p.y + tickLen).toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
-        if (!coordNearZero(tick.u)) {
-          body += svgCoordTickLabel(tick.parts, p.x, p.y + tickLen + 1, fontPx, "#111");
+        if (tick.explicit || !coordNearZero(tick.u)) {
+          if (tick.explicit && tick.parts && mathTextHasScript(tick.parts.text || "")) {
+            body += svgMathTextTag(tick.parts.text, p.x, p.y + tickLen + 1, fontPx, haloAttrs, "middle", "hanging", true);
+          } else {
+            body += svgCoordTickLabel(tick.parts, p.x, p.y + tickLen + 1, fontPx, "#111");
+          }
         }
       }
-      for (const v of coordIntegerTicks(plot.ymin, plot.ymax)) {
-        const p = toS(plot.ox, plot.oy - v * plot.unitPx);
+    }
+    if (yExplicit) {
+      for (const t of yExplicit) {
+        const p = toS(plot.ox, plot.oy - t.pos * scales.yUnitPx);
+        body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
+        const tx = coordTickText(t);
+        if (!tx) continue;
+        body += svgMathTextTag(tx, p.x - tickLen - 2, p.y, fontPx, haloAttrs, "end", "middle", true);
+      }
+    } else if (showDefaultTicks) {
+      for (const v of coordIntegerTicks(plot.ymin, plot.ymax, plot.yStep)) {
+        const p = toS(plot.ox, plot.oy - v * scales.yUnitPx);
         body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
         if (!coordNearZero(v)) {
           body += `<text x="${(p.x - tickLen - 2).toFixed(2)}" y="${p.y.toFixed(2)}" ${haloAttrs} font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(String(v))}</text>\n`;
@@ -7046,10 +7210,10 @@
     const lx = (plot.axisLabelX || "x").trim();
     const ly = (plot.axisLabelY || "y").trim();
     if (lx) {
-      body += `<text x="${(xPos.x + 4).toFixed(2)}" y="${(xPos.y + 2).toFixed(2)}" ${haloAttrs} font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="start" dominant-baseline="hanging">${escapeXml(lx)}</text>\n`;
+      body += svgMathTextTag(lx, xPos.x + 4, xPos.y + 2, fontPx, haloAttrs, "start", "hanging", true);
     }
     if (ly) {
-      body += `<text x="${(yPos.x + 4).toFixed(2)}" y="${(yPos.y - 2).toFixed(2)}" ${haloAttrs} font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="start" dominant-baseline="auto">${escapeXml(ly)}</text>\n`;
+      body += svgMathTextTag(ly, yPos.x + 4, yPos.y - 2, fontPx, haloAttrs, "start", "auto", true);
     }
     for (const curve of coordPlotCurves(plot)) {
       let d = "";
@@ -7066,7 +7230,13 @@
         } else d += `L${s.x.toFixed(2)},${s.y.toFixed(2)}`;
       }
       if (d) {
-        body += `<path d="${d}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linecap="round" stroke-linejoin="round" />\n`;
+        const st = coordCurveStyleOf(curve);
+        let dashAttr = ` stroke-linecap="round"`;
+        if (st === "dashed" || st === "dotted") {
+          const dash = (STYLE_DASH[st] || []).map((n) => (n * scale * 0.75).toFixed(2)).join(" ");
+          dashAttr = ` stroke-linecap="butt" stroke-dasharray="${dash}"`;
+        }
+        body += `<path d="${d}" fill="none" stroke="#111" stroke-width="${lw}" stroke-linejoin="round"${dashAttr} />\n`;
       }
     }
     for (const curve of coordPlotCurves(plot)) {
@@ -7076,7 +7246,8 @@
       const sp = toS(wp.x, wp.y);
       const fs = clampLabelSize(labelFontSize) * scale * 0.75;
       const halo = Math.max(3.5, fs * 0.28);
-      body += `<text x="${sp.x.toFixed(2)}" y="${sp.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(text)}</text>\n`;
+      const haloAttrsLab = `fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"`;
+      body += svgMathTextTag(text, sp.x, sp.y, fs.toFixed(1), haloAttrsLab, "middle", "middle", true);
     }
     return body;
   }
@@ -7198,21 +7369,201 @@
     return base * Math.min(Math.max(view.scale, 0.7), 1.5);
   }
 
+  // Keep in sync with src/diagram/math-text.mjs (app.js is not a module).
+  const MATH_FUNCS = ["log", "sin", "cos", "tan", "ln"];
+
+  function mathTextHasScript(text) {
+    const s = text == null ? "" : String(text);
+    return s.includes("_") || s.includes("^");
+  }
+
+  function mathMergeRun(runs, run) {
+    if (!run.text) return;
+    const prev = runs[runs.length - 1];
+    if (prev && prev.italic === run.italic && prev.shift === run.shift) {
+      prev.text += run.text;
+      return;
+    }
+    runs.push({ text: run.text, italic: !!run.italic, shift: run.shift || null });
+  }
+
+  function mathAppendStyled(runs, fragment, shift) {
+    const s = String(fragment);
+    let i = 0;
+    while (i < s.length) {
+      let fn = null;
+      for (const name of MATH_FUNCS) {
+        if (!s.startsWith(name, i)) continue;
+        const next = s[i + name.length];
+        if (next && /[A-Za-z]/.test(next)) continue;
+        fn = name;
+        break;
+      }
+      if (fn) {
+        mathMergeRun(runs, { text: fn, italic: false, shift });
+        i += fn.length;
+        continue;
+      }
+      const ch = s[i];
+      mathMergeRun(runs, { text: ch, italic: /[A-Za-z]/.test(ch), shift });
+      i += 1;
+    }
+  }
+
+  function parseMathRuns(text) {
+    const s = text == null ? "" : String(text);
+    if (!mathTextHasScript(s)) return null;
+    const runs = [];
+    let i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (ch === "_" || ch === "^") {
+        const shift = ch === "_" ? "sub" : "sup";
+        i += 1;
+        let inner = "";
+        if (s[i] === "{") {
+          const end = s.indexOf("}", i + 1);
+          if (end < 0) {
+            inner = s.slice(i + 1);
+            i = s.length;
+          } else {
+            inner = s.slice(i + 1, end);
+            i = end + 1;
+          }
+        } else if (i < s.length) {
+          inner = s[i];
+          i += 1;
+        }
+        mathAppendStyled(runs, inner, shift);
+        continue;
+      }
+      let fn = null;
+      for (const name of MATH_FUNCS) {
+        if (!s.startsWith(name, i)) continue;
+        const next = s[i + name.length];
+        if (next && /[A-Za-z]/.test(next)) continue;
+        fn = name;
+        break;
+      }
+      if (fn) {
+        mathMergeRun(runs, { text: fn, italic: false, shift: null });
+        i += fn.length;
+        continue;
+      }
+      mathMergeRun(runs, { text: ch, italic: /[A-Za-z]/.test(ch), shift: null });
+      i += 1;
+    }
+    return runs.length ? runs : null;
+  }
+
+  function svgMathRuns(runs) {
+    let out = "";
+    for (const r of runs) {
+      const bits = [];
+      if (r.shift === "sub") bits.push('baseline-shift="sub"', 'font-size="72%"');
+      else if (r.shift === "sup") bits.push('baseline-shift="super"', 'font-size="72%"');
+      bits.push(`font-style="${r.italic ? "italic" : "normal"}"`);
+      out += `<tspan ${bits.join(" ")}>${escapeXml(r.text)}</tspan>`;
+    }
+    return out;
+  }
+
+  function svgMathTextTag(text, x, y, fontPx, extraAttrs, anchor, baseline, italicIfPlain) {
+    const runs = parseMathRuns(text);
+    const style = runs ? "normal" : italicIfPlain ? "italic" : "normal";
+    const inner = runs ? svgMathRuns(runs) : escapeXml(text == null ? "" : String(text));
+    const extra = extraAttrs ? String(extraAttrs).trim() + " " : "";
+    const xx = Number(x);
+    const yy = Number(y);
+    return `<text x="${xx.toFixed(2)}" y="${yy.toFixed(2)}" ${extra}font-family="STIX Two Text, Times New Roman, serif" font-style="${style}" font-size="${fontPx}" text-anchor="${anchor}" dominant-baseline="${baseline}">${inner}</text>\n`;
+  }
+
+  function paintMathRuns(c, runs, x, y, fontPx, fill, withHalo, align, baseline, bold) {
+    const measured = [];
+    let total = 0;
+    for (const r of runs) {
+      const size = r.shift ? fontPx * 0.72 : fontPx;
+      const ital = r.italic ? "italic " : "";
+      const weight = bold ? "bold " : "";
+      c.font = `${weight}${ital}${size}px "STIX Two Text", "Times New Roman", serif`;
+      const w = c.measureText(r.text).width;
+      measured.push({ w, size });
+      total += w;
+    }
+    let left = x;
+    if (align === "center") left = x - total / 2;
+    else if (align === "right" || align === "end") left = x - total;
+    for (let i = 0; i < runs.length; i++) {
+      const r = runs[i];
+      const size = measured[i].size;
+      const ital = r.italic ? "italic " : "";
+      const weight = bold ? "bold " : "";
+      c.font = `${weight}${ital}${size}px "STIX Two Text", "Times New Roman", serif`;
+      c.textAlign = "left";
+      c.textBaseline = "middle";
+      let cy = y;
+      if (baseline === "top") cy = y + fontPx * 0.5;
+      else if (baseline === "bottom") cy = y - fontPx * 0.35;
+      else if (baseline === "hanging") cy = y + fontPx * 0.4;
+      if (r.shift === "sub") cy += fontPx * 0.32;
+      else if (r.shift === "sup") cy -= fontPx * 0.42;
+      if (withHalo) {
+        c.lineJoin = "round";
+        c.strokeStyle = edHalo();
+        c.lineWidth = Math.max(3.5, size * 0.28);
+        c.strokeText(r.text, left, cy);
+      }
+      c.fillStyle = fill;
+      c.fillText(r.text, left, cy);
+      left += measured[i].w;
+    }
+  }
+
+  /**
+   * Plain strings keep the historical single fillText (italic or not).
+   * Strings with _ or ^ are drawn as upright functions + italic variables + scripts.
+   */
+  function paintMathOrPlain(c, text, x, y, fontPx, fill, withHalo, align, baseline, bold, italicIfPlain) {
+    const runs = parseMathRuns(text);
+    if (!runs) {
+      const weight = bold ? "bold " : "";
+      const ital = italicIfPlain ? "italic " : "";
+      c.font = `${weight}${ital}${fontPx}px "STIX Two Text", "Times New Roman", serif`;
+      c.textAlign = align || "center";
+      c.textBaseline = baseline || "middle";
+      const t = text == null ? "" : String(text);
+      if (withHalo) {
+        c.lineJoin = "round";
+        c.strokeStyle = edHalo();
+        c.lineWidth = Math.max(3.5, fontPx * 0.28);
+        c.strokeText(t, x, y);
+      }
+      c.fillStyle = fill;
+      c.fillText(t, x, y);
+      return;
+    }
+    paintMathRuns(c, runs, x, y, fontPx, fill, withHalo, align || "center", baseline || "middle", !!bold);
+  }
+
   function paintLabelText(c, text, x, y, fontPx, fill, withHalo, angleRad) {
     c.save();
     c.translate(x, y);
     if (angleRad) c.rotate(angleRad);
-    c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
-    c.textBaseline = "middle";
-    c.textAlign = "center";
-    if (withHalo) {
-      c.lineJoin = "round";
-      c.strokeStyle = edHalo();
-      c.lineWidth = Math.max(3.5, fontPx * 0.28);
-      c.strokeText(text, 0, 0);
+    if (!mathTextHasScript(text)) {
+      c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
+      c.textBaseline = "middle";
+      c.textAlign = "center";
+      if (withHalo) {
+        c.lineJoin = "round";
+        c.strokeStyle = edHalo();
+        c.lineWidth = Math.max(3.5, fontPx * 0.28);
+        c.strokeText(text, 0, 0);
+      }
+      c.fillStyle = fill;
+      c.fillText(text, 0, 0);
+    } else {
+      paintMathRuns(c, parseMathRuns(text), 0, 0, fontPx, fill, withHalo, "center", "middle", false);
     }
-    c.fillStyle = fill;
-    c.fillText(text, 0, 0);
     c.restore();
   }
 
@@ -7227,14 +7578,18 @@
     if (align !== "left" && align !== "right") align = "center";
     c.textAlign = align;
     const text = tx.text != null ? String(tx.text) : "";
-    if (withHalo) {
-      c.lineJoin = "round";
-      c.strokeStyle = edHalo();
-      c.lineWidth = Math.max(3.5, fontPx * 0.28);
-      c.strokeText(text, 0, 0);
+    if (!mathTextHasScript(text)) {
+      if (withHalo) {
+        c.lineJoin = "round";
+        c.strokeStyle = edHalo();
+        c.lineWidth = Math.max(3.5, fontPx * 0.28);
+        c.strokeText(text, 0, 0);
+      }
+      c.fillStyle = fill;
+      c.fillText(text, 0, 0);
+    } else {
+      paintMathRuns(c, parseMathRuns(text), 0, 0, fontPx, fill, withHalo, align, "middle", !!tx.bold);
     }
-    c.fillStyle = fill;
-    c.fillText(text, 0, 0);
     c.restore();
   }
 
@@ -12121,7 +12476,8 @@
         const s = toS(p.x + lab.ox, p.y + lab.oy);
         const fs = clampLabelSize(lab.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
         const halo = Math.max(3.5, fs * 0.28);
-        body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(lab.text)}</text>\n`;
+        const haloAttrsLab = `fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"`;
+        body += svgMathTextTag(lab.text, s.x, s.y, fs.toFixed(1), haloAttrsLab, "middle", "middle", true);
       }
       for (const tx of texts) {
         const s = toS(tx.x, tx.y);
@@ -12131,7 +12487,8 @@
         if (align !== "left" && align !== "right") align = "center";
         const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
         const weight = tx.bold ? ' font-weight="bold"' : "";
-        body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="normal"${weight} font-size="${fs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle">${escapeXml(tx.text || "")}</text>\n`;
+        const haloAttrsTx = `fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"${weight}`;
+        body += svgMathTextTag(tx.text || "", s.x, s.y, fs.toFixed(1), haloAttrsTx, anchor, "middle", false);
       }
     }
 
@@ -12152,7 +12509,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.39",
+      version: "13.5.40",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

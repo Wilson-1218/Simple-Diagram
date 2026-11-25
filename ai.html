@@ -102,7 +102,7 @@
       <span class="en">Editor: Json ▾ → Copy JSON; Paste JSON can Append (default off = Replace). Export ▾ → Copy PNG (White BG).</span></p>
     <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
       <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
-    <p class="note">已知 ops（45，含別名）：<code>addPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
+    <p class="note">已知 ops（46，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
     <p class="note"><strong>UI ↔ op</strong>：工具列 <strong>⊥ 座標</strong>＝<code>addCoordPlot</code>（＋<code>addCurve</code>）。沒有 <code>addCoordMark</code> 這類 op 名。<br />
       <span class="en">Rail tool <strong>⊥ 座標 / Axes</strong> maps to <code>addCoordPlot</code> (+ <code>addCurve</code>). There is no <code>addCoordMark</code>.</span></p>
 
@@ -121,6 +121,8 @@
       <li>預設 <code>ox:0</code>, <code>oy:-14</code>；每點一個標籤（後寫覆蓋）</li>
     </ul>
     <p><code>addText</code>（別名 <code>addCaption</code>）：必填 <code>x</code>, <code>y</code>, <code>text</code>；可選 <code>id</code>, <code>size</code>, <code>align</code>（<code>center</code>｜<code>left</code>｜<code>right</code>，預設 center）, <code>bold</code>（預設 false）。</p>
+    <p class="note"><strong>輕量數學文字</strong>（<code>addLabel</code>、<code>addText</code>、座標軸名 <code>axisLabelX</code>/<code>axisLabelY</code>、曲線 <code>label</code>）：字串含 <code>_</code> 或 <code>^</code> 才解析。<code>_5</code>／<code>_{16}</code> 下標，<code>^2</code>／<code>^{n}</code> 上標；<code>log</code> <code>ln</code> <code>sin</code> <code>cos</code> <code>tan</code> 直立，單字母變數斜體。沒有 <code>_</code>／<code>^</code> 的純文字（含中文、<code>"P"</code>）維持原本樣式，不會整段改斜體。<br />
+      <span class="en">Light math runs only when the string contains <code>_</code> or <code>^</code>. Plain labels stay as they are today.</span></p>
     <ul>
       <li>自由文字，<strong>不</strong>綁 <code>pointId</code>；存於 <code>texts[]</code>；可選取／拖曳／刪除／匯出（含光暈）</li>
       <li><span class="en">Free-floating caption — not bound to a point; select/drag/delete/export/halo work.</span></li>
@@ -130,7 +132,8 @@
     <table>
       <thead><tr><th>op</th><th>必填</th><th>可選 / tip</th></tr></thead>
       <tbody>
-        <tr><td><code>addPoint</code></td><td><code>x</code>, <code>y</code></td><td><code>id</code>, <code>marker</code>（<code>"x"</code>｜<code>"foot"</code>）, <code>hidden?: boolean</code>（預設 false；true → 點仍在 <code>doc.points</code> 供幾何，畫布／SVG／PNG <strong>不</strong>畫點標記）</td></tr>
+        <tr><td><code>addPoint</code></td><td><code>x</code>, <code>y</code></td><td><code>id</code>, <code>marker</code>（<code>"x"</code>｜<code>"foot"</code>）, <code>hidden?: boolean</code>（預設 false；true → 點仍在 <code>doc.points</code> 供幾何，畫布／SVG／PNG <strong>不</strong>畫點標記）。亦可改用 <code>addPlotPoint</code> 的數學座標欄位（<code>plotId</code>, <code>u</code>/<code>v</code> 或 <code>mathX</code>/<code>mathY</code>, <code>projectX</code>/<code>projectY</code>…）；有 u/v 時以座標圖換算，不必再給 x,y</td></tr>
+        <tr><td><code>addPlotPoint</code></td><td><code>u</code>, <code>v</code>（別名 <code>mathX</code>, <code>mathY</code>）</td><td>見 §10.6。省略 <code>plotId</code> 用最後一個座標圖。找不到圖：<code>console.warn</code> 並跳過，不拋錯</td></tr>
         <tr><td><code>addSegment</code></td><td><code>a</code>, <code>b</code>（點 id）</td><td><code>id</code>, <code>style</code></td></tr>
         <tr><td><code>addCircle</code></td><td><code>centerId</code>, <code>throughId</code></td><td><code>id</code>, <code>style</code> — 半徑＝兩點距離</td></tr>
         <tr><td><code>addEllipse</code></td><td><code>centerId</code>, <code>rxId</code>, <code>ryId</code></td><td><code>style</code>, <code>backDashed</code>（3D 背弧）— 軸對齊</td></tr>
@@ -221,7 +224,7 @@
     <table>
       <thead><tr><th>kind</th><th>必填</th><th>tip</th></tr></thead>
       <tbody>
-        <tr><td><code>polygon</code>（預設）</td><td><code>pointIds</code> ≥3</td><td>亦接受 <code>points</code></td></tr>
+        <tr><td><code>polygon</code>（預設）</td><td><code>pointIds</code> ≥3</td><td>亦接受 <code>points</code>。或 <code>mathPoints:[[u,v],…]</code>＋可選 <code>plotId</code>（預設最後一個座標圖），依該圖比例換成世界頂點後成為一般多邊形填色（<code>pattern</code> 仍可用 <code>hatch</code> 或實心／透明度）</td></tr>
         <tr><td><code>sector</code></td><td><code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>可選 <code>circleId</code></td></tr>
         <tr><td><code>segment</code></td><td><code>startId</code>, <code>endId</code> + (<code>circleId</code>|<code>centerId</code>)</td><td>弓形</td></tr>
         <tr><td><code>polyArc</code></td><td><code>pointIds</code> ≥2 + <code>centerId</code>, <code>startId</code>, <code>endId</code></td><td>折線＋弧閉合</td></tr>
@@ -270,12 +273,15 @@
       <thead><tr><th>欄位</th><th>必填？</th><th>預設 / 說明</th></tr></thead>
       <tbody>
         <tr><td><code>ox</code>, <code>oy</code></td><td>必填</td><td>原點在<strong>世界座標</strong>的位置（建議落在畫面內，如 280, 320）</td></tr>
-        <tr><td><code>unitPx</code></td><td>可選</td><td>每單位像素，預設 <code>40</code></td></tr>
+        <tr><td><code>unitPx</code></td><td>可選</td><td>每單位像素，預設 <code>40</code>。未給 <code>xUnitPx</code>/<code>yUnitPx</code> 時兩軸都用它</td></tr>
+        <tr><td><code>xUnitPx</code> <code>yUnitPx</code></td><td>可選</td><td>兩軸可不同比例。世界座標：<code>x = ox + u·xUnitPx</code>，<code>y = oy − v·yUnitPx</code></td></tr>
+        <tr><td><code>xStep</code> <code>yStep</code></td><td>可選</td><td>預設 <code>1</code>。一般整數刻度開啟時，每隔 N 單位畫一格（<code>2</code> 會略過奇數）</td></tr>
+        <tr><td><code>xTicks</code> <code>yTicks</code></td><td>可選</td><td>給了就<strong>只</strong>畫這些刻度與標籤（該軸不再畫預設整數）。數字陣列 <code>[-4, 3]</code>，或 <code>[{ "pos": -4, "label": "-4" }, { "pos": 2.5, "label": "a" }]</code>（<code>pos</code> 也接受 <code>x</code>/<code>y</code>）。即使 <code>showTickLabels: false</code> 仍畫明確刻度與標籤</td></tr>
         <tr><td><code>xmin</code> <code>xmax</code> <code>ymin</code> <code>ymax</code></td><td>可選</td><td>預設 −2…6 / −2…6（數學座標；y 向上為正於軸上）</td></tr>
         <tr><td><code>axisLabelX</code> <code>axisLabelY</code></td><td>可選</td><td>預設 <code>"x"</code> / <code>"y"</code></td></tr>
         <tr><td><code>showOrigin</code></td><td>可選</td><td>預設 true</td></tr>
         <tr><td><code>showTicks</code></td><td>可選</td><td>預設 true — 刻度線（UI「顯示軸上刻度與數值」關時一併關）</td></tr>
-        <tr><td><code>showTickLabels</code></td><td>可選</td><td>預設 true — 軸上數字；設 <code>false</code> 時繪製／匯出亦隱藏刻度線（軸線與 O 仍在）</td></tr>
+        <tr><td><code>showTickLabels</code></td><td>可選</td><td>預設 true — 軸上數字；設 <code>false</code> 時繪製／匯出亦隱藏<strong>預設</strong>刻度線（軸線與 O 仍在）。<code>xTicks</code>/<code>yTicks</code> 不受此開關影響</td></tr>
         <tr><td><code>xAngleUnit</code></td><td>可選</td><td><code>"rad"</code>（預設）｜<code>"deg"</code> — 影響 sin/cos/tan 的 x</td></tr>
         <tr><td><code>angleAxisOn</code></td><td>可選</td><td>預設 false — 角度軸刻度模式</td></tr>
         <tr><td><code>curves</code></td><td>可選</td><td>建立時一併加入的曲線陣列</td></tr>
@@ -295,6 +301,8 @@
         <tr><td><code>exp</code></td><td><code>a:1</code>, <code>b:e</code></td><td>y = a·bˣ</td></tr>
         <tr><td><code>circle</code></td><td>見下</td><td>圓</td></tr>
         <tr><td><code>sin</code> <code>cos</code> <code>tan</code></td><td><code>A:1</code>, <code>B:1</code>, <code>C:0</code>, <code>D:0</code></td><td>y = A·f(Bx+C)+D；x 單位見 <code>xAngleUnit</code></td></tr>
+        <tr><td>每條曲線可選 <code>domain</code></td><td><code>[uMin, uMax]</code></td><td>只畫 <code>uMin ≤ x ≤ uMax</code>。省略則維持原本的視窗範圍</td></tr>
+        <tr><td>每條曲線可選 <code>style</code></td><td><code>solid</code>（預設）｜<code>dashed</code>｜<code>dotted</code></td><td>寫進曲線並匯出（虛線帶 stroke-dasharray）</td></tr>
       </tbody>
     </table>
     <p><strong>circle params</strong>：</p>
@@ -317,7 +325,54 @@
     </table>
 
     <h3>10.4 <code>addCurve</code></h3>
-    <p>必填 <code>plotId</code>；可選 <code>type</code>（預設 <code>line</code>）, <code>params</code>, <code>label</code>, <code>id</code>。</p>
+    <p>必填 <code>plotId</code>；可選 <code>type</code>（預設 <code>line</code>）, <code>params</code>, <code>label</code>, <code>domain</code>, <code>style</code>, <code>id</code>。</p>
+
+    <h3>10.6 數學座標點、投影與區域填色</h3>
+    <p><code>addPlotPoint</code> 讀座標圖的 <code>ox</code>/<code>oy</code>/<code>unitPx</code>（及 <code>xUnitPx</code>/<code>yUnitPx</code>），在世界座標建立普通點 <code>id</code>，之後 <code>addSegment</code>／<code>addFill</code>／<code>addIntersection</code> 可直接用它。<code>addPoint</code> 帶同樣的 <code>u</code>/<code>v</code>（或 <code>mathX</code>/<code>mathY</code>）時行為相同。<code>label</code> 的 <code>ox</code>/<code>oy</code> 是標籤偏移，不是圖的原點。</p>
+    <ul>
+      <li><code>projectX: true</code>：從點到 x 軸 <code>(u, 0)</code> 的線段，線型 <code>projectStyle</code>（預設 <code>dashed</code>，亦可 <code>dotted</code>／<code>solid</code>）。<code>xTickLabel</code> 放在軸外側的落腳處。</li>
+      <li><code>projectY: true</code>：到 y 軸 <code>(0, v)</code> 的水平線段，可加 <code>yTickLabel</code>。</li>
+      <li>投影線段與刻度文字會寫進圖檔，畫布／SVG／PNG 與儲存後再打開都還在。落腳點為隱藏點（不畫圓點）。</li>
+      <li>找不到座標圖：<code>console.warn</code> 並跳過，不拋錯。</li>
+    </ul>
+<pre>[
+  {
+    "op": "addCoordPlot",
+    "id": "plot1",
+    "ox": 280, "oy": 340, "unitPx": 40,
+    "xUnitPx": 36, "yUnitPx": 28,
+    "xmin": -4, "xmax": 6, "ymin": -2, "ymax": 6,
+    "xStep": 2, "yStep": 1,
+    "xTicks": [-4, { "pos": 2.5, "label": "a" }],
+    "yTicks": [{ "pos": 3, "label": "k" }],
+    "axisLabelX": "log_5 x",
+    "curves": [
+      { "type": "line", "params": { "m": 1, "c": 0 },
+        "domain": [0, 4], "style": "dashed",
+        "label": { "show": true, "kind": "custom", "customText": "y = x^2" } }
+    ]
+  },
+  {
+    "op": "addPlotPoint",
+    "id": "P",
+    "plotId": "plot1",
+    "u": 1, "v": 3,
+    "label": "P(1, 3)",
+    "ox": 18, "oy": -10,
+    "projectX": true, "projectY": true,
+    "projectStyle": "dashed",
+    "xTickLabel": "1", "yTickLabel": "3"
+  },
+  {
+    "op": "addFill",
+    "kind": "polygon",
+    "plotId": "plot1",
+    "mathPoints": [[0, 0], [0, 3], [2, 6], [5, 0]],
+    "pattern": "hatch",
+    "opacity": 1
+  }
+]</pre>
+    <p class="note"><code>showTickLabels: false</code> 時預設整數刻度消失，但上面的 <code>xTicks</code>/<code>yTicks</code> 仍會畫出。省略新欄位的舊圖，刻度與比例與以前相同。</p>
 
     <h3>10.5 最小座標例</h3>
 <pre>[
@@ -468,7 +523,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.39 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.40 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

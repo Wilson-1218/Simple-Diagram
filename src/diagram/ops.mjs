@@ -12,6 +12,7 @@ import { normalizeBoxWhisker } from "./box-whisker.mjs";
 import { normalizeBarChart } from "./bar-chart.mjs";
 import { normalizeFillPattern } from "./hatch.mjs";
 import { normalizeLengthSide } from "./length-mark.mjs";
+import { coordWorldFromAxis, normalizeCoordTicks } from "./coord-plot.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -399,6 +400,115 @@ function styleOr(s, fallback = "solid") {
   return s;
 }
 
+function optionalPositive(v) {
+  if (v == null || v === "") return undefined;
+  const n = Number(v);
+  if (!Number.isFinite(n) || !(n > 0)) return undefined;
+  return n;
+}
+
+function curveExtras(c) {
+  const extra = {};
+  if (!c || typeof c !== "object") return extra;
+  if (c.style != null && c.style !== "") {
+    if (c.style !== "solid" && c.style !== "dashed" && c.style !== "dotted") {
+      throw new Error(`invalid curve style: ${c.style}`);
+    }
+    extra.style = c.style;
+  }
+  if (c.domain != null) {
+    if (!Array.isArray(c.domain) || c.domain.length < 2) {
+      throw new Error("curve domain must be [uMin, uMax]");
+    }
+    const a = Number(c.domain[0]);
+    const b = Number(c.domain[1]);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) {
+      throw new Error("curve domain must be finite numbers");
+    }
+    extra.domain = [a, b];
+  }
+  return extra;
+}
+
+function resolveCoordPlot(doc, plotId) {
+  const plots = doc.coordPlots || [];
+  if (plotId != null && plotId !== "") {
+    return plots.find((p) => p.id === plotId) || null;
+  }
+  return plots.length ? plots[plots.length - 1] : null;
+}
+
+function readMathUV(op) {
+  const hasU = op.u != null || op.mathX != null;
+  const hasV = op.v != null || op.mathY != null;
+  if (!hasU && !hasV) return null;
+  return {
+    u: Number(op.u != null ? op.u : op.mathX),
+    v: Number(op.v != null ? op.v : op.mathY),
+  };
+}
+
+/**
+ * Place a point in a coord plot's math space and optional axis projections.
+ * Missing plot → console.warn + skip (no throw), same as addIntersection.
+ */
+function placePlotPoint(doc, op, nextId, ctx) {
+  const plot = resolveCoordPlot(doc, op.plotId);
+  if (!plot) {
+    console.warn(`${ctx}: plot not found; skipped`, {
+      plotId: op.plotId != null ? op.plotId : null,
+    });
+    return doc;
+  }
+  const uv = readMathUV(op);
+  const u = uv ? uv.u : NaN;
+  const v = uv ? uv.v : NaN;
+  if (!Number.isFinite(u) || !Number.isFinite(v)) {
+    throw new Error(`${ctx}: u,v (or mathX,mathY) must be finite`);
+  }
+  const w = coordWorldFromAxis(plot, u, v);
+  const id = resolveId(op, nextId, "p");
+  if (doc.points.some((p) => p.id === id)) throw new Error(`${ctx}: duplicate id ${id}`);
+  const p = { id, x: w.x, y: w.y };
+  if (op.marker) p.marker = op.marker;
+  if (op.hidden === true) p.hidden = true;
+  doc.points.push(p);
+  if (op.label != null && String(op.label) !== "") {
+    HANDLERS.addLabel(
+      doc,
+      {
+        pointId: id,
+        text: String(op.label),
+        ox: op.ox,
+        oy: op.oy,
+        size: op.size,
+      },
+      nextId
+    );
+  }
+  const style = styleOr(op.projectStyle, "dashed");
+  if (op.projectX === true) addAxisProjection(doc, nextId, plot, p, "x", u, style, op.xTickLabel);
+  if (op.projectY === true) addAxisProjection(doc, nextId, plot, p, "y", v, style, op.yTickLabel);
+  return doc;
+}
+
+function addAxisProjection(doc, nextId, plot, point, axis, math, style, tickLabel) {
+  const footW =
+    axis === "x" ? coordWorldFromAxis(plot, math, 0) : coordWorldFromAxis(plot, 0, math);
+  const foot = pushPoint(doc, nextId, footW.x, footW.y, undefined, undefined, true);
+  if (foot.id !== point.id) pushSegment(doc, nextId, point.id, foot.id, style);
+  if (tickLabel != null && String(tickLabel) !== "") {
+    doc.labels.push({
+      id: nextId("lab"),
+      pointId: foot.id,
+      text: String(tickLabel),
+      ox: axis === "y" ? -18 : 0,
+      oy: axis === "x" ? 16 : 0,
+      size: doc.labelFontSize || 16,
+    });
+  }
+}
+
 function defaultCurveParams(type) {
   if (type === "line") return { m: -1, c: 4 };
   if (type === "quad") return { a: 1, b: 0, c: 0 };
@@ -445,6 +555,9 @@ function resolveId(op, nextId, prefix) {
 /** @type {Record<string, function>} */
 const HANDLERS = {
   addPoint(doc, op, nextId) {
+    if (op.u != null || op.v != null || op.mathX != null || op.mathY != null) {
+      return placePlotPoint(doc, op, nextId, "addPoint");
+    }
     const id = resolveId(op, nextId, "p");
     if (doc.points.some((p) => p.id === id)) throw new Error(`addPoint: duplicate id ${id}`);
     const x = Number(op.x);
@@ -971,12 +1084,39 @@ const HANDLERS = {
       return doc;
     }
     if (kind === "polygon") {
-      const raw = op.pointIds != null ? op.pointIds : op.points;
-      if (!Array.isArray(raw) || raw.length < 3) {
-        throw new Error("addFill(polygon): pointIds must be an array of ≥3 point ids");
+      let pointIds;
+      if (Array.isArray(op.mathPoints)) {
+        const plot = resolveCoordPlot(doc, op.plotId);
+        if (!plot) {
+          console.warn("addFill: coord plot not found; skipped", {
+            plotId: op.plotId != null ? op.plotId : null,
+          });
+          return doc;
+        }
+        if (op.mathPoints.length < 3) {
+          throw new Error("addFill(polygon): mathPoints must be an array of ≥3 [u, v] pairs");
+        }
+        pointIds = [];
+        for (const pair of op.mathPoints) {
+          if (!Array.isArray(pair) || pair.length < 2) {
+            throw new Error("addFill(polygon): mathPoints entries must be [u, v]");
+          }
+          const u = Number(pair[0]);
+          const v = Number(pair[1]);
+          if (!Number.isFinite(u) || !Number.isFinite(v)) {
+            throw new Error("addFill(polygon): mathPoints must be finite");
+          }
+          const w = coordWorldFromAxis(plot, u, v);
+          pointIds.push(pushPoint(doc, nextId, w.x, w.y).id);
+        }
+      } else {
+        const raw = op.pointIds != null ? op.pointIds : op.points;
+        if (!Array.isArray(raw) || raw.length < 3) {
+          throw new Error("addFill(polygon): pointIds must be an array of ≥3 point ids");
+        }
+        pointIds = raw.map((x) => String(x));
+        for (const pid of pointIds) requirePoint(doc, pid, "addFill");
       }
-      const pointIds = raw.map((x) => String(x));
-      for (const pid of pointIds) requirePoint(doc, pid, "addFill");
       if (new Set(pointIds).size < 3) {
         throw new Error("addFill: need at least 3 distinct point ids");
       }
@@ -1430,6 +1570,18 @@ const HANDLERS = {
       angleAxisOn: !!op.angleAxisOn,
       curves: [],
     };
+    const xTicks = normalizeCoordTicks(op.xTicks);
+    const yTicks = normalizeCoordTicks(op.yTicks);
+    if (xTicks) plot.xTicks = xTicks;
+    if (yTicks) plot.yTicks = yTicks;
+    const xStep = optionalPositive(op.xStep);
+    const yStep = optionalPositive(op.yStep);
+    const xUnitPx = optionalPositive(op.xUnitPx);
+    const yUnitPx = optionalPositive(op.yUnitPx);
+    if (xStep != null) plot.xStep = xStep;
+    if (yStep != null) plot.yStep = yStep;
+    if (xUnitPx != null) plot.xUnitPx = xUnitPx;
+    if (yUnitPx != null) plot.yUnitPx = yUnitPx;
     if (Array.isArray(op.curves)) {
       for (const c of op.curves) {
         const ctype = c.type === "log10" ? "log" : c.type || "line";
@@ -1438,11 +1590,21 @@ const HANDLERS = {
           type: ctype,
           params: { ...defaultCurveParams(ctype), ...(c.params || {}) },
           label: defaultCurveLabel(c.label),
+          ...curveExtras(c),
         });
       }
     }
     doc.coordPlots.push(plot);
     return doc;
+  },
+
+  /**
+   * Point in the last (or plotId) coord plot's math space.
+   * u/v aliases: mathX/mathY. ox/oy are label offsets, not the plot origin.
+   * projectX/projectY persist dashed (or projectStyle) segments plus optional tick labels.
+   */
+  addPlotPoint(doc, op, nextId) {
+    return placePlotPoint(doc, op, nextId, "addPlotPoint");
   },
 
   /** Add / append a curve on an existing coord plot. */
@@ -1457,6 +1619,7 @@ const HANDLERS = {
       type,
       params: { ...defaultCurveParams(type), ...(op.params || {}) },
       label: defaultCurveLabel(op.label),
+      ...curveExtras(op),
     });
     return doc;
   },

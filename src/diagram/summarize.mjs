@@ -114,8 +114,15 @@ export const OP_CATALOG = {
   addRadius: { args: "circleId, throughId|angle|deg, style?" },
   addDiameter: { args: "circleId, throughId|angle|deg, style?" },
   addChord: { args: "circleId, startId+endId | deg0+deg1 | angle0+angle1, style?" },
-  addCoordPlot: { args: "ox, oy, window?, curves?" },
-  addCurve: { args: "plotId, type, params?, label?" },
+  addCoordPlot: {
+    args: "ox, oy, unitPx?, xUnitPx?, yUnitPx?, xStep?, yStep?, xTicks?, yTicks?, window?, curves?",
+    note: "xTicks/yTicks replace that axis; xStep/yStep stride; xUnitPx/yUnitPx unequal scale; curve domain+style",
+  },
+  addCurve: { args: "plotId, type, params?, label?, domain?, style?" },
+  addPlotPoint: {
+    args: "plotId?, u|mathX, v|mathY, label?, ox?, oy?, projectX?, projectY?, projectStyle?, xTickLabel?, yTickLabel?",
+    note: "world x=ox+u*xUnitPx, y=oy-v*yUnitPx; missing plot warns and skips; projections persist as segments+labels",
+  },
   alignPoints: { args: "pointIds, axis", note: "left|center|right|top|middle|bottom" },
   distributePoints: { args: "pointIds (≥3), axis x|y" },
   equalizeSegments: { args: "segmentIds (≥2), length?" },

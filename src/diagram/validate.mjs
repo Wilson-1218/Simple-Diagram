@@ -391,9 +391,26 @@ export function validateDiagram(doc) {
         errors.push(`${path} must be an object`);
         continue;
       }
-      for (const n of ["ox", "oy", "unitPx", "xmin", "xmax", "ymin", "ymax"]) {
+      for (const n of [
+        "ox",
+        "oy",
+        "unitPx",
+        "xmin",
+        "xmax",
+        "ymin",
+        "ymax",
+        "xUnitPx",
+        "yUnitPx",
+        "xStep",
+        "yStep",
+      ]) {
         if (p[n] != null && !Number.isFinite(Number(p[n]))) {
           errors.push(`${path}.${n} must be finite`);
+        }
+      }
+      for (const tickKey of ["xTicks", "yTicks"]) {
+        if (p[tickKey] != null && !Array.isArray(p[tickKey])) {
+          errors.push(`${path}.${tickKey} must be an array`);
         }
       }
       if (Array.isArray(p.curves)) {
@@ -409,6 +426,17 @@ export function validateDiagram(doc) {
           }
           if (c.params != null && (typeof c.params !== "object" || Array.isArray(c.params))) {
             errors.push(`${cp}.params must be an object`);
+          }
+          if (c.style != null && c.style !== "solid" && c.style !== "dashed" && c.style !== "dotted") {
+            errors.push(`${cp}.style must be solid|dashed|dotted`);
+          }
+          if (c.domain != null) {
+            const ok =
+              Array.isArray(c.domain) &&
+              c.domain.length >= 2 &&
+              Number.isFinite(Number(c.domain[0])) &&
+              Number.isFinite(Number(c.domain[1]));
+            if (!ok) errors.push(`${cp}.domain must be [uMin, uMax]`);
           }
         }
       }
