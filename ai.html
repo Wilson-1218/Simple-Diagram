@@ -80,7 +80,7 @@
       <li>座標與視窗</li>
       <li>標籤 ox/oy</li>
       <li>基本幾何</li>
-      <li>構造（中點／比例／交點／垂足）</li>
+      <li>構造（中點／比例／交點／垂足／三角形中心／方位／圓餅）</li>
       <li>圓件／切線</li>
       <li>記號</li>
       <li>填色 addFill</li>
@@ -102,7 +102,7 @@
       <span class="en">Editor: Json ▾ → Copy JSON; Paste JSON can Append (default off = Replace). Export ▾ → Copy PNG (White BG).</span></p>
     <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
       <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
-    <p class="note">已知 ops（48，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>add3DPolyhedron</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addFeasibleRegion</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
+    <p class="note">已知 ops（55，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>add3DPolyhedron</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addFeasibleRegion</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>addTriangleCenter</code>/<code>addIncircle</code>/<code>addCircumcircle</code> <code>addBearing</code>/<code>addCompass</code> <code>addPieChart</code>/<code>addPie</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
     <p class="note"><strong>UI ↔ op</strong>：工具列 <strong>⊥ 座標</strong>＝<code>addCoordPlot</code>（＋<code>addCurve</code>）。沒有 <code>addCoordMark</code> 這類 op 名。<br />
       <span class="en">Rail tool <strong>⊥ 座標 / Axes</strong> maps to <code>addCoordPlot</code> (+ <code>addCurve</code>). There is no <code>addCoordMark</code>.</span></p>
 
@@ -186,6 +186,26 @@
     <p class="warn">仍為 UI-only（無同名 JSON op）：水平 <code>horizontal</code>、鉛垂 <code>perpendicular</code> — 用 <code>addPoint</code>+<code>addSegment</code>（同 y／同 x）。工具列中點／比例／交點已有對應 JSON op，勿再手算。<br />
       <strong>不是</strong> UI-only：<strong>⊥ 座標</strong> → 用 <code>addCoordPlot</code> / <code>addCurve</code>（見 §10）。勿臆造 <code>addCoord</code>／<code>addCoordMark</code>。</p>
 
+    <h3>5.1 三角形中心、方位角、圓餅圖</h3>
+    <p>三個 op 都展開成既有的點、線、圓、填色、角弧與文字。沒有新欄位時，舊圖與舊 op 不變。退化（邊長過短或三點共線）只 <code>console.warn</code> 並跳過，不 throw。找不到的點 id 仍 throw。</p>
+    <p><code>addTriangleCenter</code>（別名 <code>addIncircle</code>、<code>addCircumcircle</code>）。必填 <code>a</code>、<code>b</code>、<code>c</code>（頂點 id；<code>addShape</code> 的 <code>KA</code> 與裸字母照舊解析）。<code>kind</code>：<code>incentre</code>｜<code>incenter</code>（<code>addIncircle</code> 預設）｜<code>circumcentre</code>｜<code>circumcenter</code>（<code>addCircumcircle</code> 預設）｜<code>centroid</code>｜<code>orthocentre</code>｜<code>orthocenter</code>。<code>addTriangleCenter</code> 本身必填 <code>kind</code>。</p>
+    <ul>
+      <li>內心 I = (a·A + b·B + c·C) / (a+b+c)，a=|BC|、b=|AC|、c=|AB|。畫圓時半徑是 I 到直線 AB 的距離，圓通過該垂足。<code>markTouchPoints:true</code> 或 <code>touchIds:["idAB","idBC","idCA"]</code>（僅內心）會留下 AB、BC、CA 上的可見切點；否則垂足 <code>hidden:true</code>。</li>
+      <li>外心用垂直平分線交點；畫圓時圓通過頂點 <code>a</code>。共線則跳過，不建圓、也不建外心。</li>
+      <li>重心是三頂點平均，共線仍建立。垂心是 A 高（⊥ BC）與 B 高（⊥ CA）的交點；共線則跳過。</li>
+      <li>可選中心 <code>id</code>、<code>hidden</code>、<code>label</code>、<code>ox</code>、<code>oy</code>。<code>drawCircle</code> 在兩個別名預設 true，其餘預設 false。<code>circleId</code>、<code>circleStyle</code> 只在有畫圓時使用。</li>
+    </ul>
+    <p><code>addBearing</code>（別名 <code>addCompass</code>）。必填 <code>at</code>（別名 <code>pointId</code>）。<code>northLen</code> 預設 56，向北（−y）到隱藏箭尖；實線北段，箭尖另有兩小段實線箭頭。<code>northLabel</code> 預設 <code>"N"</code>；<code>false</code> 或 <code>""</code> 不標。<code>showCross</code> 預設 false：在 <code>at</code> 加向東、向西、向南的短虛線刻度。<code>to</code> 才畫方位弧。<code>from</code> 預設 <code>"N"</code>，亦可 <code>"S"</code>｜<code>"E"</code>｜<code>"W"</code>。<code>text</code> 例如 <code>"52°"</code>。<code>mode</code>：<code>"acute"</code>（預設，from 軸與 at→to 的劣角；N 52° E、S 38° W）｜<code>"cw"</code>（別名 <code>"true"</code>：一律從正北順時針量到 at→to；大於 180° 則 <code>reflex:true</code>）。<code>arcSize</code> 預設 22。見 §7。</p>
+    <p><code>addPieChart</code>（別名 <code>addPie</code>）。必填 <code>x</code>、<code>y</code> 或 <code>centerId</code>，以及 <code>slices</code>（長度 ≥ 2）。<code>r</code> 預設 95。<code>startDeg</code> 預設 0（正東）；−90 是正北。<code>clockwise</code> 預設 true。<code>idPrefix</code> 可選。每一塊用 <code>angle</code>（度，原樣使用）或 <code>value</code>（依總和正規化成 360°）；每一塊都有 <code>angle</code> 時不當成 value。大於 180° 的塊，以及逆時針正好 180° 的塊，拆成兩份劣弧填色（既有扇形填色仍走劣弧）。整圓用一個 <code>addCircle</code> 當外框。<code>label</code> 放在角平分線上，半徑比例 <code>labelRadiusRatio</code> 預設 0.62，經 <code>addText</code>（沿用既有光暈）。<code>angleText</code> 在圓心加 <code>addAngleArc</code>（超過 180° 為優角）。<code>rightAngle:true</code> 為該塊加 <code>addRightAngle</code>。可選 <code>pattern</code>（<code>hatch</code>｜<code>solid</code>）與 <code>opacity</code>；未指定時實心用一組淺色、透明度 0.55。</p>
+<pre>[
+  { "op": "addIncircle", "a": "A", "b": "B", "c": "C", "id": "I", "markTouchPoints": true },
+  { "op": "addBearing", "at": "P", "to": "Q", "from": "N", "text": "52°", "mode": "acute" },
+  { "op": "addPieChart", "x": 420, "y": 240, "slices": [
+      { "angle": 90, "label": "Q1", "rightAngle": true },
+      { "angle": 270, "label": "rest" }
+  ] }
+]</pre>
+
     <h2>6. 圓件／切線 / Circle parts</h2>
     <p>皆需已有 <code>circleId</code>。方向可用點 id，或 <code>angle</code>（弧度）／<code>deg</code>（度）；預設角 0＝正 x。</p>
     <table>
@@ -210,6 +230,7 @@
         <tr><td><code>addEqualMark</code>＝<code>addEqual</code></td><td><code>segmentId</code></td><td><code>group</code>, <code>side</code></td></tr>
         <tr><td><code>addLengthLabel</code>＝<code>addLength</code></td><td><code>segmentId</code></td><td><code>text</code>, <code>side</code>（±1 或 <code>above</code>｜<code>below</code>｜<code>left</code>｜<code>right</code>）, <code>style</code>（text｜dim｜arcs｜ends）, <code>stroke</code>（arcs：solid｜dashed｜dotted，預設 dotted）, <code>orient</code>（tilt｜horizontal）, <code>size</code></td></tr>
         <tr><td><code>addMidTick</code></td><td><code>segmentId</code></td><td><code>pointId</code>（比例分點短劃）</td></tr>
+        <tr><td><code>addBearing</code>＝<code>addCompass</code></td><td><code>at</code>（別名 <code>pointId</code>）</td><td>北向箭、方位弧與圓餅圖的參數見 §5.1。<code>mode:"cw"</code>（別名 <code>"true"</code>）大於 180° 時角弧為優角</td></tr>
         <tr><td><code>addBoxWhisker</code>＝<code>addBoxPlot</code></td><td>水平：<code>y,min,q1,median,q3,max</code>；垂直另加 <code>orientation:"v"</code>＋<code>x</code></td><td><code>outliers[]</code>, <code>ticks[]</code>（數字＝僅刻度；或 <code>{pos,label?}</code>／<code>{x|y,label?}</code>；標籤畫在軸外側；<code>min/q1/median/q3/max</code> 皆為世界座標）, <code>boxHeight</code>, <code>cap</code>, <code>showAxis</code>, <code>axisY</code>/<code>axisX</code></td></tr>
         <tr><td><code>addBarChart</code>＝<code>addBar</code></td><td><code>x</code>, <code>y</code>（資料區左下）, <code>categories[]</code>, <code>values[]</code>｜<code>heights[]</code></td><td><code>plotW</code>/<code>plotH</code>, <code>yMin</code>/<code>yMax</code>, <code>yTicks</code>/<code>yStep</code>, <code>xLabel</code>, <code>yLabel</code>（沿軸直寫）, <code>yLabelMode</code> <code>rotate</code>｜<code>stack</code>, <code>barPattern</code> <code>hatch</code>｜<code>solid</code>, <code>showGrid</code></td></tr>
       </tbody>
@@ -620,7 +641,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.43 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.44 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

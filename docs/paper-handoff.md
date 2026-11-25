@@ -257,6 +257,34 @@ PDF
 
 ---
 
+## 三角形中心、方位角、圓餅圖（v13.5.44）
+
+與 [`ai.html`](../ai.html) §5.1、§7 同一契約。不呼叫這三個 op 時，舊的點、線、圓、填色與角弧都還在。
+
+| 呼叫 | 要點 |
+|---|---|
+| `addTriangleCenter` | 必填 `a` `b` `c`（`addShape` 字母別名照舊）與 `kind`。`addIncircle` 預設內心且畫圓；`addCircumcircle` 預設外心且畫圓 |
+| 內心 | I = (a·A + b·B + c·C) / (a+b+c)，a=\|BC\|。圓通過 I 到 AB 的垂足。`touchIds:[AB,BC,CA]` 或 `markTouchPoints:true` 才把切點留下可見 |
+| 外心／垂心／重心 | 外心圓通過頂點 `a`。垂心是兩條高的交點。重心是三頂點平均，共線仍建立 |
+| 退化 | 邊長過短或三點共線：內心、外心、垂心 `console.warn` 並跳過，不建圓。不 throw |
+| `addBearing`／`addCompass` | `at` 向北（−y）隱藏箭尖、實線北段與箭頭，`northLabel` 預設 `"N"`。`to` 才畫弧。`mode:"cw"`（`"true"`）從正北順時針；大於 180° 為優角 |
+| `addPieChart`／`addPie` | `slices` ≥ 2。`angle` 用度；否則 `value` 正規化成 360°。標籤在角平分線（`labelRadiusRatio` 預設 0.62）經 `addText`。`angleText`→角弧，`rightAngle:true`→直角標記 |
+
+```json
+{ "op": "addIncircle", "a": "A", "b": "B", "c": "C", "id": "I" }
+```
+
+```json
+{ "op": "addBearing", "at": "P", "to": "Q", "text": "52°", "mode": "acute" }
+```
+
+```json
+{ "op": "addPieChart", "x": 420, "y": 240, "r": 95,
+  "slices": [ { "angle": 90, "label": "Q1", "rightAngle": true }, { "angle": 270, "label": "rest" } ] }
+```
+
+---
+
 ## 版本釘選 / Version pin
 
 - 以 **main**／產品標籤 **v13.5.26**（穩定基線）為準；應用欄位 `version` 與 schema `formatVersion` 分開。

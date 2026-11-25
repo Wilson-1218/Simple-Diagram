@@ -17,6 +17,7 @@ import { normalizeLengthSide } from "./length-mark.mjs";
 import { coordWorldFromAxis, normalizeCoordTicks } from "./coord-plot.mjs";
 import { parseInequality, solveFeasibleRegion } from "./feasible-region.mjs";
 import { buildPolyhedron } from "./polyhedron.mjs";
+import { applyBearing, applyPieChart, applyTriangleCenter } from "./exam-ops.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -896,6 +897,16 @@ function feasibleDomain(plot, raw, ctx) {
     return null;
   }
   return { uMin, uMax, vMin, vMax };
+}
+
+function examApi() {
+  return {
+    requirePoint,
+    pointById,
+    pushPoint,
+    pushSegment,
+    handlers: HANDLERS,
+  };
 }
 
 function resolveId(op, nextId, prefix) {
@@ -2165,6 +2176,28 @@ const HANDLERS = {
     });
     return doc;
   },
+
+  /**
+   * Triangle centre. kind: incentre|incenter|circumcentre|circumcenter|centroid|orthocentre|orthocenter.
+   * a, b, c are vertex ids (addShape letter aliases resolve). Degenerate → warn and skip.
+   */
+  addTriangleCenter(doc, op, nextId) {
+    return applyTriangleCenter(doc, op, nextId, examApi(), {
+      opName: "addTriangleCenter",
+      kind: null,
+      drawCircle: false,
+    });
+  },
+
+  /** North arrow at a point, optional bearing arc. Alias addCompass. */
+  addBearing(doc, op, nextId) {
+    return applyBearing(doc, op, nextId, examApi());
+  },
+
+  /** Pie / doughnut-free sector chart. Alias addPie. */
+  addPieChart(doc, op, nextId) {
+    return applyPieChart(doc, op, nextId, examApi());
+  },
 };
 
 /** Aliases for AI-friendly names */
@@ -2176,6 +2209,20 @@ HANDLERS.addTemplate = HANDLERS.insertTemplate;
 HANDLERS.addBoxPlot = HANDLERS.addBoxWhisker;
 HANDLERS.addBar = HANDLERS.addBarChart;
 HANDLERS.addCaption = HANDLERS.addText;
+HANDLERS.addIncircle = (doc, op, nextId) =>
+  applyTriangleCenter(doc, op, nextId, examApi(), {
+    opName: "addIncircle",
+    kind: "incentre",
+    drawCircle: true,
+  });
+HANDLERS.addCircumcircle = (doc, op, nextId) =>
+  applyTriangleCenter(doc, op, nextId, examApi(), {
+    opName: "addCircumcircle",
+    kind: "circumcentre",
+    drawCircle: true,
+  });
+HANDLERS.addCompass = HANDLERS.addBearing;
+HANDLERS.addPie = HANDLERS.addPieChart;
 
 export const OP_NAMES = Object.keys(HANDLERS).sort();
 

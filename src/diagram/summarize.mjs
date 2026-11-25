@@ -94,6 +94,34 @@ export const OP_CATALOG = {
     args: "pointId, segmentId | a+b, footId?, drawSegment?, style?, label?, marker?",
     note: "orthogonal projection onto line; marker foot; altitude segment by default",
   },
+  addTriangleCenter: {
+    args: "a, b, c, kind, id?, hidden?, label?, ox?, oy?, drawCircle?, circleId?, circleStyle?, markTouchPoints?, touchIds?",
+    note: "kind incentre|incenter|circumcentre|circumcenter|centroid|orthocentre|orthocenter. Letter aliases from addShape resolve. Degenerate triangle warns and skips. drawCircle default false",
+  },
+  addIncircle: {
+    args: "same as addTriangleCenter",
+    note: "Alias; kind defaults to incentre and drawCircle defaults to true. Radius is the distance from I to side AB",
+  },
+  addCircumcircle: {
+    args: "same as addTriangleCenter",
+    note: "Alias; kind defaults to circumcentre and drawCircle defaults to true. Circle passes through vertex a",
+  },
+  addBearing: {
+    args: "at|pointId, northLen?, northLabel?, showCross?, to?, from?, text?, mode?, arcSize?",
+    note: "Hidden north tip, solid north segment plus arrow, label N. mode acute (default) or cw|true (clockwise from north; reflex if >180). Alias addCompass",
+  },
+  addCompass: {
+    args: "same as addBearing",
+    note: "Alias of addBearing",
+  },
+  addPieChart: {
+    args: "x,y|centerId, slices (≥2), r?, startDeg?, clockwise?, idPrefix?, labelRadiusRatio?, pattern?, opacity?",
+    note: "angle degrees or value normalized to 360. label via addText; angleText via addAngleArc; rightAngle via addRightAngle. Alias addPie",
+  },
+  addPie: {
+    args: "same as addPieChart",
+    note: "Alias of addPieChart",
+  },
   addMidpoint: {
     args: "a+b | segmentId, id?, markEqual?, equalGroup?, marker?, style?, hidden?",
     note: "midpoint; markEqual creates/marks subsegments (a,M)+(M,b) with equal marks; hidden skips draw",
