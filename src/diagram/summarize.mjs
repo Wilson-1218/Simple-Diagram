@@ -84,7 +84,7 @@ export const OP_CATALOG = {
   },
   addFill: {
     args: "kind?, pattern?, pointIds? | centerId+startId+endId | polyArc | pathFill edges | inequalities+plotId?, color?, opacity?, hatchSpacing?",
-    note: "kind polygon|sector|segment|polyArc|pathFill; pattern solid|hatch (slanted strokes). inequalities → feasible region (default hatch), same as addFeasibleRegion",
+    note: "kind polygon|sector|segment|polyArc|pathFill; pattern solid|hatch (slanted strokes). inequalities → feasible region (default hatch), same as addFeasibleRegion; mathPoints and feasible-region corners are hidden points",
   },
   addLengthLabel: {
     args: "segmentId, text?, side?, style?(text|dim|arcs), orient?(tilt|horizontal), size?",
@@ -111,11 +111,11 @@ export const OP_CATALOG = {
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },
   addShape: {
     args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?, apexOffset?, includeBaseCenter?, drawHeight?, waterLevel?",
-    note: "kind square|rect|…|circle|semicircle|cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone; solids: h is visual height (omit = today's proportions); pyramid/cone apexOffset [dx,dy], includeBaseCenter → O or {prefix}O, drawHeight dotted OV; cylinder/cone waterLevel in (0,1) splits an ellipse; idPrefix → vertices prefix0… and segments prefixs0…; labels:false or label:false skips vertex letters",
+    note: "kind square|rect|…|circle|semicircle|cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone; solids: h is visual height (omit = today's proportions); pyramid/cone apexOffset [dx,dy], includeBaseCenter → O or {prefix}O, drawHeight dotted OV; cylinder/cone waterLevel in (0,1) splits an ellipse; idPrefix → vertices prefix0… and segments prefixs0…; labels:false or label:false skips vertex letters; letter aliases: KC and, if no point C exists, bare C resolve to the vertex labeled C (pyramid V is K4)",
   },
   add3DPolyhedron: {
     args: "vertices, faces, origin?, scale?, yawDeg?, pitchDeg?, idPrefix?, labels?",
-    note: "vertices {A:[x,y,z]}; faces CCW from outside; front edges (and silhouette) solid, back-only edges dashed; idPrefix K + A → KA",
+    note: "vertices {A:[x,y,z]}; either face winding (normal flipped outward via (Fc-G)·n); front edges (and silhouette) solid, back-only edges dashed; idPrefix K + A → KA",
   },
   addTangent: { args: "circleId, touchId|angle|deg, halfLen|length, style?" },
   addRadius: { args: "circleId, throughId|angle|deg, style?" },
@@ -128,7 +128,7 @@ export const OP_CATALOG = {
   addCurve: { args: "plotId, type, params?, label?, domain?, style?", note: "type includes vline (params.x) for a vertical boundary" },
   addFeasibleRegion: {
     args: "inequalities, plotId?, pattern?, hatchSpacing?, color?, opacity?, label?, drawBoundaries?, domainClip?",
-    note: "half-planes → hatch polygon (default) on the last coord plot; missing plot warns and skips; strict < > is a dashed boundary",
+    note: "half-planes → hatch polygon (default) on the last coord plot; generated corners are hidden; missing plot warns and skips; strict < > is a dashed boundary",
   },
   addPlotPoint: {
     args: "plotId?, u|mathX, v|mathY, label?, ox?, oy?, projectX?, projectY?, projectStyle?, xTickLabel?, yTickLabel?",

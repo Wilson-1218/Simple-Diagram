@@ -584,6 +584,9 @@ export function applyBuiltinTemplate(doc, id, options = {}) {
         text = String(lab);
       }
     }
+    // Shown letter when labels are on; template letter when they are suppressed.
+    const aliasLetter = text != null ? text : lab != null && lab !== "" ? String(lab) : null;
+    registerShapeVertexAlias(doc, idPrefix, aliasLetter, pid);
     if (text != null) {
       doc.labels.push({
         id: nextId("lab"),
@@ -669,4 +672,39 @@ export function applyBuiltinTemplate(doc, id, options = {}) {
 
 function ensureArr(doc, key) {
   if (!Array.isArray(doc[key])) doc[key] = [];
+}
+
+/**
+ * Map a shown vertex letter onto the numeric point id.
+ * `{prefix}{Letter}` (KC) always aliases when that id is not already a point.
+ * A bare letter (C) aliases only when no point already owns that id, so a
+ * caller-created point is never replaced. Letters are A–V (cuboid A–H, apex V).
+ * Last free registration wins for a bare letter.
+ */
+export function registerShapeVertexAlias(doc, prefix, letter, pointId) {
+  const lab = letter != null ? String(letter).trim() : "";
+  if (!/^[A-V]$/.test(lab) || !pointId) return;
+  const aliases = shapeAliasMap(doc);
+  const taken = (id) => Array.isArray(doc.points) && doc.points.some((p) => p.id === id);
+  if (!taken(lab)) aliases[lab] = pointId;
+  if (prefix) {
+    const prefixed = `${prefix}${lab}`;
+    if (!taken(prefixed)) aliases[prefixed] = pointId;
+  }
+}
+
+/** Runtime alias table. Not enumerable, so it is not part of the 38-key save. */
+export function shapeAliasMap(doc) {
+  const existing = doc.pointAliases;
+  const ok = existing && typeof existing === "object" && !Array.isArray(existing);
+  const desc = ok ? Object.getOwnPropertyDescriptor(doc, "pointAliases") : null;
+  if (ok && desc && desc.enumerable === false) return existing;
+  const value = ok ? existing : {};
+  Object.defineProperty(doc, "pointAliases", {
+    value,
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  });
+  return value;
 }

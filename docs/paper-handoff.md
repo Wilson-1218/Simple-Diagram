@@ -245,6 +245,18 @@ PDF
 
 ---
 
+## 頂點別名、朝外法線、隱藏填色角（v13.5.43）
+
+與 [`ai.html`](../ai.html) §9.1、§9.3、§10.6、§10.7 同一契約。省略新行為時，舊的點 id、實線／虛線與呼叫端自己的點都還在。
+
+| 呼叫 | 要點 |
+|---|---|
+| `addShape` 字母別名 | 點 id 仍是 `K0`…。`KC` 對到標成 C 的頂點；還沒有點 `C` 時，裸 `C` 也對到它。已有的點 `C` 不會被換掉 |
+| `add3DPolyhedron` | 面順時針或逆時針都可以。`(Fc − G) · n < 0` 時把法線翻朝外。只屬背面的邊仍是虛線 |
+| `feasibleRegion`／`addFeasibleRegion`／`mathPoints` | 自動頂點預設 `hidden:true`（不畫圓點），填色仍在。呼叫端給的 `pointIds` 維持可見 |
+
+---
+
 ## 版本釘選 / Version pin
 
 - 以 **main**／產品標籤 **v13.5.26**（穩定基線）為準；應用欄位 `version` 與 schema `formatVersion` 分開。
