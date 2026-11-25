@@ -105,4 +105,11 @@ export {
   coordTickText,
   svgCoordPlot,
 } from "./coord-plot.mjs";
+export {
+  parseInequality,
+  clipHalfPlanes,
+  solveFeasibleRegion,
+  polygonAreaAndCentroid,
+  isAxisBoundary,
+} from "./feasible-region.mjs";
 export { parseMathRuns, svgTextInner } from "./math-text.mjs";

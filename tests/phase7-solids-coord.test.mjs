@@ -12,7 +12,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for solids phase 7", () => {
-  assert.equal(APP_VERSION, "13.5.41");
+  assert.equal(APP_VERSION, "13.5.42");
   assert.ok(OP_NAMES.includes("add3DPolyhedron"));
 });
 

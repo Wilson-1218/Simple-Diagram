@@ -102,7 +102,7 @@
       <span class="en">Editor: Json ▾ → Copy JSON; Paste JSON can Append (default off = Replace). Export ▾ → Copy PNG (White BG).</span></p>
     <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
       <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
-    <p class="note">已知 ops（47，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>add3DPolyhedron</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
+    <p class="note">已知 ops（48，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>add3DPolyhedron</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addFeasibleRegion</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
     <p class="note"><strong>UI ↔ op</strong>：工具列 <strong>⊥ 座標</strong>＝<code>addCoordPlot</code>（＋<code>addCurve</code>）。沒有 <code>addCoordMark</code> 這類 op 名。<br />
       <span class="en">Rail tool <strong>⊥ 座標 / Axes</strong> maps to <code>addCoordPlot</code> (+ <code>addCurve</code>). There is no <code>addCoordMark</code>.</span></p>
 
@@ -238,6 +238,7 @@
 ] }</code></pre>
     <p class="note"><strong>pathFill</strong>：弧邊預設走劣弧；整圈路徑的邊<strong>不可自交</strong>（否則填色／匯出可能錯）。兩弧＋弦可亂序。<br />
       <span class="en">pathFill arc edges default to the minor arc; edges must not self-intersect.</span></p>
+    <p><strong>可行區域</strong>：<code>addFill</code> 若帶 <code>inequalities</code>（該陣列必填）與可選 <code>plotId</code>，行為與 <code>addFeasibleRegion</code> 相同，預設 <code>pattern:"hatch"</code>。沒有 <code>inequalities</code> 時仍是原來的 <code>pointIds</code>／<code>mathPoints</code> 填色。參數與例子見 §10.7。</p>
 
     <h2>9. <code>addShape</code></h2>
     <p>一次放平面／立體圖形（UI「圖形」拖放的 JSON 版）。</p>
@@ -340,6 +341,8 @@
         <tr><td><code>xAngleUnit</code></td><td>可選</td><td><code>"rad"</code>（預設）｜<code>"deg"</code> — 影響 sin/cos/tan 的 x</td></tr>
         <tr><td><code>angleAxisOn</code></td><td>可選</td><td>預設 false — 角度軸刻度模式</td></tr>
         <tr><td><code>curves</code></td><td>可選</td><td>建立時一併加入的曲線陣列</td></tr>
+        <tr><td><code>feasibleRegion</code></td><td>可選</td><td>一個可行區域物件（見 §10.7）。省略則座標圖與以前相同</td></tr>
+        <tr><td><code>feasibleRegions</code></td><td>可選</td><td>可行區域物件陣列。與 <code>feasibleRegion</code> 同時給時兩個都畫</td></tr>
         <tr><td><code>id</code></td><td>可選</td><td>之後 <code>addCurve.plotId</code> 用</td></tr>
       </tbody>
     </table>
@@ -350,6 +353,7 @@
       <thead><tr><th>type</th><th>params（預設）</th><th>公式意涵</th></tr></thead>
       <tbody>
         <tr><td><code>line</code></td><td><code>m:-1</code>, <code>c:4</code></td><td>y = mx + c</td></tr>
+        <tr><td><code>vline</code></td><td><code>x:0</code></td><td>鉛直線 x = k（可行區域的垂直邊界）</td></tr>
         <tr><td><code>quad</code></td><td><code>a:1</code>, <code>b:0</code>, <code>c:0</code></td><td>y = ax² + bx + c</td></tr>
         <tr><td><code>log</code>（別名 <code>log10</code>）</td><td><code>a:1</code>, <code>base:10</code></td><td>y = a·log_base(x)</td></tr>
         <tr><td><code>ln</code></td><td><code>a:1</code></td><td>y = a·ln(x)</td></tr>
@@ -429,6 +433,40 @@
   }
 ]</pre>
     <p class="note"><code>showTickLabels: false</code> 時預設整數刻度消失，但上面的 <code>xTicks</code>/<code>yTicks</code> 仍會畫出。省略新欄位的舊圖，刻度與比例與以前相同。</p>
+
+    <h3>10.7 可行區域 / Feasible region</h3>
+    <p><code>addFeasibleRegion</code>，或 <code>addCoordPlot</code> 的 <code>feasibleRegion</code>／<code>feasibleRegions</code>，或 <code>addFill</code> 帶 <code>inequalities</code>。必填 <code>inequalities</code>。省略 <code>plotId</code> 用最後一個座標圖；找不到圖：<code>console.warn</code> 並跳過，不拋錯。省略這些欄位時，舊座標圖與舊填色不變。</p>
+    <table>
+      <thead><tr><th>欄位</th><th>預設</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr><td><code>inequalities</code></td><td>必填</td><td>字串或物件陣列。解不出的那一條 <code>console.warn</code> 並跳過</td></tr>
+        <tr><td><code>plotId</code></td><td>最後一個座標圖</td><td>掛在哪張圖上</td></tr>
+        <tr><td><code>pattern</code></td><td><code>"hatch"</code></td><td>亦可 <code>"solid"</code></td></tr>
+        <tr><td><code>hatchSpacing</code></td><td><code>8</code></td><td>省略時不寫入填色，繪製仍用 8</td></tr>
+        <tr><td><code>color</code>, <code>opacity</code></td><td>同 hatch／solid 填色</td><td>hatch 預設 <code>#111111</code>、不透明</td></tr>
+        <tr><td><code>label</code></td><td>省略</td><td>例如 <code>"R"</code>。面積形心、世界座標、置中粗體 <code>addText</code>（既有光暈）。含 <code>_</code>／<code>^</code> 走輕量數學文字</td></tr>
+        <tr><td><code>drawBoundaries</code></td><td><code>false</code></td><td><code>true</code> 時為每條非軸邊界加曲線</td></tr>
+        <tr><td><code>domainClip</code></td><td><code>[xmin,xmax,ymin,ymax]</code></td><td><code>[uMin,uMax,vMin,vMax]</code>。顛倒的端點會對調</td></tr>
+      </tbody>
+    </table>
+    <p>每條不等式正規化成半平面 <code>A u + B v ≤ C</code>（<code>&gt;=</code>／<code>&gt;</code> 變號）。字串接受 <code>&lt;= &gt;= &lt; &gt; ≤ ≥</code>、斜率式與一般式；<code>*</code> 可省略；分數寫 <code>3/2</code> 或 <code>(3/2)</code>。例：<code>y &lt;= 2x + 1</code>、<code>y &gt;= -0.5x + 3</code>、<code>y &lt; 1.5*x - 2</code>、<code>x + y &lt;= 5</code>、<code>3x - 2y &gt;= -6</code>、<code>2x + 3y - 12 &lt;= 0</code>、<code>x &gt;= 0</code>、<code>y &gt; 1</code>、<code>y &lt;= (3/2)x + 3</code>、<code>y &lt;= 3/2 x + 3</code>。</p>
+    <p>物件：<code>{ "a": 1, "b": 1, "op": "&lt;=", "c": 5, "drawLine"?: true, "style"?: "solid"|"dashed", "label"?: "L_1" }</code> 表示 <code>a x + b y op c</code>。或 <code>{ "expr": "y &lt;= 2x + 1", "label": "L_1" }</code>。係數與 <code>expr</code> 同時有時用係數。</p>
+    <p>從 <code>domainClip</code> 的軸對齊矩形開始，Sutherland–Hodgman 逐條裁切。頂點 ≥ 3 且面積 &gt; 1e-6 才做成一般多邊形填色（頂點是普通點，與 <code>mathPoints</code> 相同）。世界座標 <code>x = ox + u·xUnitPx</code>、<code>y = oy − v·yUnitPx</code>（沒有分軸比例就用 <code>unitPx</code>）。空交集：警告且不加填色。嚴格 <code>&lt;</code> <code>&gt;</code> 仍按閉半平面裁，邊界改虛線。</p>
+    <p><code>drawBoundaries: true</code>，或該條 <code>drawLine: true</code>，會加一條座標曲線，但<strong>不</strong>加軸線 x=0 或 y=0。<code>&lt;= &gt;= ≤ ≥</code> 實線；<code>&lt;</code> <code>&gt;</code> 虛線；寫了 <code>style</code> 就用它。斜線是 <code>type:"line"</code>；鉛直線（如 <code>x &lt;= 4</code>）是 <code>type:"vline"</code>、<code>params.x</code>。每條 <code>label</code>（如 <code>"L_1"</code>）成為曲線自訂文字，下標可用。曲線畫滿座標圖視窗。</p>
+<pre>{
+  "op": "addCoordPlot",
+  "id": "plot1",
+  "ox": 260, "oy": 360, "unitPx": 36,
+  "xmin": -1, "xmax": 6, "ymin": -1, "ymax": 7,
+  "feasibleRegion": {
+    "inequalities": ["y &lt;= 1.5x + 3", "2x + 3y &lt;= 22", "y &gt;= 0"],
+    "pattern": "hatch",
+    "hatchSpacing": 8,
+    "label": "R",
+    "drawBoundaries": true
+  }
+}</pre>
+    <p class="note"><span class="en"><code>addFeasibleRegion</code> / <code>addFill</code> with <code>inequalities</code> clip half-planes to a hatch polygon on the coord plot. Omit the field and the previous plot is unchanged. Strict inequalities stay closed for the fill and draw a dashed boundary. Axis lines x=0 and y=0 are not added as curves.</span></p>
 
     <h3>10.5 最小座標例</h3>
 <pre>[
@@ -579,7 +617,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.41 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.42 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

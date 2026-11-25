@@ -15,7 +15,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for bar/hatch/coord-export", () => {
-  assert.equal(APP_VERSION, "13.5.41");
+  assert.equal(APP_VERSION, "13.5.42");
 });
 
 test("stable top-level keys include barCharts (37)", () => {

@@ -16,6 +16,7 @@ const CURVE_TYPES = new Set([
   "sin",
   "cos",
   "tan",
+  "vline",
   "none",
 ]);
 

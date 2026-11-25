@@ -264,6 +264,10 @@ function coordCurveFormulaText(curve, mode, optPlot) {
   const p = curve.params || {};
   const type = curve.type || "line";
   const alg = mode !== "numeric";
+  if (type === "vline") {
+    if (alg) return "x = k";
+    return "x = " + coordFmtNum(p.x ?? 0);
+  }
   if (type === "line") {
     if (alg) return "y = mx+c";
     const m = p.m ?? 1;
@@ -413,6 +417,13 @@ export function coordSampleOneCurve(plot, curve) {
       }
     }
     return pts;
+  }
+  if (type === "vline") {
+    const x = Number((curve.params || {}).x);
+    if (!Number.isFinite(x)) return pts;
+    if (dom && (x < dom[0] - 1e-9 || x > dom[1] + 1e-9)) return pts;
+    if (x < plot.xmin - 1e-9 || x > plot.xmax + 1e-9) return pts;
+    return [coordWorldFromAxis(plot, x, plot.ymin), coordWorldFromAxis(plot, x, plot.ymax)];
   }
   const needsPosX = type === "log" || type === "log10" || type === "ln";
   const isTrig = type === "sin" || type === "cos" || type === "tan";
