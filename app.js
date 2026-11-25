@@ -1177,7 +1177,7 @@
     const pref = readRailWidthPref();
     if (pref != null) applyRailWidth(pref, false);
     else if (toolRailEl) {
-      const w = toolRailEl.getBoundingClientRect().width || Math.round(156 * 1.2);
+      const w = toolRailEl.getBoundingClientRect().width || Math.round(166 * 1.2);
       applyRailWidth(w, false);
     }
     if (!railResizeEl || !toolRailEl) return;
@@ -2326,7 +2326,8 @@
         minX = 0; minY = 0; maxX = canvas.width; maxY = canvas.height;
       }
       const strokes = hatchStrokesInRectScreen(minX, minY, maxX - minX, maxY - minY, spacing);
-      ctx.strokeStyle = fill.color || "#111";
+      // Dark screen: remap default-dark hatch (#111/#000) to light slate; export stays paper ink
+      ctx.strokeStyle = hatchInkForScreen(fill.color);
       ctx.globalAlpha = Number.isFinite(Number(fill.opacity)) ? Number(fill.opacity) : 1;
       ctx.lineWidth = Math.max(1, LINE_WIDTH * 0.85);
       ctx.setLineDash([]);
@@ -2349,6 +2350,24 @@
       ctx.stroke();
       ctx.setLineDash([]);
     }
+  }
+
+  /**
+   * Hatch stroke for screen canvas. Document keeps #111; dark mode remaps
+   * unspecified / default-dark ink to a readable light slate.
+   */
+  function hatchInkForScreen(color) {
+    const raw = color == null || color === "" ? "" : String(color).trim().toLowerCase();
+    const isDefaultDark =
+      !raw ||
+      raw === "#111" ||
+      raw === "#111111" ||
+      raw === "#000" ||
+      raw === "#000000" ||
+      raw === "black";
+    if (darkCanvas && isDefaultDark) return "#94a3b8";
+    if (!raw) return "#111111";
+    return String(color).trim();
   }
 
   /** Screen-space hatch lines (mirrors src/diagram/hatch.mjs for canvas). */
@@ -6872,16 +6891,26 @@
     const delta = angleSweepDelta(ang1, ang2, !!arc.reflex);
     const mid = ang1 + delta / 2;
     const count = (arc.group || 0) === 0 ? 1 : 2;
+    const sc = Math.min(Math.max(view.scale, 0.6), 1.4);
     const baseR =
-      (arc.size || rightAngleSize || DEFAULT_RA_SIZE) *
-      ANGLE_ARC_R *
-      Math.min(Math.max(view.scale, 0.6), 1.4);
-    const outerR =
-      baseR + (count - 1) * 6 * Math.min(Math.max(view.scale, 0.6), 1.4);
-    const labelR = outerR + 12 * Math.min(Math.max(view.scale, 0.6), 1.4);
+      (arc.size || rightAngleSize || DEFAULT_RA_SIZE) * ANGLE_ARC_R * sc;
+    const outerR = baseR + (count - 1) * 6 * sc;
+    const rOff =
+      arc.textRadiusOffset != null && Number.isFinite(Number(arc.textRadiusOffset))
+        ? Number(arc.textRadiusOffset) * view.scale
+        : 0;
+    const labelR = outerR + 12 * sc + rOff;
+    const ox =
+      arc.textOx != null && Number.isFinite(Number(arc.textOx))
+        ? Number(arc.textOx) * view.scale
+        : 0;
+    const oy =
+      arc.textOy != null && Number.isFinite(Number(arc.textOy))
+        ? Number(arc.textOy) * view.scale
+        : 0;
     return {
-      x: sv.x + Math.cos(mid) * labelR,
-      y: sv.y + Math.sin(mid) * labelR,
+      x: sv.x + Math.cos(mid) * labelR + ox,
+      y: sv.y + Math.sin(mid) * labelR + oy,
     };
   }
 
@@ -7542,12 +7571,36 @@
     if (st === "dashed") return [Math.max(5, 7 * scaleMul), Math.max(4, 5 * scaleMul)];
     return [Math.max(1.4, 1.8 * scaleMul), Math.max(3.2, 4 * scaleMul)];
   }
+  function normalizeLengthSideLocal(side, segmentId) {
+    if (side === -1 || side === "-1") return -1;
+    if (side === 1 || side === "1" || side == null || side === "") return 1;
+    const key = String(side).trim().toLowerCase();
+    if (key !== "above" && key !== "below" && key !== "left" && key !== "right") {
+      return 1;
+    }
+    const seg = segmentById(segmentId);
+    if (!seg) return 1;
+    const a = pointById(seg.a);
+    const b = pointById(seg.b);
+    if (!a || !b) return 1;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const nx = -dy;
+    const ny = dx;
+    let wx = 0;
+    let wy = 0;
+    if (key === "above") wy = -1;
+    else if (key === "below") wy = 1;
+    else if (key === "left") wx = -1;
+    else wx = 1;
+    return nx * wx + ny * wy >= 0 ? 1 : -1;
+  }
   function normalizeLengthLabelRecord(m) {
     if (!m) return m;
     const style = normalizeLengthStyle(m.style);
     const row = {
       ...m,
-      side: m.side === -1 ? -1 : 1,
+      side: normalizeLengthSideLocal(m.side, m.segmentId),
       text: m.text != null ? String(m.text) : "",
       size: clampLabelSize(m.size != null ? m.size : DEFAULT_LABEL_SIZE),
       orient: normalizeLengthOrient(m.orient),
@@ -11607,13 +11660,25 @@
       const text = (arc.text || "").trim();
       if (text) {
         const mid = ang1 + delta / 2;
-        const labelR = baseR + (count - 1) * 6 * scale * 0.75 + 12 * scale * 0.75;
-        const lx = sv.x + Math.cos(mid) * labelR;
-        const ly = sv.y + Math.sin(mid) * labelR;
+        const rOff =
+          arc.textRadiusOffset != null && Number.isFinite(Number(arc.textRadiusOffset))
+            ? Number(arc.textRadiusOffset) * scale
+            : 0;
+        const labelR =
+          baseR + (count - 1) * 6 * scale * 0.75 + 12 * scale * 0.75 + rOff;
+        const ox =
+          arc.textOx != null && Number.isFinite(Number(arc.textOx))
+            ? Number(arc.textOx) * scale
+            : 0;
+        const oy =
+          arc.textOy != null && Number.isFinite(Number(arc.textOy))
+            ? Number(arc.textOy) * scale
+            : 0;
+        const lx = sv.x + Math.cos(mid) * labelR + ox;
+        const ly = sv.y + Math.sin(mid) * labelR + oy;
         const fs = clampLabelSize(labelFontSize) * scale * 0.75;
         const halo = Math.max(3, fs * 0.28);
-        body += `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" fill="none" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(text)}</text>\n`;
-        body += `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(text)}</text>\n`;
+        body += `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(text)}</text>\n`;
       }
     }
 
@@ -11751,7 +11816,7 @@ ${body}</svg>`;
     // Stable 37-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.32",
+      version: "13.5.33",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

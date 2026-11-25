@@ -19,6 +19,32 @@ export function normalizeFillPattern(raw) {
   return "solid";
 }
 
+/** Default hatch ink on white paper / light canvas. */
+export const HATCH_INK_PAPER = "#111111";
+/** High-contrast hatch on dark screen canvas when stored ink is default-dark. */
+export const HATCH_INK_DARK_SCREEN = "#94a3b8";
+
+/**
+ * Hatch stroke color for display. Document/export keep paper ink (#111);
+ * dark screen remaps unspecified / default-dark (#111/#000) to a light slate.
+ * @param {unknown} color
+ * @param {{ dark?: boolean }} [opts]
+ */
+export function hatchInkForDisplay(color, opts = {}) {
+  const raw = color == null || color === "" ? "" : String(color).trim().toLowerCase();
+  const dark = !!opts.dark;
+  const isDefaultDark =
+    !raw ||
+    raw === "#111" ||
+    raw === "#111111" ||
+    raw === "#000" ||
+    raw === "#000000" ||
+    raw === "black";
+  if (dark && isDefaultDark) return HATCH_INK_DARK_SCREEN;
+  if (!raw) return HATCH_INK_PAPER;
+  return String(color).trim();
+}
+
 /**
  * Clip an infinite line (point + direction) to an axis-aligned rect.
  * @returns {{x1:number,y1:number,x2:number,y2:number}|null}

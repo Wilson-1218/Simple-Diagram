@@ -11,6 +11,7 @@ import { chainPathFillEdges } from "./path-fill.mjs";
 import { normalizeBoxWhisker } from "./box-whisker.mjs";
 import { normalizeBarChart } from "./bar-chart.mjs";
 import { normalizeFillPattern } from "./hatch.mjs";
+import { normalizeLengthSide } from "./length-mark.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -275,7 +276,8 @@ const HANDLERS = {
     requirePoint(doc, op.vertex, "addAngleArc");
     requirePoint(doc, op.arm1, "addAngleArc");
     requirePoint(doc, op.arm2, "addAngleArc");
-    doc.angleArcs.push({
+    /** @type {{ id: string, vertex: string, arm1: string, arm2: string, size: number, group: number, text: string, reflex: boolean, textRadiusOffset?: number, textOx?: number, textOy?: number }} */
+    const row = {
       id,
       vertex: op.vertex,
       arm1: op.arm1,
@@ -284,7 +286,17 @@ const HANDLERS = {
       group: op.group ? 1 : 0,
       text: op.text != null ? String(op.text) : "",
       reflex: !!op.reflex,
-    });
+    };
+    if (op.textRadiusOffset != null && Number.isFinite(Number(op.textRadiusOffset))) {
+      row.textRadiusOffset = Number(op.textRadiusOffset);
+    }
+    if (op.textOx != null && Number.isFinite(Number(op.textOx))) {
+      row.textOx = Number(op.textOx);
+    }
+    if (op.textOy != null && Number.isFinite(Number(op.textOy))) {
+      row.textOy = Number(op.textOy);
+    }
+    doc.angleArcs.push(row);
     return doc;
   },
 
@@ -368,12 +380,15 @@ const HANDLERS = {
       op.stroke === "solid" || op.stroke === "dashed" || op.stroke === "dotted"
         ? op.stroke
         : "dotted";
+    const seg = doc.segments.find((s) => s.id === op.segmentId);
+    const pa = seg ? pointById(doc, seg.a) : null;
+    const pb = seg ? pointById(doc, seg.b) : null;
     /** @type {{ id: string, segmentId: string, text: string, side: 1|-1, style: string, orient: string, stroke?: string, size?: number }} */
     const row = {
       id,
       segmentId: op.segmentId,
       text: op.text != null ? String(op.text) : "",
-      side: op.side === -1 ? -1 : 1,
+      side: normalizeLengthSide(op.side, pa, pb),
       style,
       orient,
     };
@@ -814,7 +829,12 @@ const HANDLERS = {
     return doc;
   },
 
-  /** Tangent segment at a circle point; halfLen = half of total length. */
+  /**
+   * Tangent segment at a circle point; halfLen = half of total length.
+   * Endpoint order (default leftToRight): aId = left (smaller x), bId = right;
+   * if nearly vertical (|Δx|≤1e-3), aId = above (smaller y). order:"ccw" keeps
+   * geometric tangent direction (−sin θ, cos θ) from a→b without spatial swap.
+   */
   addTangent(doc, op, nextId) {
     const geom = circleGeom(doc, op.circleId, "addTangent");
     const ang = resolveCircleAngle(doc, geom, op, "addTangent");
@@ -830,20 +850,26 @@ const HANDLERS = {
     if (!(half > 1e-6)) throw new Error("addTangent: halfLen/length must be > 0");
     const tx = -Math.sin(ang);
     const ty = Math.cos(ang);
-    const a = pushPoint(
-      doc,
-      nextId,
-      touch.x - half * tx,
-      touch.y - half * ty,
-      op.aId
-    );
-    const b = pushPoint(
-      doc,
-      nextId,
-      touch.x + half * tx,
-      touch.y + half * ty,
-      op.bId
-    );
+    let ax = touch.x - half * tx;
+    let ay = touch.y - half * ty;
+    let bx = touch.x + half * tx;
+    let by = touch.y + half * ty;
+    const order = String(op.order || "leftToRight").trim().toLowerCase();
+    if (order !== "ccw") {
+      // leftToRight (default): smaller x → aId; nearly vertical → smaller y → aId
+      const swap =
+        Math.abs(ax - bx) > 1e-3 ? ax > bx : ay > by;
+      if (swap) {
+        const tx0 = ax;
+        const ty0 = ay;
+        ax = bx;
+        ay = by;
+        bx = tx0;
+        by = ty0;
+      }
+    }
+    const a = pushPoint(doc, nextId, ax, ay, op.aId);
+    const b = pushPoint(doc, nextId, bx, by, op.bId);
     pushSegment(doc, nextId, a.id, b.id, op.style, op.id);
     return doc;
   },

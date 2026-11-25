@@ -23,7 +23,7 @@
   --font-math: "STIX Two Text", "Times New Roman", "Noto Serif TC", serif;
   /* Tool rail: default 3 columns; user can drag-resize (2-col when narrow) */
   --rail-cols: 3;
-  --rail-width: calc(156px * var(--tb, 1.2));
+  --rail-width: calc(166px * var(--tb, 1.2));
   --canvas-paper: #ffffff;
   --canvas-ink: #111111;
   --canvas-grid: rgba(0, 0, 0, 0.08);

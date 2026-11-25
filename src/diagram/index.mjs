@@ -26,6 +26,7 @@ export {
   normalizeLengthStyle,
   normalizeLengthOrient,
   normalizeLengthStroke,
+  normalizeLengthSide,
   lengthStrokeDash,
   readableEdgeAngle,
   lengthOffsetFrame,
@@ -73,6 +74,9 @@ export {
 } from "./bar-chart.mjs";
 export {
   normalizeFillPattern,
+  hatchInkForDisplay,
+  HATCH_INK_PAPER,
+  HATCH_INK_DARK_SCREEN,
   hatchStrokesInRect,
   hatchStrokesForPolygon,
   svgHatchInRect,

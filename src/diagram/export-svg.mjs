@@ -34,7 +34,7 @@ import {
   barChartParts,
   addBarChartBounds,
 } from "./bar-chart.mjs";
-import { normalizeFillPattern, hatchStrokesForPolygon } from "./hatch.mjs";
+import { normalizeFillPattern, hatchStrokesForPolygon, HATCH_INK_PAPER } from "./hatch.mjs";
 import { addCoordPlotBounds, svgCoordPlot } from "./coord-plot.mjs";
 
 /** Exam-figure default embed frame (Paper). */
@@ -386,7 +386,9 @@ function svgLengthLabel(ll, doc, pts, toS, ink) {
   const common =
     `transform="${tf}" text-anchor="middle" dominant-baseline="middle" ` +
     `font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx.toFixed(1)}"`;
-  out += `<text ${common} fill="#111">${escapeXml(ll.text || "")}</text>\n`;
+  const halo = Math.max(ink.mm(0.35), fontPx * 0.28);
+  // White-paper halo (stroke under fill via paint-order)
+  out += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(ll.text || "")}</text>\n`;
   return out;
 }
 
@@ -433,7 +435,7 @@ export function documentToSvg(doc, opts = {}) {
       const clipId = `hatchclip${hatchClipSeq++}`;
       const spacing = Math.max(2, Number(f.hatchSpacing) || 8) * scale;
       const strokes = hatchStrokesForPolygon(screenPts, { spacing });
-      const strokeCol = String(f.color || "#111");
+      const strokeCol = String(f.color || HATCH_INK_PAPER);
       body += `<clipPath id="${clipId}"><path d="${d}" /></clipPath>\n`;
       body += `<g clip-path="url(#${clipId})">\n`;
       for (const s of strokes) {
@@ -847,10 +849,24 @@ export function documentToSvg(doc, opts = {}) {
       if (aa.text) {
         const mid = t0 + delta / 2;
         const fs = ink.fontForSize(13);
-        const tr = angleLabelRadius(rad, fs);
-        const tx = sv.x + Math.cos(mid) * tr;
-        const ty = sv.y + Math.sin(mid) * tr;
-        body += `<text x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" fill="#111" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(aa.text)}</text>\n`;
+        let tr = angleLabelRadius(rad, fs);
+        if (aa.textRadiusOffset != null && Number.isFinite(Number(aa.textRadiusOffset))) {
+          tr += Number(aa.textRadiusOffset) * scale;
+        }
+        const ox =
+          aa.textOx != null && Number.isFinite(Number(aa.textOx))
+            ? Number(aa.textOx) * scale
+            : 0;
+        const oy =
+          aa.textOy != null && Number.isFinite(Number(aa.textOy))
+            ? Number(aa.textOy) * scale
+            : 0;
+        const tx = sv.x + Math.cos(mid) * tr + ox;
+        const ty = sv.y + Math.sin(mid) * tr + oy;
+        const halo = Math.max(ink.mm(0.35), fs * 0.28);
+        const common =
+          `x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
+        body += `<text ${common} fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(aa.text)}</text>\n`;
       }
     }
     for (const pm of doc.parallelMarks || []) {
