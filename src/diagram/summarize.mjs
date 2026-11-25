@@ -79,6 +79,18 @@ export const OP_CATALOG = {
     args: "pointId, segmentId | a+b, footId?, drawSegment?, style?, label?, marker?",
     note: "orthogonal projection onto line; marker foot; altitude segment by default",
   },
+  addMidpoint: {
+    args: "a+b | segmentId, id?, markEqual?, equalGroup?, marker?, style?",
+    note: "midpoint; markEqual creates/marks subsegments (a,M)+(M,b) with equal marks",
+  },
+  addRatioPoint: {
+    args: "a+b | segmentId, id?, t? | m+n, marker?",
+    note: "P=A+t(B−A); or P=(nA+mB)/(m+n); t wins over m:n; default t=0.5",
+  },
+  addIntersection: {
+    args: "of1, of2, id?, id2?, extendLines?, avoidPointId?, nearPointId?, pick?, marker?",
+    note: "of = segment|circle id or {type:line,a,b}; line×line|line×circle|circle×circle; no throw if missing",
+  },
   addCircle: { args: "centerId, throughId, style?" },
   addEllipse: { args: "centerId, rxId, ryId, style?, backDashed?" },
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },
