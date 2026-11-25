@@ -254,9 +254,9 @@
       <li><code>rightTri</code>：直角在 <code>(x,y)</code>，水平腿 <code>w</code>、向下腿 <code>h</code></li>
       <li><code>circle</code>：心 <code>(x,y)</code>，半徑點 <code>(x+w,y)</code></li>
       <li>別名：<code>prism</code>→<code>rectPrism</code>；<code>right</code>/<code>rightTriangle</code>→<code>rightTri</code></li>
-      <li><strong>立體</strong>會自動建立頂點標籤，並用虛線表示隱藏邊。多個立體／點 id 衝突時，用 <code>idPrefix</code> 區隔，或設 <code>labels:false</code>（／不傳 <code>label</code>）避免重複字母標籤。</li>
+      <li><strong>立體</strong>會自動建立頂點標籤（A…），並用虛線表示隱藏邊。省略 <code>label</code>／<code>labels</code> 時仍標字母。<code>idPrefix</code>（如 <code>"K"</code>）把頂點 id 改成 <code>K0</code>…、線段 id 改成 <code>Ks0</code>…（與平面形相同）。<code>labels:false</code> 或 <code>label:false</code> 略過頂點字母（兩者任一為 false 即略過）。</li>
     </ul>
-    <p class="note"><span class="en">Solids auto-create vertex labels + hidden (dashed) edges. Multi-shape / id clash → use <code>idPrefix</code> or <code>labels:false</code>.</span></p>
+    <p class="note"><span class="en">Solids auto-create vertex letters + hidden (dashed) edges. <code>idPrefix</code> prefixes vertex ids (<code>K0</code>…) and segment ids (<code>Ks0</code>…), same as plane shapes. <code>labels:false</code> or <code>label:false</code> skips those letters.</span></p>
 
     <h2>10. 座標圖 / Coordinate plots ★</h2>
     <p><strong>When</strong>：畫函數／圓／三角曲線。先 <code>addCoordPlot</code>，再可 <code>addCurve</code> 追加。<br />
@@ -468,7 +468,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.38 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.39 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>
