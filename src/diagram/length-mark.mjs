@@ -29,6 +29,36 @@ export function normalizeLengthStroke(s) {
   return "dotted";
 }
 
+/**
+ * Length-label side: keep ±1, or map world-space "above"|"below"|"left"|"right"
+ * onto ±1 using a→b normal (−dy, dx). side +1 follows that normal.
+ * @param {unknown} side
+ * @param {{ x: number, y: number }} [a]
+ * @param {{ x: number, y: number }} [b]
+ * @returns {1|-1}
+ */
+export function normalizeLengthSide(side, a, b) {
+  if (side === -1 || side === "-1") return -1;
+  if (side === 1 || side === "1" || side == null || side === "") return 1;
+  const key = String(side).trim().toLowerCase();
+  if (key !== "above" && key !== "below" && key !== "left" && key !== "right") {
+    return 1;
+  }
+  if (!a || !b || !Number.isFinite(a.x) || !Number.isFinite(b.x)) return 1;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  // side +1 normal (y-down world)
+  const nx = -dy;
+  const ny = dx;
+  let wx = 0;
+  let wy = 0;
+  if (key === "above") wy = -1;
+  else if (key === "below") wy = 1;
+  else if (key === "left") wx = -1;
+  else wx = 1;
+  return nx * wx + ny * wy >= 0 ? 1 : -1;
+}
+
 /** Canvas / SVG dash array for length arc stroke (screen px). */
 export function lengthStrokeDash(stroke, scale = 1) {
   const st = normalizeLengthStroke(stroke);
