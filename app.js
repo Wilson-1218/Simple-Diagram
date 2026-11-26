@@ -687,7 +687,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.52",
+      title_doc: "Simple Diagram · v13.5.53",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1040,7 +1040,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.52",
+      title_doc: "Simple Diagram · v13.5.53",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -6328,7 +6328,13 @@
     const [min, q1, median, q3, max] = nums;
     if (!(min <= q1 && q1 <= median && median <= q3 && q3 <= max)) return null;
     const boxHeight = Math.max(4, Number(raw.boxHeight) || 36);
-    const cap = Math.max(2, Number.isFinite(Number(raw.cap)) ? Number(raw.cap) : boxHeight * 0.35);
+    const cap = (function capHalf(rawCap, capHeight, boxH) {
+      if (capHeight != null && capHeight !== "" && Number.isFinite(Number(capHeight))) {
+        return Math.max(0.5, Number(capHeight) / 2);
+      }
+      if (rawCap != null && rawCap !== "" && Number.isFinite(Number(rawCap))) return Math.max(2, Number(rawCap));
+      return Math.max(0.5, (0.55 * boxH) / 2);
+    })(raw.cap, raw.capHeight, boxHeight);
     const outliers = Array.isArray(raw.outliers)
       ? raw.outliers.map(Number).filter((n) => Number.isFinite(n))
       : [];
@@ -6408,6 +6414,13 @@
   }
 
   function boxWhiskerGeomParts(bw) {
+    if (diagramMod && typeof diagramMod.normalizeBoxWhisker === "function" && typeof diagramMod.boxWhiskerParts === "function") {
+      try {
+        return diagramMod.boxWhiskerParts(diagramMod.normalizeBoxWhisker(bw, { requireId: false }));
+      } catch (_) {
+        /* local mirror below */
+      }
+    }
     const h = bw.boxHeight;
     const half = h / 2;
     const cap = bw.cap;
@@ -6608,7 +6621,13 @@
     strokeLine(parts.median);
     for (const s of parts.whiskers) strokeLine(s);
     for (const s of parts.caps) strokeLine(s);
+    if (parts.guides) {
+      c.setLineDash([5, 4]);
+      for (const s of parts.guides) strokeLine(s);
+      c.setLineDash([]);
+    }
     if (parts.axis) strokeLine(parts.axis);
+    if (parts.arrows) for (const s of parts.arrows) strokeLine(s);
     for (const s of parts.tickMarks) strokeLine(s);
     /* ~+2px vs prior floor 11 — closer to BarChart axis tick visual size */
     const fontPx = Math.max(13, lw * 8);
@@ -6842,7 +6861,8 @@
       const b = worldToScreen(s.x2, s.y2);
       c.beginPath();
       c.strokeStyle = screenInk(s.color);
-      c.setLineDash(s.dash ? [4, 3] : []);
+      c.lineWidth = s.grid ? LINE_WIDTH * 0.42 : LINE_WIDTH;
+      c.setLineDash(s.dash ? (s.grid ? [2, 2] : [4, 3]) : []);
       c.moveTo(a.x, a.y);
       c.lineTo(b.x, b.y);
       c.stroke();
@@ -6918,10 +6938,12 @@
   function svgBarChart(bc, toS, scale) {
     if (bc && (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots")) {
       if (diagramMod && typeof diagramMod.svgStatChart === "function") {
-        const ink = { dash: () => [4, 3] };
-        return diagramMod.svgStatChart(bc, toS, ink, LINE_WIDTH * scale * 0.75, (s) =>
-          String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-        );
+        const ink = {
+          dash: () => [4, 3],
+          stroke: LINE_WIDTH * scale * 0.75,
+          scale,
+        };
+        return diagramMod.svgStatChart(bc, toS, ink);
       }
       return "";
     }
@@ -6988,7 +7010,13 @@
     out += line(parts.median);
     for (const s of parts.whiskers) out += line(s);
     for (const s of parts.caps) out += line(s);
+    for (const s of parts.guides || []) {
+      const a = toS(s.x1, s.y1), b = toS(s.x2, s.y2);
+      const da = ` stroke-dasharray="${(4 * scale * 0.75).toFixed(2)} ${(3 * scale * 0.75).toFixed(2)}"`;
+      out += `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" stroke-linecap="butt"${da} />\n`;
+    }
     if (parts.axis) out += line(parts.axis);
+    for (const s of parts.arrows || []) out += line(s);
     for (const s of parts.tickMarks) out += line(s);
     const fontPx = (Math.max(13, LINE_WIDTH * 8) * scale * 0.75).toFixed(1);
     const halo = Math.max(3.5, Number(fontPx) * 0.28).toFixed(2);
@@ -13271,7 +13299,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.52",
+      version: "13.5.53",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

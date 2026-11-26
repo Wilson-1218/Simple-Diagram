@@ -214,6 +214,19 @@ function hexToRgba(hex, opacity) {
  * with preserveAspectRatio (uniform scale = min of both axes).
  * Ink uu = physicalMm × uuPerMm.
  */
+/**
+ * When the world span is large, default 14px type and the default right-angle
+ * mark (size 10) grow by max(1, max(worldW, worldH) / 340). Spans of 420 or
+ * less stay at 1. Explicit sizes are not passed through this helper.
+ * @param {number} worldW
+ * @param {number} worldH
+ */
+export function readableInkScale(worldW, worldH) {
+  const span = Math.max(Number(worldW) || 0, Number(worldH) || 0);
+  if (!(span > 420)) return 1;
+  return Math.max(1, span / 340);
+}
+
 export function inkUserUnitsPerMm(viewW, viewH, frameWmm, frameHmm) {
   const fw = Math.max(1e-6, Number(frameWmm) || DEFAULT_FRAME_WIDTH_MM);
   const fh = Math.max(1e-6, Number(frameHmm) || DEFAULT_FRAME_HEIGHT_MM);
@@ -476,8 +489,12 @@ export function documentToSvg(doc, opts = {}) {
   const hidePoints =
     opts.hidePoints != null ? !!opts.hidePoints : doc.hideExportPoints !== false;
   const b = boundsOf(doc, pad / scale);
-  const w = Math.max(40, (b.maxX - b.minX) * scale);
-  const h = Math.max(40, (b.maxY - b.minY) * scale);
+  const worldW = b.maxX - b.minX;
+  const worldH = b.maxY - b.minY;
+  const readScale = readableInkScale(worldW, worldH);
+  const defaultFont = 14 * readScale;
+  const w = Math.max(40, worldW * scale);
+  const h = Math.max(40, worldH * scale);
   const toS = (x, y) => ({
     x: (x - b.minX) * scale,
     y: (y - b.minY) * scale,
@@ -732,18 +749,27 @@ export function documentToSvg(doc, opts = {}) {
     const sc = toS(c.x, c.y);
     const rx = Math.abs(rxP.x - c.x) * scale;
     const ry = Math.abs(ryP.y - c.y) * scale;
-    if (el.backDashed && (el.style === "solid" || !el.style)) {
+    const style = el.style === "dashed" || el.style === "dotted" || el.style === "dashdot" ? el.style : "solid";
+    const splitRim = !!el.backDashed && style === "solid";
+    const xR = (sc.x + rx).toFixed(2);
+    const xL = (sc.x - rx).toFixed(2);
+    const yMid = sc.y.toFixed(2);
+    const rxA = rx.toFixed(2);
+    const ryA = ry.toFixed(2);
+    if (splitRim) {
       // Front = lower half (solid); back = upper half (dashed). Canvas y grows down.
-      const xR = (sc.x + rx).toFixed(2);
-      const xL = (sc.x - rx).toFixed(2);
-      const yMid = sc.y.toFixed(2);
-      const rxA = rx.toFixed(2);
-      const ryA = ry.toFixed(2);
       const dash = ink.dash("dashed").map((d) => d.toFixed(2)).join(" ");
       body += `<path d="M${xR},${yMid} A${rxA},${ryA} 0 0 1 ${xL},${yMid}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}" stroke-linecap="round"${svgDataAttrs(el)} />\n`;
       body += `<path d="M${xL},${yMid} A${rxA},${ryA} 0 0 1 ${xR},${yMid}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}" stroke-linecap="butt" stroke-dasharray="${dash}"${svgDataAttrs(el)} />\n`;
     } else {
-      body += `<ellipse cx="${sc.x.toFixed(2)}" cy="${sc.y.toFixed(2)}" rx="${rx.toFixed(2)}" ry="${ry.toFixed(2)}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}"${svgDataAttrs(el)} />\n`;
+      // style solid | dashed | dotted strokes the whole ring (front and back).
+      const dash = ink.dash(style);
+      const da = dash.length
+        ? ` stroke-dasharray="${dash.map((d) => d.toFixed(2)).join(" ")}"`
+        : "";
+      const cap = style === "solid" ? "round" : "butt";
+      body += `<path d="M${xR},${yMid} A${rxA},${ryA} 0 0 1 ${xL},${yMid}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}" stroke-linecap="${cap}"${da}${svgDataAttrs(el)} />\n`;
+      body += `<path d="M${xL},${yMid} A${rxA},${ryA} 0 0 1 ${xR},${yMid}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}" stroke-linecap="${cap}"${da}${svgDataAttrs(el)} />\n`;
     }
   }
 
@@ -784,10 +810,17 @@ export function documentToSvg(doc, opts = {}) {
     body += line(parts.median);
     for (const s of parts.whiskers) body += line(s);
     for (const s of parts.caps) body += line(s);
+    const guideDash = ink.dash("dashed").map((d) => d.toFixed(2)).join(" ");
+    for (const s of parts.guides || []) {
+      const a = toS(s.x1, s.y1);
+      const b = toS(s.x2, s.y2);
+      body += `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${sw}" stroke-linecap="butt" stroke-dasharray="${guideDash}" />\n`;
+    }
     if (parts.axis) body += line(parts.axis);
+    for (const s of parts.arrows || []) body += line(s);
     for (const s of parts.tickMarks) body += line(s);
     /* Match BarChart tick size (14) + white paper halo */
-    const tickFs = ink.fontForSize(14);
+    const tickFs = ink.fontForSize(defaultFont);
     const tickHalo = Math.max(3.5, ink.mm(0.35), tickFs * 0.28);
     const tickFam =
       'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
@@ -821,7 +854,7 @@ export function documentToSvg(doc, opts = {}) {
     if (!shown(raw)) continue;
     if (raw && (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots")) {
       try {
-        body += svgStatChart(raw, toS, { stroke: ink.stroke, layers });
+        body += svgStatChart(raw, toS, { stroke: ink.stroke, layers, scale });
       } catch {
         /* skip corrupt */
       }
@@ -860,7 +893,7 @@ export function documentToSvg(doc, opts = {}) {
       body += line(parts.axisY, false);
     }
     for (const s of parts.tickMarks) body += line(s, false);
-    const fs = ink.fontForSize(14);
+    const fs = ink.fontForSize(defaultFont);
     const fam =
       'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
     for (const t of parts.tickLabels) {
@@ -897,7 +930,7 @@ export function documentToSvg(doc, opts = {}) {
     const plot = curves.length === (cp.curves || []).length ? cp : { ...cp, curves };
     body += svgCoordPlot(plot, toS, {
       stroke: ink.stroke,
-      fontPx: ink.fontForSize(14),
+      fontPx: ink.fontForSize(defaultFont),
       markStroke: ink.markStroke,
     });
   }
@@ -916,7 +949,8 @@ export function documentToSvg(doc, opts = {}) {
       const mode3d = ra.mode === "3d" || ra.skew === true;
       if (mode3d) {
         // World-unit parallelogram along the two arms (not the paper-mm square).
-        const size = ra.size != null && Number.isFinite(Number(ra.size)) ? Number(ra.size) : 10;
+        const size =
+          ra.size != null && Number.isFinite(Number(ra.size)) ? Number(ra.size) : 10 * readScale;
         let u1x = a1.x - v.x;
         let u1y = a1.y - v.y;
         let u2x = a2.x - v.x;
@@ -949,7 +983,8 @@ export function documentToSvg(doc, opts = {}) {
         dx2 /= n2;
         dy2 /= n2;
         // size 10 → ~2.6mm on paper; scales with attribute.
-        const sizeAttr = ra.size != null ? Number(ra.size) : 10;
+        const sizeAttr =
+          ra.size != null && Number.isFinite(Number(ra.size)) ? Number(ra.size) : 10 * readScale;
         const sizeUu = ink.mm(Math.max(2.2, (sizeAttr / 10) * 2.6));
         p1 = { x: sv.x + dx1 * sizeUu, y: sv.y + dy1 * sizeUu };
         p2 = {

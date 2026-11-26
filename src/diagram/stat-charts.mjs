@@ -358,7 +358,7 @@ function normalizeDots(chart, raw) {
   chart.patterns = raw.patterns;
   chart.dotGap = num(raw.dotGap, 16);
   chart.patternGap = num(raw.patternGap, 64);
-  chart.dotRadius = num(raw.dotRadius, 3.5);
+  chart.dotRadius = num(raw.dotRadius, 4.5);
   chart.showArrows = raw.showArrows != null ? !!raw.showArrows : true;
   chart.labels = Array.isArray(raw.labels) ? raw.labels.map((s) => (s == null ? "" : String(s))) : [];
   return chart;
@@ -396,6 +396,7 @@ function axisChrome(chart, parts) {
         x2: chart.x + chart.plotW,
         y2: wy,
         dash: true,
+        grid: true,
         color: "#111111",
       });
     }
@@ -516,6 +517,32 @@ function invertOgive(chart, yValue) {
   return pts[pts.length - 1].u;
 }
 
+function yTickAt(chart, yValue) {
+  const y = Number(yValue);
+  if (!Number.isFinite(y)) return null;
+  const tol = 1e-4 * Math.max(1, Math.abs(y));
+  for (const t of chart.yTicks || []) {
+    if (Math.abs(t - y) <= tol) return t;
+  }
+  return null;
+}
+
+/** Solution projection that lands on a tick recolors that tick instead of stacking a second number. */
+function recolorYTick(parts, chart, tick, look) {
+  const wy = mapY(chart, tick);
+  const label = String(tick);
+  for (const t of parts.texts) {
+    if (t.anchor !== "end" || t.baseline !== "middle") continue;
+    if (Math.abs(t.y - wy) > 0.51) continue;
+    if (String(t.text) !== label) continue;
+    t.color = SOLUTION_INK;
+    t.role = "solution";
+    if (look.solutionStep != null) t.solutionStep = look.solutionStep;
+    if (chart.id) t.id = chart.id;
+    return;
+  }
+}
+
 function ogiveParts(chart) {
   const parts = emptyParts(chart);
   axisChrome(chart, parts);
@@ -571,17 +598,25 @@ function ogiveParts(chart) {
       solutionStep: look.solutionStep,
     });
     if (proj.yLabel) {
-      parts.texts.push({
-        x: chart.x - 8,
-        y: cy,
-        text: proj.yLabel,
-        anchor: "end",
-        baseline: "middle",
-        color,
-        id: chart.id,
-        role: look.role,
-        solutionStep: look.solutionStep,
-      });
+      const tick = yTickAt(chart, proj.y);
+      if (tick != null) {
+        if (proj.role === "solution") recolorYTick(parts, chart, tick, look);
+      } else {
+        parts.texts.push({
+          x: chart.x - 8,
+          y: cy,
+          text: proj.yLabel,
+          anchor: "end",
+          baseline: "middle",
+          color,
+          id: chart.id,
+          role: look.role,
+          solutionStep: look.solutionStep,
+        });
+      }
+    } else if (proj.role === "solution") {
+      const tick = yTickAt(chart, proj.y);
+      if (tick != null) recolorYTick(parts, chart, tick, look);
     }
     if (proj.xLabel) {
       parts.texts.push({
@@ -677,20 +712,69 @@ function clusterOf(dots, gap) {
   };
 }
 
-function dotParts(chart) {
-  const parts = emptyParts(chart);
+function placeDotStages(chart) {
   const gap = chart.dotGap;
-  let cursor = chart.x;
   const clusters = chart.patterns.map((pattern) => patternDots(pattern));
-  clusters.forEach((dots, index) => {
+  let cursor = chart.x;
+  const stages = [];
+  for (let index = 0; index < clusters.length; index++) {
+    const dots = clusters[index];
     const box = clusterOf(dots, gap);
     const originX = cursor - box.minC * gap;
     const originY = chart.y - box.minR * gap;
     let maxX = cursor;
-    let midYs = [];
+    let minY = Infinity;
+    let maxY = -Infinity;
+    const placed = [];
     for (const d of dots) {
       const x = originX + d.col * gap;
       const y = originY + d.row * gap;
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+      placed.push({ ...d, x, y });
+    }
+    const right = Math.max(maxX, cursor);
+    stages.push({
+      index,
+      dots: placed,
+      box,
+      originX,
+      originY,
+      right,
+      minY: placed.length ? minY : chart.y,
+      maxY: placed.length ? maxY : chart.y,
+    });
+    cursor = right + chart.patternGap;
+  }
+  let midY = chart.y;
+  let bestH = -1;
+  for (const stage of stages) {
+    if (!stage.dots.length) continue;
+    const h = stage.maxY - stage.minY;
+    if (h >= bestH) {
+      bestH = h;
+      midY = (stage.minY + stage.maxY) / 2;
+    }
+  }
+  return { stages, midY };
+}
+
+function pushArrow(parts, x1, tip, y) {
+  const end = Math.max(x1 + 12, tip);
+  parts.lines.push({ x1, y1: y, x2: end, y2: y, color: "#111111" });
+  parts.lines.push({ x1: end, y1: y, x2: end - 7, y2: y - 4, color: "#111111" });
+  parts.lines.push({ x1: end, y1: y, x2: end - 7, y2: y + 4, color: "#111111" });
+}
+
+function dotParts(chart) {
+  const parts = emptyParts(chart);
+  const gap = chart.dotGap;
+  const { stages, midY } = placeDotStages(chart);
+  const lastContent = stages.reduce((acc, stage) => (stage.dots.length ? stage.index : acc), -1);
+  stages.forEach((stage) => {
+    const { dots, box, originX, originY, right, index } = stage;
+    for (const d of dots) {
       const solution = d.role === "solution" || chart.role === "solution";
       const look = {
         role: solution ? "solution" : undefined,
@@ -698,21 +782,17 @@ function dotParts(chart) {
         solutionStep: chart.solutionStep,
       };
       parts.dots.push({
-        x,
-        y,
+        x: d.x,
+        y: d.y,
         r: chart.dotRadius,
         color: inkOf(look, "#111111"),
         role: look.role,
         solutionStep: chart.solutionStep,
       });
-      maxX = Math.max(maxX, x);
-      midYs.push(y);
     }
     const label = chart.labels[index];
     if (label) {
-      const lx = dots.length
-        ? originX + ((box.minC + box.maxC) / 2) * gap
-        : cursor;
+      const lx = dots.length ? originX + ((box.minC + box.maxC) / 2) * gap : chart.x;
       const ly = (dots.length ? originY + box.maxR * gap : chart.y) + gap + 8;
       parts.texts.push({
         x: lx,
@@ -722,27 +802,21 @@ function dotParts(chart) {
         baseline: "hanging",
       });
     }
-    const right = Math.max(maxX, cursor);
-    const next = clusters[index + 1];
-    if (chart.showArrows && next) {
-      const nextBox = clusterOf(next, gap);
-      const yMid = midYs.length ? midYs.reduce((s, v) => s + v, 0) / midYs.length : chart.y;
+    const next = stages[index + 1];
+    const nextHasDots = !!(next && next.dots.length);
+    if (chart.showArrows && nextHasDots && index !== lastContent) {
       const x1 = right + 10;
-      const x2 = right + chart.patternGap - nextBox.w - 16;
-      const tip = Math.max(x1 + 12, x2);
-      parts.lines.push({ x1, y1: yMid, x2: tip, y2: yMid, color: "#111111" });
-      parts.lines.push({ x1: tip, y1: yMid, x2: tip - 7, y2: yMid - 4, color: "#111111" });
-      parts.lines.push({ x1: tip, y1: yMid, x2: tip - 7, y2: yMid + 4, color: "#111111" });
+      const x2 = right + chart.patternGap - next.box.w - 16;
+      pushArrow(parts, x1, x2, midY);
     }
-    cursor = right + chart.patternGap;
-    if (chart.showArrows && index === clusters.length - 1) {
-      const yMid = midYs.length ? midYs.reduce((s, v) => s + v, 0) / midYs.length : chart.y;
+    if (chart.showArrows && index === lastContent) {
       for (let k = 0; k < 3; k++) {
         parts.dots.push({
           x: right + 18 + k * 8,
-          y: yMid,
+          y: midY,
           r: 1.6,
           color: "#111111",
+          ellipsis: true,
         });
       }
     }
@@ -802,15 +876,22 @@ export function addStatChartBounds(raw, add) {
 function lineSvg(line, toS, lw) {
   const a = toS(line.x1, line.y1);
   const b = toS(line.x2, line.y2);
-  const dash = line.dash ? ` stroke-dasharray="${(Number(lw) * 4).toFixed(2)} ${(Number(lw) * 2.6).toFixed(2)}"` : "";
+  const axisW = Number(lw);
+  const grid = !!line.grid;
+  const width = grid ? axisW * 0.42 : axisW;
+  const dash = line.dash
+    ? grid
+      ? ` stroke-dasharray="${(width * 1.6).toFixed(2)} ${(width * 1.35).toFixed(2)}"`
+      : ` stroke-dasharray="${(axisW * 4).toFixed(2)} ${(axisW * 2.6).toFixed(2)}"`
+    : "";
   const look = { id: line.id, role: line.role, solutionStep: line.solutionStep };
-  return `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="${escapeXml(line.color || "#111")}" stroke-width="${lw}" stroke-linecap="butt"${dash}${svgDataAttrs(look)} />\n`;
+  return `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="${escapeXml(line.color || "#111")}" stroke-width="${width.toFixed(2)}" stroke-linecap="butt"${dash}${svgDataAttrs(look)} />\n`;
 }
 
 /**
  * @param {object} raw
  * @param {(x:number,y:number)=>{x:number,y:number}} toS
- * @param {{ stroke?: number, fontPx?: number }} [ink]
+ * @param {{ stroke?: number, fontPx?: number, scale?: number }} [ink]
  */
 export function svgStatChart(raw, toS, ink = {}) {
   let parts;
@@ -821,8 +902,10 @@ export function svgStatChart(raw, toS, ink = {}) {
   }
   const layers = ink.layers;
   const keep = (el) => elementShown(el, layers);
+  const exportScale = Number(ink.scale);
+  const s = Number.isFinite(exportScale) && exportScale > 0 ? exportScale : 1;
   const lw = (ink.stroke != null ? ink.stroke : 1.2).toFixed(2);
-  const fontPx = (ink.fontPx != null ? ink.fontPx : 12).toFixed(1);
+  const fontPx = ((ink.fontPx != null ? Number(ink.fontPx) : 12) * s).toFixed(1);
   const fam = 'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
   let body = "";
   const groupLook = { id: parts.id, role: parts.role, solutionStep: parts.solutionStep };
@@ -851,8 +934,9 @@ export function svgStatChart(raw, toS, ink = {}) {
   }
   for (const d of parts.dots) {
     if (!keep(d)) continue;
-    const s = toS(d.x, d.y);
-    body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${Number(d.r).toFixed(2)}" fill="${escapeXml(d.color || "#111")}"${svgDataAttrs(d)} />\n`;
+    const p = toS(d.x, d.y);
+    const rad = Number(d.r) * s;
+    body += `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${rad.toFixed(2)}" fill="${escapeXml(d.color || "#111")}"${svgDataAttrs(d)} />\n`;
   }
   for (const t of parts.texts) {
     if (!keep(t)) continue;

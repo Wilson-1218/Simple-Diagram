@@ -610,50 +610,53 @@ export function applyPieChart(doc, op, nextId, api) {
     }
 
     const sliceSetRatio = row.slice.labelRadiusRatio != null && row.slice.labelRadiusRatio !== "";
+    const pinned = sliceSetRatio || callerSetRatio;
     const hasCategory = typeof row.slice.label === "string" && row.slice.label !== "";
-    const hasAngleText =
-      row.slice.angleText != null && row.slice.angleText !== false && row.slice.angleText !== "";
-    const splitLabel =
-      hasCategory && (hasAngleText || row.slice.rightAngle === true) && !sliceSetRatio && !callerSetRatio;
-    const labelRatio = sliceSetRatio ? Number(row.slice.labelRadiusRatio) : splitLabel ? 0.7 : ratio;
-    const useRatio = Number.isFinite(labelRatio) ? labelRatio : splitLabel ? 0.7 : ratio;
-    if (typeof row.slice.label === "string" && row.slice.label !== "") {
-      const mid = row.a0 + row.sweep / 2;
-        handlers.addText(
+    const angleRaw = sliceAngleField(row.slice);
+    const hasAngleText = angleRaw != null;
+    const splitLabel = hasCategory && (hasAngleText || row.slice.rightAngle === true) && !pinned;
+    const mid = row.a0 + row.sweep / 2;
+    const narrow = Math.abs(row.deg) < 45;
+    let labelRatio = ratio;
+    let align = "center";
+    if (sliceSetRatio) labelRatio = Number(row.slice.labelRadiusRatio);
+    else if (callerSetRatio) labelRatio = ratio;
+    else if (splitLabel && narrow) {
+      labelRatio = 1.16;
+      align = Math.cos(mid) >= 0 ? "left" : "right";
+    } else if (splitLabel) labelRatio = 0.68;
+    const useRatio = Number.isFinite(labelRatio) ? labelRatio : splitLabel ? 0.68 : ratio;
+    if (hasCategory) {
+      handlers.addText(
         doc,
         {
           x: cx + useRatio * r * Math.cos(mid),
           y: cy + useRatio * r * Math.sin(mid),
           text: row.slice.label,
-          align: "center",
+          align,
           ...look,
         },
         nextId
       );
     }
 
-    if (
-      row.startId &&
-      row.endId &&
-      row.startId !== row.endId &&
-      row.slice.angleText != null &&
-      row.slice.angleText !== false &&
-      row.slice.angleText !== ""
-    ) {
-      const text = row.slice.angleText === true ? `${trimDeg(row.deg)}°` : String(row.slice.angleText);
-      handlers.addAngleArc(
-        doc,
-        {
-          vertex: centerId,
-          arm1: row.startId,
-          arm2: row.endId,
-          text,
-          size: pieArcSize(r, op.arcSize),
-          reflex: Math.abs(row.deg) > 180 + 1e-6,
-          ...look,
-        },
-        nextId
-      );
+    if (row.startId && row.endId && row.startId !== row.endId && hasAngleText) {
+      const text = angleRaw === true ? `${trimDeg(row.deg)}°` : String(angleRaw);
+      const arcSize = pieArcSize(r, op.arcSize);
+      const arc = {
+        vertex: centerId,
+        arm1: row.startId,
+        arm2: row.endId,
+        text,
+        size: arcSize,
+        reflex: Math.abs(row.deg) > 180 + 1e-6,
+        ...look,
+      };
+      if (hasCategory && hasAngleText && !pinned) {
+        const textR = Math.max(0.36 * r, arcSize + 12);
+        arc.textRadiusOffset = textR - (arcSize + 11);
+      }
+      handlers.addAngleArc(doc, arc, nextId);
     }
 
     if (row.slice.rightAngle === true && row.startId && row.endId && row.startId !== row.endId) {
@@ -665,6 +668,18 @@ export function applyPieChart(doc, op, nextId, api) {
     }
   }
   return doc;
+}
+
+/** angleText is the stored name. angleLabel is the alias when angleText is omitted. */
+function sliceAngleField(slice) {
+  if (!slice || typeof slice !== "object") return null;
+  if (slice.angleText != null && slice.angleText !== false && slice.angleText !== "") {
+    return slice.angleText;
+  }
+  if (slice.angleLabel != null && slice.angleLabel !== false && slice.angleLabel !== "") {
+    return slice.angleLabel;
+  }
+  return null;
 }
 
 function trimDeg(deg) {

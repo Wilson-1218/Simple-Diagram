@@ -12,8 +12,8 @@ import {
   validateDiagram,
 } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.52", () => {
-  assert.equal(APP_VERSION, "13.5.52");
+test("APP_VERSION is 13.5.53", () => {
+  assert.equal(APP_VERSION, "13.5.53");
   assert.equal(emptyDiagram().layers.solutionShow, true);
 });
 
@@ -71,7 +71,7 @@ test("angle arc default size is 18 and clamps to the shorter arm", () => {
   assert.equal(validateDiagram(narrow).ok, true);
 });
 
-test("pie center arc size and the 0.70 label split", () => {
+test("pie center arc size and the outer label split", () => {
   assert.equal(pieArcSize(95), 16);
   assert.equal(pieArcSize(80), 15);
   assert.equal(pieArcSize(80, 22), 22);
@@ -94,11 +94,11 @@ test("pie center arc size and the 0.70 label split", () => {
   const a2 = pt(doc, arc.arm2);
   const g = arcDraw(arc, v, a1, a2);
   assert.equal(g.effectiveR, 15);
-  assert.ok(Math.abs(g.textR - 26) < 1e-9);
+  assert.ok(Math.abs(g.textR - 0.36 * 80) < 1e-6);
   const q1 = doc.texts.find((t) => t.text === "Q1");
   const mid = Math.PI / 4;
-  assert.ok(Math.abs(q1.x - (200 + 0.7 * 80 * Math.cos(mid))) < 1e-6);
-  assert.ok(Math.abs(q1.y - (220 + 0.7 * 80 * Math.sin(mid))) < 1e-6);
+  assert.ok(Math.abs(q1.x - (200 + 0.68 * 80 * Math.cos(mid))) < 1e-6);
+  assert.ok(Math.abs(q1.y - (220 + 0.68 * 80 * Math.sin(mid))) < 1e-6);
   const rest = doc.texts.find((t) => t.text === "rest");
   assert.ok(Math.abs(Math.hypot(rest.x - 200, rest.y - 220) - 0.62 * 80) < 1e-6);
 });

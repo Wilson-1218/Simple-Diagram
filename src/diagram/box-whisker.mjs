@@ -73,6 +73,52 @@ export function boxWhiskerTickLabel(t) {
  * axisLabel, or the aliases xLabel then yLabel. Blank string means no label.
  * @param {Record<string, unknown>|null|undefined} raw
  */
+/**
+ * Half-length of an end cap (center to tip).
+ * `cap` is that half-length (existing callers).
+ * `capHeight` is the full cap. Omit both → full height 0.55 × boxH.
+ * @param {Record<string, unknown>} raw
+ * @param {number} boxHeight
+ */
+export function resolveCapHalf(raw, boxHeight) {
+  const h = Math.max(4, Number(boxHeight) || 36);
+  if (raw && raw.capHeight != null && raw.capHeight !== "" && Number.isFinite(Number(raw.capHeight))) {
+    return Math.max(0.5, Number(raw.capHeight) / 2);
+  }
+  if (raw && raw.cap != null && raw.cap !== "" && Number.isFinite(Number(raw.cap))) {
+    return Math.max(2, Number(raw.cap));
+  }
+  return Math.max(0.5, (0.55 * h) / 2);
+}
+
+function numberLineEnds(bw) {
+  const ticks = (bw.ticks || []).map(boxWhiskerTickPos).filter((n) => Number.isFinite(n));
+  const data = [bw.min, bw.max, ...(bw.outliers || []), ...ticks].filter((n) => Number.isFinite(n));
+  let lo = Math.min(...data);
+  let hi = Math.max(...data);
+  if (bw.axisMin != null && Number.isFinite(Number(bw.axisMin))) lo = Number(bw.axisMin);
+  if (bw.axisMax != null && Number.isFinite(Number(bw.axisMax))) hi = Number(bw.axisMax);
+  if (!(hi > lo)) hi = lo + Math.max(1, bw.boxHeight || 1);
+  return { lo, hi };
+}
+
+const BOX_ARROW = 8;
+
+function arrowWings(x, y, dx, dy, size = BOX_ARROW) {
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const px = -uy;
+  const py = ux;
+  const bx = x - ux * size;
+  const by = y - uy * size;
+  const half = size * 0.42;
+  return [
+    { x1: x, y1: y, x2: bx + px * half, y2: by + py * half },
+    { x1: x, y1: y, x2: bx - px * half, y2: by - py * half },
+  ];
+}
+
 export function readBoxAxisLabel(raw) {
   if (!raw || typeof raw !== "object") return "";
   for (const key of ["axisLabel", "xLabel", "yLabel"]) {
@@ -113,7 +159,7 @@ export function normalizeBoxWhisker(raw, opts = {}) {
     throw new Error("boxWhisker: require min≤q1≤median≤q3≤max");
   }
   const boxHeight = Math.max(4, num(raw.boxHeight, 36));
-  const cap = Math.max(2, num(raw.cap, boxHeight * 0.35));
+  const cap = resolveCapHalf(raw, boxHeight);
   const outliers = finiteNums(raw.outliers);
   const ticks = normalizeBoxWhiskerTicks(raw.ticks);
   const showAxis =
@@ -135,6 +181,11 @@ export function normalizeBoxWhisker(raw, opts = {}) {
     showAxis,
   };
   if (axisLabel) out.axisLabel = axisLabel;
+  if (raw.axisMin != null && Number.isFinite(Number(raw.axisMin))) out.axisMin = Number(raw.axisMin);
+  if (raw.axisMax != null && Number.isFinite(Number(raw.axisMax))) out.axisMax = Number(raw.axisMax);
+  if (raw.capHeight != null && Number.isFinite(Number(raw.capHeight))) {
+    out.capHeight = Number(raw.capHeight);
+  }
   if (opts.requireId !== false) {
     if (typeof raw.id !== "string" || !raw.id) {
       throw new Error("boxWhisker: id required");
@@ -184,14 +235,15 @@ function attachBoxAxisLabel(bw, axis) {
   const half = h / 2;
   let ax = axis;
   if (!ax) {
+    const ends = numberLineEnds(bw);
     if (bw.orientation === "v") {
       const axisX =
         bw.axisX != null ? bw.axisX : bw.x + half + Math.max(10, h * 0.35);
-      ax = { x1: axisX, y1: bw.min, x2: axisX, y2: bw.max };
+      ax = { x1: axisX, y1: ends.lo, x2: axisX, y2: ends.hi };
     } else {
       const axisY =
         bw.axisY != null ? bw.axisY : bw.y + half + Math.max(10, h * 0.35);
-      ax = { x1: bw.min, y1: axisY, x2: bw.max, y2: axisY };
+      ax = { x1: ends.lo, y1: axisY, x2: ends.hi, y2: axisY };
     }
   }
   if (bw.orientation === "v") {
@@ -200,7 +252,7 @@ function attachBoxAxisLabel(bw, axis) {
       axis: ax,
       axisLabel: {
         x: ax.x1,
-        y: top - 8,
+        y: top - BOX_ARROW - 6,
         text,
         anchor: "middle",
         baseline: "auto",
@@ -210,17 +262,66 @@ function attachBoxAxisLabel(bw, axis) {
   const left = Math.min(ax.x1, ax.x2);
   const right = Math.max(ax.x1, ax.x2);
   const y = ax.y1;
-  const x2 = right + 18;
   return {
-    axis: { x1: left, y1: y, x2, y2: y },
+    axis: { x1: left, y1: y, x2: right, y2: y },
     axisLabel: {
-      x: x2 + 2,
+      x: right + BOX_ARROW + 6,
       y,
       text,
       anchor: "start",
       baseline: "middle",
     },
   };
+}
+
+function decorateHorizontalAxis(bw, axis, box) {
+  if (!axis) return { arrows: [], guides: [] };
+  const yAxis = axis.y1;
+  const lo = Math.min(axis.x1, axis.x2);
+  const hi = Math.max(axis.x1, axis.x2);
+  const arrows = [...arrowWings(lo, yAxis, -1, 0), ...arrowWings(hi, yAxis, 1, 0)];
+  const boxTop = Math.min(box.y, box.y + box.h);
+  const boxBottom = Math.max(box.y, box.y + box.h);
+  const marks = [
+    { x: bw.min, y0: bw.y + bw.cap },
+    { x: bw.q1, y0: boxBottom },
+    { x: bw.median, y0: boxBottom },
+    { x: bw.q3, y0: boxBottom },
+    { x: bw.max, y0: bw.y + bw.cap },
+  ];
+  const guides = [];
+  for (const m of marks) {
+    const y1 = Math.max(m.y0, boxTop);
+    if (yAxis > y1 + 0.5) guides.push({ x1: m.x, y1, x2: m.x, y2: yAxis, dash: true });
+  }
+  return { arrows, guides };
+}
+
+function decorateVerticalAxis(bw, axis, box) {
+  if (!axis) return { arrows: [], guides: [] };
+  const xAxis = axis.x1;
+  const lo = Math.min(axis.y1, axis.y2);
+  const hi = Math.max(axis.y1, axis.y2);
+  const arrows = [...arrowWings(xAxis, lo, 0, -1), ...arrowWings(xAxis, hi, 0, 1)];
+  const boxLeft = Math.min(box.x, box.x + box.w);
+  const boxRight = Math.max(box.x, box.x + box.w);
+  const towardRight = xAxis >= (boxLeft + boxRight) / 2;
+  const marks = [
+    { y: bw.min, x0: towardRight ? bw.x + bw.cap : bw.x - bw.cap },
+    { y: bw.q1, x0: towardRight ? boxRight : boxLeft },
+    { y: bw.median, x0: towardRight ? boxRight : boxLeft },
+    { y: bw.q3, x0: towardRight ? boxRight : boxLeft },
+    { y: bw.max, x0: towardRight ? bw.x + bw.cap : bw.x - bw.cap },
+  ];
+  const guides = [];
+  for (const m of marks) {
+    if (towardRight && xAxis > m.x0 + 0.5 && m.x0 >= boxLeft - 1e-6) {
+      guides.push({ x1: m.x0, y1: m.y, x2: xAxis, y2: m.y, dash: true });
+    } else if (!towardRight && m.x0 > xAxis + 0.5 && m.x0 <= boxRight + 1e-6) {
+      guides.push({ x1: m.x0, y1: m.y, x2: xAxis, y2: m.y, dash: true });
+    }
+  }
+  return { arrows, guides };
 }
 
 export function boxWhiskerParts(bw) {
@@ -254,11 +355,8 @@ export function boxWhiskerParts(bw) {
     if (bw.showAxis && bw.ticks.length) {
       const axisX =
         bw.axisX != null ? bw.axisX : x + half + Math.max(10, h * 0.35);
-      const ys = bw.ticks
-        .map(boxWhiskerTickPos)
-        .filter((n) => Number.isFinite(n))
-        .sort((a, b) => a - b);
-      axis = { x1: axisX, y1: ys[0], x2: axisX, y2: ys[ys.length - 1] };
+      const ends = numberLineEnds(bw);
+      axis = { x1: axisX, y1: ends.lo, x2: axisX, y2: ends.hi };
       for (const t of bw.ticks) {
         const ty = boxWhiskerTickPos(t);
         if (!Number.isFinite(ty)) continue;
@@ -282,6 +380,7 @@ export function boxWhiskerParts(bw) {
       }
     }
     const labeled = attachBoxAxisLabel(bw, axis);
+    const deco = decorateVerticalAxis(bw, labeled.axis, box);
     return {
       box,
       median,
@@ -292,6 +391,8 @@ export function boxWhiskerParts(bw) {
       tickMarks,
       tickLabels,
       axisLabel: labeled.axisLabel,
+      arrows: deco.arrows,
+      guides: deco.guides,
     };
   }
 
@@ -316,14 +417,11 @@ export function boxWhiskerParts(bw) {
   let axis = null;
   const tickMarks = [];
   const tickLabels = [];
-  if (bw.showAxis && bw.ticks.length) {
+    if (bw.showAxis && bw.ticks.length) {
     const axisY =
       bw.axisY != null ? bw.axisY : y + half + Math.max(10, h * 0.35);
-    const xs = bw.ticks
-      .map(boxWhiskerTickPos)
-      .filter((n) => Number.isFinite(n))
-      .sort((a, b) => a - b);
-    axis = { x1: xs[0], y1: axisY, x2: xs[xs.length - 1], y2: axisY };
+    const ends = numberLineEnds(bw);
+    axis = { x1: ends.lo, y1: axisY, x2: ends.hi, y2: axisY };
     for (const t of bw.ticks) {
       const tx = boxWhiskerTickPos(t);
       if (!Number.isFinite(tx)) continue;
@@ -347,6 +445,7 @@ export function boxWhiskerParts(bw) {
     }
   }
   const labeled = attachBoxAxisLabel(bw, axis);
+  const deco = decorateHorizontalAxis(bw, labeled.axis, box);
   return {
     box,
     median,
@@ -357,6 +456,8 @@ export function boxWhiskerParts(bw) {
     tickMarks,
     tickLabels,
     axisLabel: labeled.axisLabel,
+    arrows: deco.arrows,
+    guides: deco.guides,
   };
 }
 
@@ -414,7 +515,7 @@ export function addBoxWhiskerBounds(bw, add) {
   };
   push(p.box.x, p.box.y);
   push(p.box.x + p.box.w, p.box.y + p.box.h);
-  for (const s of [...p.whiskers, ...p.caps, p.median, ...p.tickMarks]) {
+  for (const s of [...p.whiskers, ...p.caps, p.median, ...p.tickMarks, ...(p.guides || []), ...(p.arrows || [])]) {
     push(s.x1, s.y1);
     push(s.x2, s.y2);
   }
@@ -433,7 +534,9 @@ export function addBoxWhiskerBounds(bw, add) {
     for (let i = 0; i < 5; i++) {
       const worldW = Math.max(EXPORT_MIN_WORLD, Math.max(maxX, corners.x1) - Math.min(minX, corners.x0)) + EXPORT_PAD_BOTH;
       const worldH = Math.max(EXPORT_MIN_WORLD, Math.max(maxY, corners.y1) - Math.min(minY, corners.y0)) + EXPORT_PAD_BOTH;
-      corners = axisLabelCorners(p.axisLabel, boxExportFontWorld(worldW, worldH));
+      const span = Math.max(worldW, worldH);
+      const factor = span > 420 ? Math.max(1, span / 340) : 1;
+      corners = axisLabelCorners(p.axisLabel, boxExportFontWorld(worldW, worldH) * factor);
     }
     push(corners.x0, corners.y0);
     push(corners.x1, corners.y1);
