@@ -13722,6 +13722,21 @@ square:4</textarea>
       }
       pushHistory();
       const pt = findOrCreatePointAt(hit.x, hit.y, true);
+      if (
+        pt &&
+        !pt.construction &&
+        pt.id !== a.id &&
+        pt.id !== b.id &&
+        pt.id !== c.id &&
+        pt.id !== d.id
+      ) {
+        pt.construction = {
+          kind: "intersection",
+          of1: { kind: "ref", id: s1.id },
+          of2: { kind: "ref", id: s2.id },
+          extendLines: true,
+        };
+      }
       history[histIndex] = snapshot();
       setSelection([{ type: "point", id: pt.id }]);
       openLabelPrompt(pt.id, nextLetter);
