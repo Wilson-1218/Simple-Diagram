@@ -676,7 +676,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.49",
+      title_doc: "Simple Diagram · v13.5.50",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1021,7 +1021,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.49",
+      title_doc: "Simple Diagram · v13.5.50",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -1907,6 +1907,11 @@
     return { color: p.color, opacity: p.opacity };
   }
 
+  function mouseFillPreviewColor() {
+    if (drawRole === "solution" && !suspendDrawRole) return darkCanvas ? "#f87171" : "#dc2626";
+    return activeFillStyle().color;
+  }
+
   function hexToRgba(hex, opacity) {
     const h = String(hex || "#666666").replace("#", "");
     const full =
@@ -2126,12 +2131,16 @@
   function normalizeFillRecord(f) {
     if (!f || typeof f !== "object") return null;
     const kind = fillKindOf(f);
+    const solution = f.role === "solution";
+    const explicit = f.color != null && String(f.color).trim() !== "";
     const out = {
       id: typeof f.id === "string" ? f.id : uid(),
       kind,
-      color: f.color || "#666666",
-      opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : 0.2,
+      opacity: Number.isFinite(Number(f.opacity)) ? Number(f.opacity) : solution ? 0.25 : 0.2,
     };
+    if (solution) out.role = "solution";
+    if (explicit) out.color = String(f.color).trim();
+    else if (!solution) out.color = "#666666";
     const pat = String(f.pattern || "").toLowerCase();
     if (pat === "hatch" || pat === "hatched" || pat === "stripe" || pat === "stripes") {
       out.pattern = "hatch";
@@ -2192,7 +2201,14 @@
   function fillSaveSignature(f) {
     if (!f) return "";
     const kind = fillKindOf(f);
-    const base = [kind, f.color || "", Number(f.opacity), f.pattern || "solid", f.hatchSpacing || ""];
+    const base = [
+      kind,
+      f.role === "solution" ? "solution" : "",
+      f.color || "",
+      Number(f.opacity),
+      f.pattern || "solid",
+      f.hatchSpacing || "",
+    ];
     if (kind === "pathFill") return JSON.stringify(base.concat([f.edges || []]));
     if (kind === "polygon") return JSON.stringify(base.concat([f.pointIds || []]));
     if (kind === "polyArc") {
@@ -2766,17 +2782,28 @@
     return ids;
   }
 
+  /** Swatch color blocks solution ink. Role alone is what paints solution red. */
+  function finishMouseFill(f, color, opacity) {
+    const style = activeFillStyle();
+    f.color = color || style.color;
+    f.opacity = opacity != null ? opacity : style.opacity;
+    stampDrawRole(f);
+    if (f.role === "solution") delete f.color;
+    return f;
+  }
+
   function addFillFromPointIds(pointIds, color, opacity, skipHist) {
     if (!pointIds || pointIds.length < 3) return null;
     if (!skipHist) pushHistory();
-    const f = {
-      id: uid(),
-      kind: "polygon",
-      pointIds: [...pointIds],
-      color: color || activeFillStyle().color,
-      opacity: opacity != null ? opacity : activeFillStyle().opacity,
-    };
-    stampDrawRole(f);
+    const f = finishMouseFill(
+      {
+        id: uid(),
+        kind: "polygon",
+        pointIds: [...pointIds],
+      },
+      color,
+      opacity
+    );
     fills.push(f);
     return f;
   }
@@ -2784,17 +2811,18 @@
   function addFillSector(centerId, startId, endId, circleId, color, opacity, skipHist) {
     if (!centerId || !startId || !endId) return null;
     if (!skipHist) pushHistory();
-    const f = {
-      id: uid(),
-      kind: "sector",
-      centerId,
-      startId,
-      endId,
-      color: color || activeFillStyle().color,
-      opacity: opacity != null ? opacity : activeFillStyle().opacity,
-    };
+    const f = finishMouseFill(
+      {
+        id: uid(),
+        kind: "sector",
+        centerId,
+        startId,
+        endId,
+      },
+      color,
+      opacity
+    );
     if (circleId) f.circleId = circleId;
-    stampDrawRole(f);
     fills.push(f);
     return f;
   }
@@ -2803,17 +2831,18 @@
     if (!startId || !endId) return null;
     if (!circleId && !centerId) return null;
     if (!skipHist) pushHistory();
-    const f = {
-      id: uid(),
-      kind: "segment",
-      startId,
-      endId,
-      color: color || activeFillStyle().color,
-      opacity: opacity != null ? opacity : activeFillStyle().opacity,
-    };
+    const f = finishMouseFill(
+      {
+        id: uid(),
+        kind: "segment",
+        startId,
+        endId,
+      },
+      color,
+      opacity
+    );
     if (circleId) f.circleId = circleId;
     else if (centerId) f.centerId = centerId;
-    stampDrawRole(f);
     fills.push(f);
     return f;
   }
@@ -2940,14 +2969,15 @@
     const chained = chainPathFillEdges(edges);
     if (!chained || chained.length < 2) return null;
     if (!skipHist) pushHistory();
-    const f = {
-      id: uid(),
-      kind: "pathFill",
-      edges: chained,
-      color: color || activeFillStyle().color,
-      opacity: opacity != null ? opacity : activeFillStyle().opacity,
-    };
-    stampDrawRole(f);
+    const f = finishMouseFill(
+      {
+        id: uid(),
+        kind: "pathFill",
+        edges: chained,
+      },
+      color,
+      opacity
+    );
     fills.push(f);
     return f;
   }
@@ -3690,6 +3720,12 @@
   function redo() {
     if (histIndex >= history.length - 1) return;
     histIndex++;
+    // Drawing tools call pushHistory before they mutate, so the next slot is
+    // often a copy of the state undo just restored. Skip those copies and
+    // bring back the canvas undo left behind. Undo itself is unchanged.
+    while (histIndex < history.length - 1 && history[histIndex] === history[histIndex - 1]) {
+      histIndex++;
+    }
     restore(history[histIndex]);
     refreshEditButtons();
   }
@@ -9646,7 +9682,7 @@
         }
         if (pts.length >= 3) {
           ctx.closePath();
-          ctx.fillStyle = hexToRgba(style.color, Math.min(0.35, style.opacity));
+          ctx.fillStyle = hexToRgba(mouseFillPreviewColor(), Math.min(0.35, style.opacity));
           ctx.fill();
         }
         ctx.strokeStyle = "rgba(42,122,176,0.7)";
@@ -9669,11 +9705,11 @@
       const preview = {
         kind: "pathFill",
         edges: chained || draft.edges,
-        color: style.color,
+        color: mouseFillPreviewColor(),
         opacity: Math.min(0.35, style.opacity),
       };
       if (chained && buildFillPath(ctx, preview, (x, y) => worldToScreen(x, y))) {
-        ctx.fillStyle = hexToRgba(style.color, Math.min(0.35, style.opacity));
+        ctx.fillStyle = hexToRgba(mouseFillPreviewColor(), Math.min(0.35, style.opacity));
         ctx.fill();
         ctx.strokeStyle = "rgba(42,122,176,0.7)";
         ctx.lineWidth = 1.25;
@@ -12974,7 +13010,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.49",
+      version: "13.5.50",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
