@@ -453,7 +453,8 @@ function svgLengthLabel(ll, doc, pts, toS, ink, inkHex = "#111") {
   const halo = Math.max(3.5, ink.mm(0.35), fontPx * 0.28);
   // White-paper halo (stroke under fill via paint-order)
   out += `<text ${common} fill="${inkHex}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(ll.text || "")}</text>\n`;
-  return out;
+  const attrs = svgDataAttrs(ll);
+  return attrs ? `<g${attrs}>\n${out}</g>\n` : out;
 }
 
 /**
@@ -817,9 +818,10 @@ export function documentToSvg(doc, opts = {}) {
   }
 
   for (const raw of doc.barCharts || []) {
+    if (!shown(raw)) continue;
     if (raw && (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots")) {
       try {
-        body += svgStatChart(raw, toS, ink, sw, escapeXml);
+        body += svgStatChart(raw, toS, { stroke: ink.stroke, layers });
       } catch {
         /* skip corrupt */
       }
@@ -957,7 +959,7 @@ export function documentToSvg(doc, opts = {}) {
         p3 = { x: sv.x + dx2 * sizeUu, y: sv.y + dy2 * sizeUu };
       }
       const raInk = strokeOf(ra);
-      body += `<polyline points="${p1.x.toFixed(2)},${p1.y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)} ${p3.x.toFixed(2)},${p3.y.toFixed(2)}" fill="none" stroke="${raInk}" stroke-width="${markLw}" />\n`;
+      body += `<polyline points="${p1.x.toFixed(2)},${p1.y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)} ${p3.x.toFixed(2)},${p3.y.toFixed(2)}" fill="none" stroke="${raInk}" stroke-width="${markLw}"${svgDataAttrs(ra)} />\n`;
     }
     for (const aa of doc.angleArcs || []) {
       if (!shown(aa)) continue;
@@ -969,6 +971,8 @@ export function documentToSvg(doc, opts = {}) {
       const count = aa.group ? 2 : 1;
       const arcInk = strokeOf(aa);
       const sv = toS(v.x, v.y);
+      const arcAttrs = svgDataAttrs(aa);
+      if (arcAttrs) body += `<g${arcAttrs}>\n`;
       for (let i = 0; i < count; i++) {
         const rad = (geom.effectiveR + i * 5) * scale;
         const t0 = geom.a0;
@@ -1004,6 +1008,7 @@ export function documentToSvg(doc, opts = {}) {
           `x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
         body += `<text ${common} fill="${arcInk}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(aa.text)}</text>\n`;
       }
+      if (arcAttrs) body += `</g>\n`;
     }
     for (const pm of doc.parallelMarks || []) {
       if (!shown(pm)) continue;
