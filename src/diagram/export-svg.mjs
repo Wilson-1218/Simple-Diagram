@@ -744,6 +744,14 @@ export function documentToSvg(doc, opts = {}) {
             : "middle";
       body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${tickHalo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" ${tickFam} font-size="${tickFs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
     }
+    if (parts.axisLabel) {
+      const t = parts.axisLabel;
+      const p = toS(t.x, t.y);
+      const anchor = t.anchor === "end" ? "end" : t.anchor === "start" ? "start" : "middle";
+      const baseline =
+        t.baseline === "hanging" ? "hanging" : t.baseline === "middle" ? "middle" : "auto";
+      body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${tickHalo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" ${tickFam} font-size="${tickFs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
+    }
     const or = ink.mm(0.55);
     for (const o of parts.outliers) {
       const s = toS(o.x, o.y);

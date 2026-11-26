@@ -236,13 +236,14 @@
         <tr><td><code>addLengthLabel</code>＝<code>addLength</code></td><td><code>segmentId</code></td><td><code>text</code>, <code>side</code>（±1 或 <code>above</code>｜<code>below</code>｜<code>left</code>｜<code>right</code>）, <code>style</code>（text｜dim｜arcs｜ends）, <code>stroke</code>（arcs：solid｜dashed｜dotted，預設 dotted）, <code>orient</code>（tilt｜horizontal）, <code>size</code></td></tr>
         <tr><td><code>addMidTick</code></td><td><code>segmentId</code></td><td><code>pointId</code>（比例分點短劃）</td></tr>
         <tr><td><code>addBearing</code>＝<code>addCompass</code></td><td><code>at</code>（別名 <code>pointId</code>）</td><td>北向箭、方位弧與圓餅圖的參數見 §5.1。<code>mode:"cw"</code>（別名 <code>"true"</code>）大於 180° 時角弧為優角</td></tr>
-        <tr><td><code>addBoxWhisker</code>＝<code>addBoxPlot</code></td><td>水平：<code>y,min,q1,median,q3,max</code>；垂直另加 <code>orientation:"v"</code>＋<code>x</code></td><td><code>outliers[]</code>, <code>ticks[]</code>（數字＝僅刻度；或 <code>{pos,label?}</code>／<code>{x|y,label?}</code>；標籤畫在軸外側；<code>min/q1/median/q3/max</code> 皆為世界座標）, <code>boxHeight</code>, <code>cap</code>, <code>showAxis</code>, <code>axisY</code>/<code>axisX</code></td></tr>
+        <tr><td><code>addBoxWhisker</code>＝<code>addBoxPlot</code></td><td>水平：<code>y,min,q1,median,q3,max</code>；垂直另加 <code>orientation:"v"</code>＋<code>x</code></td><td><code>outliers[]</code>, <code>ticks[]</code>（數字＝僅刻度；或 <code>{pos,label?}</code>／<code>{x|y,label?}</code>；標籤畫在軸外側；<code>min/q1/median/q3/max</code> 皆為世界座標）, <code>boxHeight</code>, <code>cap</code>, <code>showAxis</code>, <code>axisY</code>/<code>axisX</code>, <code>axisLabel</code>（別名 <code>xLabel</code>／<code>yLabel</code>）</td></tr>
         <tr><td><code>addBarChart</code>＝<code>addBar</code></td><td><code>x</code>, <code>y</code>（資料區左下）, <code>categories[]</code>, <code>values[]</code>｜<code>heights[]</code></td><td><code>plotW</code>/<code>plotH</code>, <code>yMin</code>/<code>yMax</code>, <code>yTicks</code>/<code>yStep</code>, <code>xLabel</code>, <code>yLabel</code>（沿軸直寫）, <code>yLabelMode</code> <code>rotate</code>｜<code>stack</code>, <code>barPattern</code> <code>hatch</code>｜<code>solid</code>, <code>showGrid</code></td></tr>
       </tbody>
     </table>
     <p class="note"><code>arm1</code>/<code>arm2</code> 是角兩邊上的<strong>點</strong> id，不是線段 id。<br />
       <strong>addLengthLabel <code>side</code></strong>：存檔仍為 ±1。字串依 a→b 法線 <code>(−dy, dx)</code>（side +1）對應世界方向：水平線 a→右 時 <code>below</code>＝+1、<code>above</code>＝−1；鉛垂線 a→下 時 <code>left</code>＝+1、<code>right</code>＝−1。角標／長度標／點標文字有紙白光暈（screen 用畫布底色）。<br />
       <strong>addBoxWhisker <code>ticks</code></strong>：純數字陣列＝只畫刻度；物件可帶標籤，例 <code>ticks: [{ "pos": 150, "label": "10" }, { "pos": 200, "label": "20" }]</code>。標籤在水平軸下方／垂直軸左側。五數摘要 <code>min/q1/median/q3/max</code> 與 <code>pos</code> 皆為<strong>世界座標</strong>（不是資料刻度自動對應）。<br />
+      <strong>addBoxWhisker <code>axisLabel</code></strong>：可選字串，別名 <code>xLabel</code>、<code>yLabel</code>（同時給時用 <code>axisLabel</code>，否則 <code>xLabel</code>，否則 <code>yLabel</code>）。空白字串不畫，也不必另呼叫 <code>addText</code>。水平盒鬚：數線向右再伸約 18px，文字 <code>align:"left"</code> 放在右端外側，並垂直置中於數線 <code>axisY</code>。垂直盒鬚：文字置中於數線頂端上方。<code>documentToSvg</code> 的 viewBox／自動邊界含整段文字寬，匯出不會裁切。<br />
       <span class="en"><code>addBoxWhisker</code>: dedicated boxplot — do not assemble from rects/segments. Tick positions are caller-supplied only; optional <code>{pos,label}</code>. <code>addBarChart</code>: dedicated bars + vertical axis title — do not fake with rects or horizontal y-title. Length <code>side</code> accepts above/below/left/right mapped via a→b normal (−dy,dx).</span><br />
       <strong>role／color</strong>：<code>addPoint</code>、<code>addPlotPoint</code>、<code>addSegment</code>、<code>addCircle</code>、<code>addEllipse</code>、<code>addSector</code>、<code>addLabel</code>、<code>addText</code>、<code>addRightAngle</code>、<code>addAngleArc</code>、<code>addReflex</code>、<code>addParallelMark</code>、<code>addEqualMark</code>、<code>addLengthLabel</code>、<code>addFoot</code>、<code>addMidpoint</code>、<code>addRatioPoint</code>、<code>addIntersection</code>、<code>addTangent</code>、<code>addRadius</code>、<code>addDiameter</code>、<code>addChord</code>、<code>addCurve</code>、<code>addFill</code>、<code>addCurveIntersection</code>、<code>addAreaBetweenCurves</code>、<code>addBearing</code> 可選 <code>role:"question"|"solution"</code>（預設 question，省略則不寫入）或 <code>solution:true</code>，以及 <code>color</code>。複合 op（垂足、內心、方位、圓餅、中點、比例點、交點、切線、半徑、直徑、弦、曲線交點、兩曲線間面積）會把 <code>role:"solution"</code> 與明確 <code>color</code> 傳給展開出的點、線段與記號。未指定顏色的解答元素：淺色畫布與白紙 SVG／PNG 用 <code>#dc2626</code>，暗色畫布用 <code>#f87171</code>；實心填色為該紅、透明度 0.25，斜線填色為紅色筆畫。明確 <code>color</code> 一律優先。見 §11 <code>solutionShow</code>。</p>
 
@@ -363,7 +364,7 @@
         <tr><td><code>unitPx</code></td><td>可選</td><td>每單位像素，預設 <code>40</code>。未給 <code>xUnitPx</code>/<code>yUnitPx</code> 時兩軸都用它</td></tr>
         <tr><td><code>xUnitPx</code> <code>yUnitPx</code></td><td>可選</td><td>兩軸可不同比例。世界座標：<code>x = ox + u·xUnitPx</code>，<code>y = oy − v·yUnitPx</code></td></tr>
         <tr><td><code>xStep</code> <code>yStep</code></td><td>可選</td><td>預設 <code>1</code>。一般整數刻度開啟時，每隔 N 單位畫一格（<code>2</code> 會略過奇數）</td></tr>
-        <tr><td><code>xTicks</code> <code>yTicks</code></td><td>可選</td><td>給了就<strong>只</strong>畫這些刻度與標籤（該軸不再畫預設整數）。數字陣列 <code>[-4, 3]</code>，或 <code>[{ "pos": -4, "label": "-4" }, { "pos": 2.5, "label": "a" }]</code>（<code>pos</code> 也接受 <code>x</code>/<code>y</code>）。即使 <code>showTickLabels: false</code> 仍畫明確刻度與標籤</td></tr>
+        <tr><td><code>xTicks</code> <code>yTicks</code></td><td>可選</td><td>給了就<strong>只</strong>畫這些刻度與標籤（該軸不再畫預設整數）。數字陣列 <code>[-4, 3]</code>，或 <code>[{ "pos": -4, "label": "-4" }, { "pos": 2.5, "label": "a" }]</code>（<code>pos</code> 也接受 <code>x</code>/<code>y</code>）。即使 <code>showTickLabels: false</code> 仍畫明確刻度與標籤。原點字母 <code>O</code> 已畫時（<code>showOrigin</code> 不是 <code>false</code>），<code>|pos| &lt; 1e-9</code> 且標籤是預設或明確的 <code>"0"</code> 只略過該<strong>文字</strong>（刻度線仍在），避免「O0」。自訂且不是 <code>"0"</code> 的文字仍畫。<code>showOrigin: false</code> 仍畫 <code>"0"</code>。非零刻度不略過</td></tr>
         <tr><td><code>xmin</code> <code>xmax</code> <code>ymin</code> <code>ymax</code></td><td>可選</td><td>預設 −2…6 / −2…6（數學座標；y 向上為正於軸上）</td></tr>
         <tr><td><code>axisLabelX</code> <code>axisLabelY</code></td><td>可選</td><td>預設 <code>"x"</code> / <code>"y"</code></td></tr>
         <tr><td><code>showOrigin</code></td><td>可選</td><td>預設 true</td></tr>
@@ -423,6 +424,7 @@
     <ul>
       <li><code>projectX: true</code>：從點到 x 軸 <code>(u, 0)</code> 的線段，線型 <code>projectStyle</code>（預設 <code>dashed</code>，亦可 <code>dotted</code>／<code>solid</code>）。<code>xTickLabel</code> 放在軸外側的落腳處。</li>
       <li><code>projectY: true</code>：到 y 軸 <code>(0, v)</code> 的水平線段，可加 <code>yTickLabel</code>。</li>
+      <li>若該軸<strong>已經畫出</strong>同一位置的刻度標籤（<code>|pos − u| &lt; 1e-3</code> 或 <code>|pos − v| &lt; 1e-3</code>，含預設整數刻度），而且沒有 <code>forceTickLabel: true</code>，只畫投影線，不再疊第二個刻度文字（避免兩個顏色的同一個數字）。<code>forceTickLabel: true</code> 仍建立投影刻度文字。沒畫出來的刻度（例如 <code>showTickLabels: false</code> 時的預設整數，或被原點略過的 <code>"0"</code>）不算已顯示。<code>addCurveIntersection</code>／<code>addPlotIntersection</code> 經 <code>addPlotPoint</code>，規則相同。沒有座標圖、或沒有撞上：與以前相同，不拋錯。</li>
       <li>投影線段與刻度文字會寫進圖檔，畫布／SVG／PNG 與儲存後再打開都還在。落腳點為隱藏點（不畫圓點）。</li>
       <li>找不到座標圖：<code>console.warn</code> 並跳過，不拋錯。</li>
     </ul>
@@ -452,7 +454,8 @@
     "ox": 18, "oy": -10,
     "projectX": true, "projectY": true,
     "projectStyle": "dashed",
-    "xTickLabel": "1", "yTickLabel": "3"
+    "xTickLabel": "1", "yTickLabel": "3",
+    "forceTickLabel": true
   },
   {
     "op": "addFill",
@@ -511,7 +514,7 @@
         <tr><td><code>id2</code>／<code>ids</code></td><td>省略</td><td>其餘的根。<code>ids:["P","Q",…]</code> 依 u 升序對上；若 <code>|u1−u2|≤1e-4</code> 再依 v 升序。多出來的根不命名就略過</td></tr>
         <tr><td><code>pick</code></td><td><code>"left"</code></td><td><code>"left"</code>／<code>"first"</code>／<code>0</code> 最小 u；<code>"right"</code>／<code>"last"</code>；<code>"second"</code>／<code>1</code>；<code>"top"</code> 最大 v；<code>"bottom"</code> 最小 v。超出範圍就警告並跳過</td></tr>
         <tr><td><code>nearU</code></td><td>省略</td><td>有數字時優先於 <code>pick</code>，取 u 最接近的根</td></tr>
-        <tr><td>點的外觀</td><td>同 <code>addPlotPoint</code></td><td><code>label</code>、<code>ox</code>、<code>oy</code>、<code>hidden</code>、<code>projectX</code>、<code>projectY</code>、<code>projectStyle</code>、<code>xTickLabel</code>、<code>yTickLabel</code>、<code>role</code>、<code>color</code> 會傳到每一個選中的根</td></tr>
+        <tr><td>點的外觀</td><td>同 <code>addPlotPoint</code></td><td><code>label</code>、<code>ox</code>、<code>oy</code>、<code>hidden</code>、<code>projectX</code>、<code>projectY</code>、<code>projectStyle</code>、<code>xTickLabel</code>、<code>yTickLabel</code>、<code>forceTickLabel</code>、<code>role</code>、<code>color</code> 會傳到每一個選中的根。投影刻度與軸上已顯示的刻度重疊時，規則同 §10.6</td></tr>
       </tbody>
     </table>
     <p>直線、鉛直線、二次曲線用差的多項式代數求解（二次方程，必要時再拋光）。<code>sin</code>／<code>cos</code>／<code>tan</code>／<code>exp</code>／<code>log</code>／<code>ln</code> 在定義域上約 400 段取樣，變號則二分，並以牛頓把 <code>|f1−f2|</code> 收到 <code>1e-7</code> 以內。<code>tan</code> 跨過漸近線的正負號跳動不是根，會丟掉。圓這類非函數曲線不求，警告並跳過。</p>
@@ -679,7 +682,7 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.47 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.48 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

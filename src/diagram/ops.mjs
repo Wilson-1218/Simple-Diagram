@@ -14,7 +14,7 @@ import { normalizeBoxWhisker } from "./box-whisker.mjs";
 import { normalizeBarChart } from "./bar-chart.mjs";
 import { normalizeFillPattern } from "./hatch.mjs";
 import { normalizeLengthSide } from "./length-mark.mjs";
-import { coordWorldFromAxis, normalizeCoordTicks } from "./coord-plot.mjs";
+import { coordAxisShowsTickLabel, coordWorldFromAxis, normalizeCoordTicks } from "./coord-plot.mjs";
 import { parseInequality, polygonAreaAndCentroid, solveFeasibleRegion } from "./feasible-region.mjs";
 import {
   adjacentClosedIntervals,
@@ -562,28 +562,41 @@ function placePlotPoint(doc, op, nextId, ctx) {
   doc.points.push(p);
   maybeInlineLabel(doc, op, nextId, p, { legacyOxOy: true, stringify: true, passSize: true });
   const style = styleOr(op.projectStyle, "dashed");
-  if (op.projectX === true) addAxisProjection(doc, nextId, plot, p, "x", u, style, op.xTickLabel, op);
-  if (op.projectY === true) addAxisProjection(doc, nextId, plot, p, "y", v, style, op.yTickLabel, op);
+  const forceTick = op.forceTickLabel === true;
+  if (op.projectX === true) {
+    addAxisProjection(doc, nextId, plot, p, "x", u, style, op.xTickLabel, op, forceTick);
+  }
+  if (op.projectY === true) {
+    addAxisProjection(doc, nextId, plot, p, "y", v, style, op.yTickLabel, op, forceTick);
+  }
   return doc;
 }
 
-function addAxisProjection(doc, nextId, plot, point, axis, math, style, tickLabel, appearance) {
+function addAxisProjection(doc, nextId, plot, point, axis, math, style, tickLabel, appearance, forceTickLabel) {
   const footW =
     axis === "x" ? coordWorldFromAxis(plot, math, 0) : coordWorldFromAxis(plot, 0, math);
   const foot = pushPoint(doc, nextId, footW.x, footW.y, undefined, undefined, true, appearance);
   if (foot.id !== point.id) pushSegment(doc, nextId, point.id, foot.id, style, undefined, appearance);
-  if (tickLabel != null && String(tickLabel) !== "") {
-    const lab = {
-      id: nextId("lab"),
-      pointId: foot.id,
-      text: String(tickLabel),
-      ox: axis === "y" ? -18 : 0,
-      oy: axis === "x" ? 16 : 0,
-      size: doc.labelFontSize || 16,
-    };
-    if (appearance) stampAppearance(lab, appearance);
-    doc.labels.push(lab);
+  if (tickLabel == null || String(tickLabel) === "") return;
+  // A displayed axis tick at the same place already prints this number.
+  // forceTickLabel still adds the projection text. Hidden ticks do not count.
+  let occupied = false;
+  try {
+    occupied = coordAxisShowsTickLabel(plot, axis, math);
+  } catch {
+    occupied = false;
   }
+  if (occupied && forceTickLabel !== true) return;
+  const lab = {
+    id: nextId("lab"),
+    pointId: foot.id,
+    text: String(tickLabel),
+    ox: axis === "y" ? -18 : 0,
+    oy: axis === "x" ? 16 : 0,
+    size: doc.labelFontSize || 16,
+  };
+  if (appearance) stampAppearance(lab, appearance);
+  doc.labels.push(lab);
 }
 
 function defaultCurveParams(type) {
@@ -814,6 +827,7 @@ function applyCurveIntersection(doc, op, nextId, ctx) {
       "projectStyle",
       "xTickLabel",
       "yTickLabel",
+      "forceTickLabel",
       "marker",
       "size",
       "labelOx",
@@ -2602,6 +2616,7 @@ const HANDLERS = {
    * Point in the last (or plotId) coord plot's math space.
    * u/v aliases: mathX/mathY. ox/oy are label offsets, not the plot origin.
    * projectX/projectY persist dashed (or projectStyle) segments plus optional tick labels.
+   * A tick label already shown on that axis is not repeated unless forceTickLabel is true.
    */
   addPlotPoint(doc, op, nextId) {
     return placePlotPoint(doc, op, nextId, "addPlotPoint");

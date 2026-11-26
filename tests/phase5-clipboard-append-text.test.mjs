@@ -12,7 +12,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for phase5 clipboard/append/addText", () => {
-  assert.equal(APP_VERSION, "13.5.47");
+  assert.equal(APP_VERSION, "13.5.48");
 });
 
 test("stable top-level keys include texts (38)", () => {
