@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261126-release-v13.5.50" />
-  <title>Simple Diagram · v13.5.50</title>
+  <meta name="simple-diagram-build" content="20261126-release-v13.5.51" />
+  <title>Simple Diagram · v13.5.51</title>
   <style>
 :root {
   --bg: #e8e6e1;
@@ -2114,7 +2114,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.50</span>
+            <span class="brand-sub">v13.5.51</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -2438,6 +2438,8 @@ body.dark-canvas .coord-curve-row {
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="hexagon" title="正六邊形：外接框拖曳" data-i18n-title="tip_shape_hexagon" data-i18n-aria="tip_shape_hexagon" aria-label="正六邊形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7,4 17,4 22,12 17,20 7,20 2,12"/></svg></button>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="circle" title="圓：圓心拖至圓周" data-i18n-title="tip_shape_circle" data-i18n-aria="tip_shape_circle" aria-label="圓"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg></button>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="semicircle" title="半圓：直徑拖曳，弧向拖曳側" data-i18n-title="tip_shape_semicircle" data-i18n-aria="tip_shape_semicircle" aria-label="半圓"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14 A8 8 0 0 1 20 14"/><line x1="4" y1="14" x2="20" y2="14"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="hemisphere" title="半球體：圓心拖至圓周" data-i18n-title="tip_shape_hemisphere" data-i18n-aria="tip_shape_hemisphere" aria-label="半球體"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9 A8 8 0 0 0 20 9"/><ellipse cx="12" cy="9" rx="8" ry="3"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="sphere" title="球體：圓心拖至球面" data-i18n-title="tip_shape_sphere" data-i18n-aria="tip_shape_sphere" aria-label="球體"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="8" ry="3"/></svg></button>
               <span class="shape-icon-sep" aria-hidden="true"></span>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cube" title="立方體：外接框拖曳" data-i18n-title="tip_shape_cube" data-i18n-aria="tip_shape_cube" aria-label="立方體"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8 L12 4 L20 8 L20 16 L12 20 L4 16 Z"/><path d="M4 8 L12 12 L20 8"/><path d="M12 12 L12 20"/></svg></button>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cuboid" title="長方體：外接框拖曳" data-i18n-title="tip_shape_cuboid" data-i18n-aria="tip_shape_cuboid" aria-label="長方體"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9 L14 5 L21 9 L21 16 L10 20 L3 16 Z"/><path d="M3 9 L10 13 L21 9"/><path d="M10 13 L10 20"/></svg></button>
@@ -2789,6 +2791,9 @@ body.dark-canvas .coord-curve-row {
         <button type="button" class="chart-tab active" data-chart-tab="pie" data-i18n="chart_tab_pie">圓餅</button>
         <button type="button" class="chart-tab" data-chart-tab="box" data-i18n="chart_tab_box">盒鬚</button>
         <button type="button" class="chart-tab" data-chart-tab="bar" data-i18n="chart_tab_bar">棒形</button>
+        <button type="button" class="chart-tab" data-chart-tab="ogive" data-i18n="chart_tab_ogive">累積頻數</button>
+        <button type="button" class="chart-tab" data-chart-tab="hist" data-i18n="chart_tab_hist">直方圖</button>
+        <button type="button" class="chart-tab" data-chart-tab="dots" data-i18n="chart_tab_dots">點陣</button>
       </div>
       <div class="chart-pane" data-chart-pane="pie">
         <div class="coord-field">
@@ -2834,6 +2839,32 @@ body.dark-canvas .coord-curve-row {
           <button type="button" class="mark-group-btn rail-mini-btn active" data-bar-pattern="hatch" data-i18n="bar_hatch">斜線</button>
           <button type="button" class="mark-group-btn rail-mini-btn" data-bar-pattern="solid" data-i18n="bar_solid">實色</button>
         </span>
+      </div>
+      <div class="chart-pane" data-chart-pane="ogive" hidden>
+        <p class="dialog-note" data-i18n="ogive_note">組界與累積頻數等長，第一個頻數通常是 0。smooth 畫成 S 形。</p>
+        <div class="coord-field"><label for="ogiveBounds" data-i18n="ogive_bounds">組界</label>
+          <input id="ogiveBounds" type="text" value="10, 20, 30, 40, 50" />
+        </div>
+        <div class="coord-field"><label for="ogiveValues" data-i18n="ogive_values">累積頻數</label>
+          <input id="ogiveValues" type="text" value="0, 4, 11, 18, 20" />
+        </div>
+        <label class="check-opt"><input type="checkbox" id="ogiveSmooth" /> <span data-i18n="ogive_smooth">平滑曲線</span></label>
+      </div>
+      <div class="chart-pane" data-chart-pane="hist" hidden>
+        <p class="dialog-note" data-i18n="hist_note">連續組界比頻數多 1，柱與柱相接。勾選則加頻數多邊形。</p>
+        <div class="coord-field"><label for="histBounds" data-i18n="hist_bounds">組界</label>
+          <input id="histBounds" type="text" value="0, 10, 20, 30, 40" />
+        </div>
+        <div class="coord-field"><label for="histValues" data-i18n="hist_values">頻數</label>
+          <input id="histValues" type="text" value="3, 7, 5, 2" />
+        </div>
+        <label class="check-opt"><input type="checkbox" id="histPolygon" checked /> <span data-i18n="hist_polygon">頻數多邊形</span></label>
+      </div>
+      <div class="chart-pane" data-chart-pane="dots" hidden>
+        <p class="dialog-note" data-i18n="dots_note">每行一個圖樣：1,3,3 或 triangular:6 或 square:9 或 hexagonal:7。</p>
+        <textarea id="dotsPatterns" rows="4" spellcheck="false">1,3,3
+triangular:6
+square:4</textarea>
       </div>
       <div class="dialog-actions">
         <button type="button" id="chartsInsert" data-i18n="charts_insert">插入</button>
@@ -3114,6 +3145,8 @@ body.dark-canvas .coord-curve-row {
     "hexagon",
     "circle",
     "semicircle",
+    "hemisphere",
+    "sphere",
   ];
   /** Shape-float solids → builtin template id (same key). */
   const SHAPE_SOLID_MODES = [
@@ -3130,6 +3163,7 @@ body.dark-canvas .coord-curve-row {
   const SHAPE_MODES = SHAPE_PLANE_MODES.concat(SHAPE_SOLID_MODES);
   let shapeMode = "square";
   let drawRole = "question";
+  let diagramMod = null;
   let suspendDrawRole = false;
   let rightAngleDrawMode = "2d";
   let centerKind = "incircle";
@@ -3314,6 +3348,8 @@ body.dark-canvas .coord-curve-row {
       tip_shape_triPrism: "三棱柱：外接框拖曳",
       tip_shape_cylinder: "圓柱：外接框拖曳",
       tip_shape_cone: "圓錐：外接框拖曳",
+      tip_shape_hemisphere: "半球體：圓心拖至圓周（向上為碗，向下為穹）",
+      tip_shape_sphere: "球體：圓心拖至球面",
       circlePart_chord: "弦", circlePart_diameter: "直徑", circlePart_radius: "半徑",
       tip_circlePart_bar: "弦／直徑／半徑", tip_circlePart_chord: "弦：圓上兩點",
       tip_circlePart_diameter: "直徑：過圓心", tip_circlePart_radius: "半徑：圓心到圓周",
@@ -3342,7 +3378,7 @@ body.dark-canvas .coord-curve-row {
       aria_draw_role: "原題或詳解",
       tip_tool_center: "三角形心：依序點 A、B、C",
       tip_tool_bearing: "方位角：先點站點，再點方向；Enter 或雙擊只畫北箭",
-      btn_charts: "📊 圖表 ▾", tip_charts: "圓餅、盒鬚、棒形圖",
+      btn_charts: "📊 圖表 ▾", tip_charts: "圓餅、盒鬚、棒形、累積頻數、直方圖、點陣",
       center_title: "三角形心", center_incircle: "內切圓", center_circumcircle: "外接圓",
       center_incentre: "內心", center_circumcentre: "外心", center_centroid: "重心", center_orthocentre: "垂心",
       center_touch: "切點",
@@ -3360,6 +3396,12 @@ body.dark-canvas .coord-curve-row {
       coord_sec_curve_act: "曲線交點／面積", coord_curve1: "曲線 1", coord_curve2: "曲線 2 或軸",
       coord_domain: "區間 a,b（可留空）", coord_intersect: "交點", coord_area: "面積",
       charts_title: "圖表", chart_tab_pie: "圓餅", chart_tab_box: "盒鬚", chart_tab_bar: "棒形",
+      chart_tab_ogive: "累積頻數", chart_tab_hist: "直方圖", chart_tab_dots: "點陣",
+      ogive_note: "組界與累積頻數等長，第一個頻數通常是 0。smooth 畫成 S 形。",
+      ogive_bounds: "組界", ogive_values: "累積頻數", ogive_smooth: "平滑曲線",
+      hist_note: "連續組界比頻數多 1，柱與柱相接。勾選則加頻數多邊形。",
+      hist_bounds: "組界", hist_values: "頻數", hist_polygon: "頻數多邊形",
+      dots_note: "每行一個圖樣：1,3,3 或 triangular:6 或 square:9 或 hexagonal:7。",
       pie_r: "半徑 r", pie_start: "起始角 startDeg",
       pie_slice_note: "每行一片：角度或數值 | 類別 | 角文 | right | hatch。",
       pie_use_value: "第一欄是 value（否則是 angle）",
@@ -3574,7 +3616,7 @@ body.dark-canvas .coord-curve-row {
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.50",
+      title_doc: "Simple Diagram · v13.5.51",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -3658,6 +3700,8 @@ body.dark-canvas .coord-curve-row {
       tip_shape_triPrism: "Triangular prism: drag bounds",
       tip_shape_cylinder: "Cylinder: drag bounds",
       tip_shape_cone: "Cone: drag bounds",
+      tip_shape_hemisphere: "Hemisphere: drag from centre to the rim",
+      tip_shape_sphere: "Sphere: drag from centre to the surface",
       circlePart_chord: "Chord", circlePart_diameter: "Diam", circlePart_radius: "Rad",
       tip_circlePart_bar: "Chord / diameter / radius", tip_circlePart_chord: "Chord: two points on circle",
       tip_circlePart_diameter: "Diameter through center", tip_circlePart_radius: "Radius: center to rim",
@@ -3687,7 +3731,7 @@ body.dark-canvas .coord-curve-row {
       aria_draw_role: "Question or solution",
       tip_tool_center: "Triangle centre: click A, then B, then C",
       tip_tool_bearing: "Bearing: click station, then direction; Enter or double-click draws north only",
-      btn_charts: "📊 Charts ▾", tip_charts: "Pie, box-whisker, and bar charts",
+      btn_charts: "📊 Charts ▾", tip_charts: "Pie, box, bar, cumulative frequency, histogram, and dot patterns",
       center_title: "Centre", center_incircle: "Incircle", center_circumcircle: "Circumcircle",
       center_incentre: "Incentre", center_circumcentre: "Circumcentre", center_centroid: "Centroid", center_orthocentre: "Orthocentre",
       center_touch: "Touch pts",
@@ -3705,6 +3749,12 @@ body.dark-canvas .coord-curve-row {
       coord_sec_curve_act: "Curve intersection / area", coord_curve1: "Curve 1", coord_curve2: "Curve 2 or axis",
       coord_domain: "Domain a,b (optional)", coord_intersect: "Intersection", coord_area: "Area",
       charts_title: "Charts", chart_tab_pie: "Pie", chart_tab_box: "Box", chart_tab_bar: "Bar",
+      chart_tab_ogive: "Ogive", chart_tab_hist: "Histogram", chart_tab_dots: "Dots",
+      ogive_note: "Boundaries and cumulative frequencies have the same length. The first frequency is usually 0. Smooth draws an S-curve.",
+      ogive_bounds: "Boundaries", ogive_values: "Cumulative frequency", ogive_smooth: "Smooth curve",
+      hist_note: "Continuous boundaries are one longer than the frequencies. Bars touch. Optional frequency polygon.",
+      hist_bounds: "Boundaries", hist_values: "Frequencies", hist_polygon: "Frequency polygon",
+      dots_note: "One pattern per line: 1,3,3 or triangular:6 or square:9 or hexagonal:7.",
       pie_r: "Radius r", pie_start: "startDeg",
       pie_slice_note: "One slice per line: angle or value | category | angle text | right | hatch.",
       pie_use_value: "First field is value (otherwise angle)",
@@ -3919,7 +3969,7 @@ body.dark-canvas .coord-curve-row {
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.50",
+      title_doc: "Simple Diagram · v13.5.51",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -4101,7 +4151,12 @@ body.dark-canvas .coord-curve-row {
   /** Solution layer. Omitted role is question and always draws. */
   function solutionShown(el) {
     if (!el || el.role !== "solution") return true;
-    return layers.solutionShow !== false;
+    if (layers.solutionShow === false) return false;
+    const max = Number(layers.solutionMaxStep);
+    if (!Number.isInteger(max) || max <= 0) return true;
+    const step = Number(el.solutionStep);
+    if (!Number.isInteger(step) || step <= 0) return true;
+    return step <= max;
   }
   /** Explicit color wins. Solution without a color is red (lighter on a dark canvas). */
   function inkFor(el, highlight) {
@@ -6553,6 +6608,9 @@ body.dark-canvas .coord-curve-row {
         helpersLock: data.layers.helpersLock != null ? !!data.layers.helpersLock : true,
         solutionShow: data.layers.solutionShow != null ? !!data.layers.solutionShow : true,
       };
+      if (Number.isInteger(Number(data.layers.solutionMaxStep)) && Number(data.layers.solutionMaxStep) > 0) {
+        layers.solutionMaxStep = Number(data.layers.solutionMaxStep);
+      }
       syncLayersUI();
     }
     if (
@@ -7975,14 +8033,19 @@ body.dark-canvas .coord-curve-row {
     if (lab.kind === "formula") kind = "formula";
     else if (lab.kind === "custom" || customText.trim() !== "") kind = "custom";
     const show = lab.show != null ? !!lab.show : kind === "custom" && customText.trim() !== "";
-    return {
+    const out = {
       show,
       kind,
       formulaMode: lab.formulaMode === "numeric" ? "numeric" : "algebraic",
       customText,
-      t,
       n,
     };
+    if (lab.t == null || lab.t === "") {
+      if (!show) out.t = d.t;
+    } else if (Number.isFinite(Number(lab.t))) {
+      out.t = Math.min(1, Math.max(0, Number(lab.t)));
+    } else if (!show) out.t = d.t;
+    return out;
   }
 
   /**
@@ -8249,8 +8312,46 @@ body.dark-canvas .coord-curve-row {
     };
   }
 
+  function coordAxisClearance(plot, x, y, others) {
+    let best = Math.min(Math.abs(x - plot.ox), Math.abs(y - plot.oy));
+    for (const q of others) best = Math.min(best, Math.hypot(x - q.x, y - q.y));
+    return best;
+  }
+
+  function coordCurveLabelAvoid(plot, curve, n) {
+    const pts = coordCurveLabelSamples(plot, curve);
+    const nn = Number.isFinite(n) ? n : 0.55;
+    const unit = plot.unitPx || 40;
+    if (!pts.length) return coordCurveLabelPlacement(plot, curve, 0.55, nn).pos;
+    const others = [];
+    for (const other of plot.curves || []) {
+      if (!other || other === curve || (other.id && curve.id && other.id === curve.id)) continue;
+      for (const p of coordSampleOneCurve(plot, other)) if (p) others.push(p);
+    }
+    let best = null;
+    let bestScore = -Infinity;
+    for (const t of [0.15, 0.3, 0.5, 0.7, 0.85]) {
+      const idx = Math.min(pts.length - 1, Math.round(t * (pts.length - 1)));
+      const p = pts[idx];
+      const score = coordAxisClearance(plot, p.x, p.y, others);
+      if (score > bestScore + 1e-6) {
+        bestScore = score;
+        best = { p, idx };
+      }
+    }
+    if (!best) best = { p: pts[0], idx: 0 };
+    const fr = coordCurveFrameAt(pts, best.idx);
+    const off = nn * unit;
+    const a = { x: best.p.x + fr.nx * off, y: best.p.y + fr.ny * off };
+    const b = { x: best.p.x - fr.nx * off, y: best.p.y - fr.ny * off };
+    const ca = coordAxisClearance(plot, a.x, a.y, others);
+    const cb = coordAxisClearance(plot, b.x, b.y, others);
+    return cb > ca + 1e-6 ? b : a;
+  }
+
   function coordCurveLabelWorldPos(plot, curve) {
     const lab = normalizeCurveLabel(curve && curve.label);
+    if (lab.t == null) return coordCurveLabelAvoid(plot, curve, lab.n);
     return coordCurveLabelPlacement(plot, curve, lab.t, lab.n).pos;
   }
 
@@ -9468,6 +9569,7 @@ body.dark-canvas .coord-curve-row {
 
   function normalizeBarChartRecord(raw) {
     if (!raw || typeof raw !== "object") return null;
+    if (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots") return raw;
     try {
       const categories = Array.isArray(raw.categories)
         ? raw.categories.map((x) => String(x ?? ""))
@@ -9638,7 +9740,75 @@ body.dark-canvas .coord-curve-row {
     }
   }
 
+  function screenInk(color) {
+    if (darkCanvas && String(color).toLowerCase() === "#dc2626") return "#f87171";
+    return color || (darkCanvas ? "#e6e8eb" : "#111");
+  }
+
+  function paintStatChart(c, chart) {
+    if (!diagramMod || typeof diagramMod.statChartParts !== "function") return;
+    let parts;
+    try {
+      parts = diagramMod.statChartParts(chart);
+    } catch {
+      return;
+    }
+    c.save();
+    c.lineJoin = "round";
+    c.lineWidth = LINE_WIDTH;
+    const drawLine = (s) => {
+      const a = worldToScreen(s.x1, s.y1);
+      const b = worldToScreen(s.x2, s.y2);
+      c.beginPath();
+      c.strokeStyle = screenInk(s.color);
+      c.setLineDash(s.dash ? [4, 3] : []);
+      c.moveTo(a.x, a.y);
+      c.lineTo(b.x, b.y);
+      c.stroke();
+    };
+    for (const s of parts.lines) drawLine(s);
+    c.setLineDash([]);
+    for (const poly of parts.polylines) {
+      if (!poly.points || poly.points.length < 2) continue;
+      c.beginPath();
+      c.strokeStyle = screenInk(poly.color);
+      poly.points.forEach((p, i) => {
+        const s = worldToScreen(p.x, p.y);
+        if (i === 0) c.moveTo(s.x, s.y);
+        else c.lineTo(s.x, s.y);
+      });
+      c.stroke();
+    }
+    for (const r of parts.rects) {
+      const tl = worldToScreen(r.x, r.y);
+      const br = worldToScreen(r.x + r.w, r.y + r.h);
+      c.strokeStyle = screenInk(r.color);
+      c.strokeRect(Math.min(tl.x, br.x), Math.min(tl.y, br.y), Math.abs(br.x - tl.x), Math.abs(br.y - tl.y));
+    }
+    for (const d of parts.dots) {
+      const s = worldToScreen(d.x, d.y);
+      const rad = Math.max(1.2, d.r * view.scale);
+      c.beginPath();
+      c.fillStyle = screenInk(d.color);
+      c.arc(s.x, s.y, rad, 0, Math.PI * 2);
+      c.fill();
+    }
+    c.font = `${Math.max(11, 13 * Math.min(view.scale, 1.6))}px "STIX Two Text", "Times New Roman", serif`;
+    c.fillStyle = darkCanvas ? "#e6e8eb" : "#111";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    for (const t of parts.texts) {
+      const s = worldToScreen(t.x, t.y);
+      c.fillText(String(t.text || ""), s.x, s.y);
+    }
+    c.restore();
+  }
+
   function drawBarChart(bc, highlight) {
+    if (bc && (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots")) {
+      if (solutionShown(bc)) paintStatChart(ctx, bc);
+      return;
+    }
     const toScreen = (wx, wy) => worldToScreen(wx, wy);
     const lw = LINE_WIDTH * (highlight ? 1.15 : 1);
     const fontPx = clampLabelSize(labelFontSize) * Math.min(Math.max(view.scale, 0.7), 1.4);
@@ -9646,6 +9816,15 @@ body.dark-canvas .coord-curve-row {
   }
 
   function svgBarChart(bc, toS, scale) {
+    if (bc && (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots")) {
+      if (diagramMod && typeof diagramMod.svgStatChart === "function") {
+        const ink = { dash: () => [4, 3] };
+        return diagramMod.svgStatChart(bc, toS, ink, LINE_WIDTH * scale * 0.75, (s) =>
+          String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        );
+      }
+      return "";
+    }
     const parts = barChartGeomParts(bc);
     const lw = (LINE_WIDTH * scale * 0.75).toFixed(2);
     const fontPx = (clampLabelSize(labelFontSize) * scale * 0.75).toFixed(1);
@@ -10071,8 +10250,14 @@ body.dark-canvas .coord-curve-row {
     const tInp = row.querySelector("[data-label-t]");
     const nInp = row.querySelector("[data-label-n]");
     if (tInp) {
-      const t = parseFloat(tInp.value);
-      if (Number.isFinite(t)) lab.t = Math.min(1, Math.max(0, t));
+      const raw = String(tInp.value || "").trim();
+      if (!raw) {
+        if (lab.show) delete lab.t;
+        else lab.t = 0.55;
+      } else {
+        const t = parseFloat(raw);
+        if (Number.isFinite(t)) lab.t = Math.min(1, Math.max(0, t));
+      }
     }
     if (nInp) {
       const n = parseFloat(nInp.value);
@@ -10137,7 +10322,7 @@ body.dark-canvas .coord-curve-row {
     const posRow = document.createElement("div");
     posRow.className = "coord-label-pos-row";
     posRow.innerHTML =
-      `<label>${t("coord_label_t")} <input type="number" data-label-t min="0" max="1" step="0.05" value="${lab.t}" /></label>` +
+      `<label>${t("coord_label_t")} <input type="number" data-label-t min="0" max="1" step="0.05" value="${lab.t == null ? "" : lab.t}" /></label>` +
       `<label>${t("coord_label_n")} <input type="number" data-label-n min="-6" max="6" step="0.05" value="${lab.n}" /></label>`;
     box.appendChild(posRow);
     const posNote = document.createElement("p");
@@ -10625,6 +10810,15 @@ body.dark-canvas .coord-curve-row {
     if (!pos) return null;
     pushHistory();
     const pt = findOrCreatePointAt(pos.x, pos.y, true);
+    if (
+      Math.abs(t - 0.5) < 1e-9 &&
+      pt &&
+      pt.id !== seg.a &&
+      pt.id !== seg.b &&
+      !pt.construction
+    ) {
+      pt.construction = { kind: "midpoint", a: seg.a, b: seg.b };
+    }
     if (withTick && !midTicks.some((m) => m.segmentId === seg.id && m.pointId === pt.id)) {
       midTicks.push(stampDrawRole({ id: uid(), segmentId: seg.id, pointId: pt.id }));
     }
@@ -12382,6 +12576,19 @@ body.dark-canvas .coord-curve-row {
           ctx.beginPath();
           ctx.arc(sc.x, sc.y, r, 0, Math.PI * 2);
           ctx.stroke();
+        } else if (geom.type === "round3d") {
+          const sc = worldToScreen(geom.x, geom.y);
+          const edge = worldToScreen(geom.x + geom.w, geom.y);
+          const r = Math.abs(edge.x - sc.x);
+          const ry = r * 0.25;
+          ctx.beginPath();
+          if (geom.kind === "sphere") ctx.arc(sc.x, sc.y, r, 0, Math.PI * 2);
+          else if (geom.opening === "down") ctx.arc(sc.x, sc.y, r, Math.PI, 0, true);
+          else ctx.arc(sc.x, sc.y, r, 0, Math.PI, false);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.ellipse(sc.x, sc.y, r, ry, 0, 0, Math.PI * 2);
+          ctx.stroke();
         } else if (geom.type === "semicircle") {
           const sc = worldToScreen(geom.center.x, geom.center.y);
           const sa = worldToScreen(geom.a.x, geom.a.y);
@@ -13571,6 +13778,9 @@ body.dark-canvas .coord-curve-row {
       footPt = addPoint(proj.x, proj.y, true, "foot", true);
     }
     const style = lineStyle || "solid";
+    if (footPt && footPt.id !== a.id && footPt.id !== b.id && !footPt.construction) {
+      footPt.construction = { kind: "foot", from: from.id, a: a.id, b: b.id };
+    }
     const altitude = addSegment(from.id, footPt.id, style, true);
     history[histIndex] = snapshot();
     const sel = [{ type: "point", id: footPt.id }];
@@ -13690,6 +13900,17 @@ body.dark-canvas .coord-curve-row {
     const p = pointById(pid) || touch;
     const aId = addPoint(p.x - halfLen * tan.tx, p.y - halfLen * tan.ty, true, null, true).id;
     const bId = addPoint(p.x + halfLen * tan.tx, p.y + halfLen * tan.ty, true, null, true).id;
+    const tangentRec = {
+      kind: "tangent",
+      circleId: cir.id,
+      touchId: pid,
+      halfLen,
+      order: "ccw",
+    };
+    const aPt = pointById(aId);
+    const bPt = pointById(bId);
+    if (aPt && !aPt.construction) aPt.construction = { ...tangentRec, end: "a" };
+    if (bPt && !bPt.construction) bPt.construction = { ...tangentRec, end: "b" };
     const seg = addSegment(aId, bId, style, true);
     history[histIndex] = snapshot();
     setSelection(seg ? [{ type: "segment", id: seg.id }] : [{ type: "point", id: aId }]);
@@ -13760,6 +13981,18 @@ body.dark-canvas .coord-curve-row {
       const r = Math.hypot(x1 - x0, y1 - y0);
       if (r < minSize) return null;
       return { type: "circle", center: { x: x0, y: y0 }, through: { x: x1, y: y1 } };
+    }
+    if (mode === "hemisphere" || mode === "sphere") {
+      const r = Math.hypot(x1 - x0, y1 - y0);
+      if (r < minSize) return null;
+      return {
+        type: "round3d",
+        kind: mode,
+        x: x0,
+        y: y0,
+        w: r,
+        opening: mode === "hemisphere" && y1 < y0 ? "down" : "up",
+      };
     }
     if (mode === "semicircle") {
       const dx = x1 - x0;
@@ -14011,6 +14244,18 @@ body.dark-canvas .coord-curve-row {
       statusHint.textContent = t("shape_too_small");
       updateStatus();
       draw();
+      return;
+    }
+    if (geom.type === "round3d") {
+      const op = { op: "addShape", kind: geom.kind, x: geom.x, y: geom.y, w: geom.w, style };
+      if (geom.kind === "hemisphere") op.opening = geom.opening;
+      runEditorOps([op]).then((res) => {
+        if (!res) {
+          statusHint.textContent = t("shape_too_small");
+          updateStatus();
+          draw();
+        }
+      });
       return;
     }
     if (geom.type === "solid" && solidExtrasActive()) {
@@ -14497,6 +14742,9 @@ body.dark-canvas .coord-curve-row {
             }
           }
         }
+      }
+      if (diagramMod && typeof diagramMod.recomputeConstructions === "function") {
+        diagramMod.recomputeConstructions(buildProjectData(), ids);
       }
       draw();
       return;
@@ -15908,7 +16156,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.50",
+      version: "13.5.51",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
@@ -15940,6 +16188,9 @@ ${body}</svg>`;
         helpersShow: !!layers.helpersShow,
         helpersLock: !!layers.helpersLock,
         solutionShow: layers.solutionShow !== false,
+        ...(Number.isInteger(Number(layers.solutionMaxStep)) && Number(layers.solutionMaxStep) > 0
+          ? { solutionMaxStep: Number(layers.solutionMaxStep) }
+          : {}),
       },
       nextLetter,
       labelFontSize,
@@ -16220,6 +16471,9 @@ ${body}</svg>`;
         helpersLock: data.layers.helpersLock != null ? !!data.layers.helpersLock : true,
         solutionShow: data.layers.solutionShow != null ? !!data.layers.solutionShow : true,
       };
+      if (Number.isInteger(Number(data.layers.solutionMaxStep)) && Number(data.layers.solutionMaxStep) > 0) {
+        layers.solutionMaxStep = Number(data.layers.solutionMaxStep);
+      }
     }
     nextLetter = data.nextLetter || "A";
     labelFontSize = clampLabelSize(data.labelFontSize || DEFAULT_LABEL_SIZE);
@@ -16444,9 +16698,12 @@ ${body}</svg>`;
     throw new Error(t("paste_json_err_shape"));
   }
 
-  async function loadDiagramModule() {
-    // Relative to the HTML page URL (works on GitHub Pages + local http server).
-    return import(new URL("./src/diagram/index.mjs", window.location.href).href);
+  function loadDiagramModule() {
+    if (diagramMod) return Promise.resolve(diagramMod);
+    return import(new URL("./src/diagram/index.mjs", window.location.href).href).then((mod) => {
+      diagramMod = mod;
+      return mod;
+    });
   }
 
   /**
@@ -17040,6 +17297,69 @@ ${body}</svg>`;
         if (axis) op.axisLabel = axis;
         const res = await runEditorOps([op]);
         if (res) statusHint.textContent = uiLang === "en" ? "Box plot inserted" : "已插入盒鬚圖";
+        return !!res;
+      }
+      if (tab === "ogive" || tab === "hist" || tab === "dots") {
+        const origin = { x: c.x - 140, y: c.y + 80 };
+        let op;
+        if (tab === "ogive") {
+          const boundaries = String(document.getElementById("ogiveBounds").value || "")
+            .split(/[, ]+/)
+            .map(Number)
+            .filter((n) => Number.isFinite(n));
+          const values = String(document.getElementById("ogiveValues").value || "")
+            .split(/[, ]+/)
+            .map(Number)
+            .filter((n) => Number.isFinite(n));
+          op = {
+            op: "addCumulativeFrequency",
+            x: origin.x,
+            y: origin.y,
+            boundaries,
+            values,
+            smooth: !!(document.getElementById("ogiveSmooth") && document.getElementById("ogiveSmooth").checked),
+          };
+        } else if (tab === "hist") {
+          const boundaries = String(document.getElementById("histBounds").value || "")
+            .split(/[, ]+/)
+            .map(Number)
+            .filter((n) => Number.isFinite(n));
+          const values = String(document.getElementById("histValues").value || "")
+            .split(/[, ]+/)
+            .map(Number)
+            .filter((n) => Number.isFinite(n));
+          op = {
+            op: "addHistogram",
+            x: origin.x,
+            y: origin.y,
+            boundaries,
+            values,
+            showFrequencyPolygon: !!(
+              document.getElementById("histPolygon") && document.getElementById("histPolygon").checked
+            ),
+          };
+        } else {
+          const patterns = String(document.getElementById("dotsPatterns").value || "")
+            .split(/\n+/)
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line) => {
+              const named = /^(triangular|square|hexagonal)\s*:\s*(\d+)$/i.exec(line);
+              if (named) return { kind: named[1].toLowerCase(), count: Number(named[2]) };
+              const rows = line.split(/[, ]+/).map(Number).filter((n) => Number.isFinite(n) && n >= 0);
+              return { rows, align: "center" };
+            });
+          op = { op: "addDotPattern", x: origin.x, y: origin.y, patterns };
+        }
+        const res = await runEditorOps([op]);
+        if (res) {
+          statusHint.textContent =
+            tab === "ogive"
+              ? uiLang === "en" ? "Cumulative frequency inserted" : "已插入累積頻數"
+              : tab === "hist"
+                ? uiLang === "en" ? "Histogram inserted" : "已插入直方圖"
+                : uiLang === "en" ? "Dot pattern inserted" : "已插入點陣";
+        }
         return !!res;
       }
       const cats = String(document.getElementById("barCats").value || "")
@@ -20216,6 +20536,9 @@ ${body}</svg>`;
     if (!pos) return;
     pushHistory();
     const pt = findOrCreatePointAt(pos.x, pos.y, true);
+    if (pt && pt.id !== seg.a && pt.id !== seg.b && !pt.construction) {
+      pt.construction = { kind: "ratio", a: seg.a, b: seg.b, t };
+    }
     if (!midTicks.some((m) => m.segmentId === seg.id && m.pointId === pt.id)) {
       midTicks.push(stampDrawRole({ id: uid(), segmentId: seg.id, pointId: pt.id }));
     }
@@ -20464,6 +20787,7 @@ ${body}</svg>`;
   initRailResize();
   updateStatus();
   draw();
+  loadDiagramModule().then(() => draw()).catch(() => {});
 
   // Autosave every 20s + on hide (never triggers leave-site dialog by itself).
   function maybeAutosave() {

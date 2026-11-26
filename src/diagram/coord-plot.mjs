@@ -506,24 +506,7 @@ export function coordSampleOneCurve(plot, curve) {
   return pts;
 }
 
-function curveLabelWorld(plot, curve) {
-  const text = coordCurveLabelText(curve, plot);
-  if (!text) return null;
-  const lab = curve.label || {};
-  const pts = coordSampleOneCurve(plot, curve).filter(Boolean);
-  const tt = Math.min(1, Math.max(0, Number.isFinite(Number(lab.t)) ? Number(lab.t) : 0.55));
-  const nn = Number.isFinite(Number(lab.n)) ? Number(lab.n) : 0.55;
-  const unit = coordAxisScales(plot).unitPx;
-  if (!pts.length) {
-    const fb = coordWorldFromAxis(
-      plot,
-      ((plot.xmin ?? 0) + (plot.xmax ?? 0)) * 0.55,
-      ((plot.ymin ?? 0) + (plot.ymax ?? 0)) * 0.5
-    );
-    return { text, x: fb.x, y: fb.y - nn * unit };
-  }
-  const idx = Math.min(pts.length - 1, Math.round(tt * (pts.length - 1)));
-  const p = pts[idx];
+function curveFrameAt(pts, idx) {
   const i0 = Math.max(0, idx - 1);
   const i1 = Math.min(pts.length - 1, idx + 1);
   let tx = pts[i1].x - pts[i0].x;
@@ -537,8 +520,88 @@ function curveLabelWorld(plot, curve) {
     nx = -nx;
     ny = -ny;
   }
+  return { nx, ny };
+}
+
+function otherCurveSamples(plot, curve) {
+  const out = [];
+  for (const other of plot.curves || []) {
+    if (!other || other === curve) continue;
+    if (other.id && curve.id && other.id === curve.id) continue;
+    for (const p of coordSampleOneCurve(plot, other)) {
+      if (p) out.push(p);
+    }
+  }
+  return out;
+}
+
+function axisClearance(plot, x, y, others) {
+  let best = Math.min(Math.abs(x - plot.ox), Math.abs(y - plot.oy));
+  for (const q of others) {
+    best = Math.min(best, Math.hypot(x - q.x, y - q.y));
+  }
+  return best;
+}
+
+/**
+ * Label anchor. Explicit label.t keeps the historical normal offset.
+ * Omitted t samples 0.15, 0.3, 0.5, 0.7, 0.85 and steps off the axes.
+ */
+export function curveLabelWorld(plot, curve) {
+  const text = coordCurveLabelText(curve, plot);
+  if (!text) return null;
+  const lab = curve.label || {};
+  const pts = coordSampleOneCurve(plot, curve).filter(Boolean);
+  const explicitT = lab.t != null && lab.t !== "" && Number.isFinite(Number(lab.t));
+  const nn = Number.isFinite(Number(lab.n)) ? Number(lab.n) : 0.55;
+  const unit = coordAxisScales(plot).unitPx;
+  if (!pts.length) {
+    const fb = coordWorldFromAxis(
+      plot,
+      ((plot.xmin ?? 0) + (plot.xmax ?? 0)) * 0.55,
+      ((plot.ymin ?? 0) + (plot.ymax ?? 0)) * 0.5
+    );
+    return { text, x: fb.x, y: fb.y - nn * unit };
+  }
   const off = nn * unit;
-  return { text, x: p.x + nx * off, y: p.y + ny * off };
+  if (!explicitT) {
+    const others = otherCurveSamples(plot, curve);
+    const candidates = [0.15, 0.3, 0.5, 0.7, 0.85];
+    let best = null;
+    let bestScore = -Infinity;
+    for (const t of candidates) {
+      const idx = Math.min(pts.length - 1, Math.round(t * (pts.length - 1)));
+      const p = pts[idx];
+      const score = axisClearance(plot, p.x, p.y, others);
+      if (score > bestScore + 1e-6) {
+        bestScore = score;
+        best = { p, idx };
+      }
+    }
+    if (!best) best = { p: pts[Math.round(0.5 * (pts.length - 1))], idx: Math.round(0.5 * (pts.length - 1)) };
+    const fr = curveFrameAt(pts, best.idx);
+    const a = { x: best.p.x + fr.nx * off, y: best.p.y + fr.ny * off };
+    const b = { x: best.p.x - fr.nx * off, y: best.p.y - fr.ny * off };
+    const ca = axisClearance(plot, a.x, a.y, others);
+    const cb = axisClearance(plot, b.x, b.y, others);
+    const pick = cb > ca + 1e-6 ? b : a;
+    return { text, x: pick.x, y: pick.y };
+  }
+  const tt = Math.min(1, Math.max(0, Number(lab.t)));
+  const idx = Math.min(pts.length - 1, Math.round(tt * (pts.length - 1)));
+  const p = pts[idx];
+  const fr = curveFrameAt(pts, idx);
+  return { text, x: p.x + fr.nx * off, y: p.y + fr.ny * off };
+}
+
+function curveDataAttrs(el) {
+  if (!el || typeof el !== "object") return "";
+  const parts = [];
+  if (el.id != null && String(el.id) !== "") parts.push(`data-id="${escapeXml(el.id)}"`);
+  if (el.role === "solution") parts.push('data-role="solution"');
+  const step = Number(el.solutionStep);
+  if (Number.isInteger(step) && step > 0) parts.push(`data-step="${step}"`);
+  return parts.length ? " " + parts.join(" ") : "";
 }
 
 function escapeXml(s) {
@@ -714,7 +777,7 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
     if (d) {
       const dash = curveDashAttr(coordCurveStyle(curve), lw);
       const stroke = escapeXml(coordCurveInk(curve, "paper"));
-      body += `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${lw}" stroke-linejoin="round"${dash} />\n`;
+      body += `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${lw}" stroke-linejoin="round"${dash}${curveDataAttrs(curve)} />\n`;
     }
   }
   for (const curve of curves) {
@@ -725,7 +788,7 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
     const fs = Number(fontPx);
     const labHalo = Math.max(3.5, fs * 0.28).toFixed(2);
     const labInk = escapeXml(coordCurveInk(curve, "paper"));
-    body += `<text x="${sp.x.toFixed(2)}" y="${sp.y.toFixed(2)}" fill="${labInk}" stroke="#ffffff" stroke-width="${labHalo}" stroke-linejoin="round" paint-order="stroke fill" ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="middle" dominant-baseline="middle">${rich.inner}</text>\n`;
+    body += `<text x="${sp.x.toFixed(2)}" y="${sp.y.toFixed(2)}" fill="${labInk}" stroke="#ffffff" stroke-width="${labHalo}" stroke-linejoin="round" paint-order="stroke fill" ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="middle" dominant-baseline="middle"${curveDataAttrs(curve)}>${rich.inner}</text>\n`;
   }
   return body;
 }

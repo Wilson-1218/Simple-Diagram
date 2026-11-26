@@ -12,8 +12,8 @@ import {
   validateDiagram,
 } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.50", () => {
-  assert.equal(APP_VERSION, "13.5.50");
+test("APP_VERSION is 13.5.51", () => {
+  assert.equal(APP_VERSION, "13.5.51");
   assert.equal(emptyDiagram().layers.solutionShow, true);
 });
 

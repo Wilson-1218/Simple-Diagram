@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="424" height="336" viewBox="0 0 424.00 336.00">
+<svg xmlns="http://www.w3.org/2000/svg" width="444" height="373" viewBox="0 0 443.20 372.80">
 <rect width="100%" height="100%" fill="#ffffff"/>
-<line x1="52.00" y1="292.00" x2="372.00" y2="292.00" stroke="#111" stroke-width="3.36" stroke-linecap="round" />
-<line x1="372.00" y1="292.00" x2="52.00" y2="52.00" stroke="#111" stroke-width="3.36" stroke-linecap="round" />
-<line x1="52.00" y1="52.00" x2="52.00" y2="292.00" stroke="#111" stroke-width="3.36" stroke-linecap="round" />
-<polyline points="73.84,292.00 73.84,270.16 52.00,270.16" fill="none" stroke="#111" stroke-width="3.19" />
-<text x="24.00" y="312.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="23.7" text-anchor="middle" dominant-baseline="middle" fill="#111" stroke="#ffffff" stroke-width="6.64" stroke-linejoin="round" paint-order="stroke fill">A</text>
-<text x="400.00" y="312.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="23.7" text-anchor="middle" dominant-baseline="middle" fill="#111" stroke="#ffffff" stroke-width="6.64" stroke-linejoin="round" paint-order="stroke fill">B</text>
-<text x="24.00" y="24.00" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="23.7" text-anchor="middle" dominant-baseline="middle" fill="#111" stroke="#ffffff" stroke-width="6.64" stroke-linejoin="round" paint-order="stroke fill">C</text>
+<line x1="61.60" y1="314.40" x2="381.60" y2="314.40" stroke="#111" stroke-width="3.73" stroke-linecap="round" data-id="AB" />
+<line x1="381.60" y1="314.40" x2="61.60" y2="74.40" stroke="#111" stroke-width="3.73" stroke-linecap="round" data-id="BC" />
+<line x1="61.60" y1="74.40" x2="61.60" y2="314.40" stroke="#111" stroke-width="3.73" stroke-linecap="round" data-id="CA" />
+<polyline points="85.83,314.40 85.83,290.17 61.60,290.17" fill="none" stroke="#111" stroke-width="3.54" />
+<text x="33.60" y="334.40" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="26.3" text-anchor="middle" dominant-baseline="middle" fill="#111" stroke="#ffffff" stroke-width="7.36" stroke-linejoin="round" paint-order="stroke fill" data-id="lab_0002">A</text>
+<text x="409.60" y="334.40" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="26.3" text-anchor="middle" dominant-baseline="middle" fill="#111" stroke="#ffffff" stroke-width="7.36" stroke-linejoin="round" paint-order="stroke fill" data-id="lab_0003">B</text>
+<text x="33.60" y="46.40" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="26.3" text-anchor="middle" dominant-baseline="middle" fill="#111" stroke="#ffffff" stroke-width="7.36" stroke-linejoin="round" paint-order="stroke fill" data-id="lab_0004">C</text>
 </svg>

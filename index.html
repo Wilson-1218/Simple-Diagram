@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261126-release-v13.5.50" />
-  <title>Simple Diagram · v13.5.50</title>
-  <link rel="stylesheet" href="styles.css?v=20261126-release-v13.5.50" />
+  <meta name="simple-diagram-build" content="20261126-release-v13.5.51" />
+  <title>Simple Diagram · v13.5.51</title>
+  <link rel="stylesheet" href="styles.css?v=20261126-release-v13.5.51" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.50</span>
+            <span class="brand-sub">v13.5.51</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -345,6 +345,8 @@
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="hexagon" title="正六邊形：外接框拖曳" data-i18n-title="tip_shape_hexagon" data-i18n-aria="tip_shape_hexagon" aria-label="正六邊形"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7,4 17,4 22,12 17,20 7,20 2,12"/></svg></button>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="circle" title="圓：圓心拖至圓周" data-i18n-title="tip_shape_circle" data-i18n-aria="tip_shape_circle" aria-label="圓"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg></button>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="semicircle" title="半圓：直徑拖曳，弧向拖曳側" data-i18n-title="tip_shape_semicircle" data-i18n-aria="tip_shape_semicircle" aria-label="半圓"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14 A8 8 0 0 1 20 14"/><line x1="4" y1="14" x2="20" y2="14"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="hemisphere" title="半球體：圓心拖至圓周" data-i18n-title="tip_shape_hemisphere" data-i18n-aria="tip_shape_hemisphere" aria-label="半球體"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9 A8 8 0 0 0 20 9"/><ellipse cx="12" cy="9" rx="8" ry="3"/></svg></button>
+              <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="sphere" title="球體：圓心拖至球面" data-i18n-title="tip_shape_sphere" data-i18n-aria="tip_shape_sphere" aria-label="球體"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="8" ry="3"/></svg></button>
               <span class="shape-icon-sep" aria-hidden="true"></span>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cube" title="立方體：外接框拖曳" data-i18n-title="tip_shape_cube" data-i18n-aria="tip_shape_cube" aria-label="立方體"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8 L12 4 L20 8 L20 16 L12 20 L4 16 Z"/><path d="M4 8 L12 12 L20 8"/><path d="M12 12 L12 20"/></svg></button>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cuboid" title="長方體：外接框拖曳" data-i18n-title="tip_shape_cuboid" data-i18n-aria="tip_shape_cuboid" aria-label="長方體"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9 L14 5 L21 9 L21 16 L10 20 L3 16 Z"/><path d="M3 9 L10 13 L21 9"/><path d="M10 13 L10 20"/></svg></button>
@@ -696,6 +698,9 @@
         <button type="button" class="chart-tab active" data-chart-tab="pie" data-i18n="chart_tab_pie">圓餅</button>
         <button type="button" class="chart-tab" data-chart-tab="box" data-i18n="chart_tab_box">盒鬚</button>
         <button type="button" class="chart-tab" data-chart-tab="bar" data-i18n="chart_tab_bar">棒形</button>
+        <button type="button" class="chart-tab" data-chart-tab="ogive" data-i18n="chart_tab_ogive">累積頻數</button>
+        <button type="button" class="chart-tab" data-chart-tab="hist" data-i18n="chart_tab_hist">直方圖</button>
+        <button type="button" class="chart-tab" data-chart-tab="dots" data-i18n="chart_tab_dots">點陣</button>
       </div>
       <div class="chart-pane" data-chart-pane="pie">
         <div class="coord-field">
@@ -741,6 +746,32 @@
           <button type="button" class="mark-group-btn rail-mini-btn active" data-bar-pattern="hatch" data-i18n="bar_hatch">斜線</button>
           <button type="button" class="mark-group-btn rail-mini-btn" data-bar-pattern="solid" data-i18n="bar_solid">實色</button>
         </span>
+      </div>
+      <div class="chart-pane" data-chart-pane="ogive" hidden>
+        <p class="dialog-note" data-i18n="ogive_note">組界與累積頻數等長，第一個頻數通常是 0。smooth 畫成 S 形。</p>
+        <div class="coord-field"><label for="ogiveBounds" data-i18n="ogive_bounds">組界</label>
+          <input id="ogiveBounds" type="text" value="10, 20, 30, 40, 50" />
+        </div>
+        <div class="coord-field"><label for="ogiveValues" data-i18n="ogive_values">累積頻數</label>
+          <input id="ogiveValues" type="text" value="0, 4, 11, 18, 20" />
+        </div>
+        <label class="check-opt"><input type="checkbox" id="ogiveSmooth" /> <span data-i18n="ogive_smooth">平滑曲線</span></label>
+      </div>
+      <div class="chart-pane" data-chart-pane="hist" hidden>
+        <p class="dialog-note" data-i18n="hist_note">連續組界比頻數多 1，柱與柱相接。勾選則加頻數多邊形。</p>
+        <div class="coord-field"><label for="histBounds" data-i18n="hist_bounds">組界</label>
+          <input id="histBounds" type="text" value="0, 10, 20, 30, 40" />
+        </div>
+        <div class="coord-field"><label for="histValues" data-i18n="hist_values">頻數</label>
+          <input id="histValues" type="text" value="3, 7, 5, 2" />
+        </div>
+        <label class="check-opt"><input type="checkbox" id="histPolygon" checked /> <span data-i18n="hist_polygon">頻數多邊形</span></label>
+      </div>
+      <div class="chart-pane" data-chart-pane="dots" hidden>
+        <p class="dialog-note" data-i18n="dots_note">每行一個圖樣：1,3,3 或 triangular:6 或 square:9 或 hexagonal:7。</p>
+        <textarea id="dotsPatterns" rows="4" spellcheck="false">1,3,3
+triangular:6
+square:4</textarea>
       </div>
       <div class="dialog-actions">
         <button type="button" id="chartsInsert" data-i18n="charts_insert">插入</button>
@@ -802,6 +833,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261126-release-v13.5.50"></script>
+  <script src="app.js?v=20261126-release-v13.5.51"></script>
 </body>
 </html>

@@ -43,7 +43,7 @@ function dist(a, b) {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
 
-function isDegenerate(A, B, C) {
+export function isDegenerate(A, B, C) {
   const ab = dist(A, B);
   const bc = dist(B, C);
   const ca = dist(C, A);
@@ -52,7 +52,7 @@ function isDegenerate(A, B, C) {
   return area2 / (ab * ca) < 1e-10;
 }
 
-function incenter(A, B, C) {
+export function incenter(A, B, C) {
   const a = dist(B, C);
   const b = dist(A, C);
   const c = dist(A, B);
@@ -64,7 +64,7 @@ function incenter(A, B, C) {
   };
 }
 
-function circumcenter(A, B, C) {
+export function circumcenter(A, B, C) {
   const d = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y));
   if (!(Math.abs(d) > 1e-12)) return null;
   const a2 = A.x * A.x + A.y * A.y;
@@ -76,12 +76,12 @@ function circumcenter(A, B, C) {
   };
 }
 
-function centroid(A, B, C) {
+export function centroid(A, B, C) {
   return { x: (A.x + B.x + C.x) / 3, y: (A.y + B.y + C.y) / 3 };
 }
 
 /** Intersection of altitude from A (⊥ BC) and altitude from B (⊥ CA). */
-function orthocenter(A, B, C) {
+export function orthocenter(A, B, C) {
   const a1 = C.x - B.x;
   const b1 = C.y - B.y;
   const c1 = a1 * A.x + b1 * A.y;
@@ -96,7 +96,7 @@ function orthocenter(A, B, C) {
   };
 }
 
-function footOnLine(P, A, B) {
+export function footOnLine(P, A, B) {
   const dx = B.x - A.x;
   const dy = B.y - A.y;
   const len2 = dx * dx + dy * dy;
@@ -200,6 +200,8 @@ export function applyTriangleCenter(doc, op, nextId, api, defaults) {
 
   /** @type {string|null} */
   let throughId = null;
+  /** @type {string[]|null} */
+  let generatedTouches = null;
   if (kind === "incentre" && (drawCircle || wantTouch)) {
     const feet = [footOnLine(pos, A, B), footOnLine(pos, B, C), footOnLine(pos, C, A)];
     if (wantTouch) {
@@ -210,9 +212,11 @@ export function applyTriangleCenter(doc, op, nextId, api, defaults) {
         ids.push(p.id);
       }
       throughId = ids[0];
+      generatedTouches = ids;
     } else {
       const p = pushPoint(doc, nextId, feet[0].x, feet[0].y, undefined, undefined, true, op);
       throughId = p.id;
+      generatedTouches = [p.id];
     }
   }
 
@@ -227,6 +231,16 @@ export function applyTriangleCenter(doc, op, nextId, api, defaults) {
     if (op.circleId != null && op.circleId !== "") circle.id = String(op.circleId);
     if (op.circleStyle != null && op.circleStyle !== "") circle.style = op.circleStyle;
     handlers.addCircle(doc, circle, nextId);
+  }
+  center.construction = {
+    kind: "triangleCenter",
+    centerKind: kind,
+    a: aId,
+    b: bId,
+    c: cId,
+  };
+  if (generatedTouches && generatedTouches.length) {
+    center.construction.touchIds = generatedTouches;
   }
   return doc;
 }

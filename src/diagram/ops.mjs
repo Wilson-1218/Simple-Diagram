@@ -26,6 +26,8 @@ import { buildPolyhedron } from "./polyhedron.mjs";
 import { applyBearing, applyPieChart, applyTriangleCenter } from "./exam-ops.mjs";
 import { appearanceFields, elementRole, stampAppearance } from "./appearance.mjs";
 import { DEFAULT_ARC_SIZE } from "./angle-arc.mjs";
+import { normalizeStatChart } from "./stat-charts.mjs";
+import { perpendicularFoot, tangentEndpoints } from "./constructions.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 
@@ -347,6 +349,39 @@ function resolveOfGeom(doc, of, ctx) {
   throw new Error(`${ctx}: of id not a segment or circle: ${id}`);
 }
 
+function storeIntersectionOf(doc, of) {
+  if (of && typeof of === "object") {
+    return {
+      kind: "line",
+      a: requirePoint(doc, of.a, "addIntersection"),
+      b: requirePoint(doc, of.b, "addIntersection"),
+    };
+  }
+  return { kind: "ref", id: String(of) };
+}
+
+function pushHiddenPoint(doc, nextId, x, y) {
+  return pushPoint(doc, nextId, x, y, undefined, undefined, true);
+}
+
+/** Horizontal ellipse. ry is the foreshortened vertical radius. backDashed defaults true. */
+function pushHorizontalEllipse(doc, nextId, center, rxPoint, ry, backDashed) {
+  const ryPoint = pushHiddenPoint(doc, nextId, center.x, center.y + ry);
+  doc.ellipses.push({
+    id: nextId("ell"),
+    centerId: center.id,
+    rxId: rxPoint.id,
+    ryId: ryPoint.id,
+    style: "solid",
+    backDashed: backDashed !== false,
+  });
+}
+
+function labelShapeLetter(doc, nextId, point, text, op) {
+  if (!op || op.labels === false || op.label === false) return;
+  HANDLERS.addLabel(doc, { pointId: point.id, text, ox: 8, oy: -14 }, nextId);
+}
+
 function tOnSegment(t, extendLines) {
   if (extendLines) return true;
   return t >= -1e-9 && t <= 1 + 1e-9;
@@ -473,6 +508,13 @@ function normalizeLayers(raw) {
   if (!raw || typeof raw !== "object") return base;
   for (const k of Object.keys(DEFAULT_LAYERS)) {
     if (raw[k] != null) base[k] = !!raw[k];
+  }
+  if (Object.prototype.hasOwnProperty.call(raw, "solutionMaxStep")) {
+    const v = raw.solutionMaxStep;
+    if (v != null && v !== "") {
+      const n = Number(v);
+      if (Number.isInteger(n) && n > 0) base.solutionMaxStep = n;
+    }
   }
   return base;
 }
@@ -633,14 +675,19 @@ function defaultCurveLabel(lab) {
   else if (lab.kind === "custom" || customText.trim() !== "") kind = "custom";
   const show =
     lab.show != null ? !!lab.show : kind === "custom" && customText.trim() !== "";
-  return {
+  const tGiven = Number.isFinite(Number(lab.t));
+  const out = {
     show,
     kind,
     formulaMode: lab.formulaMode === "numeric" ? "numeric" : "algebraic",
     customText,
-    t: Number.isFinite(Number(lab.t)) ? Math.min(1, Math.max(0, Number(lab.t))) : d.t,
     n: Number.isFinite(Number(lab.n)) ? Math.min(6, Math.max(-6, Number(lab.n))) : d.n,
   };
+  // Shown labels with no t are placed away from the axes. Hidden labels keep
+  // the historical stored default so an omitted label object stays the same.
+  if (tGiven) out.t = Math.min(1, Math.max(0, Number(lab.t)));
+  else if (!show) out.t = d.t;
+  return out;
 }
 
 function materializeCurve(raw) {
@@ -1674,6 +1721,24 @@ const HANDLERS = {
     return doc;
   },
 
+  /**
+   * Cumulative-frequency curve. Alias addOgive.
+   * (x, y) is the lower-left of the plot, same as addBarChart.
+   */
+  addCumulativeFrequency(doc, op, nextId) {
+    return pushStatChart(doc, op, nextId, "ogive");
+  },
+
+  /** Touching bars. boundaries length is values+1, or centers/boundaries length matches values. */
+  addHistogram(doc, op, nextId) {
+    return pushStatChart(doc, op, nextId, "histogram");
+  },
+
+  /** Dot patterns: coordinate lists, row counts, or triangular/square/hexagonal counts. */
+  addDotPattern(doc, op, nextId) {
+    return pushStatChart(doc, op, nextId, "dots");
+  },
+
   addEqualMark(doc, op, nextId) {
     const id = resolveId(op, nextId, "em");
     requireSegment(doc, op.segmentId, "addEqualMark");
@@ -1765,19 +1830,17 @@ const HANDLERS = {
       b = pointById(doc, bId);
     }
     if (!a || !b) throw new Error("addFoot: line endpoints missing");
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const len2 = dx * dx + dy * dy;
-    if (!(len2 > 1e-18)) throw new Error("addFoot: line is degenerate");
-    const t = ((from.x - a.x) * dx + (from.y - a.y) * dy) / len2;
-    const fx = a.x + t * dx;
-    const fy = a.y + t * dy;
+    const proj = perpendicularFoot(from, a, b);
+    if (!proj) throw new Error("addFoot: line is degenerate");
+    const fx = proj.x;
+    const fy = proj.y;
     if (Math.hypot(from.x - fx, from.y - fy) < 1e-9) {
       throw new Error("addFoot: point already lies on the line");
     }
     const footHint = op.footId != null ? op.footId : op.id;
     const marker = op.marker === false || op.marker === "" ? undefined : op.marker || "foot";
     const foot = pushPoint(doc, nextId, fx, fy, footHint || undefined, marker, undefined, op);
+    foot.construction = { kind: "foot", from: fromId, a: a.id, b: b.id };
     if (op.label || op.labelText) {
       const text = op.labelText != null ? String(op.labelText) : String(op.label === true ? "H" : op.label);
       HANDLERS.addLabel(
@@ -1820,6 +1883,7 @@ const HANDLERS = {
       op.hidden === true,
       op
     );
+    mid.construction = { kind: "midpoint", a: aId, b: bId };
     maybeInlineLabel(doc, op, nextId, mid);
     if (op.markEqual) {
       const group = op.equalGroup != null ? op.equalGroup : 0;
@@ -1873,6 +1937,7 @@ const HANDLERS = {
       op.hidden === true,
       op
     );
+    p.construction = { kind: "ratio", a: a.id, b: b.id, t };
     maybeInlineLabel(doc, op, nextId, p);
     return doc;
   },
@@ -1906,9 +1971,20 @@ const HANDLERS = {
     const hidden = op.hidden === true;
     const sorted = sortHitsStable(hits);
     const wantBoth = op.id2 != null && op.id2 !== "" && sorted.length >= 2;
+    const stored = {
+      kind: "intersection",
+      of1: storeIntersectionOf(doc, op.of1),
+      of2: storeIntersectionOf(doc, op.of2),
+      extendLines,
+    };
+    if (op.avoidPointId) stored.avoidPointId = requirePoint(doc, op.avoidPointId, "addIntersection");
+    if (op.nearPointId) stored.nearPointId = requirePoint(doc, op.nearPointId, "addIntersection");
+    if (op.pick != null && op.pick !== "") stored.pick = String(op.pick);
     if (wantBoth) {
       const first = pushPoint(doc, nextId, sorted[0].x, sorted[0].y, op.id, marker, hidden, op);
-      pushPoint(doc, nextId, sorted[1].x, sorted[1].y, op.id2, marker, hidden, op);
+      const second = pushPoint(doc, nextId, sorted[1].x, sorted[1].y, op.id2, marker, hidden, op);
+      first.construction = { ...stored, slot: 0 };
+      second.construction = { ...stored, slot: 1 };
       maybeInlineLabel(doc, op, nextId, first);
       return doc;
     }
@@ -1928,6 +2004,7 @@ const HANDLERS = {
       hidden,
       op
     );
+    hit.construction = { ...stored };
     maybeInlineLabel(doc, op, nextId, hit);
     return doc;
   },
@@ -2284,6 +2361,59 @@ const HANDLERS = {
       return doc;
     }
 
+    // Circle radius is w (through-point at x+w). Sphere and hemisphere use that
+    // same radius, with the centre at (x, y). Ellipse ry/rx matches the cylinder rim (1/4).
+    if (kind === "sphere" || kind === "hemisphere") {
+      const R = w;
+      const cx = x0;
+      const cy = y0;
+      const openingDown =
+        kind === "hemisphere" &&
+        (String(op.opening || "").toLowerCase() === "down" ||
+          String(op.opening || "").toLowerCase() === "dome");
+      const showCenter = kind === "sphere" || op.includeBaseCenter === true;
+      const center = showCenter
+        ? pushPoint(doc, nextId, cx, cy, prefix ? `${prefix}O` : "O")
+        : pushPoint(doc, nextId, cx, cy, undefined, undefined, true);
+      if (showCenter) labelShapeLetter(doc, nextId, center, "O", op);
+      const right = pushHiddenPoint(doc, nextId, cx + R, cy);
+      const left = pushHiddenPoint(doc, nextId, cx - R, cy);
+      const rimRy = R * 0.25;
+      if (kind === "sphere") {
+        doc.circles.push({
+          id: resolveId(op, nextId, "cir"),
+          centerId: center.id,
+          throughId: right.id,
+          style,
+        });
+        pushHorizontalEllipse(doc, nextId, center, right, rimRy, op.backDashed !== false);
+        return doc;
+      }
+      const start = openingDown ? left : right;
+      const end = openingDown ? right : left;
+      doc.sectors.push({
+        id: resolveId(op, nextId, "sec"),
+        centerId: center.id,
+        startId: start.id,
+        endId: end.id,
+        style,
+        mode: "arc",
+      });
+      pushHorizontalEllipse(doc, nextId, center, right, rimRy, true);
+      const level = Number(op.waterLevel);
+      if (Number.isFinite(level) && level > 0 && level < 1) {
+        const dist = openingDown ? level * R : (1 - level) * R;
+        const sectionY = openingDown ? cy - level * R : cy + (1 - level) * R;
+        const rho = Math.sqrt(Math.max(0, R * R - dist * dist));
+        if (rho > 0.5) {
+          const wc = pushHiddenPoint(doc, nextId, cx, sectionY);
+          const wrx = pushHiddenPoint(doc, nextId, cx + rho, sectionY);
+          pushHorizontalEllipse(doc, nextId, wc, wrx, rho * 0.25, true);
+        }
+      }
+      return doc;
+    }
+
     const pts = [];
     if (kind === "square" || kind === "rect") {
       const hh = kind === "square" ? w : h;
@@ -2323,7 +2453,7 @@ const HANDLERS = {
       }
     } else {
       throw new Error(
-        `addShape: unknown kind "${kind}" (plane kinds or solid: cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone)`
+        `addShape: unknown kind "${kind}" (plane kinds, hemisphere, sphere, or solid: cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone)`
       );
     }
     const ids = [];
@@ -2366,28 +2496,19 @@ const HANDLERS = {
     }
     const half = Math.abs(Number(op.halfLen != null ? op.halfLen : op.length != null ? Number(op.length) / 2 : 40));
     if (!(half > 1e-6)) throw new Error("addTangent: halfLen/length must be > 0");
-    const tx = -Math.sin(ang);
-    const ty = Math.cos(ang);
-    let ax = touch.x - half * tx;
-    let ay = touch.y - half * ty;
-    let bx = touch.x + half * tx;
-    let by = touch.y + half * ty;
     const order = String(op.order || "leftToRight").trim().toLowerCase();
-    if (order !== "ccw") {
-      // leftToRight (default): smaller x → aId; nearly vertical → smaller y → aId
-      const swap =
-        Math.abs(ax - bx) > 1e-3 ? ax > bx : ay > by;
-      if (swap) {
-        const tx0 = ax;
-        const ty0 = ay;
-        ax = bx;
-        ay = by;
-        bx = tx0;
-        by = ty0;
-      }
-    }
-    const a = pushPoint(doc, nextId, ax, ay, op.aId, undefined, undefined, op);
-    const b = pushPoint(doc, nextId, bx, by, op.bId, undefined, undefined, op);
+    const placed = tangentEndpoints(geom.c, touch, half, order);
+    const a = pushPoint(doc, nextId, placed.a.x, placed.a.y, op.aId, undefined, undefined, op);
+    const b = pushPoint(doc, nextId, placed.b.x, placed.b.y, op.bId, undefined, undefined, op);
+    const tangentRec = {
+      kind: "tangent",
+      circleId: geom.cir.id,
+      touchId,
+      halfLen: half,
+      order,
+    };
+    a.construction = { ...tangentRec, end: "a" };
+    b.construction = { ...tangentRec, end: "b" };
     pushSegment(doc, nextId, a.id, b.id, op.style, op.id, op);
     return doc;
   },
@@ -2736,6 +2857,7 @@ const HANDLERS = {
     for (const k of Object.keys(DEFAULT_LAYERS)) {
       if (op[k] !== undefined) patch[k] = op[k];
     }
+    if (op.solutionMaxStep !== undefined) patch.solutionMaxStep = op.solutionMaxStep;
     doc.layers = normalizeLayers({ ...(doc.layers || {}), ...patch });
     return doc;
   },
@@ -2860,6 +2982,18 @@ HANDLERS.addCompass = HANDLERS.addBearing;
 HANDLERS.addPie = HANDLERS.addPieChart;
 HANDLERS.addPlotIntersection = (doc, op, nextId) =>
   applyCurveIntersection(doc, op, nextId, "addPlotIntersection");
+HANDLERS.addOgive = HANDLERS.addCumulativeFrequency;
+
+function pushStatChart(doc, op, nextId, kind) {
+  const id = resolveId(op, nextId, "bc");
+  const chart = normalizeStatChart({ ...op, id, kind });
+  stampAppearance(chart, op);
+  if (doc.barCharts.some((x) => x.id === id)) {
+    throw new Error(`${kind}: duplicate id ${id}`);
+  }
+  doc.barCharts.push(chart);
+  return doc;
+}
 
 export const OP_NAMES = Object.keys(HANDLERS).sort();
 

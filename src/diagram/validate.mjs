@@ -1,6 +1,7 @@
 import { CURRENT_FORMAT_VERSION } from "./empty-doc.mjs";
 import { normalizeBoxWhisker } from "./box-whisker.mjs";
 import { normalizeBarChart } from "./bar-chart.mjs";
+import { normalizeStatChart } from "./stat-charts.mjs";
 
 const LINE_STYLES = new Set(["solid", "dashed", "dotted", "dashdot"]);
 const MARKERS = new Set(["x", "foot"]);
@@ -462,7 +463,9 @@ export function validateDiagram(doc) {
       const bc = d.barCharts[i];
       const path = `barCharts[${i}]`;
       try {
-        normalizeBarChart(bc, { requireId: true });
+        if (bc && (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots")) {
+          normalizeStatChart(bc);
+        } else normalizeBarChart(bc, { requireId: true });
       } catch (e) {
         errors.push(`${path}: ${e instanceof Error ? e.message : String(e)}`);
       }

@@ -80,7 +80,19 @@ export const OP_CATALOG = {
   },
   addBarChart: {
     args: "x, y, categories, values|heights, plotW?, plotH?, yMin?, yMax?, yTicks?, yStep?, xLabel?, yLabel?, yLabelMode?, barPattern?, showGrid?",
-    note: "Dedicated bar chart; yLabel along axis (rotate|stack); barPattern hatch|solid; alias addBar",
+    note: "Dedicated bar chart; yLabel along axis (rotate|stack); barPattern hatch|solid; alias addBar. Stored on doc.barCharts",
+  },
+  addCumulativeFrequency: {
+    args: "x, y, boundaries, values, plotW?, plotH?, yMax?, yStep?, xLabel?, yLabel?, smooth?, showGrid?, projections?",
+    note: "Ogive. (x,y) lower-left like addBarChart. boundaries and values same length (first value usually 0). smooth false = polyline, true = monotone cubic. projections[{y,xLabel?,yLabel?,role?}]. Alias addOgive. Stored as barCharts kind ogive",
+  },
+  addHistogram: {
+    args: "x, y, boundaries|centers, values|heights, plotW?, plotH?, yMax?, yStep?, xLabel?, yLabel?, showGrid?, showFrequencyPolygon?, barPattern?",
+    note: "Touching bars (zero gap). boundaries length is values+1, or centers when length matches values. Stored as barCharts kind histogram",
+  },
+  addDotPattern: {
+    args: "x, y, patterns, dotGap?, patternGap?, dotRadius?, showArrows?, labels?",
+    note: "patterns: [[col,row]|[col,row,role]] or {rows,align} or {kind:triangular|square|hexagonal,count,solution?}. Stored as barCharts kind dots",
   },
   addFill: {
     args: "kind?, pattern?, pointIds? | centerId+startId+endId | polyArc | pathFill edges | inequalities+plotId? | betweenCurves, color?, opacity?, hatchSpacing?",
@@ -139,7 +151,7 @@ export const OP_CATALOG = {
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },
   addShape: {
     args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?, apexOffset?, includeBaseCenter?, drawHeight?, waterLevel?",
-    note: "kind square|rect|…|circle|semicircle|cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone; solids: h is visual height (omit = today's proportions); pyramid/cone apexOffset [dx,dy], includeBaseCenter → O or {prefix}O, drawHeight dotted OV; cylinder/cone waterLevel in (0,1) splits an ellipse; idPrefix → vertices prefix0… and segments prefixs0…; labels:false or label:false skips vertex letters; letter aliases: KC and, if no point C exists, bare C resolve to the vertex labeled C (pyramid V is K4)",
+    note: "kind square|rect|…|circle|semicircle|hemisphere|sphere|cube|cuboid|rectPrism|frustum|tetra|pyramid|triPrism|cylinder|cone. hemisphere/sphere radius is w (same as circle), centre (x,y), rim/equator ry = w/4. hemisphere opening up (default) is a bowl, down is a dome; waterLevel in (0,1) from the bottom; includeBaseCenter → O or {prefix}O. sphere backDashed defaults true. Solids: h is visual height (omit = today's proportions); pyramid/cone apexOffset [dx,dy], includeBaseCenter → O or {prefix}O, drawHeight dotted OV; cylinder/cone waterLevel in (0,1) splits an ellipse; idPrefix → vertices prefix0… and segments prefixs0…; labels:false or label:false skips vertex letters; letter aliases: KC and, if no point C exists, bare C resolve to the vertex labeled C (pyramid V is K4). addShape does not stamp role or solutionStep",
   },
   add3DPolyhedron: {
     args: "vertices, faces, origin?, scale?, yawDeg?, pitchDeg?, idPrefix?, labels?",
