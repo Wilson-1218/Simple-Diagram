@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.48 · 穩定）
+## 目前版本 / Current version（v13.5.49 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.49** — 編輯器：原題／詳解繪圖、三角形心、方位角、圖表、座標刻度與可行區域、立體附加與 3D 直角（皆呼叫既有 ops）
 - **v13.5.48** — 原點 `O` 不再與刻度 `0` 疊成「O0」；投影刻度若與軸上已顯示的數字同位置則略過（`forceTickLabel` 可強制）；盒鬚圖 `axisLabel`
 - **v13.5.47** — 座標曲線交點 `addCurveIntersection`／`addPlotIntersection`；兩曲線間面積 `addAreaBetweenCurves`（`addFill` `kind:"betweenCurves"`）
 - **v13.5.46** — 角弧預設更緊（`size` 18，依臂長夾限）；圓餅角文與類別標分開；`role`／`solution`／`color` 與圖層 `solutionShow`

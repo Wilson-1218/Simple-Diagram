@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261126-release-v13.5.48" />
-  <title>Simple Diagram · Wilson</title>
-  <link rel="stylesheet" href="styles.css?v=20261126-release-v13.5.48" />
+  <meta name="simple-diagram-build" content="20261126-release-v13.5.49" />
+  <title>Simple Diagram · v13.5.49</title>
+  <link rel="stylesheet" href="styles.css?v=20261126-release-v13.5.49" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -21,7 +21,7 @@
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.48</span>
+            <span class="brand-sub">v13.5.49</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -37,6 +37,14 @@
               </button>
             </div>
           </div>
+        </div>
+        <div class="draw-role-capsule" id="drawRoleCapsule" role="group" aria-label="原題或詳解" data-i18n-aria="aria_draw_role">
+          <button type="button" class="role-btn active" id="btnDrawQuestion" data-draw-role="question" title="原題：新圖形不寫 role" data-i18n-title="tip_draw_question">
+            <span aria-hidden="true">⚫</span> <span data-i18n="role_question">原題</span>
+          </button>
+          <button type="button" class="role-btn" id="btnDrawSolution" data-draw-role="solution" title="詳解：新圖形 role 為 solution，立即紅色" data-i18n-title="tip_draw_solution">
+            <span aria-hidden="true">🔴</span> <span data-i18n="role_solution">詳解</span>
+          </button>
         </div>
         <div class="rail-section" data-group="draw">
           <span class="rail-title" title="繪畫" data-i18n="rail_draw" data-i18n-title="rail_draw_title">繪畫</span>
@@ -101,6 +109,12 @@
           <button type="button" class="tool" data-tool="coord" title="座標軸：點選原點位置；可加曲線" data-i18n-title="tip_tool_coord">
             <span class="icon">⊥</span><span class="label" data-i18n="tool_coord">座標</span>
           </button>
+          <button type="button" class="tool" data-tool="center" title="三角形心：依序點 A、B、C" data-i18n-title="tip_tool_center">
+            <span class="icon">△</span><span class="label" data-i18n="tool_center">心</span>
+          </button>
+          <button type="button" class="tool" data-tool="bearing" title="方位角：先點站點，再點方向；Enter 或雙擊只畫北箭" data-i18n-title="tip_tool_bearing">
+            <span class="icon">🧭</span><span class="label" data-i18n="tool_bearing">北</span>
+          </button>
         </div>
 
         <div class="rail-section" data-group="marks">
@@ -142,6 +156,9 @@
         <!-- Overlay chrome: does not reserve layout height -->
         <header class="chrome-overlay toolbar" role="toolbar" aria-label="屬性與檔案" data-i18n-aria="aria_toolbar_props">
           <div class="chrome-cluster chrome-actions">
+            <div class="tool-group" data-group="charts">
+              <button type="button" id="btnChartsMenu" class="menu-btn" title="圓餅、盒鬚、棒形圖" data-i18n-title="tip_charts" data-i18n="btn_charts">📊 圖表 ▾</button>
+            </div>
             <div class="tool-group" data-group="templates">
               <div class="menu-wrap">
                 <button type="button" id="btnTemplateMenu" class="menu-btn" title="我的模板／接入 AI" data-i18n-title="tip_templates" aria-haspopup="true" aria-expanded="false">模板 ▾</button>
@@ -259,6 +276,10 @@
               <option value="14">大</option>
               <option value="18">特大</option>
             </select>
+            <span class="float-mini-opts" id="rightAngleModeBar" hidden title="直角平面或立體平行四邊形" data-i18n-title="tip_ra_mode">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-ra-mode="2d" data-i18n="ra_mode_2d">2D</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-ra-mode="3d" data-i18n="ra_mode_3d">3D</button>
+            </span>
           </div>
           <div class="float-panel float-sector" id="sectorFloat" hidden>
             <span class="float-mini-opts" id="sectorModeBar" title="弧段僅畫弧；扇形含兩條半徑" data-i18n-title="tip_sector_bar">
@@ -335,6 +356,72 @@
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cylinder" title="圓柱：外接框拖曳" data-i18n-title="tip_shape_cylinder" data-i18n-aria="tip_shape_cylinder" aria-label="圓柱"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6 L5 17"/><path d="M19 6 L19 17"/><ellipse cx="12" cy="17" rx="7" ry="3"/></svg></button>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cone" title="圓錐：外接框拖曳" data-i18n-title="tip_shape_cone" data-i18n-aria="tip_shape_cone" aria-label="圓錐"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="17" rx="7" ry="3"/><path d="M5 17 L12 4 L19 17"/></svg></button>
             </span>
+          </div>
+          <div class="float-panel float-center" id="centerFloat" hidden>
+            <span class="float-title" data-i18n="center_title">三角形心</span>
+            <span class="float-mini-opts center-mode-grid" id="centerModeBar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-center-kind="incircle" data-i18n="center_incircle">內切圓</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-center-kind="circumcircle" data-i18n="center_circumcircle">外接圓</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-center-kind="incentre" data-i18n="center_incentre">內心</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-center-kind="circumcentre" data-i18n="center_circumcentre">外心</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-center-kind="centroid" data-i18n="center_centroid">重心</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-center-kind="orthocentre" data-i18n="center_orthocentre">垂心</button>
+            </span>
+            <label class="check-opt"><input type="checkbox" id="centerMarkTouch" /> <span data-i18n="center_touch">切點</span></label>
+          </div>
+          <div class="float-panel float-bearing" id="bearingFloat" hidden>
+            <span class="float-title" data-i18n="bearing_title">方位角</span>
+            <label class="coord-field" for="bearingText"><span data-i18n="bearing_text">角度文字</span>
+              <input id="bearingText" type="text" value="52°" maxlength="16" />
+            </label>
+            <span class="float-mini-opts" id="bearingModeBar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-bearing-mode="acute" data-i18n="bearing_acute">銳角</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-bearing-mode="cw" data-i18n="bearing_cw">順時針</button>
+            </span>
+            <span class="float-mini-opts" id="bearingFromBar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-bearing-from="N">N</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-bearing-from="S">S</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-bearing-from="E">E</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-bearing-from="W">W</button>
+            </span>
+            <label class="check-opt"><input type="checkbox" id="bearingShowCross" /> <span data-i18n="bearing_cross">十字</span></label>
+          </div>
+          <div class="float-panel float-role" id="roleFloat" hidden>
+            <span class="float-title" data-i18n="role_float_title">原題／詳解</span>
+            <span class="float-mini-opts">
+              <button type="button" class="rail-mini-btn" id="btnSelQuestion" data-i18n="role_question">原題</button>
+              <button type="button" class="rail-mini-btn" id="btnSelSolution" data-i18n="role_solution">詳解</button>
+            </span>
+            <button type="button" class="rail-mini-btn" id="btnSelAutoOffset" data-i18n="role_auto_offset">自動偏移</button>
+          </div>
+          <div class="float-panel float-solid" id="solidOptsFloat" hidden>
+            <span class="float-title" data-i18n="solid_title">立體</span>
+            <label class="coord-field"><span data-i18n="solid_h">視覺高度 h</span>
+              <input id="solidH" type="text" inputmode="decimal" placeholder="120" />
+            </label>
+            <label class="check-opt"><input type="checkbox" id="solidBaseCenter" /> <span data-i18n="solid_base">底心</span></label>
+            <label class="check-opt"><input type="checkbox" id="solidDrawHeight" /> <span data-i18n="solid_height">點高</span></label>
+            <label class="coord-field" id="solidWaterRow"><span data-i18n="solid_water">水位 0–1</span>
+              <input id="solidWater" type="text" inputmode="decimal" placeholder="0.5" />
+            </label>
+            <label class="coord-field" id="solidApexRow"><span data-i18n="solid_apex">頂點偏移 dx,dy</span>
+              <input id="solidApex" type="text" placeholder="40, 0" />
+            </label>
+            <button type="button" class="rail-mini-btn" id="btnSolidRightEdge" data-i18n="solid_right_edge">直角側棱</button>
+            <span class="float-title" data-i18n="poly_title">多面體</span>
+            <label class="coord-field"><span data-i18n="poly_yaw">yaw°</span>
+              <input id="polyYaw" type="text" value="35" />
+            </label>
+            <label class="coord-field"><span data-i18n="poly_pitch">pitch°</span>
+              <input id="polyPitch" type="text" value="20" />
+            </label>
+            <span class="float-mini-opts">
+              <button type="button" class="rail-mini-btn" id="btnPolyTetra" data-i18n="poly_tetra">四面體</button>
+              <button type="button" class="rail-mini-btn" id="btnPolyCube" data-i18n="poly_cube">立方體</button>
+            </span>
+            <label class="coord-field"><span data-i18n="poly_advanced">進階頂點／面</span>
+              <textarea id="polyAdvanced" rows="4" spellcheck="false" placeholder='{"vertices":{"A":[0,0,0]},"faces":[["A","B","C"]]}'></textarea>
+            </label>
           </div>
           <div class="float-panel float-circle-part" id="circlePartFloat" hidden>
             <span class="float-mini-opts" id="circlePartModeBar" title="弦／直徑／半徑" data-i18n-title="tip_circlePart_bar">
@@ -482,6 +569,15 @@
             <div class="coord-field">
               <label for="coordAxisLabels" data-i18n="coord_axis_labels">軸標籤 x,y</label>
               <input id="coordAxisLabels" type="text" value="x,y" autocomplete="off" />
+              <p class="dialog-note" data-i18n="coord_math_hint">_ 與 ^ 是輕量數學，例如 log_5 x。</p>
+            </div>
+            <div class="coord-field">
+              <label for="coordXTicks" data-i18n="coord_xticks">x 刻度（-4, 2.5:a）</label>
+              <input id="coordXTicks" type="text" autocomplete="off" placeholder="-4, 2.5:a" />
+            </div>
+            <div class="coord-field">
+              <label for="coordYTicks" data-i18n="coord_yticks">y 刻度</label>
+              <input id="coordYTicks" type="text" autocomplete="off" placeholder="-2, 1:b" />
             </div>
           </section>
 
@@ -495,7 +591,59 @@
               <input type="checkbox" id="coordAngleAxis" />
               <span data-i18n="coord_angle_axis">角度軸刻度</span>
             </label>
-            <p class="dialog-note" data-i18n="coord_angle_axis_note">開啟後 x 軸改為 π（弧度）或 °（角度）刻度，並可暫用三角視窗；關閉後還原原本視窗與數字刻度。</p>
+            <p class="dialog-note" data-i18n="coord_angle_axis_note">開啟後 x 軸改為 π（弧度）或 °（角度）刻度，並可暫用三角視窗；關閉後還原原本視窗與數字刻度。取消「顯示軸上數值」即 showTickLabels:false，預設整數刻度隱藏；自訂刻度仍會畫。</p>
+          </section>
+
+          <section class="coord-card" aria-labelledby="coordSecRegion">
+            <h3 class="coord-card-title" id="coordSecRegion" data-i18n="coord_sec_region">可行區域</h3>
+            <div class="coord-field">
+              <label for="coordInequalities" data-i18n="coord_ineq">不等式（每行一條）</label>
+              <textarea id="coordInequalities" rows="4" spellcheck="false" placeholder="y &lt;= 1.5x + 3&#10;2x + 3y &lt;= 22&#10;y &gt;= 0"></textarea>
+            </div>
+            <label class="check-opt coord-check">
+              <input type="checkbox" id="coordDrawBoundaries" />
+              <span data-i18n="coord_boundaries">畫邊界</span>
+            </label>
+            <div class="coord-field">
+              <label for="coordRegionLabel" data-i18n="coord_region_label">區域標籤</label>
+              <input id="coordRegionLabel" type="text" value="R" maxlength="12" />
+            </div>
+            <label class="check-opt coord-check">
+              <input type="checkbox" id="coordRegionHatch" checked />
+              <span data-i18n="coord_region_hatch">斜線填色</span>
+            </label>
+            <button type="button" id="coordApplyRegion" data-i18n="coord_apply_region">套用區域</button>
+          </section>
+
+          <section class="coord-card" aria-labelledby="coordSecPoint">
+            <h3 class="coord-card-title" id="coordSecPoint" data-i18n="coord_sec_point">數學點</h3>
+            <div class="coord-field">
+              <label for="coordMathUV" data-i18n="coord_math_uv">(u, v)</label>
+              <input id="coordMathUV" type="text" placeholder="2, 3" autocomplete="off" />
+            </div>
+            <label class="check-opt coord-check"><input type="checkbox" id="coordProjectX" /> <span data-i18n="coord_project_x">投影 x</span></label>
+            <label class="check-opt coord-check"><input type="checkbox" id="coordProjectY" /> <span data-i18n="coord_project_y">投影 y</span></label>
+            <button type="button" id="coordAddMathPoint" data-i18n="coord_add_point">加點</button>
+          </section>
+
+          <section class="coord-card" id="coordCurveActionCard" aria-labelledby="coordSecCurveAct">
+            <h3 class="coord-card-title" id="coordSecCurveAct" data-i18n="coord_sec_curve_act">曲線交點／面積</h3>
+            <div class="coord-field">
+              <label for="coordCurve1" data-i18n="coord_curve1">曲線 1</label>
+              <select id="coordCurve1"></select>
+            </div>
+            <div class="coord-field">
+              <label for="coordCurve2" data-i18n="coord_curve2">曲線 2 或軸</label>
+              <select id="coordCurve2"></select>
+            </div>
+            <div class="coord-field">
+              <label for="coordCurveDomain" data-i18n="coord_domain">區間 a,b（可留空）</label>
+              <input id="coordCurveDomain" type="text" placeholder="0, 4" autocomplete="off" />
+            </div>
+            <div class="dialog-actions">
+              <button type="button" id="coordBtnIntersect" data-i18n="coord_intersect">交點</button>
+              <button type="button" id="coordBtnArea" data-i18n="coord_area">面積</button>
+            </div>
           </section>
 
           <section class="coord-card" aria-labelledby="coordSecTrig">
@@ -537,6 +685,66 @@
       <div class="dialog-actions coord-form-actions">
         <button type="submit" value="ok" data-i18n="btn_ok">確定</button>
         <button type="button" id="coordCancel" value="cancel" data-i18n="btn_cancel">取消</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="chartsDialog" class="charts-dialog">
+    <form id="chartsForm" class="charts-form">
+      <p class="dialog-lead" data-i18n="charts_title">圖表</p>
+      <div class="chart-tabs" role="tablist">
+        <button type="button" class="chart-tab active" data-chart-tab="pie" data-i18n="chart_tab_pie">圓餅</button>
+        <button type="button" class="chart-tab" data-chart-tab="box" data-i18n="chart_tab_box">盒鬚</button>
+        <button type="button" class="chart-tab" data-chart-tab="bar" data-i18n="chart_tab_bar">棒形</button>
+      </div>
+      <div class="chart-pane" data-chart-pane="pie">
+        <div class="coord-field">
+          <label for="pieRadius" data-i18n="pie_r">半徑 r</label>
+          <input id="pieRadius" type="text" value="95" />
+        </div>
+        <div class="coord-field">
+          <label for="pieStart" data-i18n="pie_start">起始角 startDeg</label>
+          <input id="pieStart" type="text" value="-90" />
+        </div>
+        <p class="dialog-note" data-i18n="pie_slice_note">每行一片：角度或數值 | 類別 | 角文 | right | hatch。例 120 | 甲 | 120° 或 1 | 乙 | x° | right | hatch。</p>
+        <textarea id="pieSlices" rows="5" spellcheck="false">120 | 甲 | 120°
+90 | 乙 | 90° | right
+150 | 丙 | x° | | hatch</textarea>
+        <label class="check-opt"><input type="checkbox" id="pieUseValue" /> <span data-i18n="pie_use_value">第一欄是 value（否則是 angle）</span></label>
+      </div>
+      <div class="chart-pane" data-chart-pane="box" hidden>
+        <p class="dialog-note" data-i18n="box_note">五數是資料值，插入時映到世界座標。刻度做成 {pos,label}。</p>
+        <div class="coord-field"><label for="boxFive" data-i18n="box_five">min, q1, median, q3, max</label>
+          <input id="boxFive" type="text" value="10, 18, 24, 31, 40" />
+        </div>
+        <div class="coord-field"><label for="boxTicks" data-i18n="box_ticks">刻度起,迄,步長</label>
+          <input id="boxTicks" type="text" value="10, 40, 5" />
+        </div>
+        <div class="coord-field"><label for="boxAxisLabel" data-i18n="box_axis">軸標題</label>
+          <input id="boxAxisLabel" type="text" value="Age" />
+        </div>
+      </div>
+      <div class="chart-pane" data-chart-pane="bar" hidden>
+        <div class="coord-field"><label for="barCats" data-i18n="bar_cats">類別</label>
+          <input id="barCats" type="text" value="23, 24, 25, 26" />
+        </div>
+        <div class="coord-field"><label for="barHeights" data-i18n="bar_heights">高度（5:k 表示高度 5、標 k）</label>
+          <input id="barHeights" type="text" value="8, 6, 5:k, 7" />
+        </div>
+        <div class="coord-field"><label for="barXLabel" data-i18n="bar_xlabel">xLabel</label>
+          <input id="barXLabel" type="text" value="" />
+        </div>
+        <div class="coord-field"><label for="barYLabel" data-i18n="bar_ylabel">yLabel</label>
+          <input id="barYLabel" type="text" value="" />
+        </div>
+        <span class="float-mini-opts">
+          <button type="button" class="mark-group-btn rail-mini-btn active" data-bar-pattern="hatch" data-i18n="bar_hatch">斜線</button>
+          <button type="button" class="mark-group-btn rail-mini-btn" data-bar-pattern="solid" data-i18n="bar_solid">實色</button>
+        </span>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" id="chartsInsert" data-i18n="charts_insert">插入</button>
+        <button type="button" id="chartsClose" data-i18n="btn_cancel">取消</button>
       </div>
     </form>
   </dialog>
@@ -594,6 +802,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20261126-release-v13.5.48"></script>
+  <script src="app.js?v=20261126-release-v13.5.49"></script>
 </body>
 </html>
