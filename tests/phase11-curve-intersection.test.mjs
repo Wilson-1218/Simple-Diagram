@@ -45,8 +45,8 @@ function withWarns(fn) {
   }
 }
 
-test("APP_VERSION is 13.5.47 and curve ops are registered", () => {
-  assert.equal(APP_VERSION, "13.5.47");
+test("APP_VERSION is 13.5.48 and curve ops are registered", () => {
+  assert.equal(APP_VERSION, "13.5.48");
   assert.equal(OP_NAMES.length, 58);
   assert.ok(OP_NAMES.includes("addCurveIntersection"));
   assert.ok(OP_NAMES.includes("addPlotIntersection"));
@@ -185,6 +185,7 @@ test("pick, nearU, id2, and inline curve stay off the plot", () => {
       hidden: false,
       projectY: true,
       yTickLabel: "v",
+      forceTickLabel: true,
       color: "#2255aa",
     },
   ]);

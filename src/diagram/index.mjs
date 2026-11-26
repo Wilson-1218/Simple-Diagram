@@ -118,6 +118,9 @@ export {
   coordCurveLabelText,
   normalizeCoordTicks,
   coordTickText,
+  coordOriginZeroLabelSuppressed,
+  coordDisplayedTickPositions,
+  coordAxisShowsTickLabel,
   svgCoordPlot,
 } from "./coord-plot.mjs";
 export {

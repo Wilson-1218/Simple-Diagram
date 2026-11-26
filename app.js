@@ -5790,6 +5790,13 @@
     return Math.abs(u) < 1e-9;
   }
 
+  /** Skip a default "0" tick label when the origin letter O is already drawn. */
+  function coordOriginZeroLabelSuppressed(plot, pos, text) {
+    if (!plot || plot.showOrigin === false) return false;
+    if (!(Math.abs(Number(pos)) < 1e-9)) return false;
+    return String(text) === "0";
+  }
+
   function formatDegAxisTick(u) {
     const n = Math.abs(u - Math.round(u)) < 1e-6 ? Math.round(u) : Math.round(u * 10) / 10;
     return String(n) + "°";
@@ -5951,8 +5958,12 @@
         c.lineTo(p.x, p.y + tickLen);
         c.stroke();
         // Skip ≈0 label — origin "O" already marks the origin (avoid "O0").
-        // Explicit ticks always keep their label.
-        if (tick.explicit || !coordNearZero(tick.u)) {
+        // Explicit custom text other than "0" still draws. The tick mark stays.
+        const plain = tick.parts && tick.parts.kind === "text" ? tick.parts.text : "";
+        if (
+          !coordOriginZeroLabelSuppressed(plot, tick.u, plain) &&
+          (tick.explicit || !coordNearZero(tick.u))
+        ) {
           if (tick.explicit && tick.parts && tick.parts.kind === "text" && mathTextHasScript(tick.parts.text)) {
             paintMathOrPlain(c, tick.parts.text, p.x, p.y + tickLen + 1, fontPx, color, true, "center", "top", false, true);
           } else {
@@ -5969,7 +5980,7 @@
         c.lineTo(p.x + tickLen, p.y);
         c.stroke();
         const tx = coordTickText(t);
-        if (!tx) continue;
+        if (!tx || coordOriginZeroLabelSuppressed(plot, t.pos, tx)) continue;
         paintMathOrPlain(c, tx, p.x - tickLen - 2, p.y, fontPx, color, true, "right", "middle", false, true);
       }
     } else if (showDefaultTicks) {
@@ -6090,6 +6101,8 @@
       cap,
       showAxis,
     };
+    const axisLabel = readBoxAxisLabelLocal(raw);
+    if (axisLabel) out.axisLabel = axisLabel;
     if (orientation === "v") {
       const x = Number(raw.x);
       if (!Number.isFinite(x)) return null;
@@ -6102,6 +6115,49 @@
       if (raw.axisY != null && Number.isFinite(Number(raw.axisY))) out.axisY = Number(raw.axisY);
     }
     return out;
+  }
+
+  function readBoxAxisLabelLocal(raw) {
+    if (!raw || typeof raw !== "object") return "";
+    for (const key of ["axisLabel", "xLabel", "yLabel"]) {
+      if (raw[key] == null) continue;
+      const s = String(raw[key]).trim();
+      if (s) return s;
+    }
+    return "";
+  }
+
+  /** Extend a horizontal number line ~18px and place axisLabel outside it. */
+  function attachBoxAxisLabelLocal(bw, axis) {
+    const text = bw.axisLabel != null ? String(bw.axisLabel).trim() : "";
+    if (!text) return { axis, axisLabel: null };
+    const h = bw.boxHeight;
+    const half = h / 2;
+    let ax = axis;
+    if (!ax) {
+      if (bw.orientation === "v") {
+        const axisX = bw.axisX != null ? bw.axisX : bw.x + half + Math.max(10, h * 0.35);
+        ax = { x1: axisX, y1: bw.min, x2: axisX, y2: bw.max };
+      } else {
+        const axisY = bw.axisY != null ? bw.axisY : bw.y + half + Math.max(10, h * 0.35);
+        ax = { x1: bw.min, y1: axisY, x2: bw.max, y2: axisY };
+      }
+    }
+    if (bw.orientation === "v") {
+      const top = Math.min(ax.y1, ax.y2);
+      return {
+        axis: ax,
+        axisLabel: { x: ax.x1, y: top - 8, text, anchor: "middle", baseline: "auto" },
+      };
+    }
+    const left = Math.min(ax.x1, ax.x2);
+    const right = Math.max(ax.x1, ax.x2);
+    const y = ax.y1;
+    const x2 = right + 18;
+    return {
+      axis: { x1: left, y1: y, x2, y2: y },
+      axisLabel: { x: x2 + 2, y, text, anchor: "start", baseline: "middle" },
+    };
   }
 
   function boxWhiskerGeomParts(bw) {
@@ -6155,7 +6211,18 @@
           }
         }
       }
-      return { box, median, whiskers, caps, outliers, axis, tickMarks, tickLabels };
+      const labeled = attachBoxAxisLabelLocal(bw, axis);
+      return {
+        box,
+        median,
+        whiskers,
+        caps,
+        outliers,
+        axis: labeled.axis,
+        tickMarks,
+        tickLabels,
+        axisLabel: labeled.axisLabel,
+      };
     }
     const y = bw.y;
     const box = { x: bw.q1, y: y - half, w: bw.q3 - bw.q1, h };
@@ -6201,7 +6268,18 @@
         }
       }
     }
-    return { box, median, whiskers, caps, outliers, axis, tickMarks, tickLabels };
+    const labeled = attachBoxAxisLabelLocal(bw, axis);
+    return {
+      box,
+      median,
+      whiskers,
+      caps,
+      outliers,
+      axis: labeled.axis,
+      tickMarks,
+      tickLabels,
+      axisLabel: labeled.axisLabel,
+    };
   }
 
   function boxWhiskerBounds(bw) {
@@ -6226,6 +6304,31 @@
     }
     for (const t of p.tickLabels || []) add(t.x, t.y);
     for (const o of p.outliers) add(o.x, o.y);
+    if (p.axisLabel) {
+      const font = 16;
+      const tw = approxLengthTextWidth(p.axisLabel.text, font) * 1.5;
+      const th = font * 1.45;
+      const lab = p.axisLabel;
+      if (lab.anchor === "start") {
+        add(lab.x, lab.y);
+        add(lab.x + tw, lab.y);
+      } else if (lab.anchor === "end") {
+        add(lab.x - tw, lab.y);
+        add(lab.x, lab.y);
+      } else {
+        add(lab.x - tw / 2, lab.y);
+        add(lab.x + tw / 2, lab.y);
+      }
+      if (lab.baseline === "middle") {
+        add(lab.x, lab.y - th / 2);
+        add(lab.x, lab.y + th / 2);
+      } else if (lab.baseline === "hanging") {
+        add(lab.x, lab.y + th);
+      } else {
+        add(lab.x, lab.y - th);
+        add(lab.x, lab.y + th * 0.35);
+      }
+    }
     return b;
   }
 
@@ -6269,6 +6372,16 @@
       c.textAlign = t.anchor === "end" ? "right" : t.anchor === "start" ? "left" : "center";
       c.textBaseline =
         t.baseline === "hanging" ? "top" : t.baseline === "auto" ? "alphabetic" : "middle";
+      paintTextHalo(c, t.text, p.x, p.y, fontPx);
+      c.fillStyle = color;
+      c.fillText(t.text, p.x, p.y);
+    }
+    if (parts.axisLabel) {
+      const t = parts.axisLabel;
+      const p = toScreen(t.x, t.y);
+      c.textAlign = t.anchor === "end" ? "right" : t.anchor === "start" ? "left" : "center";
+      c.textBaseline =
+        t.baseline === "hanging" ? "top" : t.baseline === "middle" ? "middle" : "alphabetic";
       paintTextHalo(c, t.text, p.x, p.y, fontPx);
       c.fillStyle = color;
       c.fillText(t.text, p.x, p.y);
@@ -6541,6 +6654,14 @@
       const anchor = t.anchor === "end" ? "end" : t.anchor === "start" ? "start" : "middle";
       const baseline =
         t.baseline === "hanging" ? "hanging" : t.baseline === "auto" ? "auto" : "middle";
+      out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo}" stroke-linejoin="round" paint-order="stroke fill" ${fam} font-size="${fontPx}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
+    }
+    if (parts.axisLabel) {
+      const t = parts.axisLabel;
+      const p = toS(t.x, t.y);
+      const anchor = t.anchor === "end" ? "end" : t.anchor === "start" ? "start" : "middle";
+      const baseline =
+        t.baseline === "hanging" ? "hanging" : t.baseline === "middle" ? "middle" : "auto";
       out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${halo}" stroke-linejoin="round" paint-order="stroke fill" ${fam} font-size="${fontPx}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
     }
     const or = Math.max(2.5, LINE_WIDTH * scale * 0.75 * 1.4);
@@ -7310,7 +7431,11 @@
       for (const tick of xEntries) {
         const p = toS(plot.ox + tick.u * scales.xUnitPx, plot.oy);
         body += `<line x1="${p.x.toFixed(2)}" y1="${(p.y - tickLen).toFixed(2)}" x2="${p.x.toFixed(2)}" y2="${(p.y + tickLen).toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
-        if (tick.explicit || !coordNearZero(tick.u)) {
+        const plain = tick.parts && tick.parts.kind === "text" ? tick.parts.text : "";
+        if (
+          !coordOriginZeroLabelSuppressed(plot, tick.u, plain) &&
+          (tick.explicit || !coordNearZero(tick.u))
+        ) {
           if (tick.explicit && tick.parts && mathTextHasScript(tick.parts.text || "")) {
             body += svgMathTextTag(tick.parts.text, p.x, p.y + tickLen + 1, fontPx, haloAttrs, "middle", "hanging", true);
           } else {
@@ -7324,7 +7449,7 @@
         const p = toS(plot.ox, plot.oy - t.pos * scales.yUnitPx);
         body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
         const tx = coordTickText(t);
-        if (!tx) continue;
+        if (!tx || coordOriginZeroLabelSuppressed(plot, t.pos, tx)) continue;
         body += svgMathTextTag(tx, p.x - tickLen - 2, p.y, fontPx, haloAttrs, "end", "middle", true);
       }
     } else if (showDefaultTicks) {
@@ -12677,7 +12802,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.47",
+      version: "13.5.48",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

@@ -3,6 +3,16 @@
  * Horizontal (default) or vertical; axis tick positions are caller-supplied only.
  */
 
+import { approxTextWidth } from "./length-mark.mjs";
+
+/** documentToSvg defaults: 54×40mm frame, 8pt labels, pad 24 at scale 2. */
+const EXPORT_FRAME_W_MM = 54;
+const EXPORT_FRAME_H_MM = 40;
+const EXPORT_LABEL_PT = 8;
+const PT_TO_MM = 25.4 / 72;
+const EXPORT_PAD_BOTH = 24;
+const EXPORT_MIN_WORLD = 20;
+
 function num(v, fallback) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
@@ -60,6 +70,20 @@ export function boxWhiskerTickLabel(t) {
 }
 
 /**
+ * axisLabel, or the aliases xLabel then yLabel. Blank string means no label.
+ * @param {Record<string, unknown>|null|undefined} raw
+ */
+export function readBoxAxisLabel(raw) {
+  if (!raw || typeof raw !== "object") return "";
+  for (const key of ["axisLabel", "xLabel", "yLabel"]) {
+    if (raw[key] == null) continue;
+    const s = String(raw[key]).trim();
+    if (s) return s;
+  }
+  return "";
+}
+
+/**
  * Normalize / validate a box-whisker record for persist + render.
  * @param {Record<string, unknown>} raw
  * @param {{ requireId?: boolean }} [opts]
@@ -94,6 +118,7 @@ export function normalizeBoxWhisker(raw, opts = {}) {
   const ticks = normalizeBoxWhiskerTicks(raw.ticks);
   const showAxis =
     raw.showAxis != null ? !!raw.showAxis : ticks.length > 0;
+  const axisLabel = readBoxAxisLabel(raw);
 
   /** @type {Record<string, unknown>} */
   const out = {
@@ -109,6 +134,7 @@ export function normalizeBoxWhisker(raw, opts = {}) {
     cap,
     showAxis,
   };
+  if (axisLabel) out.axisLabel = axisLabel;
   if (opts.requireId !== false) {
     if (typeof raw.id !== "string" || !raw.id) {
       throw new Error("boxWhisker: id required");
@@ -148,8 +174,55 @@ export function normalizeBoxWhisker(raw, opts = {}) {
  *   axis: {x1:number,y1:number,x2:number,y2:number}|null,
  *   tickMarks: {x1:number,y1:number,x2:number,y2:number}[],
  *   tickLabels: {x:number,y:number,text:string,anchor:string,baseline:string}[],
+ *   axisLabel: {x:number,y:number,text:string,anchor:string,baseline:string}|null,
  * }}
  */
+function attachBoxAxisLabel(bw, axis) {
+  const text = bw.axisLabel != null ? String(bw.axisLabel).trim() : "";
+  if (!text) return { axis, axisLabel: null };
+  const h = bw.boxHeight;
+  const half = h / 2;
+  let ax = axis;
+  if (!ax) {
+    if (bw.orientation === "v") {
+      const axisX =
+        bw.axisX != null ? bw.axisX : bw.x + half + Math.max(10, h * 0.35);
+      ax = { x1: axisX, y1: bw.min, x2: axisX, y2: bw.max };
+    } else {
+      const axisY =
+        bw.axisY != null ? bw.axisY : bw.y + half + Math.max(10, h * 0.35);
+      ax = { x1: bw.min, y1: axisY, x2: bw.max, y2: axisY };
+    }
+  }
+  if (bw.orientation === "v") {
+    const top = Math.min(ax.y1, ax.y2);
+    return {
+      axis: ax,
+      axisLabel: {
+        x: ax.x1,
+        y: top - 8,
+        text,
+        anchor: "middle",
+        baseline: "auto",
+      },
+    };
+  }
+  const left = Math.min(ax.x1, ax.x2);
+  const right = Math.max(ax.x1, ax.x2);
+  const y = ax.y1;
+  const x2 = right + 18;
+  return {
+    axis: { x1: left, y1: y, x2, y2: y },
+    axisLabel: {
+      x: x2 + 2,
+      y,
+      text,
+      anchor: "start",
+      baseline: "middle",
+    },
+  };
+}
+
 export function boxWhiskerParts(bw) {
   const h = bw.boxHeight;
   const half = h / 2;
@@ -208,7 +281,18 @@ export function boxWhiskerParts(bw) {
         }
       }
     }
-    return { box, median, whiskers, caps, outliers, axis, tickMarks, tickLabels };
+    const labeled = attachBoxAxisLabel(bw, axis);
+    return {
+      box,
+      median,
+      whiskers,
+      caps,
+      outliers,
+      axis: labeled.axis,
+      tickMarks,
+      tickLabels,
+      axisLabel: labeled.axisLabel,
+    };
   }
 
   // Horizontal
@@ -262,22 +346,97 @@ export function boxWhiskerParts(bw) {
       }
     }
   }
-  return { box, median, whiskers, caps, outliers, axis, tickMarks, tickLabels };
+  const labeled = attachBoxAxisLabel(bw, axis);
+  return {
+    box,
+    median,
+    whiskers,
+    caps,
+    outliers,
+    axis: labeled.axis,
+    tickMarks,
+    tickLabels,
+    axisLabel: labeled.axisLabel,
+  };
 }
 
-/** Expand world bounds to cover a box-whisker. */
+/** World-space font of an export tick (fontForSize 14) at the default frame. */
+function boxExportFontWorld(worldW, worldH) {
+  const uuPerWorld = Math.max(
+    Math.max(1e-6, worldW) / EXPORT_FRAME_W_MM,
+    Math.max(1e-6, worldH) / EXPORT_FRAME_H_MM
+  );
+  return (14 / 16) * EXPORT_LABEL_PT * PT_TO_MM * uuPerWorld;
+}
+
+/** Corners of the painted axis label, including halo slack so SVG does not clip it. */
+function axisLabelCorners(label, font) {
+  const tw = approxTextWidth(label.text, font) * 1.5;
+  const th = Math.max(font * 1.45, 8);
+  const anchor = label.anchor;
+  const baseline = label.baseline;
+  let x0;
+  let x1;
+  if (anchor === "start") {
+    x0 = label.x;
+    x1 = label.x + tw;
+  } else if (anchor === "end") {
+    x0 = label.x - tw;
+    x1 = label.x;
+  } else {
+    x0 = label.x - tw / 2;
+    x1 = label.x + tw / 2;
+  }
+  let y0;
+  let y1;
+  if (baseline === "hanging") {
+    y0 = label.y;
+    y1 = label.y + th;
+  } else if (baseline === "middle") {
+    y0 = label.y - th / 2;
+    y1 = label.y + th / 2;
+  } else {
+    y0 = label.y - th;
+    y1 = label.y + th * 0.35;
+  }
+  return { x0, y0, x1, y1 };
+}
+
+/** Expand world bounds to cover a box-whisker, including the full axisLabel. */
 export function addBoxWhiskerBounds(bw, add) {
   const p = boxWhiskerParts(bw);
-  add(p.box.x, p.box.y);
-  add(p.box.x + p.box.w, p.box.y + p.box.h);
+  const xs = [];
+  const ys = [];
+  const push = (x, y) => {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    xs.push(x);
+    ys.push(y);
+  };
+  push(p.box.x, p.box.y);
+  push(p.box.x + p.box.w, p.box.y + p.box.h);
   for (const s of [...p.whiskers, ...p.caps, p.median, ...p.tickMarks]) {
-    add(s.x1, s.y1);
-    add(s.x2, s.y2);
+    push(s.x1, s.y1);
+    push(s.x2, s.y2);
   }
   if (p.axis) {
-    add(p.axis.x1, p.axis.y1);
-    add(p.axis.x2, p.axis.y2);
+    push(p.axis.x1, p.axis.y1);
+    push(p.axis.x2, p.axis.y2);
   }
-  for (const t of p.tickLabels || []) add(t.x, t.y);
-  for (const o of p.outliers) add(o.x, o.y);
+  for (const t of p.tickLabels || []) push(t.x, t.y);
+  for (const o of p.outliers) push(o.x, o.y);
+  if (p.axisLabel && xs.length) {
+    let minX = Math.min(...xs);
+    let maxX = Math.max(...xs);
+    let minY = Math.min(...ys);
+    let maxY = Math.max(...ys);
+    let corners = axisLabelCorners(p.axisLabel, 12);
+    for (let i = 0; i < 5; i++) {
+      const worldW = Math.max(EXPORT_MIN_WORLD, Math.max(maxX, corners.x1) - Math.min(minX, corners.x0)) + EXPORT_PAD_BOTH;
+      const worldH = Math.max(EXPORT_MIN_WORLD, Math.max(maxY, corners.y1) - Math.min(minY, corners.y0)) + EXPORT_PAD_BOTH;
+      corners = axisLabelCorners(p.axisLabel, boxExportFontWorld(worldW, worldH));
+    }
+    push(corners.x0, corners.y0);
+    push(corners.x1, corners.y1);
+  }
+  for (let i = 0; i < xs.length; i++) add(xs[i], ys[i]);
 }

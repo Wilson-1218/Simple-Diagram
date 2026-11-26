@@ -70,6 +70,57 @@ export function coordTickText(tick) {
 }
 
 /**
+ * Origin letter O is already drawn. Skip a tick label that would print "0"
+ * on top of it. Custom text other than "0" still draws. showOrigin:false
+ * still draws "0". The tick mark itself is unchanged.
+ * @param {object|null|undefined} plot
+ * @param {number} pos
+ * @param {string} text
+ */
+export function coordOriginZeroLabelSuppressed(plot, pos, text) {
+  if (!plot || plot.showOrigin === false) return false;
+  if (!(Math.abs(Number(pos)) < 1e-9)) return false;
+  return String(text) === "0";
+}
+
+/**
+ * Math positions whose tick labels the axis actually paints.
+ * Explicit ticks count even when showTickLabels is false, except a "0"
+ * suppressed beside O. Default integer ticks count only while both
+ * showTicks and showTickLabels are on (they already omit 0).
+ * @param {object|null|undefined} plot
+ * @param {"x"|"y"} axis
+ * @returns {number[]}
+ */
+export function coordDisplayedTickPositions(plot, axis) {
+  if (!plot || (axis !== "x" && axis !== "y")) return [];
+  const explicit = normalizeCoordTicks(axis === "x" ? plot.xTicks : plot.yTicks);
+  if (explicit) {
+    const out = [];
+    for (const t of explicit) {
+      const text = coordTickText(t);
+      if (!text) continue;
+      if (coordOriginZeroLabelSuppressed(plot, t.pos, text)) continue;
+      out.push(Number(t.pos));
+    }
+    return out;
+  }
+  if (plot.showTicks === false || plot.showTickLabels === false) return [];
+  const min = Number(axis === "x" ? plot.xmin : plot.ymin);
+  const max = Number(axis === "x" ? plot.xmax : plot.ymax);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return [];
+  const step = axis === "x" ? plot.xStep : plot.yStep;
+  return coordIntegerTicks(min, max, step);
+}
+
+/** True when a displayed tick label already sits within 1e-3 of `math`. */
+export function coordAxisShowsTickLabel(plot, axis, math) {
+  const m = Number(math);
+  if (!Number.isFinite(m)) return false;
+  return coordDisplayedTickPositions(plot, axis).some((pos) => Math.abs(pos - m) < 1e-3);
+}
+
+/**
  * When tick labels are on, extend axes past xmax/ymax so the last digit
  * does not collide with the arrow / axis name. Returns px overhangs.
  * Explicit xTicks/yTicks also count (they draw even if showTickLabels is false).
@@ -584,7 +635,7 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
       const p = toS(ox + t.pos * scales.xUnitPx, oy);
       body += `<line x1="${p.x.toFixed(2)}" y1="${(p.y - tickLen).toFixed(2)}" x2="${p.x.toFixed(2)}" y2="${(p.y + tickLen).toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
       const label = coordTickText(t);
-      if (label) {
+      if (label && !coordOriginZeroLabelSuppressed(plot, t.pos, label)) {
         const rich = svgTextInner(label, true);
         body += `<text x="${p.x.toFixed(2)}" y="${(p.y + tickLen + 1).toFixed(2)}" ${haloAttrs} ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="middle" dominant-baseline="hanging">${rich.inner}</text>\n`;
       }
@@ -603,7 +654,7 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
       const p = toS(ox, oy - t.pos * scales.yUnitPx);
       body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
       const label = coordTickText(t);
-      if (label) {
+      if (label && !coordOriginZeroLabelSuppressed(plot, t.pos, label)) {
         const rich = svgTextInner(label, true);
         body += `<text x="${(p.x - tickLen - 2).toFixed(2)}" y="${p.y.toFixed(2)}" ${haloAttrs} ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${rich.inner}</text>\n`;
       }

@@ -12,7 +12,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for coord-plot phase 6", () => {
-  assert.equal(APP_VERSION, "13.5.47");
+  assert.equal(APP_VERSION, "13.5.48");
   assert.ok(OP_NAMES.includes("addPlotPoint"));
 });
 
@@ -150,6 +150,8 @@ test("projectX/projectY persist axis segments and tick labels", () => {
       ox: 100,
       oy: 200,
       unitPx: 40,
+      xTicks: [],
+      yTicks: [],
     },
     {
       op: "addPlotPoint",

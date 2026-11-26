@@ -75,8 +75,8 @@ export const OP_CATALOG = {
   addParallelMark: { args: "segmentId, group?, side?" },
   addEqualMark: { args: "segmentId, group?, side?" },
   addBoxWhisker: {
-    args: "y|x, min, q1, median, q3, max, outliers?, ticks?, boxHeight?, orientation?, showAxis?",
-    note: "Dedicated boxplot; ticks[] caller-supplied (no equal-spacing invent); alias addBoxPlot",
+    args: "y|x, min, q1, median, q3, max, outliers?, ticks?, boxHeight?, orientation?, showAxis?, axisLabel?|xLabel?|yLabel?",
+    note: "Dedicated boxplot; ticks[] caller-supplied (no equal-spacing invent); axisLabel (aliases xLabel, yLabel) sits outside the number line and is included in the export bbox; alias addBoxPlot",
   },
   addBarChart: {
     args: "x, y, categories, values|heights, plotW?, plotH?, yMin?, yMax?, yTicks?, yStep?, xLabel?, yLabel?, yLabelMode?, barPattern?, showGrid?",
@@ -167,8 +167,8 @@ export const OP_CATALOG = {
     note: "half-planes → hatch polygon (default) on the last coord plot; generated corners are hidden; missing plot warns and skips; strict < > is a dashed boundary",
   },
   addPlotPoint: {
-    args: "plotId?, u|mathX, v|mathY, label?, ox?, oy?, projectX?, projectY?, projectStyle?, xTickLabel?, yTickLabel?",
-    note: "world x=ox+u*xUnitPx, y=oy-v*yUnitPx; missing plot warns and skips; projections persist as segments+labels",
+    args: "plotId?, u|mathX, v|mathY, label?, ox?, oy?, projectX?, projectY?, projectStyle?, xTickLabel?, yTickLabel?, forceTickLabel?",
+    note: "world x=ox+u*xUnitPx, y=oy-v*yUnitPx; missing plot warns and skips; projections persist as segments; tick text is omitted when that axis already shows a label within 1e-3 unless forceTickLabel",
   },
   alignPoints: { args: "pointIds, axis", note: "left|center|right|top|middle|bottom" },
   distributePoints: { args: "pointIds (≥3), axis x|y" },

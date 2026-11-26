@@ -11,7 +11,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for phase1 AI/UX", () => {
-  assert.equal(APP_VERSION, "13.5.47");
+  assert.equal(APP_VERSION, "13.5.48");
 });
 
 test("addTangent leftToRight: bottom touch → aId left, bId right", () => {
