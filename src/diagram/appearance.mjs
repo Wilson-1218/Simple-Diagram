@@ -43,6 +43,14 @@ export function readExplicitColor(op) {
  * @param {object} row
  * @param {object} op
  */
+/** Positive integer solution step, or null when omitted / not a positive integer. */
+export function readSolutionStep(op) {
+  if (!op || op.solutionStep == null || op.solutionStep === "") return null;
+  const n = Number(op.solutionStep);
+  if (!Number.isInteger(n) || !(n > 0)) return null;
+  return n;
+}
+
 export function stampAppearance(row, op) {
   if (!row || !op) return row;
   const role = elementRole(op);
@@ -56,6 +64,8 @@ export function stampAppearance(row, op) {
   else if (named) row.role = "question";
   const color = readExplicitColor(op);
   if (color) row.color = color;
+  const step = readSolutionStep(op);
+  if (step != null) row.solutionStep = step;
   return row;
 }
 
@@ -75,6 +85,8 @@ export function appearanceFields(op) {
   }
   const color = readExplicitColor(op);
   if (color) out.color = color;
+  const step = readSolutionStep(op);
+  if (step != null) out.solutionStep = step;
   return out;
 }
 
@@ -85,7 +97,15 @@ export function solutionLayerVisible(layers) {
 
 export function elementShown(el, layers) {
   if (!el || el.role !== "solution") return true;
-  return solutionLayerVisible(layers);
+  if (!solutionLayerVisible(layers)) return false;
+  const max = layers && layers.solutionMaxStep;
+  if (max == null || max === "") return true;
+  const k = Number(max);
+  if (!Number.isInteger(k) || !(k > 0)) return true;
+  if (el.solutionStep == null || el.solutionStep === "") return true;
+  const step = Number(el.solutionStep);
+  if (!Number.isInteger(step)) return true;
+  return step <= k;
 }
 
 /**

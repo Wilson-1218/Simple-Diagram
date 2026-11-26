@@ -23,6 +23,7 @@ export {
   SOLUTION_FILL_OPACITY,
   elementStroke,
   resolveFillPaint,
+  readSolutionStep,
 } from "./appearance.mjs";
 export { summarizeDiagram, OP_CATALOG } from "./summarize.mjs";
 export {
@@ -91,6 +92,14 @@ export {
   barValueToWorldY,
 } from "./bar-chart.mjs";
 export {
+  normalizeStatChart,
+  statChartParts,
+  addStatChartBounds,
+  svgStatChart,
+  svgDataAttrs,
+} from "./stat-charts.mjs";
+export { recomputeConstructions, tangentEndpoints, perpendicularFoot } from "./constructions.mjs";
+export {
   normalizeFillPattern,
   hatchInkForDisplay,
   HATCH_INK_PAPER,
@@ -116,6 +125,7 @@ export {
   COORD_CURVE_INK_PAPER,
   COORD_CURVE_INK_DARK,
   coordCurveLabelText,
+  curveLabelWorld,
   normalizeCoordTicks,
   coordTickText,
   coordOriginZeroLabelSuppressed,

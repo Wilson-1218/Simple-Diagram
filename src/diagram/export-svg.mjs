@@ -39,6 +39,8 @@ import { addCoordPlotBounds, svgCoordPlot } from "./coord-plot.mjs";
 import { svgTextInner } from "./math-text.mjs";
 import { arcDraw } from "./angle-arc.mjs";
 import { elementShown, elementStroke, resolveFillPaint } from "./appearance.mjs";
+import { addStatChartBounds, svgStatChart, svgDataAttrs } from "./stat-charts.mjs";
+import { approxTextWidth } from "./length-mark.mjs";
 
 /** Exam-figure default embed frame (Paper). */
 export const DEFAULT_FRAME_WIDTH_MM = 54;
@@ -70,6 +72,36 @@ function pointMap(doc) {
   return m;
 }
 
+function addSectorArcExtrema(sec, pts, add) {
+  if (!sec) return;
+  const c = pts.get(sec.centerId);
+  const s0 = pts.get(sec.startId);
+  const s1 = pts.get(sec.endId);
+  if (!c || !s0 || !s1) return;
+  const r = Math.hypot(s0.x - c.x, s0.y - c.y) || Math.hypot(s1.x - c.x, s1.y - c.y);
+  if (!(r > 1e-9)) return;
+  const a0 = Math.atan2(s0.y - c.y, s0.x - c.x);
+  const a1 = Math.atan2(s1.y - c.y, s1.x - c.x);
+  let delta = a1 - a0;
+  while (delta <= -Math.PI) delta += Math.PI * 2;
+  while (delta > Math.PI) delta -= Math.PI * 2;
+  if (sec.reflex && Math.abs(delta) < Math.PI) {
+    delta = delta > 0 ? delta - Math.PI * 2 : delta + Math.PI * 2;
+  }
+  const lo = Math.min(a0, a0 + delta);
+  const hi = Math.max(a0, a0 + delta);
+  add(c.x + r * Math.cos(a0), c.y + r * Math.sin(a0));
+  add(c.x + r * Math.cos(a0 + delta), c.y + r * Math.sin(a0 + delta));
+  for (let k = -2; k <= 4; k++) {
+    for (const base of [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]) {
+      const a = base + k * Math.PI * 2;
+      if (a >= lo - 1e-6 && a <= hi + 1e-6) {
+        add(c.x + r * Math.cos(a), c.y + r * Math.sin(a));
+      }
+    }
+  }
+}
+
 function boundsOf(doc, pad = 24) {
   let minX = Infinity,
     minY = Infinity,
@@ -86,11 +118,34 @@ function boundsOf(doc, pad = 24) {
   for (const p of pts.values()) add(p.x, p.y);
   for (const lab of doc.labels || []) {
     const p = pts.get(lab.pointId);
-    if (p) add(p.x + (lab.ox || 0), p.y + (lab.oy || 0));
+    if (!p) continue;
+    const x = p.x + (lab.ox || 0);
+    const y = p.y + (lab.oy || 0);
+    add(x, y);
+    // Keep the anchor inside the frame. Extra glyph extent is only added when
+    // the caller did not force pad 0 (that path is a pure geometry scale check).
+    if (pad > 0) {
+      const fs = Number(lab.size) > 0 ? Number(lab.size) : 16;
+      const tw = approxTextWidth(lab.text || "", fs);
+      add(x - tw / 2, y - fs * 0.7);
+      add(x + tw / 2, y + fs * 0.45);
+    }
   }
   for (const tx of doc.texts || []) {
     if (!tx || typeof tx !== "object") continue;
-    add(Number(tx.x), Number(tx.y));
+    const x = Number(tx.x);
+    const y = Number(tx.y);
+    add(x, y);
+    if (pad > 0) {
+      const fs = Number(tx.size) > 0 ? Number(tx.size) : 16;
+      const tw = approxTextWidth(tx.text || "", fs);
+      add(x - tw / 2, y - fs * 0.7);
+      add(x + tw / 2, y + fs * 0.45);
+    }
+  }
+  for (const sec of doc.sectors || []) addSectorArcExtrema(sec, pts, add);
+  for (const f of doc.fills || []) {
+    if (f && (f.kind === "sector" || f.kind === "segment")) addSectorArcExtrema(f, pts, add);
   }
   for (const cir of doc.circles || []) {
     const c = pts.get(cir.centerId);
@@ -109,7 +164,9 @@ function boundsOf(doc, pad = 24) {
   }
   for (const raw of doc.barCharts || []) {
     try {
-      addBarChartBounds(normalizeBarChart(raw), add);
+      if (raw && (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots")) {
+        addStatChartBounds(raw, add);
+      } else addBarChartBounds(normalizeBarChart(raw), add);
     } catch {
       /* skip corrupt */
     }
@@ -447,14 +504,14 @@ export function documentToSvg(doc, opts = {}) {
       const strokes = hatchStrokesForPolygon(screenPts, { spacing });
       const strokeCol = paint.color || HATCH_INK_PAPER;
       body += `<clipPath id="${clipId}"><path d="${d}" /></clipPath>\n`;
-      body += `<g clip-path="url(#${clipId})">\n`;
+      body += `<g clip-path="url(#${clipId})"${svgDataAttrs(f)}>\n`;
       for (const s of strokes) {
         body += `<line x1="${s.x1.toFixed(2)}" y1="${s.y1.toFixed(2)}" x2="${s.x2.toFixed(2)}" y2="${s.y2.toFixed(2)}" stroke="${strokeCol}" stroke-width="${sw}" stroke-linecap="butt" />\n`;
       }
       body += `</g>\n`;
     } else {
       const fill = hexToRgba(paint.color, paint.opacity);
-      body += `<path d="${d}" fill="${fill}" stroke="none" />\n`;
+      body += `<path d="${d}" fill="${fill}" stroke="none"${svgDataAttrs(f)} />\n`;
     }
   };
 
@@ -629,7 +686,7 @@ export function documentToSvg(doc, opts = {}) {
     const da = dash.length
       ? ` stroke-dasharray="${dash.map((d) => d.toFixed(2)).join(" ")}"`
       : "";
-    body += `<circle cx="${sc.x.toFixed(2)}" cy="${sc.y.toFixed(2)}" r="${rs.toFixed(2)}" fill="none" stroke="${strokeOf(cir)}" stroke-width="${sw}"${da} />\n`;
+    body += `<circle cx="${sc.x.toFixed(2)}" cy="${sc.y.toFixed(2)}" r="${rs.toFixed(2)}" fill="none" stroke="${strokeOf(cir)}" stroke-width="${sw}"${da}${svgDataAttrs(cir)} />\n`;
   }
 
   for (const sec of doc.sectors || []) {
@@ -659,9 +716,9 @@ export function documentToSvg(doc, opts = {}) {
       : "";
     if (sec.mode === "sector") {
       const sc = toS(c.x, c.y);
-      body += `<path d="M${sc.x.toFixed(2)},${sc.y.toFixed(2)} L${p0.x.toFixed(2)},${p0.y.toFixed(2)} A${sr.toFixed(2)},${sr.toFixed(2)} 0 ${large} ${sweep} ${p1.x.toFixed(2)},${p1.y.toFixed(2)} Z" fill="none" stroke="${strokeOf(sec)}" stroke-width="${sw}"${da} />\n`;
+      body += `<path d="M${sc.x.toFixed(2)},${sc.y.toFixed(2)} L${p0.x.toFixed(2)},${p0.y.toFixed(2)} A${sr.toFixed(2)},${sr.toFixed(2)} 0 ${large} ${sweep} ${p1.x.toFixed(2)},${p1.y.toFixed(2)} Z" fill="none" stroke="${strokeOf(sec)}" stroke-width="${sw}"${da}${svgDataAttrs(sec)} />\n`;
     } else {
-      body += `<path d="M${p0.x.toFixed(2)},${p0.y.toFixed(2)} A${sr.toFixed(2)},${sr.toFixed(2)} 0 ${large} ${sweep} ${p1.x.toFixed(2)},${p1.y.toFixed(2)}" fill="none" stroke="${strokeOf(sec)}" stroke-width="${sw}" stroke-linecap="round"${da} />\n`;
+      body += `<path d="M${p0.x.toFixed(2)},${p0.y.toFixed(2)} A${sr.toFixed(2)},${sr.toFixed(2)} 0 ${large} ${sweep} ${p1.x.toFixed(2)},${p1.y.toFixed(2)}" fill="none" stroke="${strokeOf(sec)}" stroke-width="${sw}" stroke-linecap="round"${da}${svgDataAttrs(sec)} />\n`;
     }
   }
 
@@ -682,10 +739,10 @@ export function documentToSvg(doc, opts = {}) {
       const rxA = rx.toFixed(2);
       const ryA = ry.toFixed(2);
       const dash = ink.dash("dashed").map((d) => d.toFixed(2)).join(" ");
-      body += `<path d="M${xR},${yMid} A${rxA},${ryA} 0 0 1 ${xL},${yMid}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}" stroke-linecap="round" />\n`;
-      body += `<path d="M${xL},${yMid} A${rxA},${ryA} 0 0 1 ${xR},${yMid}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}" stroke-linecap="butt" stroke-dasharray="${dash}" />\n`;
+      body += `<path d="M${xR},${yMid} A${rxA},${ryA} 0 0 1 ${xL},${yMid}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}" stroke-linecap="round"${svgDataAttrs(el)} />\n`;
+      body += `<path d="M${xL},${yMid} A${rxA},${ryA} 0 0 1 ${xR},${yMid}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}" stroke-linecap="butt" stroke-dasharray="${dash}"${svgDataAttrs(el)} />\n`;
     } else {
-      body += `<ellipse cx="${sc.x.toFixed(2)}" cy="${sc.y.toFixed(2)}" rx="${rx.toFixed(2)}" ry="${ry.toFixed(2)}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}" />\n`;
+      body += `<ellipse cx="${sc.x.toFixed(2)}" cy="${sc.y.toFixed(2)}" rx="${rx.toFixed(2)}" ry="${ry.toFixed(2)}" fill="none" stroke="${strokeOf(el)}" stroke-width="${sw}"${svgDataAttrs(el)} />\n`;
     }
   }
 
@@ -700,7 +757,7 @@ export function documentToSvg(doc, opts = {}) {
     const da = dash.length
       ? ` stroke-dasharray="${dash.map((d) => d.toFixed(2)).join(" ")}"`
       : "";
-    body += `<line x1="${sa.x.toFixed(2)}" y1="${sa.y.toFixed(2)}" x2="${sb.x.toFixed(2)}" y2="${sb.y.toFixed(2)}" stroke="${strokeOf(seg)}" stroke-width="${sw}" stroke-linecap="round"${da} />\n`;
+    body += `<line x1="${sa.x.toFixed(2)}" y1="${sa.y.toFixed(2)}" x2="${sb.x.toFixed(2)}" y2="${sb.y.toFixed(2)}" stroke="${strokeOf(seg)}" stroke-width="${sw}" stroke-linecap="round"${da}${svgDataAttrs(seg)} />\n`;
   }
 
   for (const raw of doc.boxWhiskers || []) {
@@ -760,6 +817,14 @@ export function documentToSvg(doc, opts = {}) {
   }
 
   for (const raw of doc.barCharts || []) {
+    if (raw && (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots")) {
+      try {
+        body += svgStatChart(raw, toS, ink, sw, escapeXml);
+      } catch {
+        /* skip corrupt */
+      }
+      continue;
+    }
     let bc;
     try {
       bc = normalizeBarChart(raw);
@@ -995,7 +1060,7 @@ export function documentToSvg(doc, opts = {}) {
       if (p.hidden === true || !shown(p)) continue;
       const s = toS(p.x, p.y);
       const pr = ink.mm(0.55).toFixed(2);
-      body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${pr}" fill="${strokeOf(p)}" />\n`;
+      body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${pr}" fill="${strokeOf(p)}"${svgDataAttrs(p)} />\n`;
     }
   }
 
@@ -1009,7 +1074,7 @@ export function documentToSvg(doc, opts = {}) {
       const halo = Math.max(3.5, ink.mm(0.35), fs * 0.28);
       const rich = svgTextInner(lab.text, true);
       const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="${rich.fontStyle}" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
-      body += `<text ${common} fill="${strokeOf(lab)}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${rich.inner}</text>\n`;
+      body += `<text ${common} fill="${strokeOf(lab)}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"${svgDataAttrs(lab)}>${rich.inner}</text>\n`;
     }
     for (const tx of doc.texts || []) {
       if (!tx || typeof tx !== "object" || !shown(tx)) continue;
@@ -1022,7 +1087,7 @@ export function documentToSvg(doc, opts = {}) {
       const weight = tx.bold ? ' font-weight="bold"' : "";
       const rich = svgTextInner(tx.text || "", false);
       const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="${rich.fontStyle}"${weight} font-size="${fs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle"`;
-      body += `<text ${common} fill="${strokeOf(tx)}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${rich.inner}</text>\n`;
+      body += `<text ${common} fill="${strokeOf(tx)}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"${svgDataAttrs(tx)}>${rich.inner}</text>\n`;
     }
   }
 

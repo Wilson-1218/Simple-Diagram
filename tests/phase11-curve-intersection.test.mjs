@@ -45,9 +45,9 @@ function withWarns(fn) {
   }
 }
 
-test("APP_VERSION is 13.5.50 and curve ops are registered", () => {
-  assert.equal(APP_VERSION, "13.5.50");
-  assert.equal(OP_NAMES.length, 58);
+test("APP_VERSION is 13.5.51 and curve ops are registered", () => {
+  assert.equal(APP_VERSION, "13.5.51");
+  assert.equal(OP_NAMES.length, 62);
   assert.ok(OP_NAMES.includes("addCurveIntersection"));
   assert.ok(OP_NAMES.includes("addPlotIntersection"));
   assert.ok(OP_NAMES.includes("addAreaBetweenCurves"));

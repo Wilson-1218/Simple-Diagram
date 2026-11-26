@@ -102,7 +102,7 @@
       <span class="en">Editor: Json ▾ → Copy JSON; Paste JSON can Append (default off = Replace). Export ▾ → Copy PNG (White BG).</span></p>
     <p class="note">不要模擬 UI 點擊。順序：點／線／圓 → 記號／填色／曲線。之後的 op 只能引用已有 id。<br />
       <span class="en">No UI clicking. Points → edges → circles → marks/fills/curves.</span></p>
-    <p class="note">已知 ops（58，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>add3DPolyhedron</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addCurveIntersection</code>/<code>addPlotIntersection</code> <code>addAreaBetweenCurves</code> <code>addFeasibleRegion</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>addTriangleCenter</code>/<code>addIncircle</code>/<code>addCircumcircle</code> <code>addBearing</code>/<code>addCompass</code> <code>addPieChart</code>/<code>addPie</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
+    <p class="note">已知 ops（62，含別名）：<code>addPoint</code> <code>addPlotPoint</code> <code>addSegment</code> <code>addLabel</code> <code>addText</code>/<code>addCaption</code> <code>addCircle</code> <code>addEllipse</code> <code>addSector</code> <code>addFill</code> <code>addShape</code> <code>add3DPolyhedron</code> <code>addFoot</code> <code>addMidpoint</code> <code>addRatioPoint</code> <code>addIntersection</code> <code>addTangent</code> <code>addRadius</code> <code>addDiameter</code> <code>addChord</code> <code>addRightAngle</code> <code>addAngleArc</code>/<code>addArc</code> <code>addReflex</code> <code>addParallelMark</code>/<code>addParallel</code> <code>addEqualMark</code>/<code>addEqual</code> <code>addLengthLabel</code>/<code>addLength</code> <code>addMidTick</code> <code>addCoordPlot</code> <code>addCurve</code> <code>addCurveIntersection</code>/<code>addPlotIntersection</code> <code>addAreaBetweenCurves</code> <code>addFeasibleRegion</code> <code>addBoxWhisker</code>/<code>addBoxPlot</code> <code>addBarChart</code>/<code>addBar</code> <code>addCumulativeFrequency</code>/<code>addOgive</code> <code>addHistogram</code> <code>addDotPattern</code> <code>addTriangleCenter</code>/<code>addIncircle</code>/<code>addCircumcircle</code> <code>addBearing</code>/<code>addCompass</code> <code>addPieChart</code>/<code>addPie</code> <code>alignPoints</code> <code>distributePoints</code> <code>equalizeSegments</code> <code>insertTemplate</code>/<code>addTemplate</code> <code>setView</code> <code>setMeta</code> <code>setLayers</code> <code>movePoint</code> <code>remove</code></p>
     <p class="note"><strong>UI ↔ op</strong>：工具列 <strong>⊥ 座標</strong>＝<code>addCoordPlot</code>（＋<code>addCurve</code>）。沒有 <code>addCoordMark</code> 這類 op 名。<br />
       <span class="en">Rail tool <strong>⊥ 座標 / Axes</strong> maps to <code>addCoordPlot</code> (+ <code>addCurve</code>). There is no <code>addCoordMark</code>.</span></p>
 
@@ -282,11 +282,13 @@
         <tr><td><code>style</code>, <code>label</code>/<code>labels</code>, <code>idPrefix</code></td><td>可選</td></tr>
       </tbody>
     </table>
-    <p><strong>平面</strong>：<code>square</code> <code>rect</code> <code>rhombus</code> <code>parallelogram</code> <code>trapezoid</code> <code>kite</code> <code>equilateral</code> <code>iso</code> <code>rightTri</code> <code>isoRight</code> <code>pentagon</code> <code>hexagon</code> <code>circle</code> <code>semicircle</code></p>
+    <p><strong>平面</strong>：<code>square</code> <code>rect</code> <code>rhombus</code> <code>parallelogram</code> <code>trapezoid</code> <code>kite</code> <code>equilateral</code> <code>iso</code> <code>rightTri</code> <code>isoRight</code> <code>pentagon</code> <code>hexagon</code> <code>circle</code> <code>semicircle</code> <code>hemisphere</code> <code>sphere</code></p>
     <p><strong>立體</strong>：<code>cube</code> <code>cuboid</code> <code>rectPrism</code> <code>frustum</code> <code>tetra</code> <code>pyramid</code> <code>triPrism</code> <code>cylinder</code> <code>cone</code></p>
     <ul>
       <li><code>rightTri</code>：直角在 <code>(x,y)</code>，水平腿 <code>w</code>、向下腿 <code>h</code></li>
-      <li><code>circle</code>：心 <code>(x,y)</code>，半徑點 <code>(x+w,y)</code></li>
+      <li><code>circle</code>：心 <code>(x,y)</code>，半徑點 <code>(x+w,y)</code>（半徑是 <code>w</code>，不是 <code>w/2</code>）</li>
+      <li><code>hemisphere</code>：心在 <code>(x,y)</code>，半徑同樣是 <code>w</code>。預設 <code>opening:"up"</code> 是碗（上緣水平橢圓、下半圓）。<code>opening:"down"</code> 是穹。<code>includeBaseCenter:true</code> 在緣心加點，id 為 <code>O</code> 或 <code>{prefix}O</code>。<code>waterLevel</code>（<code>0 &lt; t &lt; 1</code>）從最低點往上，畫水平截面橢圓（前實後虛）。<code>addShape</code> 不把 <code>role</code>／<code>solutionStep</code> 傳給子元素。</li>
+      <li><code>sphere</code>：心 <code>O</code> 在 <code>(x,y)</code>，半徑 <code>w</code>。外圓加水平赤道橢圓；<code>backDashed</code> 預設 true（後一半虛線）。<code>labels:false</code> 略過字母 O。</li>
       <li>別名：<code>prism</code>→<code>rectPrism</code>；<code>right</code>/<code>rightTriangle</code>→<code>rightTri</code></li>
       <li><strong>立體</strong>會自動建立頂點標籤（A…），並用虛線表示隱藏邊。省略 <code>label</code>／<code>labels</code> 時仍標字母。<code>idPrefix</code>（如 <code>"K"</code>）把頂點 id 改成 <code>K0</code>…、線段 id 改成 <code>Ks0</code>…（與平面形相同）。<code>labels:false</code> 或 <code>label:false</code> 略過頂點字母（兩者任一為 false 即略過）。</li>
       <li><code>h</code>：所有立體 kinds 的視覺高度。省略時 x／y 用同一個縮放，頂點與 v13.5.40 相同。</li>
@@ -354,6 +356,10 @@
       UI 工具列 <strong>⊥ 座標</strong> 開的就是這組 op（不是獨立的「座標記號」op）。</p>
     <p class="note"><strong>盒鬚圖</strong>請用 <code>addBoxWhisker</code>（§7 表），不要用 rect／segment 拼裝；軸刻度 <code>ticks[]</code> 必須由呼叫端給定位置。<br />
       <strong>棒形圖</strong>請用 <code>addBarChart</code>；縱軸標題用 <code>yLabel</code>（會直寫），斜線填色用 <code>barPattern:"hatch"</code> 或 <code>addFill</code> 的 <code>pattern:"hatch"</code>。<br />
+      <strong>累積頻數</strong> <code>addCumulativeFrequency</code>（別名 <code>addOgive</code>）：<code>x</code>, <code>y</code> 是圖左下角，<code>boundaries</code> 與 <code>values</code> 等長。<code>smooth:true</code> 才畫 S 形，預設折線。<code>projections:[{y,xLabel?,yLabel?,role?}]</code> 從該 y 畫虛線水平到曲線再垂直落到 x 軸；<code>role:"solution"</code> 用詳解紅。<br />
+      <strong>直方圖</strong> <code>addHistogram</code>：連續 <code>boundaries</code>（比 <code>values</code> 多 1）或等長的 <code>centers</code>。柱與柱零間距。<code>showFrequencyPolygon:true</code> 連柱頂中點並落到兩端 x 軸。<code>barPattern</code> <code>hatch</code>｜<code>solid</code>。<br />
+      <strong>點陣</strong> <code>addDotPattern</code>：<code>patterns</code> 可以是 <code>[[col,row],…]</code>、<code>{rows:[1,3,3],align?}</code> 或 <code>{kind:"triangular"|"square"|"hexagonal",count}</code>。某一點可帶 <code>role:"solution"</code>。<br />
+      這三種圖存在 <code>barCharts</code>，用 <code>kind</code> 區分（<code>ogive</code>／<code>histogram</code>／<code>dots</code>），沒有新的頂層鍵。<br />
       正式卷匯出：<code>documentToSvg</code>／CLI 會畫出 <code>coordPlots</code>（軸／刻度／曲線），勿再手繪軸假裝。</p>
 
     <h3>10.1 <code>addCoordPlot</code></h3>
@@ -682,7 +688,12 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.50 · params from <code>src/diagram/ops.mjs</code></p>
+    <h2>14. <code>solutionStep</code> 與曲線標籤</h2>
+    <p>凡是已經接受 <code>role:"solution"</code> 的 op，都可以再加正整數 <code>solutionStep</code>。會把 <code>role</code> 傳給子元素的複合 op 也會把 <code>solutionStep</code> 傳下去。<code>addShape</code> 仍然不繼承 <code>role</code>。<code>setLayers</code> 的 <code>solutionMaxStep</code> 寫在 <code>doc.layers</code>（與 <code>solutionShow</code> 同一個物件）。省略或 null 表示 <code>solutionShow</code> 為真時畫出全部詳解；整數 k 只畫沒有 <code>solutionStep</code>、或 <code>solutionStep ≤ k</code> 的詳解。</p>
+    <p><code>documentToSvg</code>：有 id 才寫 <code>data-id</code>；<code>role</code> 是 solution 才寫 <code>data-role="solution"</code>；有正整數 <code>solutionStep</code> 才寫 <code>data-step</code>。不要空屬性。</p>
+    <p>曲線 <code>label.show:true</code> 且省略 <code>t</code> 時，標籤會避開座標軸與其他曲線。寫了 <code>t</code>（含既有的 0.55）仍用原來的位置。</p>
+    <p class="note"><span class="en">Optional positive <code>solutionStep</code> on ops that already take <code>role:"solution"</code>. <code>solutionMaxStep</code> lives on <code>doc.layers</code>. SVG data attributes are omitted when empty. A shown curve label with no <code>t</code> avoids the axes; an explicit <code>t</code> keeps the old placement. Hemisphere and sphere use radius <code>w</code>, same as <code>circle</code>.</span></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.51 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>
