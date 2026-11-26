@@ -9,8 +9,8 @@ import {
 } from "../src/diagram/index.mjs";
 import { approxTextWidth } from "../src/diagram/length-mark.mjs";
 
-test("APP_VERSION is 13.5.52", () => {
-  assert.equal(APP_VERSION, "13.5.52");
+test("APP_VERSION is 13.5.53", () => {
+  assert.equal(APP_VERSION, "13.5.53");
 });
 
 function textNodes(svg) {
@@ -249,12 +249,12 @@ test("box whisker axisLabel is placed and kept inside the export viewBox", () =>
   assert.equal(bw.axisLabel, "Age");
   assert.equal(bw.orientation, "h");
   const parts = boxWhiskerParts(bw);
-  assert.equal(parts.axis.x2, 200 + 18);
+  assert.equal(parts.axis.x2, 200);
   assert.equal(parts.axis.y1, 250);
   assert.equal(parts.axisLabel.text, "Age");
   assert.equal(parts.axisLabel.anchor, "start");
   assert.equal(parts.axisLabel.baseline, "middle");
-  assert.equal(parts.axisLabel.x, 200 + 18 + 2);
+  assert.equal(parts.axisLabel.x, 200 + 14);
   assert.equal(parts.axisLabel.y, 250);
   assert.equal(parts.tickMarks.length, 3);
   const svgH = documentToSvg(horizontal);

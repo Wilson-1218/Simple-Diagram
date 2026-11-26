@@ -63,6 +63,7 @@ export {
 } from "./macros.mjs";
 export {
   documentToSvg,
+  readableInkScale,
   resolveInkBudget,
   inkUserUnitsPerMm,
   angleLabelRadius,

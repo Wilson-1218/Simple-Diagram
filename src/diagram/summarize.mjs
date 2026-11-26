@@ -128,7 +128,7 @@ export const OP_CATALOG = {
   },
   addPieChart: {
     args: "x,y|centerId, slices (≥2), r?, startDeg?, clockwise?, idPrefix?, labelRadiusRatio?, pattern?, opacity?",
-    note: "angle degrees or value normalized to 360. label via addText; angleText via addAngleArc; rightAngle via addRightAngle. Alias addPie",
+    note: "angle degrees or value normalized to 360. label via addText; angleText (alias angleLabel) via addAngleArc; rightAngle via addRightAngle. Both texts and no labelRadiusRatio: category at 0.68r (1.16r and side anchor if the slice is under 45°), angle text near 0.36r. Explicit labelRadiusRatio still places the category. Alias addPie",
   },
   addPie: {
     args: "same as addPieChart",
@@ -147,7 +147,10 @@ export const OP_CATALOG = {
     note: "of = segment|circle id or {type:line,a,b}; line×line|line×circle|circle×circle; no throw if missing; hidden skips draw",
   },
   addCircle: { args: "centerId, throughId, style?" },
-  addEllipse: { args: "centerId, rxId, ryId, style?, backDashed?" },
+  addEllipse: {
+    args: "centerId, rxId, ryId, style?, backDashed?",
+    note: "style solid|dashed|dotted strokes the whole ellipse. backDashed with solid (or omitted style) keeps the 3D front-solid/back-dashed rim",
+  },
   addSector: { args: "centerId, startId, endId, mode?, style?", note: "mode arc|sector" },
   addShape: {
     args: "kind, x, y, w, h?, style?, label?, labels?, idPrefix?, apexOffset?, includeBaseCenter?, drawHeight?, waterLevel?",

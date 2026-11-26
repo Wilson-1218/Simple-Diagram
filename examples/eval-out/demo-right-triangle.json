@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "version": "13.5.52",
+  "version": "13.5.53",
   "app": "simple-diagram",
   "points": [
     {
@@ -71,8 +71,7 @@
       "id": "ra_0001",
       "vertex": "A",
       "arm1": "B",
-      "arm2": "C",
-      "size": 10
+      "arm2": "C"
     }
   ],
   "angleArcs": [],

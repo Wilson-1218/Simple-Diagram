@@ -32,8 +32,8 @@ function withWarns(fn) {
   }
 }
 
-test("APP_VERSION is 13.5.52", () => {
-  assert.equal(APP_VERSION, "13.5.52");
+test("APP_VERSION is 13.5.53", () => {
+  assert.equal(APP_VERSION, "13.5.53");
 });
 
 test("OP_NAMES includes triangle, bearing, and pie ops", () => {
@@ -224,7 +224,7 @@ test("addPieChart splits by angle and by value, places a label, and marks a righ
   ]);
   assert.equal(validateDiagram(doc).ok, true, validateDiagram(doc).errors.join("; "));
   const r = 95;
-  const ratio = 0.7;
+  const ratio = 0.68;
   const mid = Math.PI / 4;
   const label = doc.texts.find((t) => t.text === "Q1");
   assert.ok(label);

@@ -1645,8 +1645,12 @@ const HANDLERS = {
       vertex,
       arm1,
       arm2,
-      size: op.size != null ? Number(op.size) : doc.rightAngleSize || 10,
     };
+    if (op.size != null && op.size !== "" && Number.isFinite(Number(op.size))) {
+      row.size = Number(op.size);
+    } else if (doc.rightAngleSize != null && Number(doc.rightAngleSize) !== 10) {
+      row.size = Number(doc.rightAngleSize);
+    }
     // Omitted mode stays the paper-sized 2D mark (today's geometry).
     if (rightAngleMode(op) === "3d") row.mode = "3d";
     stampAppearance(row, op);
