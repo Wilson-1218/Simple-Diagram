@@ -2018,3 +2018,74 @@ body.dark-canvas .coord-curve-row {
     overflow-y: auto;
   }
 }
+
+.draw-role-capsule {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+.draw-role-capsule .role-btn {
+  flex: 1;
+  border: 1px solid var(--bar-border);
+  background: var(--bar);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 4px;
+  cursor: pointer;
+  color: inherit;
+}
+.draw-role-capsule .role-btn.active {
+  background: var(--accent, #1a5fb4);
+  color: #fff;
+  border-color: transparent;
+}
+.draw-role-capsule .role-btn.active[data-draw-role="solution"] {
+  background: #dc2626;
+}
+.float-panel.float-center,
+.float-panel.float-bearing,
+.float-panel.float-solid,
+.float-panel.float-role {
+  max-width: calc(168px * var(--tb, 1.2));
+}
+.center-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+.float-solid textarea,
+.float-bearing input,
+.float-solid input,
+.charts-form input,
+.charts-form textarea,
+.coord-form textarea {
+  width: 100%;
+  font: inherit;
+  box-sizing: border-box;
+}
+.charts-dialog[open] {
+  width: min(440px, 92vw);
+}
+.chart-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.chart-tab {
+  flex: 1;
+  font: inherit;
+  cursor: pointer;
+}
+.chart-tab.active {
+  font-weight: 700;
+}
+.float-solid .coord-field,
+.float-bearing .coord-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}

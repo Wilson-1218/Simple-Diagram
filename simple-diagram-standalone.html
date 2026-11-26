@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261126-release-v13.5.48" />
-  <title>Simple Diagram · Wilson</title>
+  <meta name="simple-diagram-build" content="20261126-release-v13.5.49" />
+  <title>Simple Diagram · v13.5.49</title>
   <style>
 :root {
   --bg: #e8e6e1;
@@ -2027,6 +2027,77 @@ body.dark-canvas .coord-curve-row {
   }
 }
 
+.draw-role-capsule {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+.draw-role-capsule .role-btn {
+  flex: 1;
+  border: 1px solid var(--bar-border);
+  background: var(--bar);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 4px;
+  cursor: pointer;
+  color: inherit;
+}
+.draw-role-capsule .role-btn.active {
+  background: var(--accent, #1a5fb4);
+  color: #fff;
+  border-color: transparent;
+}
+.draw-role-capsule .role-btn.active[data-draw-role="solution"] {
+  background: #dc2626;
+}
+.float-panel.float-center,
+.float-panel.float-bearing,
+.float-panel.float-solid,
+.float-panel.float-role {
+  max-width: calc(168px * var(--tb, 1.2));
+}
+.center-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+.float-solid textarea,
+.float-bearing input,
+.float-solid input,
+.charts-form input,
+.charts-form textarea,
+.coord-form textarea {
+  width: 100%;
+  font: inherit;
+  box-sizing: border-box;
+}
+.charts-dialog[open] {
+  width: min(440px, 92vw);
+}
+.chart-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.chart-tab {
+  flex: 1;
+  font: inherit;
+  cursor: pointer;
+}
+.chart-tab.active {
+  font-weight: 700;
+}
+.float-solid .coord-field,
+.float-bearing .coord-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}
+
 </style>
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="assets/favicon-32.png" sizes="32x32" />
@@ -2043,7 +2114,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.48</span>
+            <span class="brand-sub">v13.5.49</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -2059,6 +2130,14 @@ body.dark-canvas .coord-curve-row {
               </button>
             </div>
           </div>
+        </div>
+        <div class="draw-role-capsule" id="drawRoleCapsule" role="group" aria-label="原題或詳解" data-i18n-aria="aria_draw_role">
+          <button type="button" class="role-btn active" id="btnDrawQuestion" data-draw-role="question" title="原題：新圖形不寫 role" data-i18n-title="tip_draw_question">
+            <span aria-hidden="true">⚫</span> <span data-i18n="role_question">原題</span>
+          </button>
+          <button type="button" class="role-btn" id="btnDrawSolution" data-draw-role="solution" title="詳解：新圖形 role 為 solution，立即紅色" data-i18n-title="tip_draw_solution">
+            <span aria-hidden="true">🔴</span> <span data-i18n="role_solution">詳解</span>
+          </button>
         </div>
         <div class="rail-section" data-group="draw">
           <span class="rail-title" title="繪畫" data-i18n="rail_draw" data-i18n-title="rail_draw_title">繪畫</span>
@@ -2123,6 +2202,12 @@ body.dark-canvas .coord-curve-row {
           <button type="button" class="tool" data-tool="coord" title="座標軸：點選原點位置；可加曲線" data-i18n-title="tip_tool_coord">
             <span class="icon">⊥</span><span class="label" data-i18n="tool_coord">座標</span>
           </button>
+          <button type="button" class="tool" data-tool="center" title="三角形心：依序點 A、B、C" data-i18n-title="tip_tool_center">
+            <span class="icon">△</span><span class="label" data-i18n="tool_center">心</span>
+          </button>
+          <button type="button" class="tool" data-tool="bearing" title="方位角：先點站點，再點方向；Enter 或雙擊只畫北箭" data-i18n-title="tip_tool_bearing">
+            <span class="icon">🧭</span><span class="label" data-i18n="tool_bearing">北</span>
+          </button>
         </div>
 
         <div class="rail-section" data-group="marks">
@@ -2164,6 +2249,9 @@ body.dark-canvas .coord-curve-row {
         <!-- Overlay chrome: does not reserve layout height -->
         <header class="chrome-overlay toolbar" role="toolbar" aria-label="屬性與檔案" data-i18n-aria="aria_toolbar_props">
           <div class="chrome-cluster chrome-actions">
+            <div class="tool-group" data-group="charts">
+              <button type="button" id="btnChartsMenu" class="menu-btn" title="圓餅、盒鬚、棒形圖" data-i18n-title="tip_charts" data-i18n="btn_charts">📊 圖表 ▾</button>
+            </div>
             <div class="tool-group" data-group="templates">
               <div class="menu-wrap">
                 <button type="button" id="btnTemplateMenu" class="menu-btn" title="我的模板／接入 AI" data-i18n-title="tip_templates" aria-haspopup="true" aria-expanded="false">模板 ▾</button>
@@ -2281,6 +2369,10 @@ body.dark-canvas .coord-curve-row {
               <option value="14">大</option>
               <option value="18">特大</option>
             </select>
+            <span class="float-mini-opts" id="rightAngleModeBar" hidden title="直角平面或立體平行四邊形" data-i18n-title="tip_ra_mode">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-ra-mode="2d" data-i18n="ra_mode_2d">2D</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-ra-mode="3d" data-i18n="ra_mode_3d">3D</button>
+            </span>
           </div>
           <div class="float-panel float-sector" id="sectorFloat" hidden>
             <span class="float-mini-opts" id="sectorModeBar" title="弧段僅畫弧；扇形含兩條半徑" data-i18n-title="tip_sector_bar">
@@ -2357,6 +2449,72 @@ body.dark-canvas .coord-curve-row {
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cylinder" title="圓柱：外接框拖曳" data-i18n-title="tip_shape_cylinder" data-i18n-aria="tip_shape_cylinder" aria-label="圓柱"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6 L5 17"/><path d="M19 6 L19 17"/><ellipse cx="12" cy="17" rx="7" ry="3"/></svg></button>
               <button type="button" class="mark-group-btn rail-mini-btn shape-icon-btn" data-shape-mode="cone" title="圓錐：外接框拖曳" data-i18n-title="tip_shape_cone" data-i18n-aria="tip_shape_cone" aria-label="圓錐"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="17" rx="7" ry="3"/><path d="M5 17 L12 4 L19 17"/></svg></button>
             </span>
+          </div>
+          <div class="float-panel float-center" id="centerFloat" hidden>
+            <span class="float-title" data-i18n="center_title">三角形心</span>
+            <span class="float-mini-opts center-mode-grid" id="centerModeBar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-center-kind="incircle" data-i18n="center_incircle">內切圓</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-center-kind="circumcircle" data-i18n="center_circumcircle">外接圓</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-center-kind="incentre" data-i18n="center_incentre">內心</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-center-kind="circumcentre" data-i18n="center_circumcentre">外心</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-center-kind="centroid" data-i18n="center_centroid">重心</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-center-kind="orthocentre" data-i18n="center_orthocentre">垂心</button>
+            </span>
+            <label class="check-opt"><input type="checkbox" id="centerMarkTouch" /> <span data-i18n="center_touch">切點</span></label>
+          </div>
+          <div class="float-panel float-bearing" id="bearingFloat" hidden>
+            <span class="float-title" data-i18n="bearing_title">方位角</span>
+            <label class="coord-field" for="bearingText"><span data-i18n="bearing_text">角度文字</span>
+              <input id="bearingText" type="text" value="52°" maxlength="16" />
+            </label>
+            <span class="float-mini-opts" id="bearingModeBar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-bearing-mode="acute" data-i18n="bearing_acute">銳角</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-bearing-mode="cw" data-i18n="bearing_cw">順時針</button>
+            </span>
+            <span class="float-mini-opts" id="bearingFromBar">
+              <button type="button" class="mark-group-btn rail-mini-btn active" data-bearing-from="N">N</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-bearing-from="S">S</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-bearing-from="E">E</button>
+              <button type="button" class="mark-group-btn rail-mini-btn" data-bearing-from="W">W</button>
+            </span>
+            <label class="check-opt"><input type="checkbox" id="bearingShowCross" /> <span data-i18n="bearing_cross">十字</span></label>
+          </div>
+          <div class="float-panel float-role" id="roleFloat" hidden>
+            <span class="float-title" data-i18n="role_float_title">原題／詳解</span>
+            <span class="float-mini-opts">
+              <button type="button" class="rail-mini-btn" id="btnSelQuestion" data-i18n="role_question">原題</button>
+              <button type="button" class="rail-mini-btn" id="btnSelSolution" data-i18n="role_solution">詳解</button>
+            </span>
+            <button type="button" class="rail-mini-btn" id="btnSelAutoOffset" data-i18n="role_auto_offset">自動偏移</button>
+          </div>
+          <div class="float-panel float-solid" id="solidOptsFloat" hidden>
+            <span class="float-title" data-i18n="solid_title">立體</span>
+            <label class="coord-field"><span data-i18n="solid_h">視覺高度 h</span>
+              <input id="solidH" type="text" inputmode="decimal" placeholder="120" />
+            </label>
+            <label class="check-opt"><input type="checkbox" id="solidBaseCenter" /> <span data-i18n="solid_base">底心</span></label>
+            <label class="check-opt"><input type="checkbox" id="solidDrawHeight" /> <span data-i18n="solid_height">點高</span></label>
+            <label class="coord-field" id="solidWaterRow"><span data-i18n="solid_water">水位 0–1</span>
+              <input id="solidWater" type="text" inputmode="decimal" placeholder="0.5" />
+            </label>
+            <label class="coord-field" id="solidApexRow"><span data-i18n="solid_apex">頂點偏移 dx,dy</span>
+              <input id="solidApex" type="text" placeholder="40, 0" />
+            </label>
+            <button type="button" class="rail-mini-btn" id="btnSolidRightEdge" data-i18n="solid_right_edge">直角側棱</button>
+            <span class="float-title" data-i18n="poly_title">多面體</span>
+            <label class="coord-field"><span data-i18n="poly_yaw">yaw°</span>
+              <input id="polyYaw" type="text" value="35" />
+            </label>
+            <label class="coord-field"><span data-i18n="poly_pitch">pitch°</span>
+              <input id="polyPitch" type="text" value="20" />
+            </label>
+            <span class="float-mini-opts">
+              <button type="button" class="rail-mini-btn" id="btnPolyTetra" data-i18n="poly_tetra">四面體</button>
+              <button type="button" class="rail-mini-btn" id="btnPolyCube" data-i18n="poly_cube">立方體</button>
+            </span>
+            <label class="coord-field"><span data-i18n="poly_advanced">進階頂點／面</span>
+              <textarea id="polyAdvanced" rows="4" spellcheck="false" placeholder='{"vertices":{"A":[0,0,0]},"faces":[["A","B","C"]]}'></textarea>
+            </label>
           </div>
           <div class="float-panel float-circle-part" id="circlePartFloat" hidden>
             <span class="float-mini-opts" id="circlePartModeBar" title="弦／直徑／半徑" data-i18n-title="tip_circlePart_bar">
@@ -2504,6 +2662,15 @@ body.dark-canvas .coord-curve-row {
             <div class="coord-field">
               <label for="coordAxisLabels" data-i18n="coord_axis_labels">軸標籤 x,y</label>
               <input id="coordAxisLabels" type="text" value="x,y" autocomplete="off" />
+              <p class="dialog-note" data-i18n="coord_math_hint">_ 與 ^ 是輕量數學，例如 log_5 x。</p>
+            </div>
+            <div class="coord-field">
+              <label for="coordXTicks" data-i18n="coord_xticks">x 刻度（-4, 2.5:a）</label>
+              <input id="coordXTicks" type="text" autocomplete="off" placeholder="-4, 2.5:a" />
+            </div>
+            <div class="coord-field">
+              <label for="coordYTicks" data-i18n="coord_yticks">y 刻度</label>
+              <input id="coordYTicks" type="text" autocomplete="off" placeholder="-2, 1:b" />
             </div>
           </section>
 
@@ -2517,7 +2684,59 @@ body.dark-canvas .coord-curve-row {
               <input type="checkbox" id="coordAngleAxis" />
               <span data-i18n="coord_angle_axis">角度軸刻度</span>
             </label>
-            <p class="dialog-note" data-i18n="coord_angle_axis_note">開啟後 x 軸改為 π（弧度）或 °（角度）刻度，並可暫用三角視窗；關閉後還原原本視窗與數字刻度。</p>
+            <p class="dialog-note" data-i18n="coord_angle_axis_note">開啟後 x 軸改為 π（弧度）或 °（角度）刻度，並可暫用三角視窗；關閉後還原原本視窗與數字刻度。取消「顯示軸上數值」即 showTickLabels:false，預設整數刻度隱藏；自訂刻度仍會畫。</p>
+          </section>
+
+          <section class="coord-card" aria-labelledby="coordSecRegion">
+            <h3 class="coord-card-title" id="coordSecRegion" data-i18n="coord_sec_region">可行區域</h3>
+            <div class="coord-field">
+              <label for="coordInequalities" data-i18n="coord_ineq">不等式（每行一條）</label>
+              <textarea id="coordInequalities" rows="4" spellcheck="false" placeholder="y &lt;= 1.5x + 3&#10;2x + 3y &lt;= 22&#10;y &gt;= 0"></textarea>
+            </div>
+            <label class="check-opt coord-check">
+              <input type="checkbox" id="coordDrawBoundaries" />
+              <span data-i18n="coord_boundaries">畫邊界</span>
+            </label>
+            <div class="coord-field">
+              <label for="coordRegionLabel" data-i18n="coord_region_label">區域標籤</label>
+              <input id="coordRegionLabel" type="text" value="R" maxlength="12" />
+            </div>
+            <label class="check-opt coord-check">
+              <input type="checkbox" id="coordRegionHatch" checked />
+              <span data-i18n="coord_region_hatch">斜線填色</span>
+            </label>
+            <button type="button" id="coordApplyRegion" data-i18n="coord_apply_region">套用區域</button>
+          </section>
+
+          <section class="coord-card" aria-labelledby="coordSecPoint">
+            <h3 class="coord-card-title" id="coordSecPoint" data-i18n="coord_sec_point">數學點</h3>
+            <div class="coord-field">
+              <label for="coordMathUV" data-i18n="coord_math_uv">(u, v)</label>
+              <input id="coordMathUV" type="text" placeholder="2, 3" autocomplete="off" />
+            </div>
+            <label class="check-opt coord-check"><input type="checkbox" id="coordProjectX" /> <span data-i18n="coord_project_x">投影 x</span></label>
+            <label class="check-opt coord-check"><input type="checkbox" id="coordProjectY" /> <span data-i18n="coord_project_y">投影 y</span></label>
+            <button type="button" id="coordAddMathPoint" data-i18n="coord_add_point">加點</button>
+          </section>
+
+          <section class="coord-card" id="coordCurveActionCard" aria-labelledby="coordSecCurveAct">
+            <h3 class="coord-card-title" id="coordSecCurveAct" data-i18n="coord_sec_curve_act">曲線交點／面積</h3>
+            <div class="coord-field">
+              <label for="coordCurve1" data-i18n="coord_curve1">曲線 1</label>
+              <select id="coordCurve1"></select>
+            </div>
+            <div class="coord-field">
+              <label for="coordCurve2" data-i18n="coord_curve2">曲線 2 或軸</label>
+              <select id="coordCurve2"></select>
+            </div>
+            <div class="coord-field">
+              <label for="coordCurveDomain" data-i18n="coord_domain">區間 a,b（可留空）</label>
+              <input id="coordCurveDomain" type="text" placeholder="0, 4" autocomplete="off" />
+            </div>
+            <div class="dialog-actions">
+              <button type="button" id="coordBtnIntersect" data-i18n="coord_intersect">交點</button>
+              <button type="button" id="coordBtnArea" data-i18n="coord_area">面積</button>
+            </div>
           </section>
 
           <section class="coord-card" aria-labelledby="coordSecTrig">
@@ -2559,6 +2778,66 @@ body.dark-canvas .coord-curve-row {
       <div class="dialog-actions coord-form-actions">
         <button type="submit" value="ok" data-i18n="btn_ok">確定</button>
         <button type="button" id="coordCancel" value="cancel" data-i18n="btn_cancel">取消</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="chartsDialog" class="charts-dialog">
+    <form id="chartsForm" class="charts-form">
+      <p class="dialog-lead" data-i18n="charts_title">圖表</p>
+      <div class="chart-tabs" role="tablist">
+        <button type="button" class="chart-tab active" data-chart-tab="pie" data-i18n="chart_tab_pie">圓餅</button>
+        <button type="button" class="chart-tab" data-chart-tab="box" data-i18n="chart_tab_box">盒鬚</button>
+        <button type="button" class="chart-tab" data-chart-tab="bar" data-i18n="chart_tab_bar">棒形</button>
+      </div>
+      <div class="chart-pane" data-chart-pane="pie">
+        <div class="coord-field">
+          <label for="pieRadius" data-i18n="pie_r">半徑 r</label>
+          <input id="pieRadius" type="text" value="95" />
+        </div>
+        <div class="coord-field">
+          <label for="pieStart" data-i18n="pie_start">起始角 startDeg</label>
+          <input id="pieStart" type="text" value="-90" />
+        </div>
+        <p class="dialog-note" data-i18n="pie_slice_note">每行一片：角度或數值 | 類別 | 角文 | right | hatch。例 120 | 甲 | 120° 或 1 | 乙 | x° | right | hatch。</p>
+        <textarea id="pieSlices" rows="5" spellcheck="false">120 | 甲 | 120°
+90 | 乙 | 90° | right
+150 | 丙 | x° | | hatch</textarea>
+        <label class="check-opt"><input type="checkbox" id="pieUseValue" /> <span data-i18n="pie_use_value">第一欄是 value（否則是 angle）</span></label>
+      </div>
+      <div class="chart-pane" data-chart-pane="box" hidden>
+        <p class="dialog-note" data-i18n="box_note">五數是資料值，插入時映到世界座標。刻度做成 {pos,label}。</p>
+        <div class="coord-field"><label for="boxFive" data-i18n="box_five">min, q1, median, q3, max</label>
+          <input id="boxFive" type="text" value="10, 18, 24, 31, 40" />
+        </div>
+        <div class="coord-field"><label for="boxTicks" data-i18n="box_ticks">刻度起,迄,步長</label>
+          <input id="boxTicks" type="text" value="10, 40, 5" />
+        </div>
+        <div class="coord-field"><label for="boxAxisLabel" data-i18n="box_axis">軸標題</label>
+          <input id="boxAxisLabel" type="text" value="Age" />
+        </div>
+      </div>
+      <div class="chart-pane" data-chart-pane="bar" hidden>
+        <div class="coord-field"><label for="barCats" data-i18n="bar_cats">類別</label>
+          <input id="barCats" type="text" value="23, 24, 25, 26" />
+        </div>
+        <div class="coord-field"><label for="barHeights" data-i18n="bar_heights">高度（5:k 表示高度 5、標 k）</label>
+          <input id="barHeights" type="text" value="8, 6, 5:k, 7" />
+        </div>
+        <div class="coord-field"><label for="barXLabel" data-i18n="bar_xlabel">xLabel</label>
+          <input id="barXLabel" type="text" value="" />
+        </div>
+        <div class="coord-field"><label for="barYLabel" data-i18n="bar_ylabel">yLabel</label>
+          <input id="barYLabel" type="text" value="" />
+        </div>
+        <span class="float-mini-opts">
+          <button type="button" class="mark-group-btn rail-mini-btn active" data-bar-pattern="hatch" data-i18n="bar_hatch">斜線</button>
+          <button type="button" class="mark-group-btn rail-mini-btn" data-bar-pattern="solid" data-i18n="bar_solid">實色</button>
+        </span>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" id="chartsInsert" data-i18n="charts_insert">插入</button>
+        <button type="button" id="chartsClose" data-i18n="btn_cancel">取消</button>
       </div>
     </form>
   </dialog>
@@ -2736,6 +3015,8 @@ body.dark-canvas .coord-curve-row {
     shape: "圖形",
     reflex: "優角",
     coord: "座標圖",
+    center: "三角形心",
+    bearing: "方位角",
   };
   // Dashes sized for screen-space strokes (butt caps). Keep gaps obvious vs solid.
   const STYLE_DASH = {
@@ -2848,6 +3129,14 @@ body.dark-canvas .coord-curve-row {
   ];
   const SHAPE_MODES = SHAPE_PLANE_MODES.concat(SHAPE_SOLID_MODES);
   let shapeMode = "square";
+  let drawRole = "question";
+  let suspendDrawRole = false;
+  let rightAngleDrawMode = "2d";
+  let centerKind = "incircle";
+  let bearingMode = "acute";
+  let bearingFrom = "N";
+  let solidRightEdge = false;
+  let barPattern = "hatch";
   function isShapeMode(mode) {
     return SHAPE_MODES.indexOf(mode) >= 0;
   }
@@ -2964,6 +3253,7 @@ body.dark-canvas .coord-curve-row {
       tool_foot: "垂足",
       tool_tangent: "切線", tool_circlePart: "圓件", tool_shape: "圖形",
       tool_reflex: "優角", tool_coord: "座標", tool_fill: "填色",
+      tool_center: "心", tool_bearing: "北",
       group_templates: "模板", group_props: "屬性", group_view: "檢視／匯出",
       rail_draw: "繪畫", rail_construct: "構建", rail_marks: "記號",
       rail_draw_title: "繪畫", rail_construct_title: "構建", rail_marks_title: "記號",
@@ -3045,7 +3335,39 @@ body.dark-canvas .coord-curve-row {
       coord_x_unit_deg: "角度 °",
       coord_x_unit_note: "只影響 sin／cos／tan：角度模式下 Bx、C 以「度」計（內部轉弧度）。與下方「角度軸刻度」分開。",
       coord_angle_axis: "角度軸刻度",
-      coord_angle_axis_note: "開啟後 x 軸改為 π（弧度）或 °（角度）刻度，並可暫用三角視窗；關閉後還原原本視窗與數字刻度。",
+      coord_angle_axis_note: "開啟後 x 軸改為 π（弧度）或 °（角度）刻度，並可暫用三角視窗；關閉後還原原本視窗與數字刻度。取消「顯示軸上數值」即隱藏預設整數刻度；自訂刻度仍會畫。",
+      role_question: "原題", role_solution: "詳解",
+      tip_draw_question: "原題：新圖形不寫 role",
+      tip_draw_solution: "詳解：新圖形 role 為 solution，立即紅色",
+      aria_draw_role: "原題或詳解",
+      tip_tool_center: "三角形心：依序點 A、B、C",
+      tip_tool_bearing: "方位角：先點站點，再點方向；Enter 或雙擊只畫北箭",
+      btn_charts: "📊 圖表 ▾", tip_charts: "圓餅、盒鬚、棒形圖",
+      center_title: "三角形心", center_incircle: "內切圓", center_circumcircle: "外接圓",
+      center_incentre: "內心", center_circumcentre: "外心", center_centroid: "重心", center_orthocentre: "垂心",
+      center_touch: "切點",
+      bearing_title: "方位角", bearing_text: "角度文字", bearing_acute: "銳角", bearing_cw: "順時針", bearing_cross: "十字",
+      role_float_title: "原題／詳解", role_auto_offset: "自動偏移",
+      solid_title: "立體", solid_h: "視覺高度 h", solid_base: "底心", solid_height: "點高",
+      solid_water: "水位 0–1", solid_apex: "頂點偏移 dx,dy", solid_right_edge: "直角側棱",
+      poly_title: "多面體", poly_yaw: "yaw°", poly_pitch: "pitch°", poly_tetra: "四面體", poly_cube: "立方體", poly_advanced: "進階頂點／面",
+      ra_mode_2d: "2D", ra_mode_3d: "3D", tip_ra_mode: "直角平面或立體平行四邊形",
+      coord_math_hint: "_ 與 ^ 是輕量數學，例如 log_5 x。",
+      coord_xticks: "x 刻度（-4, 2.5:a）", coord_yticks: "y 刻度",
+      coord_sec_region: "可行區域", coord_ineq: "不等式（每行一條）", coord_boundaries: "畫邊界",
+      coord_region_label: "區域標籤", coord_region_hatch: "斜線填色", coord_apply_region: "套用區域",
+      coord_sec_point: "數學點", coord_math_uv: "(u, v)", coord_project_x: "投影 x", coord_project_y: "投影 y", coord_add_point: "加點",
+      coord_sec_curve_act: "曲線交點／面積", coord_curve1: "曲線 1", coord_curve2: "曲線 2 或軸",
+      coord_domain: "區間 a,b（可留空）", coord_intersect: "交點", coord_area: "面積",
+      charts_title: "圖表", chart_tab_pie: "圓餅", chart_tab_box: "盒鬚", chart_tab_bar: "棒形",
+      pie_r: "半徑 r", pie_start: "起始角 startDeg",
+      pie_slice_note: "每行一片：角度或數值 | 類別 | 角文 | right | hatch。",
+      pie_use_value: "第一欄是 value（否則是 angle）",
+      box_note: "五數是資料值，插入時映到世界座標。刻度做成 {pos,label}。",
+      box_five: "min, q1, median, q3, max", box_ticks: "刻度起,迄,步長", box_axis: "軸標題",
+      bar_cats: "類別", bar_heights: "高度（5:k 表示高度 5、標 k）",
+      bar_xlabel: "xLabel", bar_ylabel: "yLabel", bar_hatch: "斜線", bar_solid: "實色", charts_insert: "插入",
+      hint_center: "依序點三角形三頂點", hint_bearing: "點站點，再點方向；Enter 或雙擊只畫北箭",
       coord_log_base: "底 b",
       coord_curves_note: "可加多條曲線；對數可改底數（例 10、2、e）。",
       coord_add_curve: "＋曲線",
@@ -3252,7 +3574,7 @@ body.dark-canvas .coord-curve-row {
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · Wilson",
+      title_doc: "Simple Diagram · v13.5.49",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -3275,6 +3597,7 @@ body.dark-canvas .coord-curve-row {
       tool_foot: "Foot",
       tool_tangent: "Tan", tool_circlePart: "Chord", tool_shape: "Shape",
       tool_reflex: "Reflex", tool_coord: "Axes", tool_fill: "Fill",
+      tool_center: "Center", tool_bearing: "Bearing",
       group_templates: "Templates", group_props: "Props", group_view: "View / Export",
       rail_draw: "Draw", rail_construct: "Construct", rail_marks: "Marks",
       rail_draw_title: "Draw", rail_construct_title: "Construct", rail_marks_title: "Marks",
@@ -3357,7 +3680,39 @@ body.dark-canvas .coord-curve-row {
       coord_x_unit_deg: "Degrees °",
       coord_x_unit_note: "Affects sin/cos/tan only: in degree mode, Bx and C are in degrees (converted internally). Separate from “Angle axis ticks” below.",
       coord_angle_axis: "Angle axis ticks",
-      coord_angle_axis_note: "When on, x ticks use π (radians) or ° (degrees) and may use a trig-friendly window; turning off restores the previous window and numeric ticks.",
+      coord_angle_axis_note: "When on, x ticks use π (radians) or ° (degrees) and may use a trig-friendly window; turning off restores the previous window and numeric ticks. Uncheck tick labels to set showTickLabels false (default integers hide; custom ticks stay).",
+      role_question: "Question", role_solution: "Solution",
+      tip_draw_question: "Question: new geometry omits role",
+      tip_draw_solution: "Solution: new geometry gets role solution and draws red",
+      aria_draw_role: "Question or solution",
+      tip_tool_center: "Triangle centre: click A, then B, then C",
+      tip_tool_bearing: "Bearing: click station, then direction; Enter or double-click draws north only",
+      btn_charts: "📊 Charts ▾", tip_charts: "Pie, box-whisker, and bar charts",
+      center_title: "Centre", center_incircle: "Incircle", center_circumcircle: "Circumcircle",
+      center_incentre: "Incentre", center_circumcentre: "Circumcentre", center_centroid: "Centroid", center_orthocentre: "Orthocentre",
+      center_touch: "Touch pts",
+      bearing_title: "Bearing", bearing_text: "Angle text", bearing_acute: "Acute", bearing_cw: "Clockwise", bearing_cross: "Cross",
+      role_float_title: "Question / Solution", role_auto_offset: "Auto offset",
+      solid_title: "Solid", solid_h: "Visual height h", solid_base: "Base centre", solid_height: "Height",
+      solid_water: "Water 0–1", solid_apex: "Apex offset dx,dy", solid_right_edge: "Right edge",
+      poly_title: "Polyhedron", poly_yaw: "yaw°", poly_pitch: "pitch°", poly_tetra: "Tetra", poly_cube: "Cube", poly_advanced: "Vertices / faces",
+      ra_mode_2d: "2D", ra_mode_3d: "3D", tip_ra_mode: "Flat mark or 3D parallelogram",
+      coord_math_hint: "_ and ^ are light math, e.g. log_5 x.",
+      coord_xticks: "x ticks (-4, 2.5:a)", coord_yticks: "y ticks",
+      coord_sec_region: "Feasible region", coord_ineq: "Inequalities (one per line)", coord_boundaries: "Draw boundaries",
+      coord_region_label: "Region label", coord_region_hatch: "Hatch", coord_apply_region: "Apply region",
+      coord_sec_point: "Math point", coord_math_uv: "(u, v)", coord_project_x: "Project x", coord_project_y: "Project y", coord_add_point: "Add point",
+      coord_sec_curve_act: "Curve intersection / area", coord_curve1: "Curve 1", coord_curve2: "Curve 2 or axis",
+      coord_domain: "Domain a,b (optional)", coord_intersect: "Intersection", coord_area: "Area",
+      charts_title: "Charts", chart_tab_pie: "Pie", chart_tab_box: "Box", chart_tab_bar: "Bar",
+      pie_r: "Radius r", pie_start: "startDeg",
+      pie_slice_note: "One slice per line: angle or value | category | angle text | right | hatch.",
+      pie_use_value: "First field is value (otherwise angle)",
+      box_note: "Five numbers are data values, mapped into world coordinates. Ticks become {pos,label}.",
+      box_five: "min, q1, median, q3, max", box_ticks: "tick from, to, step", box_axis: "Axis title",
+      bar_cats: "Categories", bar_heights: "Heights (5:k means height 5, label k)",
+      bar_xlabel: "xLabel", bar_ylabel: "yLabel", bar_hatch: "Hatch", bar_solid: "Solid", charts_insert: "Insert",
+      hint_center: "Click the three vertices", hint_bearing: "Click the station, then the direction; Enter or double-click draws north only",
       coord_log_base: "base b",
       coord_curves_note: "Add multiple curves; log base editable (e.g. 10, 2, e).",
       coord_add_curve: "+ Curve",
@@ -3564,7 +3919,7 @@ body.dark-canvas .coord-curve-row {
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · Wilson",
+      title_doc: "Simple Diagram · v13.5.49",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -4017,6 +4372,12 @@ body.dark-canvas .coord-curve-row {
       const ra = rightAngles.find((r) => r.id === selected.id);
       if (ra && rightAngleSizeSelect) {
         rightAngleSizeSelect.value = String(ra.size || DEFAULT_RA_SIZE);
+      }
+      if (ra) {
+        rightAngleDrawMode = ra.mode === "3d" || ra.skew === true ? "3d" : "2d";
+        document.querySelectorAll("[data-ra-mode]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.raMode === rightAngleDrawMode);
+        });
       }
     } else if (selected.type === "angleArc") {
       const arc = angleArcs.find((a) => a.id === selected.id);
@@ -4549,6 +4910,7 @@ body.dark-canvas .coord-curve-row {
     if (alignFloat) {
       alignFloat.hidden = !(tool === "select" && selectionHasAlignableItems());
     }
+    syncParityFloats();
   }
 
   function syncShapeModeUI() {
@@ -5312,6 +5674,7 @@ body.dark-canvas .coord-curve-row {
       color: color || activeFillStyle().color,
       opacity: opacity != null ? opacity : activeFillStyle().opacity,
     };
+    stampDrawRole(f);
     fills.push(f);
     return f;
   }
@@ -5329,6 +5692,7 @@ body.dark-canvas .coord-curve-row {
       opacity: opacity != null ? opacity : activeFillStyle().opacity,
     };
     if (circleId) f.circleId = circleId;
+    stampDrawRole(f);
     fills.push(f);
     return f;
   }
@@ -5347,6 +5711,7 @@ body.dark-canvas .coord-curve-row {
     };
     if (circleId) f.circleId = circleId;
     else if (centerId) f.centerId = centerId;
+    stampDrawRole(f);
     fills.push(f);
     return f;
   }
@@ -5480,6 +5845,7 @@ body.dark-canvas .coord-curve-row {
       color: color || activeFillStyle().color,
       opacity: opacity != null ? opacity : activeFillStyle().opacity,
     };
+    stampDrawRole(f);
     fills.push(f);
     return f;
   }
@@ -5867,7 +6233,10 @@ body.dark-canvas .coord-curve-row {
   }
 
   function updateStatus() {
-    statusTool.textContent = t("status_tool") + (TOOL_NAMES[tool] || tool);
+    statusTool.textContent =
+      t("status_tool") +
+      (TOOL_NAMES[tool] || tool) +
+      (drawRole === "solution" ? (uiLang === "en" ? " · Solution" : " · 詳解") : "");
     if (hoverSnap) {
       const lab = labels.find((l) => l.pointId === hoverSnap);
       const p = pointById(hoverSnap);
@@ -5933,6 +6302,8 @@ body.dark-canvas .coord-curve-row {
       angleArc: t("hint_angleArc"),
       reflex: t("hint_reflex"),
       coord: t("hint_coord"),
+      center: t("hint_center"),
+      bearing: t("hint_bearing"),
       midTick: t("hint_midTick"),
       ratio: t("hint_ratio"),
       length: t("hint_length"),
@@ -6195,6 +6566,12 @@ body.dark-canvas .coord-curve-row {
     if (history.length > HIST_MAX) history.shift();
     histIndex = history.length - 1;
     refreshEditButtons();
+  }
+
+  /** Make the history top equal the canvas. Drawing tools often leave the top one step behind. */
+  function commitLiveHistory() {
+    if (history[histIndex] === snapshot()) return;
+    pushHistory();
   }
 
   function undo() {
@@ -6690,11 +7067,36 @@ body.dark-canvas .coord-curve-row {
   }
 
   // ——— Mutations ———
+  function ensureSolutionVisible() {
+    if (layers.solutionShow === false) {
+      layers.solutionShow = true;
+      if (typeof syncLayersUI === "function") syncLayersUI();
+    }
+  }
+
+  /** Solution draw mode stamps role on mouse-created geometry. Question mode omits role. */
+  function stampDrawRole(el) {
+    if (!el || suspendDrawRole) return el;
+    if (drawRole === "solution") {
+      el.role = "solution";
+      ensureSolutionVisible();
+    }
+    return el;
+  }
+
+  function decorateRightAngle(ra) {
+    stampDrawRole(ra);
+    if (rightAngleDrawMode === "3d") ra.mode = "3d";
+    else delete ra.mode;
+    return ra;
+  }
+
   function addPoint(x, y, skipHist, marker, skipGrid) {
     const g = skipGrid ? { x, y } : applyGrid(x, y);
     if (!skipHist) pushHistory();
     const p = { id: uid(), x: g.x, y: g.y };
     if (marker) p.marker = marker;
+    stampDrawRole(p);
     points.push(p);
     return p;
   }
@@ -6706,6 +7108,7 @@ body.dark-canvas .coord-curve-row {
     }
     if (!skipHist) pushHistory();
     const seg = { id: uid(), a: aId, b: bId, style: style || lineStyle };
+    stampDrawRole(seg);
     segments.push(seg);
     return seg;
   }
@@ -6834,6 +7237,7 @@ body.dark-canvas .coord-curve-row {
       oy: off.oy,
       size: clampLabelSize(size || labelFontSize),
     };
+    stampDrawRole(lab);
     labels.push(lab);
     return lab;
   }
@@ -7109,14 +7513,16 @@ body.dark-canvas .coord-curve-row {
     }
     const style = completeStyle || "solid";
     pushHistory();
-    ellipses.push({
+    const ell = {
       id: uid(),
       centerId: draft.centerId,
       rxId: draft.rxId,
       ryId: ryPt.id,
       style,
       backDashed: false,
-    });
+    };
+    stampDrawRole(ell);
+    ellipses.push(ell);
     history[histIndex] = snapshot();
     setSelection([{ type: "ellipse", id: ellipses[ellipses.length - 1].id }]);
     draft = null;
@@ -7183,14 +7589,16 @@ body.dark-canvas .coord-curve-row {
     }
     const style = completeStyle || "solid";
     pushHistory();
-    sectors.push({
+    const sec = {
       id: uid(),
       centerId: draft.centerId,
       startId: draft.startId,
       endId: endPt.id,
       style,
       mode: draft.mode === "sector" ? "sector" : "arc",
-    });
+    };
+    stampDrawRole(sec);
+    sectors.push(sec);
     history[histIndex] = snapshot();
     setSelection([{ type: "sector", id: sectors[sectors.length - 1].id }]);
     draft = null;
@@ -7252,13 +7660,13 @@ body.dark-canvas .coord-curve-row {
       const nbs = connectedNeighbors(sn.id);
       if (nbs.length === 2) {
         pushHistory();
-        rightAngles.push({
+        rightAngles.push(decorateRightAngle({
           id: uid(),
           vertex: sn.id,
           arm1: nbs[0],
           arm2: nbs[1],
           size: rightAngleSize,
-        });
+        }));
         setSelection([{ type: "rightAngle", id: rightAngles[rightAngles.length - 1].id }]);
         draft = null;
         updateStatus();
@@ -7291,13 +7699,13 @@ body.dark-canvas .coord-curve-row {
     }
     if (sn.id === draft.vertex || sn.id === draft.arm1) return;
     pushHistory();
-    rightAngles.push({
+    rightAngles.push(decorateRightAngle({
       id: uid(),
       vertex: draft.vertex,
       arm1: draft.arm1,
       arm2: sn.id,
       size: rightAngleSize,
-    });
+    }));
     setSelection([{ type: "rightAngle", id: rightAngles[rightAngles.length - 1].id }]);
     draft = null;
     updateStatus();
@@ -7305,7 +7713,7 @@ body.dark-canvas .coord-curve-row {
   }
 
   function pushAngleArc(vertex, arm1, arm2, reflex) {
-    angleArcs.push({
+    const arc = {
       id: uid(),
       vertex,
       arm1,
@@ -7314,8 +7722,10 @@ body.dark-canvas .coord-curve-row {
       group: activeArcGroup ? 1 : 0,
       text: "",
       reflex: !!reflex,
-    });
-    return angleArcs[angleArcs.length - 1];
+    };
+    stampDrawRole(arc);
+    angleArcs.push(arc);
+    return arc;
   }
 
   function openArcLabelPrompt(arcId, presetText) {
@@ -9747,6 +10157,7 @@ body.dark-canvas .coord-curve-row {
   }
 
   function renderCoordCurvesList() {
+    fillCurveActionSelects();
     const list = document.getElementById("coordCurvesList");
     if (!list) return;
     list.innerHTML = "";
@@ -9882,6 +10293,10 @@ body.dark-canvas .coord-curve-row {
     syncCoordWindowInputFromPlot(plot);
     if (labInp) labInp.value = (plot.axisLabelX || "x") + "," + (plot.axisLabelY || "y");
     if (tickChk) tickChk.checked = plot.showTickLabels !== false;
+    const xTickInp = document.getElementById("coordXTicks");
+    const yTickInp = document.getElementById("coordYTicks");
+    if (xTickInp) xTickInp.value = formatTickSpec(plot.xTicks);
+    if (yTickInp) yTickInp.value = formatTickSpec(plot.yTicks);
     if (angSel) angSel.value = plot.xAngleUnit === "deg" ? "deg" : "rad";
     if (axisChk) axisChk.checked = !!plot.angleAxisOn;
     coordDialogCurves = coordPlotCurves(plot).map((c) => ({
@@ -9915,6 +10330,16 @@ body.dark-canvas .coord-curve-row {
     const labs = String(labInp ? labInp.value : "x,y")
       .split(",")
       .map((s) => s.trim());
+    const xSpec = parseTickSpec(document.getElementById("coordXTicks") && document.getElementById("coordXTicks").value);
+    const ySpec = parseTickSpec(document.getElementById("coordYTicks") && document.getElementById("coordYTicks").value);
+    if (xSpec && xSpec.error) {
+      statusHint.textContent = (uiLang === "en" ? "Bad x tick: " : "x 刻度無法解析：") + xSpec.error;
+      return false;
+    }
+    if (ySpec && ySpec.error) {
+      statusHint.textContent = (uiLang === "en" ? "Bad y tick: " : "y 刻度無法解析：") + ySpec.error;
+      return false;
+    }
     pushHistory();
     const nextUnit = angSel && angSel.value === "deg" ? "deg" : "rad";
     const wantOn = !!(axisChk && axisChk.checked);
@@ -9972,6 +10397,10 @@ body.dark-canvas .coord-curve-row {
     plot.angleAxisOn = wantOn;
     plot.axisLabelX = labs[0] || "x";
     plot.axisLabelY = labs[1] || "y";
+    if (xSpec && xSpec.ticks) plot.xTicks = xSpec.ticks;
+    else delete plot.xTicks;
+    if (ySpec && ySpec.ticks) plot.yTicks = ySpec.ticks;
+    else delete plot.yTicks;
     // One checkbox: numbers + tick marks together (axes / O unchanged)
     plot.showTickLabels = !tickChk || !!tickChk.checked;
     plot.showTicks = plot.showTickLabels;
@@ -10002,7 +10431,9 @@ body.dark-canvas .coord-curve-row {
     pushHistory();
     const plot = defaultCoordPlot(x, y);
     // Start with one editable line so the dialog feels useful
-    plot.curves = [makeCoordCurve("line")];
+    const firstCurve = makeCoordCurve("line");
+    stampDrawRole(firstCurve);
+    plot.curves = [firstCurve];
     coordPlots.push(plot);
     history[histIndex] = snapshot();
     setSelection([{ type: "coordPlot", id: plot.id }]);
@@ -10159,7 +10590,7 @@ body.dark-canvas .coord-curve-row {
     pushHistory();
     const pt = findOrCreatePointAt(pos.x, pos.y, true);
     if (withTick && !midTicks.some((m) => m.segmentId === seg.id && m.pointId === pt.id)) {
-      midTicks.push({ id: uid(), segmentId: seg.id, pointId: pt.id });
+      midTicks.push(stampDrawRole({ id: uid(), segmentId: seg.id, pointId: pt.id }));
     }
     history[histIndex] = snapshot();
     setSelection([{ type: "point", id: pt.id }]);
@@ -12519,6 +12950,18 @@ body.dark-canvas .coord-curve-row {
       return;
     }
 
+    if (tool === "center" && e.button === 0) {
+      e.preventDefault();
+      handleCenterClick(world);
+      return;
+    }
+
+    if (tool === "bearing" && e.button === 0) {
+      e.preventDefault();
+      handleBearingClick(world);
+      return;
+    }
+
     if (e.button !== 0) return;
 
     if (tool === "exportCrop") {
@@ -12992,12 +13435,14 @@ body.dark-canvas .coord-curve-row {
       const through = sn ? sn : addPoint(world.x, world.y);
       if (through.id === draft.centerId) return;
       pushHistory();
-      circles.push({
+      const cir = {
         id: uid(),
         centerId: draft.centerId,
         throughId: through.id,
         style: "solid",
-      });
+      };
+      stampDrawRole(cir);
+      circles.push(cir);
       setSelection([{ type: "circle", id: circles[circles.length - 1].id }]);
       draft = null;
       updateStatus();
@@ -13265,7 +13710,7 @@ body.dark-canvas .coord-curve-row {
       }
       return { x, y, lab: row[2], ox: row[3], oy: row[4], marker: row[5] };
     });
-    return { type: "solid", spec, pts, scale };
+    return { type: "solid", spec, pts, scale, originX: ox, originY: oy, worldW, worldH };
   }
 
   /** @returns {null|{type:"poly",corners:Array}|{type:"circle",center,through}|{type:"semicircle",a,b,center}|{type:"solid",spec,pts}} */
@@ -13532,6 +13977,10 @@ body.dark-canvas .coord-curve-row {
       draw();
       return;
     }
+    if (geom.type === "solid" && solidExtrasActive()) {
+      commitSolidViaOps(geom, mode);
+      return;
+    }
     pushHistory();
     if (geom.type === "solid") {
       commitSolidShapeLayout(geom);
@@ -13541,6 +13990,7 @@ body.dark-canvas .coord-curve-row {
       const cId = addPoint(geom.center.x, geom.center.y, true, null, true).id;
       const tId = addPoint(geom.through.x, geom.through.y, true, null, true).id;
       const cir = { id: uid(), centerId: cId, throughId: tId, style };
+      stampDrawRole(cir);
       circles.push(cir);
       history[histIndex] = snapshot();
       setSelection([{ type: "circle", id: cir.id }]);
@@ -13561,6 +14011,7 @@ body.dark-canvas .coord-curve-row {
         style,
         mode: "arc",
       };
+      stampDrawRole(sec);
       sectors.push(sec);
       history[histIndex] = snapshot();
       const sel = [{ type: "sector", id: sec.id }];
@@ -15421,7 +15872,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.48",
+      version: "13.5.49",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
@@ -15662,6 +16113,9 @@ ${body}</svg>`;
 
   function applyProjectData(data, opts) {
     opts = opts || {};
+    // Mouse tools leave the latest snapshot one step behind the canvas.
+    // Catch up before pushHistory so undo returns to this picture, not the one before it.
+    if (history[histIndex] !== snapshot()) pushHistory();
     pushHistory();
     points = data.points || [];
     segments = data.segments || [];
@@ -15768,7 +16222,8 @@ ${body}</svg>`;
     draw();
     writeAutosave();
     // Load / recent / autosave restore → clean until the user edits again.
-    markDocClean();
+    // Editor ops pass keepDirty so an insert stays an unsaved edit.
+    if (!opts.keepDirty) markDocClean();
   }
 
   async function saveProject() {
@@ -15959,6 +16414,39 @@ ${body}</svg>`;
   }
 
   /**
+   * Run existing ops against the current canvas document.
+   * Geometry stays in applyOps — the UI only collects arguments.
+   */
+  async function runEditorOps(ops) {
+    let mod;
+    try {
+      mod = await loadDiagramModule();
+    } catch (err) {
+      statusHint.textContent = t("paste_json_err_import");
+      return null;
+    }
+    try {
+      const base = buildDocSnapshotForOps();
+      let list = ops;
+      if (drawRole === "solution") {
+        base.layers = { ...(base.layers || {}), solutionShow: true };
+        list = ops.map((op) => (op && op.role ? op : { ...op, role: "solution" }));
+      }
+      const doc = mod.applyOps(base, list);
+      const v = mod.validateDiagram(doc);
+      if (!v.ok) {
+        statusHint.textContent = (v.errors || []).slice(0, 4).join(" · ");
+        return null;
+      }
+      applyProjectData(doc, { name: currentDocName, keepDirty: true });
+      return { doc, mod };
+    } catch (err) {
+      statusHint.textContent = err && err.message ? err.message : String(err);
+      return null;
+    }
+  }
+
+  /**
    * Paste ops array or full document. Undoable via applyProjectData → pushHistory.
    * @returns {Promise<{ ok: boolean, message?: string }>}
    */
@@ -15992,6 +16480,790 @@ ${body}</svg>`;
       return { ok: false, message: err && err.message ? err.message : String(err) };
     }
   }
+
+
+  // ——— v13.5.49 editor UI: calls existing ops, no second geometry engine ———
+  const POLY_PRESETS = {
+    tetra: {
+      vertices: { A: [0, 0, 0], B: [2, 0, 0], C: [1, 0, 2], V: [0, 2, 0] },
+      faces: [
+        ["A", "B", "C"],
+        ["A", "B", "V"],
+        ["B", "C", "V"],
+        ["C", "A", "V"],
+      ],
+    },
+    cube: {
+      vertices: {
+        A: [0, 0, 0], B: [1, 0, 0], C: [1, 1, 0], D: [0, 1, 0],
+        E: [0, 0, 1], F: [1, 0, 1], G: [1, 1, 1], H: [0, 1, 1],
+      },
+      faces: [
+        ["A", "B", "C", "D"],
+        ["H", "G", "F", "E"],
+        ["A", "B", "F", "E"],
+        ["B", "C", "G", "F"],
+        ["C", "D", "H", "G"],
+        ["D", "A", "E", "H"],
+      ],
+    },
+  };
+
+  function syncDrawRoleUI() {
+    document.querySelectorAll("#drawRoleCapsule [data-draw-role]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.drawRole === drawRole);
+    });
+  }
+
+  function setDrawRole(role) {
+    drawRole = role === "solution" ? "solution" : "question";
+    if (drawRole === "solution") ensureSolutionVisible();
+    syncDrawRoleUI();
+    updateStatus();
+  }
+
+  function selectionRecords() {
+    const table = {
+      point: points,
+      segment: segments,
+      circle: circles,
+      ellipse: ellipses,
+      sector: sectors,
+      fill: fills,
+      label: labels,
+      text: texts,
+      rightAngle: rightAngles,
+      angleArc: angleArcs,
+      lengthLabel: lengthLabels,
+      parallelMark: parallelMarks,
+      equalMark: equalMarks,
+      midTick: midTicks,
+      boxWhisker: boxWhiskers,
+      barChart: barCharts,
+    };
+    const out = [];
+    for (const sel of selection) {
+      if (!sel) continue;
+      if (sel.type === "coordPlot") {
+        const plot = coordPlots.find((p) => p.id === sel.id);
+        if (!plot) continue;
+        if (sel.curveId) {
+          const curve = (plot.curves || []).find((c) => c.id === sel.curveId);
+          if (curve) out.push(curve);
+        } else out.push(plot);
+        continue;
+      }
+      const arr = table[sel.type];
+      if (!arr) continue;
+      const el = arr.find((x) => x.id === sel.id);
+      if (el) out.push(el);
+    }
+    return out;
+  }
+
+  function setSelectionRole(role) {
+    const els = selectionRecords();
+    if (!els.length) {
+      statusHint.textContent = uiLang === "en" ? "Nothing selected" : "沒有選取";
+      return;
+    }
+    const next = role === "solution" ? "solution" : "question";
+    commitLiveHistory();
+    for (const el of els) el.role = next;
+    if (next === "solution") ensureSolutionVisible();
+    commitLiveHistory();
+    updateStatus();
+    draw();
+  }
+
+  function toggleSelectionRole() {
+    const els = selectionRecords();
+    if (!els.length) return;
+    setSelectionRole(els.every((el) => el.role === "solution") ? "question" : "solution");
+  }
+
+  async function setSelectionAutoOffset() {
+    const ids = selection.filter((s) => s.type === "label").map((s) => s.id);
+    if (!ids.length) {
+      statusHint.textContent = uiLang === "en" ? "Select a label" : "請選取標籤";
+      return;
+    }
+    let mod;
+    try {
+      mod = await loadDiagramModule();
+    } catch (err) {
+      statusHint.textContent = t("paste_json_err_import");
+      return;
+    }
+    const base = buildDocSnapshotForOps();
+    let n = 0;
+    for (const lab of base.labels || []) {
+      if (ids.indexOf(lab.id) >= 0) {
+        lab.autoOffset = true;
+        n++;
+      }
+    }
+    if (!n) return;
+    try {
+      const doc = mod.applyOps(base, []);
+      const v = mod.validateDiagram(doc);
+      if (!v.ok) {
+        statusHint.textContent = (v.errors || []).slice(0, 4).join(" · ");
+        return;
+      }
+      applyProjectData(doc, { name: currentDocName, keepDirty: true });
+      statusHint.textContent = uiLang === "en" ? "Label auto-offset" : "標籤已自動偏移";
+    } catch (err) {
+      statusHint.textContent = err && err.message ? err.message : String(err);
+    }
+  }
+
+  function pointHitForConstruct(world) {
+    return snapWorld(world.x, world.y) || nearestPointHit(world.x, world.y);
+  }
+
+  function centerOp(a, b, c) {
+    if (centerKind === "incircle") {
+      const op = { op: "addIncircle", a, b, c };
+      const touch = document.getElementById("centerMarkTouch");
+      if (touch && touch.checked) op.markTouchPoints = true;
+      return op;
+    }
+    if (centerKind === "circumcircle") return { op: "addCircumcircle", a, b, c };
+    return { op: "addTriangleCenter", kind: centerKind, a, b, c, drawCircle: false };
+  }
+
+  function handleCenterClick(world) {
+    const sn = pointHitForConstruct(world);
+    if (!sn) {
+      statusHint.textContent = uiLang === "en" ? "Click a vertex" : "請點頂點";
+      return;
+    }
+    if (!draft || draft.kind !== "center") {
+      draft = { kind: "center", ids: [sn.id] };
+      statusHint.textContent = uiLang === "en" ? "Click the second vertex" : "再點第二頂點";
+      draw();
+      return;
+    }
+    if (draft.ids.indexOf(sn.id) >= 0) return;
+    draft.ids.push(sn.id);
+    if (draft.ids.length < 3) {
+      statusHint.textContent = uiLang === "en" ? "Click the third vertex" : "再點第三頂點";
+      draw();
+      return;
+    }
+    const ids = draft.ids.slice();
+    draft = null;
+    runEditorOps([centerOp(ids[0], ids[1], ids[2])]).then((res) => {
+      if (res) statusHint.textContent = uiLang === "en" ? "Centre placed" : "已放置三角形心";
+    });
+  }
+
+  function bearingOp(at, to) {
+    const textEl = document.getElementById("bearingText");
+    const cross = document.getElementById("bearingShowCross");
+    const op = {
+      op: "addBearing",
+      at,
+      text: textEl ? String(textEl.value || "") : "",
+      mode: bearingMode === "cw" ? "cw" : "acute",
+      from: bearingFrom,
+    };
+    if (to) op.to = to;
+    if (cross && cross.checked) op.showCross = true;
+    return op;
+  }
+
+  function handleBearingClick(world) {
+    const sn = pointHitForConstruct(world);
+    if (!sn) {
+      statusHint.textContent = uiLang === "en" ? "Click a point" : "請點一點";
+      return;
+    }
+    if (!draft || draft.kind !== "bearing") {
+      draft = { kind: "bearing", at: sn.id };
+      statusHint.textContent =
+        uiLang === "en" ? "Click the direction, or Enter for north only" : "再點方向；Enter 或雙擊只畫北箭";
+      draw();
+      return;
+    }
+    if (sn.id === draft.at) return;
+    const at = draft.at;
+    const to = sn.id;
+    draft = null;
+    runEditorOps([bearingOp(at, to)]).then((res) => {
+      if (res) statusHint.textContent = uiLang === "en" ? "Bearing placed" : "已放置方位角";
+    });
+  }
+
+  function commitBearingNorthOnly() {
+    if (tool !== "bearing" || !draft || draft.kind !== "bearing" || !draft.at) return false;
+    const at = draft.at;
+    draft = null;
+    runEditorOps([bearingOp(at, null)]).then((res) => {
+      if (res) statusHint.textContent = uiLang === "en" ? "North arrow" : "已畫北箭";
+    });
+    return true;
+  }
+
+  function readNumInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const n = Number(String(el.value || "").trim());
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function parsePair(text) {
+    const parts = String(text || "")
+      .split(/[, ]+/)
+      .map((x) => Number(x))
+      .filter((n) => Number.isFinite(n));
+    if (parts.length < 2) return null;
+    return [parts[0], parts[1]];
+  }
+
+  function solidExtrasActive() {
+    const h = readNumInput("solidH");
+    const water = readNumInput("solidWater");
+    const apex = parsePair(document.getElementById("solidApex") && document.getElementById("solidApex").value);
+    const base = document.getElementById("solidBaseCenter");
+    const dh = document.getElementById("solidDrawHeight");
+    return !!(
+      (h != null && h > 0) ||
+      (water != null && water > 0 && water < 1) ||
+      apex ||
+      (base && base.checked) ||
+      (dh && dh.checked) ||
+      solidRightEdge
+    );
+  }
+
+  function rightEdgeOffset(mode, scale) {
+    const spec = BUILTIN_TEMPLATES[mode];
+    if (!spec || (mode !== "pyramid" && mode !== "cone")) return null;
+    const v = (spec.pts || []).find((r) => r[2] === "V");
+    const bases = (spec.pts || []).filter((r) => r[2] !== "V");
+    if (!v || !bases.length) return null;
+    const right = bases.reduce((a, b) => (a[0] >= b[0] ? a : b));
+    return [(right[0] - v[0]) * GRID_SIZE * scale, 0];
+  }
+
+  function commitSolidViaOps(geom, mode) {
+    const op = { op: "addShape", kind: mode, x: geom.originX, y: geom.originY, w: geom.worldW };
+    const h = readNumInput("solidH");
+    if (h != null && h > 0) op.h = h;
+    if (document.getElementById("solidBaseCenter") && document.getElementById("solidBaseCenter").checked) {
+      op.includeBaseCenter = true;
+    }
+    if (document.getElementById("solidDrawHeight") && document.getElementById("solidDrawHeight").checked) {
+      op.drawHeight = true;
+    }
+    const water = readNumInput("solidWater");
+    if ((mode === "cylinder" || mode === "cone") && water != null && water > 0 && water < 1) {
+      op.waterLevel = water;
+    }
+    if ((mode === "pyramid" || mode === "cone") && solidRightEdge) {
+      const off = rightEdgeOffset(mode, geom.scale);
+      if (off) op.apexOffset = off;
+    } else if (mode === "pyramid" || mode === "cone") {
+      const apex = parsePair(document.getElementById("solidApex") && document.getElementById("solidApex").value);
+      if (apex) op.apexOffset = apex;
+    }
+    runEditorOps([op]).then((res) => {
+      if (res) statusHint.textContent = uiLang === "en" ? "Solid inserted" : "已插入立體";
+    });
+  }
+
+  function syncSolidRows() {
+    const water = document.getElementById("solidWaterRow");
+    const apex = document.getElementById("solidApexRow");
+    const edge = document.getElementById("btnSolidRightEdge");
+    const coneLike = shapeMode === "cylinder" || shapeMode === "cone";
+    const apexLike = shapeMode === "pyramid" || shapeMode === "cone";
+    if (water) water.hidden = !coneLike;
+    if (apex) apex.hidden = !apexLike;
+    if (edge) {
+      edge.hidden = shapeMode !== "pyramid";
+      edge.classList.toggle("active", solidRightEdge);
+    }
+  }
+
+  function insertPolyhedron(preset) {
+    const raw = (document.getElementById("polyAdvanced") && document.getElementById("polyAdvanced").value || "").trim();
+    let vertices;
+    let faces;
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        vertices = parsed.vertices;
+        faces = parsed.faces;
+      } catch (err) {
+        statusHint.textContent = err && err.message ? err.message : String(err);
+        return;
+      }
+    } else {
+      const spec = POLY_PRESETS[preset] || POLY_PRESETS.tetra;
+      vertices = spec.vertices;
+      faces = spec.faces;
+    }
+    if (!vertices || !faces) {
+      statusHint.textContent = uiLang === "en" ? "Need vertices and faces" : "需要 vertices 與 faces";
+      return;
+    }
+    const c = viewCenterWorld();
+    const op = {
+      op: "add3DPolyhedron",
+      origin: [c.x, c.y],
+      scale: 36,
+      vertices,
+      faces,
+    };
+    const yaw = readNumInput("polyYaw");
+    const pitch = readNumInput("polyPitch");
+    if (yaw != null) op.yawDeg = yaw;
+    if (pitch != null) op.pitchDeg = pitch;
+    runEditorOps([op]).then((res) => {
+      if (res) statusHint.textContent = uiLang === "en" ? "Polyhedron inserted" : "已插入多面體";
+    });
+  }
+
+  function parseTickSpec(text) {
+    const s = String(text || "").trim();
+    if (!s) return null;
+    const ticks = [];
+    for (const part of s.split(",")) {
+      const bit = part.trim();
+      if (!bit) continue;
+      const m = bit.match(/^(-?\d+(?:\.\d+)?)\s*:\s*(.+)$/);
+      if (m) ticks.push({ pos: Number(m[1]), label: m[2].trim() });
+      else {
+        const n = Number(bit);
+        if (!Number.isFinite(n)) return { error: bit };
+        ticks.push(n);
+      }
+    }
+    return ticks.length ? { ticks } : null;
+  }
+
+  function formatTickSpec(ticks) {
+    if (!Array.isArray(ticks) || !ticks.length) return "";
+    return ticks
+      .map((t) => {
+        if (t != null && typeof t === "object") {
+          const pos = t.pos != null ? t.pos : t.x != null ? t.x : t.y;
+          return t.label ? String(pos) + ":" + t.label : String(pos);
+        }
+        return String(t);
+      })
+      .join(", ");
+  }
+
+  function readDomain(text) {
+    const s = String(text || "").trim();
+    if (!s) return undefined;
+    const parts = s.split(/[, ]+/).map(Number);
+    if (parts.length < 2 || !Number.isFinite(parts[0]) || !Number.isFinite(parts[1])) return { error: true };
+    return [parts[0], parts[1]];
+  }
+
+  function fillCurveActionSelects() {
+    const c1 = document.getElementById("coordCurve1");
+    const c2 = document.getElementById("coordCurve2");
+    const card = document.getElementById("coordCurveActionCard");
+    if (!c1 || !c2) return;
+    const curves = coordDialogCurves || [];
+    if (card) card.hidden = curves.length < 1;
+    const curveOpts = curves
+      .map((c, i) => `<option value="${c.id}">${i + 1}. ${c.type}</option>`)
+      .join("");
+    c1.innerHTML = curveOpts || `<option value="">—</option>`;
+    c2.innerHTML = curveOpts + `<option value="xAxis">x</option><option value="yAxis">y</option>`;
+    if (curves.length === 1) c2.value = "xAxis";
+    else if (curves[1]) c2.value = curves[1].id;
+  }
+
+  async function applyCoordSideOp(build) {
+    if (!applyCoordDialog()) return;
+    const plotId = pendingCoordEditId;
+    const op = build(plotId);
+    if (!op) return;
+    const res = await runEditorOps([op]);
+    if (res) statusHint.textContent = uiLang === "en" ? "Applied" : "已套用";
+  }
+
+  function parsePieSlices(text, useValue) {
+    const lines = String(text || "")
+      .split(/\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const slices = [];
+    for (const line of lines) {
+      const parts = line.split("|").map((s) => s.trim());
+      const raw = (parts[0] || "").replace(/°$/, "");
+      const n = Number(raw);
+      if (!Number.isFinite(n)) throw new Error(parts[0] || line);
+      const slice = useValue ? { value: n } : { angle: n };
+      if (parts[1]) slice.label = parts[1];
+      if (parts[2]) slice.angleText = parts[2];
+      const flags = (parts.slice(3).join(" ") || "").toLowerCase();
+      if (/right|直角/.test(flags)) slice.rightAngle = true;
+      if (/hatch|斜/.test(flags)) slice.pattern = "hatch";
+      slices.push(slice);
+    }
+    if (slices.length < 2) throw new Error("need at least 2 slices");
+    return slices;
+  }
+
+  function parseBarHeights(text) {
+    const parts = String(text || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const values = [];
+    const topLabels = [];
+    for (const part of parts) {
+      const bits = part.split(":").map((s) => s.trim());
+      if (bits.length === 1) {
+        const n = Number(bits[0]);
+        if (!Number.isFinite(n)) return null;
+        values.push(n);
+        topLabels.push("");
+      } else {
+        const a = Number(bits[0]);
+        const b = Number(bits[1]);
+        if (Number.isFinite(a) && !Number.isFinite(b)) {
+          values.push(a);
+          topLabels.push(bits[1]);
+        } else if (!Number.isFinite(a) && Number.isFinite(b)) {
+          values.push(b);
+          topLabels.push(bits[0]);
+        } else return null;
+      }
+    }
+    return { values, topLabels };
+  }
+
+  async function insertChart(tab) {
+    const c = viewCenterWorld();
+    try {
+      if (tab === "pie") {
+        const useValue = !!(document.getElementById("pieUseValue") && document.getElementById("pieUseValue").checked);
+        const slices = parsePieSlices(document.getElementById("pieSlices").value, useValue);
+        const r = readNumInput("pieRadius");
+        const start = readNumInput("pieStart");
+        const op = {
+          op: "addPieChart",
+          x: c.x,
+          y: c.y,
+          r: r != null && r > 0 ? r : 95,
+          startDeg: start != null ? start : -90,
+          slices,
+        };
+        const res = await runEditorOps([op]);
+        if (res) statusHint.textContent = uiLang === "en" ? "Pie inserted" : "已插入圓餅";
+        return !!res;
+      }
+      if (tab === "box") {
+        const five = String(document.getElementById("boxFive").value || "")
+          .split(/[, ]+/)
+          .map(Number)
+          .filter((n) => Number.isFinite(n));
+        if (five.length !== 5) throw new Error(uiLang === "en" ? "Need five numbers" : "需要五個數");
+        const [min, q1, median, q3, max] = five;
+        if (!(min <= q1 && q1 <= median && median <= q3 && q3 <= max)) {
+          throw new Error("min≤q1≤median≤q3≤max");
+        }
+        const tickBits = String(document.getElementById("boxTicks").value || "")
+          .split(/[, ]+/)
+          .map(Number)
+          .filter((n) => Number.isFinite(n));
+        const from = tickBits.length ? tickBits[0] : min;
+        const to = tickBits.length > 1 ? tickBits[1] : max;
+        const step = tickBits.length > 2 && tickBits[2] > 0 ? tickBits[2] : Math.max((to - from) / 4, 1e-6);
+        if (!(to > from) || !(step > 0)) throw new Error(uiLang === "en" ? "Bad tick range" : "刻度範圍不對");
+        const world0 = c.x - 120;
+        const world1 = c.x + 120;
+        const map = (v) => world0 + ((v - from) / (to - from)) * (world1 - world0);
+        const ticks = [];
+        for (let t = from; t <= to + step * 1e-6; t += step) {
+          const rounded = Math.abs(t - Math.round(t)) < 1e-6 ? Math.round(t) : Math.round(t * 1000) / 1000;
+          ticks.push({ pos: map(t), label: String(rounded) });
+          if (ticks.length > 40) break;
+        }
+        const op = {
+          op: "addBoxWhisker",
+          y: c.y,
+          min: map(min),
+          q1: map(q1),
+          median: map(median),
+          q3: map(q3),
+          max: map(max),
+          ticks,
+        };
+        const axis = (document.getElementById("boxAxisLabel").value || "").trim();
+        if (axis) op.axisLabel = axis;
+        const res = await runEditorOps([op]);
+        if (res) statusHint.textContent = uiLang === "en" ? "Box plot inserted" : "已插入盒鬚圖";
+        return !!res;
+      }
+      const cats = String(document.getElementById("barCats").value || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const parsed = parseBarHeights(document.getElementById("barHeights").value);
+      if (!parsed || parsed.values.length !== cats.length) {
+        throw new Error(uiLang === "en" ? "Heights must match categories" : "高度數目要與類別相同");
+      }
+      const mod = await loadDiagramModule();
+      const chart = {
+        id: "preview",
+        x: c.x - 140,
+        y: c.y + 80,
+        plotW: 280,
+        plotH: 160,
+        categories: cats,
+        values: parsed.values,
+        yMin: 0,
+        barPattern: barPattern === "solid" ? "solid" : "hatch",
+        xLabel: (document.getElementById("barXLabel").value || "").trim(),
+        yLabel: (document.getElementById("barYLabel").value || "").trim(),
+      };
+      const norm = mod.normalizeBarChart(chart);
+      const parts = mod.barChartParts(norm);
+      const op = { op: "addBarChart" };
+      for (const key of ["x", "y", "plotW", "plotH", "categories", "values", "yMin", "barPattern", "xLabel", "yLabel"]) {
+        op[key] = chart[key];
+      }
+      const ops = [op];
+      parsed.topLabels.forEach((lab, i) => {
+        if (!lab || !parts.bars[i]) return;
+        const bar = parts.bars[i];
+        ops.push({
+          op: "addText",
+          x: bar.x + bar.w / 2,
+          y: bar.y - 14,
+          text: lab,
+          align: "center",
+        });
+      });
+      const res = await runEditorOps(ops);
+      if (res) statusHint.textContent = uiLang === "en" ? "Bar chart inserted" : "已插入棒形圖";
+      return !!res;
+    } catch (err) {
+      statusHint.textContent = err && err.message ? err.message : String(err);
+      return false;
+    }
+  }
+
+  function setRightAngleDrawMode(mode) {
+    rightAngleDrawMode = mode === "3d" ? "3d" : "2d";
+    document.querySelectorAll("[data-ra-mode]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.raMode === rightAngleDrawMode);
+    });
+    const ras = selection
+      .filter((s) => s.type === "rightAngle")
+      .map((s) => rightAngles.find((r) => r.id === s.id))
+      .filter(Boolean);
+    if (!ras.length) {
+      updateStatus();
+      return;
+    }
+    commitLiveHistory();
+    for (const ra of ras) {
+      if (rightAngleDrawMode === "3d") ra.mode = "3d";
+      else delete ra.mode;
+    }
+    commitLiveHistory();
+    draw();
+  }
+
+  function syncParityFloats() {
+    const centerFloat = document.getElementById("centerFloat");
+    const bearingFloat = document.getElementById("bearingFloat");
+    const roleFloat = document.getElementById("roleFloat");
+    const solidFloat = document.getElementById("solidOptsFloat");
+    const raBar = document.getElementById("rightAngleModeBar");
+    if (centerFloat) centerFloat.hidden = tool !== "center";
+    if (bearingFloat) bearingFloat.hidden = tool !== "bearing";
+    if (roleFloat) roleFloat.hidden = !(tool === "select" && selection.length > 0);
+    if (solidFloat) {
+      const show = tool === "shape" && isSolidShapeMode(shapeMode);
+      solidFloat.hidden = !show;
+      if (show) syncSolidRows();
+    }
+    if (raBar) {
+      raBar.hidden = !(tool === "rightAngle" || selection.some((s) => s.type === "rightAngle"));
+    }
+  }
+
+  function wireParityControls() {
+    document.querySelectorAll("#drawRoleCapsule [data-draw-role]").forEach((btn) => {
+      btn.addEventListener("click", () => setDrawRole(btn.dataset.drawRole));
+    });
+    const qBtn = document.getElementById("btnSelQuestion");
+    const sBtn = document.getElementById("btnSelSolution");
+    const autoBtn = document.getElementById("btnSelAutoOffset");
+    if (qBtn) qBtn.addEventListener("click", () => setSelectionRole("question"));
+    if (sBtn) sBtn.addEventListener("click", () => setSelectionRole("solution"));
+    if (autoBtn) autoBtn.addEventListener("click", () => setSelectionAutoOffset());
+    document.querySelectorAll("[data-center-kind]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        centerKind = btn.dataset.centerKind || "incircle";
+        document.querySelectorAll("[data-center-kind]").forEach((b) => {
+          b.classList.toggle("active", b.dataset.centerKind === centerKind);
+        });
+      });
+    });
+    document.querySelectorAll("[data-bearing-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        bearingMode = btn.dataset.bearingMode === "cw" ? "cw" : "acute";
+        document.querySelectorAll("[data-bearing-mode]").forEach((b) => {
+          b.classList.toggle("active", b.dataset.bearingMode === bearingMode);
+        });
+      });
+    });
+    document.querySelectorAll("[data-bearing-from]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        bearingFrom = btn.dataset.bearingFrom || "N";
+        document.querySelectorAll("[data-bearing-from]").forEach((b) => {
+          b.classList.toggle("active", b.dataset.bearingFrom === bearingFrom);
+        });
+      });
+    });
+    document.querySelectorAll("[data-ra-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => setRightAngleDrawMode(btn.dataset.raMode));
+    });
+    const edgeBtn = document.getElementById("btnSolidRightEdge");
+    if (edgeBtn) {
+      edgeBtn.addEventListener("click", () => {
+        solidRightEdge = !solidRightEdge;
+        edgeBtn.classList.toggle("active", solidRightEdge);
+      });
+    }
+    const tetraBtn = document.getElementById("btnPolyTetra");
+    const cubeBtn = document.getElementById("btnPolyCube");
+    if (tetraBtn) tetraBtn.addEventListener("click", () => insertPolyhedron("tetra"));
+    if (cubeBtn) cubeBtn.addEventListener("click", () => insertPolyhedron("cube"));
+    const chartsBtn = document.getElementById("btnChartsMenu");
+    const chartsDlg = document.getElementById("chartsDialog");
+    if (chartsBtn && chartsDlg) {
+      chartsBtn.addEventListener("click", () => {
+        if (typeof chartsDlg.showModal === "function") chartsDlg.showModal();
+      });
+    }
+    let chartTab = "pie";
+    document.querySelectorAll("[data-chart-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        chartTab = btn.dataset.chartTab || "pie";
+        document.querySelectorAll("[data-chart-tab]").forEach((b) => {
+          b.classList.toggle("active", b.dataset.chartTab === chartTab);
+        });
+        document.querySelectorAll("[data-chart-pane]").forEach((pane) => {
+          pane.hidden = pane.dataset.chartPane !== chartTab;
+        });
+      });
+    });
+    document.querySelectorAll("[data-bar-pattern]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        barPattern = btn.dataset.barPattern === "solid" ? "solid" : "hatch";
+        document.querySelectorAll("[data-bar-pattern]").forEach((b) => {
+          b.classList.toggle("active", b.dataset.barPattern === barPattern);
+        });
+      });
+    });
+    const chartsInsert = document.getElementById("chartsInsert");
+    const chartsClose = document.getElementById("chartsClose");
+    if (chartsInsert) {
+      chartsInsert.addEventListener("click", () => {
+        insertChart(chartTab).then((ok) => {
+          if (ok && chartsDlg && chartsDlg.open) chartsDlg.close();
+        });
+      });
+    }
+    if (chartsClose && chartsDlg) chartsClose.addEventListener("click", () => chartsDlg.close());
+    const chartsForm = document.getElementById("chartsForm");
+    if (chartsForm) {
+      chartsForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+      });
+    }
+    const regionBtn = document.getElementById("coordApplyRegion");
+    if (regionBtn) {
+      regionBtn.addEventListener("click", () => {
+        const lines = String(document.getElementById("coordInequalities").value || "")
+          .split(/\n/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (!lines.length) {
+          statusHint.textContent = uiLang === "en" ? "Add an inequality" : "請輸入不等式";
+          return;
+        }
+        applyCoordSideOp((plotId) => {
+          const op = {
+            op: "addFeasibleRegion",
+            plotId,
+            inequalities: lines,
+            label: (document.getElementById("coordRegionLabel").value || "").trim(),
+            pattern: document.getElementById("coordRegionHatch").checked ? "hatch" : "solid",
+          };
+          if (document.getElementById("coordDrawBoundaries").checked) op.drawBoundaries = true;
+          if (!op.label) delete op.label;
+          return op;
+        });
+      });
+    }
+    const mathBtn = document.getElementById("coordAddMathPoint");
+    if (mathBtn) {
+      mathBtn.addEventListener("click", () => {
+        const m = String(document.getElementById("coordMathUV").value || "").match(
+          /(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)/
+        );
+        if (!m) {
+          statusHint.textContent = uiLang === "en" ? "Use (u, v)" : "請用 u, v";
+          return;
+        }
+        applyCoordSideOp((plotId) => ({
+          op: "addPlotPoint",
+          plotId,
+          u: Number(m[1]),
+          v: Number(m[2]),
+          projectX: !!document.getElementById("coordProjectX").checked,
+          projectY: !!document.getElementById("coordProjectY").checked,
+        }));
+      });
+    }
+    function curveAction(kind) {
+      const curves = coordDialogCurves || [];
+      if (!curves.length) {
+        statusHint.textContent = uiLang === "en" ? "Add a curve first" : "請先加一條曲線";
+        return;
+      }
+      const domain = readDomain(document.getElementById("coordCurveDomain").value);
+      if (domain && domain.error) {
+        statusHint.textContent = uiLang === "en" ? "Domain is a,b" : "區間請用 a,b";
+        return;
+      }
+      const c1 = document.getElementById("coordCurve1").value || curves[0].id;
+      const c2 = document.getElementById("coordCurve2").value || "xAxis";
+      applyCoordSideOp((plotId) => {
+        const op = {
+          op: kind === "area" ? "addAreaBetweenCurves" : "addCurveIntersection",
+          plotId,
+          curve1: c1,
+          curve2: c2,
+        };
+        if (domain) op.domain = domain;
+        return op;
+      });
+    }
+    const ixBtn = document.getElementById("coordBtnIntersect");
+    const areaBtn = document.getElementById("coordBtnArea");
+    if (ixBtn) ixBtn.addEventListener("click", () => curveAction("intersect"));
+    if (areaBtn) areaBtn.addEventListener("click", () => curveAction("area"));
+    syncDrawRoleUI();
+  }
+
+  wireParityControls();
 
   // ——— Templates ———
   function viewCenterWorld() {
@@ -18009,11 +19281,14 @@ ${body}</svg>`;
       return;
     }
     pushHistory();
+    suspendDrawRole = true;
     const idMap = {};
     for (const id of pointIds) {
       const p = pointById(id);
       if (!p) continue;
       const np = addPoint(p.x + offset, p.y + offset, true, p.marker);
+      if (p.role === "solution" || p.role === "question") np.role = p.role;
+      if (p.color) np.color = p.color;
       idMap[id] = np.id;
     }
     const newSel = [];
@@ -18023,7 +19298,11 @@ ${body}</svg>`;
       const a = idMap[seg.a], b = idMap[seg.b];
       if (!a || !b) continue;
       const ns = addSegment(a, b, seg.style, true);
-      if (ns) newSel.push({ type: "segment", id: ns.id });
+      if (ns) {
+        if (seg.role === "solution" || seg.role === "question") ns.role = seg.role;
+        if (seg.color) ns.color = seg.color;
+        newSel.push({ type: "segment", id: ns.id });
+      }
     }
     for (const id of circleIds) {
       const cir = circles.find((c) => c.id === id);
@@ -18130,6 +19409,7 @@ ${body}</svg>`;
       if (idMap[id]) newSel.push({ type: "point", id: idMap[id] });
     }
     history[histIndex] = snapshot();
+    suspendDrawRole = false;
     setSelection(newSel);
     updateStatus();
     draw();
@@ -18288,6 +19568,17 @@ ${body}</svg>`;
       !e.ctrlKey &&
       !e.metaKey &&
       !e.altKey &&
+      (e.key === "y" || e.key === "Y")
+    ) {
+      e.preventDefault();
+      toggleSelectionRole();
+      return;
+    }
+    if (
+      tool === "select" &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.altKey &&
       (e.key === "+" || e.key === "=" || e.code === "NumpadAdd" || e.code === "Equal")
     ) {
       if (lastNonSelectTool && lastNonSelectTool !== "select") {
@@ -18297,6 +19588,10 @@ ${body}</svg>`;
       }
     }
     if (e.key === "Enter") {
+      if (commitBearingNorthOnly()) {
+        e.preventDefault();
+        return;
+      }
       if (draft && (draft.kind === "fill" || draft.kind === "fillPath")) {
         e.preventDefault();
         commitFillDraft();
@@ -18762,7 +20057,7 @@ ${body}</svg>`;
         } else delete existing.stroke;
       } else
         lengthLabels.push(
-          normalizeLengthLabelRecord({
+          stampDrawRole(normalizeLengthLabelRecord({
             id: uid(),
             segmentId: segId,
             text,
@@ -18771,7 +20066,7 @@ ${body}</svg>`;
             orient: lengthMarkOrient,
             style: lengthMarkStyle,
             stroke: lengthMarkStyle === "arcs" ? lengthMarkStroke : undefined,
-          })
+          }))
         );
       history[histIndex] = snapshot();
       const ll = lengthLabels.find((l) => l.segmentId === segId);
@@ -18886,7 +20181,7 @@ ${body}</svg>`;
     pushHistory();
     const pt = findOrCreatePointAt(pos.x, pos.y, true);
     if (!midTicks.some((m) => m.segmentId === seg.id && m.pointId === pt.id)) {
-      midTicks.push({ id: uid(), segmentId: seg.id, pointId: pt.id });
+      midTicks.push(stampDrawRole({ id: uid(), segmentId: seg.id, pointId: pt.id }));
     }
     addLabel(pt.id, labText, null, null, labelFontSize, true);
     if (labText.length === 1 && labText >= "A" && labText <= "Z") {
@@ -18942,6 +20237,10 @@ ${body}</svg>`;
 
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("dblclick", (e) => {
+    if (tool === "bearing" && commitBearingNorthOnly()) {
+      e.preventDefault();
+      return;
+    }
     if (tool === "fill" && draft && draft.kind === "fill") {
       e.preventDefault();
       commitFillDraft();
