@@ -163,6 +163,21 @@ export function coordPlotBounds(plot) {
   maxX += oh.pos;
   minY -= oh.pos; // +y arrow goes up → smaller world y
   maxY += oh.neg;
+  for (const curve of plot.curves || []) {
+    let lab = null;
+    try {
+      lab = curveLabelWorld(plot, curve);
+    } catch {
+      lab = null;
+    }
+    if (!lab) continue;
+    const fs = 14;
+    const tw = Math.max(14, String(lab.text || "").length * fs * 0.56);
+    minX = Math.min(minX, lab.x - tw / 2);
+    maxX = Math.max(maxX, lab.x + tw / 2);
+    minY = Math.min(minY, lab.y - fs * 0.7);
+    maxY = Math.max(maxY, lab.y + fs * 0.5);
+  }
   return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
 }
 
@@ -308,7 +323,14 @@ function coordSignedJoin(hasPrev, coef, body) {
 export function coordCurveLabelText(curve, plot) {
   const lab = curve && curve.label;
   if (!lab || !lab.show) return "";
-  if (lab.kind === "custom") return String(lab.customText || "").trim();
+  const custom =
+    lab.customText != null && String(lab.customText) !== ""
+      ? String(lab.customText)
+      : lab.text != null
+        ? String(lab.text)
+        : "";
+  if (lab.kind === "formula") return coordCurveFormulaText(curve, lab.formulaMode, plot);
+  if (lab.kind === "custom" || custom.trim() !== "") return custom.trim();
   return coordCurveFormulaText(curve, lab.formulaMode, plot);
 }
 
@@ -535,26 +557,55 @@ function otherCurveSamples(plot, curve) {
   return out;
 }
 
-function axisClearance(plot, x, y, others) {
-  let best = Math.min(Math.abs(x - plot.ox), Math.abs(y - plot.oy));
-  for (const q of others) {
-    best = Math.min(best, Math.hypot(x - q.x, y - q.y));
-  }
-  return best;
+/**
+ * Only a real number is an explicit fraction along the curve.
+ * Omitted t, a blank, and "auto" must not inherit the historical 0.55 default.
+ */
+export function curveLabelTExplicit(t) {
+  if (t == null || t === "") return false;
+  if (typeof t === "string" && t.trim().toLowerCase() === "auto") return false;
+  return Number.isFinite(Number(t));
+}
+
+function labelInkBox(text, x, y) {
+  const fs = 14;
+  const w = Math.max(14, String(text || "").length * fs * 0.56);
+  const h = fs;
+  return { x0: x - w / 2, y0: y - h * 0.62, x1: x + w / 2, y1: y + h * 0.48 };
+}
+
+function distPointToBox(px, py, box) {
+  const dx = Math.max(box.x0 - px, 0, px - box.x1);
+  const dy = Math.max(box.y0 - py, 0, py - box.y1);
+  return Math.hypot(dx, dy);
+}
+
+function distBoxToHLine(box, y) {
+  if (y >= box.y0 && y <= box.y1) return 0;
+  return Math.min(Math.abs(box.y0 - y), Math.abs(box.y1 - y));
+}
+
+function distBoxToVLine(box, x) {
+  if (x >= box.x0 && x <= box.x1) return 0;
+  return Math.min(Math.abs(box.x0 - x), Math.abs(box.x1 - x));
 }
 
 /**
- * Label anchor. Explicit label.t keeps the historical normal offset.
- * Omitted t samples 0.15, 0.3, 0.5, 0.7, 0.85 and steps off the axes.
+ * Label anchor.
+ * An explicit numeric label.t keeps the historical normal offset at that fraction.
+ * Omitted t and t:"auto" sample the visible window, then step along the normal
+ * until the label box clears the x-axis (|v|≈0), the y-axis (|u|≈0), every
+ * curve, and curve intersections. A stored default of 0.55 is not invented here.
  */
 export function curveLabelWorld(plot, curve) {
   const text = coordCurveLabelText(curve, plot);
   if (!text) return null;
   const lab = curve.label || {};
   const pts = coordSampleOneCurve(plot, curve).filter(Boolean);
-  const explicitT = lab.t != null && lab.t !== "" && Number.isFinite(Number(lab.t));
+  const explicitT = curveLabelTExplicit(lab.t);
   const nn = Number.isFinite(Number(lab.n)) ? Number(lab.n) : 0.55;
-  const unit = coordAxisScales(plot).unitPx;
+  const scales = coordAxisScales(plot);
+  const unit = scales.unitPx;
   if (!pts.length) {
     const fb = coordWorldFromAxis(
       plot,
@@ -566,25 +617,69 @@ export function curveLabelWorld(plot, curve) {
   const off = nn * unit;
   if (!explicitT) {
     const others = otherCurveSamples(plot, curve);
-    const candidates = [0.15, 0.3, 0.5, 0.7, 0.85];
-    let best = null;
-    let bestScore = -Infinity;
-    for (const t of candidates) {
-      const idx = Math.min(pts.length - 1, Math.round(t * (pts.length - 1)));
-      const p = pts[idx];
-      const score = axisClearance(plot, p.x, p.y, others);
-      if (score > bestScore + 1e-6) {
-        bestScore = score;
-        best = { p, idx };
+    const all = pts.concat(others);
+    const hitTol = Math.max(8, unit * 0.22);
+    const hits = [];
+    if (others.length) {
+      for (const p of pts) {
+        let near = null;
+        let best = hitTol;
+        for (const q of others) {
+          const d = Math.hypot(p.x - q.x, p.y - q.y);
+          if (d <= best) {
+            best = d;
+            near = q;
+          }
+        }
+        if (near) hits.push({ x: (p.x + near.x) / 2, y: (p.y + near.y) / 2 });
       }
     }
-    if (!best) best = { p: pts[Math.round(0.5 * (pts.length - 1))], idx: Math.round(0.5 * (pts.length - 1)) };
-    const fr = curveFrameAt(pts, best.idx);
-    const a = { x: best.p.x + fr.nx * off, y: best.p.y + fr.ny * off };
-    const b = { x: best.p.x - fr.nx * off, y: best.p.y - fr.ny * off };
-    const ca = axisClearance(plot, a.x, a.y, others);
-    const cb = axisClearance(plot, b.x, b.y, others);
-    const pick = cb > ca + 1e-6 ? b : a;
+    const gap = Math.max(6, unit * 0.16);
+    let best = null;
+    let bestScore = -Infinity;
+    let fallback = null;
+    let fallbackScore = -Infinity;
+    const scalesNow = coordAxisScales(plot);
+    for (let i = 2; i < pts.length - 2; i += Math.max(1, Math.round(pts.length / 28))) {
+      const fr = curveFrameAt(pts, i);
+      for (const sign of [1, -1]) {
+        for (const grow of [1, 1.45, 1.9, 2.5, 3.2]) {
+          const dist = Math.abs(off) * grow;
+          const x = pts[i].x + fr.nx * dist * sign;
+          const y = pts[i].y + fr.ny * dist * sign;
+          const box = labelInkBox(text, x, y);
+          const axisX = distBoxToHLine(box, plot.oy);
+          const axisY = distBoxToVLine(box, plot.ox);
+          const axis = Math.min(axisX, axisY);
+          let curveClear = Infinity;
+          for (const q of all) curveClear = Math.min(curveClear, distPointToBox(q.x, q.y, box));
+          let hitClear = Infinity;
+          for (const h of hits) hitClear = Math.min(hitClear, distPointToBox(h.x, h.y, box));
+          const uv = {
+            u: (x - plot.ox) / scalesNow.xUnitPx,
+            v: (plot.oy - y) / scalesNow.yUnitPx,
+          };
+          const inside =
+            uv.u >= plot.xmin - 0.35 &&
+            uv.u <= plot.xmax + 0.35 &&
+            uv.v >= plot.ymin - 0.35 &&
+            uv.v <= plot.ymax + 0.35;
+          const clear = Math.min(axis, curveClear, hitClear);
+          const score = clear - grow * 4 + (inside ? 8 : 0);
+          if (score > fallbackScore) {
+            fallbackScore = score;
+            fallback = { x, y };
+          }
+          if (axis < gap || curveClear < gap || hitClear < gap) continue;
+          if (Math.abs(uv.u) < 0.2 || Math.abs(uv.v) < 0.2) continue;
+          if (score > bestScore) {
+            bestScore = score;
+            best = { x, y };
+          }
+        }
+      }
+    }
+    const pick = best || fallback || pts[Math.round(0.5 * (pts.length - 1))];
     return { text, x: pick.x, y: pick.y };
   }
   const tt = Math.min(1, Math.max(0, Number(lab.t)));

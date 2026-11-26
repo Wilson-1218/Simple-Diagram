@@ -14,7 +14,12 @@ import { normalizeBoxWhisker } from "./box-whisker.mjs";
 import { normalizeBarChart } from "./bar-chart.mjs";
 import { normalizeFillPattern } from "./hatch.mjs";
 import { normalizeLengthSide } from "./length-mark.mjs";
-import { coordAxisShowsTickLabel, coordWorldFromAxis, normalizeCoordTicks } from "./coord-plot.mjs";
+import {
+  coordAxisShowsTickLabel,
+  coordWorldFromAxis,
+  curveLabelTExplicit,
+  normalizeCoordTicks,
+} from "./coord-plot.mjs";
 import { parseInequality, polygonAreaAndCentroid, solveFeasibleRegion } from "./feasible-region.mjs";
 import {
   adjacentClosedIntervals,
@@ -379,7 +384,19 @@ function pushHorizontalEllipse(doc, nextId, center, rxPoint, ry, backDashed) {
 
 function labelShapeLetter(doc, nextId, point, text, op) {
   if (!op || op.labels === false || op.label === false) return;
-  HANDLERS.addLabel(doc, { pointId: point.id, text, ox: 8, oy: -14 }, nextId);
+  HANDLERS.addLabel(
+    doc,
+    { pointId: point.id, text, ox: 8, oy: -14, ...appearanceFields(op) },
+    nextId
+  );
+}
+
+/** Hemisphere and sphere accept role / solutionStep. Other addShape kinds do not. */
+function stampShapeLook(row, op) {
+  if (!row) return row;
+  const look = appearanceFields(op);
+  if (!look.role && !look.color && look.solutionStep == null) return row;
+  return stampAppearance(row, op);
 }
 
 function tOnSegment(t, extendLines) {
@@ -675,7 +692,7 @@ function defaultCurveLabel(lab) {
   else if (lab.kind === "custom" || customText.trim() !== "") kind = "custom";
   const show =
     lab.show != null ? !!lab.show : kind === "custom" && customText.trim() !== "";
-  const tGiven = Number.isFinite(Number(lab.t));
+  const tGiven = curveLabelTExplicit(lab && lab.t);
   const out = {
     show,
     kind,
@@ -2373,32 +2390,38 @@ const HANDLERS = {
           String(op.opening || "").toLowerCase() === "dome");
       const showCenter = kind === "sphere" || op.includeBaseCenter === true;
       const center = showCenter
-        ? pushPoint(doc, nextId, cx, cy, prefix ? `${prefix}O` : "O")
+        ? pushPoint(doc, nextId, cx, cy, prefix ? `${prefix}O` : "O", undefined, undefined, op)
         : pushPoint(doc, nextId, cx, cy, undefined, undefined, true);
       if (showCenter) labelShapeLetter(doc, nextId, center, "O", op);
       const right = pushHiddenPoint(doc, nextId, cx + R, cy);
       const left = pushHiddenPoint(doc, nextId, cx - R, cy);
       const rimRy = R * 0.25;
+      const ellBefore = doc.ellipses.length;
       if (kind === "sphere") {
-        doc.circles.push({
+        const cir = {
           id: resolveId(op, nextId, "cir"),
           centerId: center.id,
           throughId: right.id,
           style,
-        });
+        };
+        stampShapeLook(cir, op);
+        doc.circles.push(cir);
         pushHorizontalEllipse(doc, nextId, center, right, rimRy, op.backDashed !== false);
+        for (let i = ellBefore; i < doc.ellipses.length; i++) stampShapeLook(doc.ellipses[i], op);
         return doc;
       }
       const start = openingDown ? left : right;
       const end = openingDown ? right : left;
-      doc.sectors.push({
+      const sec = {
         id: resolveId(op, nextId, "sec"),
         centerId: center.id,
         startId: start.id,
         endId: end.id,
         style,
         mode: "arc",
-      });
+      };
+      stampShapeLook(sec, op);
+      doc.sectors.push(sec);
       pushHorizontalEllipse(doc, nextId, center, right, rimRy, true);
       const level = Number(op.waterLevel);
       if (Number.isFinite(level) && level > 0 && level < 1) {
@@ -2411,6 +2434,7 @@ const HANDLERS = {
           pushHorizontalEllipse(doc, nextId, wc, wrx, rho * 0.25, true);
         }
       }
+      for (let i = ellBefore; i < doc.ellipses.length; i++) stampShapeLook(doc.ellipses[i], op);
       return doc;
     }
 

@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.51 · 穩定）
+## 目前版本 / Current version（v13.5.52 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.52** — 省略的曲線標籤 `t` 不再當成 0.55；標籤避開軸與交點。半球／球接受 `role:"solution"`。複合 op 的 SVG 帶 `data-role`／`data-step`／`data-id`，`solutionMaxStep` 會藏起較後的步驟
 - **v13.5.51** — 半球／球、累積頻數／直方圖／點陣圖、`solutionStep` 與 `data-step`、曲線標籤避軸、拖曳時重算中點等構造
 - **v13.5.50** — 詳解填色寫入 `role: "solution"` 並用詳解紅；單點復原後重做會把該點加回來
 - **v13.5.49** — 編輯器：原題／詳解繪圖、三角形心、方位角、圖表、座標刻度與可行區域、立體附加與 3D 直角（皆呼叫既有 ops）

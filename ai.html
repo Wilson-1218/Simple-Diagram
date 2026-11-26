@@ -238,6 +238,9 @@
         <tr><td><code>addBearing</code>＝<code>addCompass</code></td><td><code>at</code>（別名 <code>pointId</code>）</td><td>北向箭、方位弧與圓餅圖的參數見 §5.1。<code>mode:"cw"</code>（別名 <code>"true"</code>）大於 180° 時角弧為優角</td></tr>
         <tr><td><code>addBoxWhisker</code>＝<code>addBoxPlot</code></td><td>水平：<code>y,min,q1,median,q3,max</code>；垂直另加 <code>orientation:"v"</code>＋<code>x</code></td><td><code>outliers[]</code>, <code>ticks[]</code>（數字＝僅刻度；或 <code>{pos,label?}</code>／<code>{x|y,label?}</code>；標籤畫在軸外側；<code>min/q1/median/q3/max</code> 皆為世界座標）, <code>boxHeight</code>, <code>cap</code>, <code>showAxis</code>, <code>axisY</code>/<code>axisX</code>, <code>axisLabel</code>（別名 <code>xLabel</code>／<code>yLabel</code>）</td></tr>
         <tr><td><code>addBarChart</code>＝<code>addBar</code></td><td><code>x</code>, <code>y</code>（資料區左下）, <code>categories[]</code>, <code>values[]</code>｜<code>heights[]</code></td><td><code>plotW</code>/<code>plotH</code>, <code>yMin</code>/<code>yMax</code>, <code>yTicks</code>/<code>yStep</code>, <code>xLabel</code>, <code>yLabel</code>（沿軸直寫）, <code>yLabelMode</code> <code>rotate</code>｜<code>stack</code>, <code>barPattern</code> <code>hatch</code>｜<code>solid</code>, <code>showGrid</code></td></tr>
+        <tr><td><code>addCumulativeFrequency</code>＝<code>addOgive</code></td><td><code>x</code>, <code>y</code>（圖左下角）, <code>boundaries</code>, <code>values</code>（等長）</td><td><code>smooth:true</code> 才畫 S 形，預設折線。<code>projections:[{y,xLabel?,yLabel?,role?,solutionStep?}]</code> 從該 y 畫虛線水平到曲線再垂直落到 x 軸。<code>role:"solution"</code> 用詳解紅。存在 <code>barCharts</code>，<code>kind:"ogive"</code></td></tr>
+        <tr><td><code>addHistogram</code></td><td><code>x</code>, <code>y</code>, <code>values</code>，以及 <code>boundaries</code>（比 values 多 1）或等長 <code>centers</code></td><td>柱與柱零間距。<code>showFrequencyPolygon:true</code> 連柱頂中點並落到兩端 x 軸。<code>barPattern</code> <code>hatch</code>｜<code>solid</code>。<code>kind:"histogram"</code></td></tr>
+        <tr><td><code>addDotPattern</code></td><td><code>x</code>, <code>y</code>, <code>patterns</code></td><td><code>patterns</code> 可以是 <code>[[col,row],…]</code>（第三項 <code>"solution"</code>）、<code>{rows,align?,solution?}</code> 或 <code>{kind:"triangular"|"square"|"hexagonal",count,solution?}</code>。預設畫箭頭，最後一組後有省略號。新點可帶 <code>role:"solution"</code>。<code>kind:"dots"</code></td></tr>
       </tbody>
     </table>
     <p class="note"><code>arm1</code>/<code>arm2</code> 是角兩邊上的<strong>點</strong> id，不是線段 id。<br />
@@ -269,6 +272,7 @@
       <span class="en">pathFill arc edges default to the minor arc; edges must not self-intersect.</span></p>
     <p><strong>可行區域</strong>：<code>addFill</code> 若帶 <code>inequalities</code>（該陣列必填）與可選 <code>plotId</code>，行為與 <code>addFeasibleRegion</code> 相同，預設 <code>pattern:"hatch"</code>。沒有 <code>inequalities</code> 時仍是原來的 <code>pointIds</code>／<code>mathPoints</code> 填色。參數與例子見 §10.7。</p>
     <p><strong>兩曲線之間</strong>：<code>kind:"betweenCurves"</code> 與 <code>addAreaBetweenCurves</code> 相同。見 §10.8。</p>
+    <p><strong>三種統計圖</strong>（參數表在 §7）：<code>addCumulativeFrequency</code>（別名 <code>addOgive</code>）、<code>addHistogram</code>、<code>addDotPattern</code>。直方圖 <code>barPattern:"hatch"</code> 用與這裡相同的斜線；<code>smooth:true</code> 的累積頻數才是 S 形。三者都接受 <code>role:"solution"</code>。</p>
 
     <h2>9. <code>addShape</code></h2>
     <p>一次放平面／立體圖形（UI「圖形」拖放的 JSON 版）。</p>
@@ -287,8 +291,8 @@
     <ul>
       <li><code>rightTri</code>：直角在 <code>(x,y)</code>，水平腿 <code>w</code>、向下腿 <code>h</code></li>
       <li><code>circle</code>：心 <code>(x,y)</code>，半徑點 <code>(x+w,y)</code>（半徑是 <code>w</code>，不是 <code>w/2</code>）</li>
-      <li><code>hemisphere</code>：心在 <code>(x,y)</code>，半徑同樣是 <code>w</code>。預設 <code>opening:"up"</code> 是碗（上緣水平橢圓、下半圓）。<code>opening:"down"</code> 是穹。<code>includeBaseCenter:true</code> 在緣心加點，id 為 <code>O</code> 或 <code>{prefix}O</code>。<code>waterLevel</code>（<code>0 &lt; t &lt; 1</code>）從最低點往上，畫水平截面橢圓（前實後虛）。<code>addShape</code> 不把 <code>role</code>／<code>solutionStep</code> 傳給子元素。</li>
-      <li><code>sphere</code>：心 <code>O</code> 在 <code>(x,y)</code>，半徑 <code>w</code>。外圓加水平赤道橢圓；<code>backDashed</code> 預設 true（後一半虛線）。<code>labels:false</code> 略過字母 O。</li>
+      <li><code>hemisphere</code>：心在 <code>(x,y)</code>，半徑同樣是 <code>w</code>。預設 <code>opening:"up"</code> 是碗（上緣水平橢圓、下半圓）。<code>opening:"down"</code> 是穹。<code>includeBaseCenter:true</code> 在緣心加點，id 為 <code>O</code> 或 <code>{prefix}O</code>。<code>waterLevel</code>（<code>0 &lt; t &lt; 1</code>）從最低點往上，畫水平截面橢圓（前實後虛）。<code>role:"solution"</code> 與 <code>solutionStep</code> 會寫到可見的心、緣、水位橢圓與字母上。其他 <code>addShape</code> 種類仍不傳 <code>role</code>。</li>
+      <li><code>sphere</code>：心 <code>O</code> 在 <code>(x,y)</code>，半徑 <code>w</code>。外圓加水平赤道橢圓；赤道前一半實線、後一半虛線（<code>backDashed</code> 預設 true）。<code>labels:false</code> 略過字母 O。同樣接受 <code>role:"solution"</code>。</li>
       <li>別名：<code>prism</code>→<code>rectPrism</code>；<code>right</code>/<code>rightTriangle</code>→<code>rightTri</code></li>
       <li><strong>立體</strong>會自動建立頂點標籤（A…），並用虛線表示隱藏邊。省略 <code>label</code>／<code>labels</code> 時仍標字母。<code>idPrefix</code>（如 <code>"K"</code>）把頂點 id 改成 <code>K0</code>…、線段 id 改成 <code>Ks0</code>…（與平面形相同）。<code>labels:false</code> 或 <code>label:false</code> 略過頂點字母（兩者任一為 false 即略過）。</li>
       <li><code>h</code>：所有立體 kinds 的視覺高度。省略時 x／y 用同一個縮放，頂點與 v13.5.40 相同。</li>
@@ -418,7 +422,7 @@
         <tr><td><code>kind</code></td><td><code>"formula"</code>（預設）｜<code>"custom"</code>。未寫 <code>kind</code> 但給了 <code>text</code> 或 <code>customText</code> 時視為 <code>"custom"</code>。寫明 <code>kind:"formula"</code> 仍用公式</td></tr>
         <tr><td><code>formulaMode</code></td><td><code>"algebraic"</code>｜<code>"numeric"</code></td></tr>
         <tr><td><code>customText</code>／<code>text</code></td><td><code>text</code> 是 <code>customText</code> 的別名。可含 <code>_</code>／<code>^</code>（<code>L_1</code> → L 下標 1）</td></tr>
-        <tr><td><code>t</code>, <code>n</code></td><td>沿曲線位置／法向偏移（t∈[0,1]，n∈[−6,6]）</td></tr>
+        <tr><td><code>t</code>, <code>n</code></td><td>沿曲線位置／法向偏移（明確的數字 t∈[0,1]，n∈[−6,6]）。省略 <code>t</code>，或 <code>t:"auto"</code>，<strong>不是</strong>舊的預設 0.55：在可見窗 <code>[xmin,xmax]×[ymin,ymax]</code> 取樣，避開 x 軸（<code>|v|≈0</code>）、y 軸（<code>|u|≈0</code>）與曲線交點，再沿法線偏移，使標籤不壓在軸或曲線上。只有呼叫端明確寫了數字 <code>t</code> 才跳過避讓、停在該比例。只給 <code>{show:true, text}</code> 時，引擎不會把缺省的 0.55 寫進 <code>t</code></td></tr>
       </tbody>
     </table>
 
@@ -581,11 +585,13 @@
         <tr><td><code>alignPoints</code></td><td><code>pointIds</code> ≥2；<code>axis</code>：<code>left</code>｜<code>center</code>｜<code>right</code>｜<code>top</code>｜<code>middle</code>｜<code>bottom</code></td></tr>
         <tr><td><code>distributePoints</code></td><td><code>pointIds</code> ≥3；<code>axis</code>：<code>x</code>｜<code>y</code></td></tr>
         <tr><td><code>equalizeSegments</code></td><td><code>segmentIds</code> ≥2；可選 <code>length</code>（否則用中位長）</td></tr>
-        <tr><td><code>setLayers</code></td><td><code>gridShow</code>, <code>coordsShow</code>, <code>coordsLock</code>, <code>helpersShow</code>, <code>helpersLock</code>, <code>solutionShow</code>（bool，預設 true；false 隱藏每一個 <code>role==="solution"</code>，元素仍留在文件）；或包在 <code>layers</code>。<code>gridLock</code> 仍可寫入檔案但 UI 不再暴露（無畫布行為）</td></tr>
+        <tr><td><code>setLayers</code></td><td><code>gridShow</code>, <code>coordsShow</code>, <code>coordsLock</code>, <code>helpersShow</code>, <code>helpersLock</code>, <code>solutionShow</code>（bool，預設 true；false 隱藏每一個 <code>role==="solution"</code>，元素仍留在文件），<code>solutionMaxStep</code>（正整數，寫在 <code>doc.layers</code>，與 <code>solutionShow</code> 同一個物件）；或包在 <code>layers</code>。<code>gridLock</code> 仍可寫入檔案但 UI 不再暴露（無畫布行為）</td></tr>
         <tr><td><code>setMeta</code></td><td><code>gridSnap</code>, <code>gridMode</code>（<code>square</code>｜<code>triangle</code>）, <code>name</code>, <code>labelFontSize</code>, <code>rightAngleSize</code>, <code>hideExportPoints</code>, <code>layers</code>, <code>nextLetter</code>, …</td></tr>
       </tbody>
     </table>
     <p class="note">App「圖層 ▾」：網格＝開關＋格種（聯動 <code>gridSnap</code>/<code>gridShow</code>）；下列為<strong>座標</strong>／<strong>記號</strong>顯示＋鎖定，以及<strong>解答</strong>顯示（無鎖定）。helpers＝記號／標籤層，預設 <code>helpersLock:true</code>；座標鎖定＝不可選取／拖移座標圖。<code>layers.solutionShow</code> 缺鍵視為 true。</p>
+    <p>凡是已經接受 <code>role:"solution"</code> 的 op，都可以再加正整數 <code>solutionStep</code>。會把 <code>role</code> 傳給子元素的複合 op（<code>addFoot</code>、<code>addLengthLabel</code>、<code>addAngleArc</code>、<code>addRightAngle</code>、<code>addPlotPoint</code>、累積頻數的 <code>projections</code>，以及中點、交點等）也會把 <code>solutionStep</code> 傳下去。<code>setLayers({ solutionShow:true, solutionMaxStep:1 })</code> 仍顯示沒有 <code>solutionStep</code>、或 <code>solutionStep ≤ 1</code> 的詳解，並隱藏 step 大於 1 的詳解。<code>solutionMaxStep</code> 留在 <code>doc.layers</code>。省略或 null 表示 <code>solutionShow</code> 為真時畫出全部詳解。</p>
+    <p><code>documentToSvg</code>：有 id 才寫 <code>data-id</code>；<code>role</code> 是 solution 才寫 <code>data-role="solution"</code>；有正整數 <code>solutionStep</code> 才寫 <code>data-step</code>。不要空屬性。上述複合 op 在 <code>role:"solution"</code> 且 <code>solutionStep:2</code> 時，對應的線、記號或投影會同時帶這三個屬性。</p>
 
     <h2>12. 模板與 macros</h2>
     <h3>12.1 <code>insertTemplate</code>＝<code>addTemplate</code></h3>
@@ -688,12 +694,8 @@
       <a href="./">App</a>
       <a href="https://github.com/Wilson-1218/Simple-Diagram">GitHub</a>
     </p>
-    <h2>14. <code>solutionStep</code> 與曲線標籤</h2>
-    <p>凡是已經接受 <code>role:"solution"</code> 的 op，都可以再加正整數 <code>solutionStep</code>。會把 <code>role</code> 傳給子元素的複合 op 也會把 <code>solutionStep</code> 傳下去。<code>addShape</code> 仍然不繼承 <code>role</code>。<code>setLayers</code> 的 <code>solutionMaxStep</code> 寫在 <code>doc.layers</code>（與 <code>solutionShow</code> 同一個物件）。省略或 null 表示 <code>solutionShow</code> 為真時畫出全部詳解；整數 k 只畫沒有 <code>solutionStep</code>、或 <code>solutionStep ≤ k</code> 的詳解。</p>
-    <p><code>documentToSvg</code>：有 id 才寫 <code>data-id</code>；<code>role</code> 是 solution 才寫 <code>data-role="solution"</code>；有正整數 <code>solutionStep</code> 才寫 <code>data-step</code>。不要空屬性。</p>
-    <p>曲線 <code>label.show:true</code> 且省略 <code>t</code> 時，標籤會避開座標軸與其他曲線。寫了 <code>t</code>（含既有的 0.55）仍用原來的位置。</p>
-    <p class="note"><span class="en">Optional positive <code>solutionStep</code> on ops that already take <code>role:"solution"</code>. <code>solutionMaxStep</code> lives on <code>doc.layers</code>. SVG data attributes are omitted when empty. A shown curve label with no <code>t</code> avoids the axes; an explicit <code>t</code> keeps the old placement. Hemisphere and sphere use radius <code>w</code>, same as <code>circle</code>.</span></p>
-    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.51 · params from <code>src/diagram/ops.mjs</code></p>
+    <p class="note"><span class="en">Optional positive <code>solutionStep</code> on ops that already take <code>role:"solution"</code>. <code>solutionMaxStep</code> lives on <code>doc.layers</code>. SVG <code>data-id</code>, <code>data-role="solution"</code>, and <code>data-step</code> are omitted when empty. A shown curve label with omitted <code>t</code> or <code>t:"auto"</code> avoids the axes and intersections; that omitted t is not the old 0.55 default. An explicit numeric <code>t</code> keeps the old placement. Hemisphere and sphere use radius <code>w</code> and accept <code>role:"solution"</code>.</span></p>
+    <p class="note">Simple Diagram · Wilson Li · MIT · guide v13.5.52 · params from <code>src/diagram/ops.mjs</code></p>
   </main>
 </body>
 </html>

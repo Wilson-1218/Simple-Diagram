@@ -125,6 +125,7 @@ export {
   COORD_CURVE_INK_PAPER,
   COORD_CURVE_INK_DARK,
   coordCurveLabelText,
+  curveLabelTExplicit,
   curveLabelWorld,
   normalizeCoordTicks,
   coordTickText,

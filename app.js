@@ -687,7 +687,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.51",
+      title_doc: "Simple Diagram · v13.5.52",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1040,7 +1040,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.51",
+      title_doc: "Simple Diagram · v13.5.52",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -5421,9 +5421,19 @@
   }
 
   function coordCurveLabelWorldPos(plot, curve) {
+    if (diagramMod && typeof diagramMod.curveLabelWorld === "function") {
+      const hit = diagramMod.curveLabelWorld(plot, curve);
+      if (hit) return { x: hit.x, y: hit.y };
+    }
+    const rawT = curve && curve.label ? curve.label.t : undefined;
     const lab = normalizeCurveLabel(curve && curve.label);
-    if (lab.t == null) return coordCurveLabelAvoid(plot, curve, lab.n);
-    return coordCurveLabelPlacement(plot, curve, lab.t, lab.n).pos;
+    const explicit =
+      rawT != null &&
+      rawT !== "" &&
+      !(typeof rawT === "string" && String(rawT).trim().toLowerCase() === "auto") &&
+      Number.isFinite(Number(rawT));
+    if (!explicit) return coordCurveLabelAvoid(plot, curve, lab.n);
+    return coordCurveLabelPlacement(plot, curve, Number(rawT), lab.n).pos;
   }
 
   /** Update label t/n from a world pointer so it slides along the curve. */
@@ -6837,10 +6847,10 @@
       c.lineTo(b.x, b.y);
       c.stroke();
     };
-    for (const s of parts.lines) drawLine(s);
+    for (const s of parts.lines) if (solutionShown(s)) drawLine(s);
     c.setLineDash([]);
     for (const poly of parts.polylines) {
-      if (!poly.points || poly.points.length < 2) continue;
+      if (!solutionShown(poly) || !poly.points || poly.points.length < 2) continue;
       c.beginPath();
       c.strokeStyle = screenInk(poly.color);
       poly.points.forEach((p, i) => {
@@ -6851,12 +6861,22 @@
       c.stroke();
     }
     for (const r of parts.rects) {
+      if (!solutionShown(r)) continue;
       const tl = worldToScreen(r.x, r.y);
       const br = worldToScreen(r.x + r.w, r.y + r.h);
+      const x = Math.min(tl.x, br.x);
+      const y = Math.min(tl.y, br.y);
+      const w = Math.abs(br.x - tl.x);
+      const h = Math.abs(br.y - tl.y);
+      if (r.pattern === "solid") {
+        c.fillStyle = darkCanvas ? "#2a2e33" : "#f4f4f4";
+        c.fillRect(x, y, w, h);
+      }
       c.strokeStyle = screenInk(r.color);
-      c.strokeRect(Math.min(tl.x, br.x), Math.min(tl.y, br.y), Math.abs(br.x - tl.x), Math.abs(br.y - tl.y));
+      c.strokeRect(x, y, w, h);
     }
     for (const d of parts.dots) {
+      if (!solutionShown(d)) continue;
       const s = worldToScreen(d.x, d.y);
       const rad = Math.max(1.2, d.r * view.scale);
       c.beginPath();
@@ -6865,12 +6885,21 @@
       c.fill();
     }
     c.font = `${Math.max(11, 13 * Math.min(view.scale, 1.6))}px "STIX Two Text", "Times New Roman", serif`;
-    c.fillStyle = darkCanvas ? "#e6e8eb" : "#111";
-    c.textAlign = "center";
-    c.textBaseline = "middle";
     for (const t of parts.texts) {
+      if (!solutionShown(t)) continue;
       const s = worldToScreen(t.x, t.y);
-      c.fillText(String(t.text || ""), s.x, s.y);
+      c.save();
+      c.fillStyle = screenInk(t.color || (darkCanvas ? "#e6e8eb" : "#111"));
+      c.textAlign = t.anchor === "end" ? "right" : t.anchor === "start" ? "left" : "center";
+      c.textBaseline = t.baseline === "middle" ? "middle" : t.baseline === "auto" ? "alphabetic" : "top";
+      if (t.rotate != null && Number.isFinite(Number(t.rotate))) {
+        c.translate(s.x, s.y);
+        c.rotate((Number(t.rotate) * Math.PI) / 180);
+        c.fillText(String(t.text || ""), 0, 0);
+      } else {
+        c.fillText(String(t.text || ""), s.x, s.y);
+      }
+      c.restore();
     }
     c.restore();
   }
@@ -13242,7 +13271,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.51",
+      version: "13.5.52",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

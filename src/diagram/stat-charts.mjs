@@ -5,7 +5,7 @@
  */
 
 import { hatchStrokesInRect } from "./hatch.mjs";
-import { SOLUTION_INK } from "./appearance.mjs";
+import { SOLUTION_INK, elementShown } from "./appearance.mjs";
 
 function num(v, fallback) {
   const n = Number(v);
@@ -555,6 +555,7 @@ function ogiveParts(chart) {
       y2: cy,
       dash: true,
       color,
+      id: chart.id,
       role: look.role,
       solutionStep: look.solutionStep,
     });
@@ -565,6 +566,7 @@ function ogiveParts(chart) {
       y2: chart.y,
       dash: true,
       color,
+      id: chart.id,
       role: look.role,
       solutionStep: look.solutionStep,
     });
@@ -576,6 +578,7 @@ function ogiveParts(chart) {
         anchor: "end",
         baseline: "middle",
         color,
+        id: chart.id,
         role: look.role,
         solutionStep: look.solutionStep,
       });
@@ -588,6 +591,7 @@ function ogiveParts(chart) {
         anchor: "middle",
         baseline: "hanging",
         color,
+        id: chart.id,
         role: look.role,
         solutionStep: look.solutionStep,
       });
@@ -815,6 +819,8 @@ export function svgStatChart(raw, toS, ink = {}) {
   } catch {
     return "";
   }
+  const layers = ink.layers;
+  const keep = (el) => elementShown(el, layers);
   const lw = (ink.stroke != null ? ink.stroke : 1.2).toFixed(2);
   const fontPx = (ink.fontPx != null ? ink.fontPx : 12).toFixed(1);
   const fam = 'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
@@ -822,9 +828,9 @@ export function svgStatChart(raw, toS, ink = {}) {
   const groupLook = { id: parts.id, role: parts.role, solutionStep: parts.solutionStep };
   const open = svgDataAttrs(groupLook);
   if (open) body += `<g${open}>\n`;
-  for (const line of parts.lines) body += lineSvg(line, toS, lw);
+  for (const line of parts.lines) if (keep(line)) body += lineSvg(line, toS, lw);
   for (const poly of parts.polylines) {
-    if (!poly.points.length) continue;
+    if (!keep(poly) || !poly.points.length) continue;
     let d = "";
     poly.points.forEach((p, i) => {
       const s = toS(p.x, p.y);
@@ -833,6 +839,7 @@ export function svgStatChart(raw, toS, ink = {}) {
     body += `<path d="${d}" fill="none" stroke="${escapeXml(poly.color || "#111")}" stroke-width="${lw}" stroke-linejoin="round" stroke-linecap="round"${svgDataAttrs(poly)} />\n`;
   }
   for (const r of parts.rects) {
+    if (!keep(r)) continue;
     const tl = toS(r.x, r.y);
     const br = toS(r.x + r.w, r.y + r.h);
     const x = Math.min(tl.x, br.x);
@@ -843,10 +850,12 @@ export function svgStatChart(raw, toS, ink = {}) {
     body += `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${w.toFixed(2)}" height="${h.toFixed(2)}"${fill} stroke="${escapeXml(r.color || "#111")}" stroke-width="${lw}" />\n`;
   }
   for (const d of parts.dots) {
+    if (!keep(d)) continue;
     const s = toS(d.x, d.y);
     body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${Number(d.r).toFixed(2)}" fill="${escapeXml(d.color || "#111")}"${svgDataAttrs(d)} />\n`;
   }
   for (const t of parts.texts) {
+    if (!keep(t)) continue;
     const s = toS(t.x, t.y);
     const anchor = t.anchor === "end" ? "end" : t.anchor === "start" ? "start" : "middle";
     const baseline = t.baseline === "middle" ? "middle" : t.baseline === "auto" ? "auto" : "hanging";
