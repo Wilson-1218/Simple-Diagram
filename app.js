@@ -687,7 +687,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.59",
+      title_doc: "Simple Diagram · v13.5.60",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1040,7 +1040,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.59",
+      title_doc: "Simple Diagram · v13.5.60",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -6982,7 +6982,19 @@
     return color || (darkCanvas ? "#e6e8eb" : "#111");
   }
 
-  function paintStatChart(c, chart) {
+  function isStatChart(bc) {
+    return !!(
+      bc &&
+      (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots" || bc.kind === "stemLeaf")
+    );
+  }
+
+  /**
+   * Draw ogive / histogram / dots / stem-leaf.
+   * Screen calls omit toScreen (uses worldToScreen). PNG export passes the
+   * export mapper and scale so these charts are not sent through bar geometry.
+   */
+  function paintStatChart(c, chart, toScreen, exportScale) {
     if (!diagramMod || typeof diagramMod.statChartParts !== "function") return;
     let parts;
     try {
@@ -6990,16 +7002,21 @@
     } catch {
       return;
     }
+    const map = typeof toScreen === "function" ? toScreen : (x, y) => worldToScreen(x, y);
+    const exporting = Number(exportScale) > 0;
+    const unit = exporting ? Number(exportScale) : view.scale;
+    const lw = exporting ? LINE_WIDTH * unit * 0.75 : LINE_WIDTH;
     c.save();
     c.lineJoin = "round";
-    c.lineWidth = LINE_WIDTH;
+    c.lineWidth = lw;
     const drawLine = (s) => {
-      const a = worldToScreen(s.x1, s.y1);
-      const b = worldToScreen(s.x2, s.y2);
+      const a = map(s.x1, s.y1);
+      const b = map(s.x2, s.y2);
       c.beginPath();
       c.strokeStyle = screenInk(s.color);
-      c.lineWidth = s.grid ? LINE_WIDTH * 0.42 : LINE_WIDTH;
-      c.setLineDash(s.dash ? (s.grid ? [2, 2] : [4, 3]) : []);
+      c.lineWidth = s.grid ? lw * 0.42 : lw;
+      const dash = s.dash ? (s.grid ? [2, 2] : [4, 3]) : [];
+      c.setLineDash(exporting ? dash.map((d) => d * unit * 0.75) : dash);
       c.moveTo(a.x, a.y);
       c.lineTo(b.x, b.y);
       c.stroke();
@@ -7010,7 +7027,7 @@
       if (!solutionShown(poly) || !poly.points || poly.points.length < 3) continue;
       c.beginPath();
       poly.points.forEach((p, i) => {
-        const s = worldToScreen(p.x, p.y);
+        const s = map(p.x, p.y);
         if (i === 0) c.moveTo(s.x, s.y);
         else c.lineTo(s.x, s.y);
       });
@@ -7021,14 +7038,16 @@
         c.fill();
       }
       c.strokeStyle = screenInk(poly.color || "#111");
+      if (exporting) c.lineWidth = lw;
       c.stroke();
     }
     for (const poly of parts.polylines) {
       if (!solutionShown(poly) || !poly.points || poly.points.length < 2) continue;
       c.beginPath();
       c.strokeStyle = screenInk(poly.color);
+      if (exporting) c.lineWidth = lw;
       poly.points.forEach((p, i) => {
-        const s = worldToScreen(p.x, p.y);
+        const s = map(p.x, p.y);
         if (i === 0) c.moveTo(s.x, s.y);
         else c.lineTo(s.x, s.y);
       });
@@ -7036,8 +7055,8 @@
     }
     for (const r of parts.rects) {
       if (!solutionShown(r)) continue;
-      const tl = worldToScreen(r.x, r.y);
-      const br = worldToScreen(r.x + r.w, r.y + r.h);
+      const tl = map(r.x, r.y);
+      const br = map(r.x + r.w, r.y + r.h);
       const x = Math.min(tl.x, br.x);
       const y = Math.min(tl.y, br.y);
       const w = Math.abs(br.x - tl.x);
@@ -7047,30 +7066,36 @@
         c.fillRect(x, y, w, h);
       }
       c.strokeStyle = screenInk(r.color);
+      if (exporting) c.lineWidth = lw;
       c.strokeRect(x, y, w, h);
     }
     for (const d of parts.dots) {
       if (!solutionShown(d)) continue;
-      const s = worldToScreen(d.x, d.y);
-      const rad = Math.max(1.2, d.r * view.scale);
+      const s = map(d.x, d.y);
+      const rad = exporting ? Math.max(0.8, d.r * unit) : Math.max(1.2, d.r * view.scale);
       c.beginPath();
       c.fillStyle = screenInk(d.fill || d.color);
       c.arc(s.x, s.y, rad, 0, Math.PI * 2);
       c.fill();
       if (d.stroke) {
         c.strokeStyle = screenInk(d.stroke);
-        c.lineWidth = Math.max(1, LINE_WIDTH);
+        c.lineWidth = exporting ? Math.max(0.8, lw * 0.7) : Math.max(1, LINE_WIDTH);
         c.stroke();
       }
     }
     for (const t of parts.texts) {
       if (!solutionShown(t)) continue;
-      const fs =
-        t.size != null && Number(t.size) > 0
+      const fs = exporting
+        ? t.size != null && Number(t.size) > 0
+          ? Number(t.size) * unit
+          : 12 * unit
+        : t.size != null && Number(t.size) > 0
           ? Math.max(8, Number(t.size) * Math.min(view.scale, 1.6))
           : Math.max(11, 13 * Math.min(view.scale, 1.6));
-      c.font = `${fs}px "STIX Two Text", "Times New Roman", serif`;
-      const s = worldToScreen(t.x, t.y);
+      // Screen stays roman (today's canvas). Export follows svgStatChart.
+      const fontStyle = exporting && t.italic !== false ? "italic " : "";
+      c.font = `${fontStyle}${fs}px "STIX Two Text", "Times New Roman", serif`;
+      const s = map(t.x, t.y);
       c.save();
       c.fillStyle = screenInk(t.color || (darkCanvas ? "#e6e8eb" : "#111"));
       c.textAlign = t.anchor === "end" ? "right" : t.anchor === "start" ? "left" : "center";
@@ -12991,6 +13016,10 @@
       paintBoxWhisker(c, bw, toS, LINE_WIDTH * scale * 0.75, "#111");
     }
     for (const bc of barCharts) {
+      if (isStatChart(bc)) {
+        if (solutionShown(bc)) paintStatChart(c, bc, toS, scale);
+        continue;
+      }
       const fontPx = clampLabelSize(labelFontSize) * scale * 0.75;
       paintBarChart(c, bc, toS, LINE_WIDTH * scale * 0.75, fontPx, "#111");
     }
@@ -13129,6 +13158,7 @@
   async function exportPng(opts) {
     const preferCached = opts && opts.fromPreview && lastPreviewPngBlob;
     try {
+      if (!preferCached) await loadDiagramModule();
       const blob = preferCached
         ? lastPreviewPngBlob
         : await canvasToPngBlob(buildExportCanvas(2));
@@ -13139,18 +13169,92 @@
     }
   }
 
-  /** White-paper PNG → system clipboard (same path as PNG export @ 2–3×). */
-  async function copyWhiteBgPngToClipboard() {
+  /** documentToSvg → blob URL → Image → canvas PNG. Resolves to a PNG Blob. */
+  function svgDocumentToPngBlob() {
+    return loadDiagramModule().then((mod) => {
+      const svg = mod.documentToSvg(buildDocSnapshotForOps(), { scale: 2 });
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
+        const img = new Image();
+        const fail = (err) => {
+          URL.revokeObjectURL(url);
+          reject(err instanceof Error ? err : new Error("SVG image failed"));
+        };
+        img.onload = () => {
+          try {
+            let w = img.naturalWidth || 1;
+            let h = img.naturalHeight || 1;
+            const fit = Math.min(1, MAX_PNG_DIM / w, MAX_PNG_DIM / h, Math.sqrt(MAX_PNG_AREA / (w * h)));
+            if (fit > 0 && fit < 1) {
+              w = Math.max(1, Math.floor(w * fit));
+              h = Math.max(1, Math.floor(h * fit));
+            }
+            const off = document.createElement("canvas");
+            off.width = w;
+            off.height = h;
+            const ctx2 = off.getContext("2d");
+            ctx2.fillStyle = "#ffffff";
+            ctx2.fillRect(0, 0, w, h);
+            ctx2.drawImage(img, 0, 0, w, h);
+            URL.revokeObjectURL(url);
+            off.toBlob((blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error("PNG blob failed"));
+            }, "image/png");
+          } catch (err) {
+            fail(err);
+          }
+        };
+        img.onerror = () => fail(new Error("SVG image failed"));
+        img.src = url;
+      });
+    });
+  }
+
+  function downloadPngBlob(blob) {
+    return saveBlobAs(blob, "simple-diagram.png", "image/png", [".png"]);
+  }
+
+  /**
+   * clipboard.write must run in the click turn. The PNG blob is a Promise
+   * inside ClipboardItem so a slow SVG does not drop the user gesture.
+   * If write rejects, download the PNG. Never fail silently.
+   */
+  function copyWhiteBgPngToClipboard() {
+    const pngPromise = svgDocumentToPngBlob();
+    const fallback = (err) => {
+      console.error(err);
+      pngPromise
+        .then(async (blob) => {
+          const saved = await downloadPngBlob(blob);
+          if (!saved) statusHint.textContent = t("copy_png_fail");
+        })
+        .catch(async (err2) => {
+          console.error(err2);
+          try {
+            await loadDiagramModule();
+            const blob = await canvasToPngBlob(buildExportCanvas(2));
+            const saved = await downloadPngBlob(blob);
+            if (!saved) statusHint.textContent = t("copy_png_fail");
+          } catch (err3) {
+            console.error(err3);
+            statusHint.textContent = t("copy_png_fail");
+          }
+        });
+    };
     try {
       if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
-        throw new Error("clipboard unsupported");
+        fallback(new Error("clipboard unsupported"));
+        return;
       }
-      const blob = await canvasToPngBlob(buildExportCanvas(2));
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-      statusHint.textContent = t("copy_png_ok");
+      navigator.clipboard
+        .write([new ClipboardItem({ "image/png": pngPromise })])
+        .then(() => {
+          statusHint.textContent = t("copy_png_ok");
+        })
+        .catch(fallback);
     } catch (err) {
-      console.error(err);
-      statusHint.textContent = t("copy_png_fail");
+      fallback(err);
     }
   }
 
@@ -13175,6 +13279,13 @@
     const note = document.getElementById("exportPreviewNote");
     const sizeEl = document.getElementById("exportPreviewSize");
     if (!dlg || !img) return;
+    try {
+      await loadDiagramModule();
+    } catch (err) {
+      console.error(err);
+      statusHint.textContent = "PNG 匯出失敗";
+      return;
+    }
     const off = buildExportCanvas(2);
     try {
       lastPreviewPngBlob = await canvasToPngBlob(off);
@@ -13233,6 +13344,13 @@
   }
 
   async function exportSvg() {
+    try {
+      await loadDiagramModule();
+    } catch (err) {
+      console.error(err);
+      statusHint.textContent = "SVG 匯出失敗";
+      return;
+    }
     const { w, h, toS, scale, pad } = exportLayout(1.5);
     void pad;
     const dashAttr = (style) => {
@@ -13581,7 +13699,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.59",
+      version: "13.5.60",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
