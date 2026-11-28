@@ -36,7 +36,7 @@ import {
   addBarChartBounds,
 } from "./bar-chart.mjs";
 import { normalizeFillPattern, hatchStrokesForPolygon, HATCH_INK_PAPER } from "./hatch.mjs";
-import { fillOutlinePoints } from "./path-fill.mjs";
+import { fillOutlinePoints, minorArcDelta } from "./path-fill.mjs";
 import { addCoordPlotBounds, svgCoordPlot } from "./coord-plot.mjs";
 import { svgTextInner } from "./math-text.mjs";
 import { arcDraw } from "./angle-arc.mjs";
@@ -129,8 +129,17 @@ function boundsOf(doc, pad = 24) {
     if (pad > 0) {
       const fs = Number(lab.size) > 0 ? Number(lab.size) : 16;
       const tw = approxTextWidth(lab.text || "", fs);
-      add(x - tw / 2, y - fs * 0.7);
-      add(x + tw / 2, y + fs * 0.45);
+      const anchor = lab.anchor === "end" ? "end" : lab.anchor === "start" ? "start" : "middle";
+      if (anchor === "end") {
+        add(x - tw, y - fs * 0.7);
+        add(x, y + fs * 0.45);
+      } else if (anchor === "start") {
+        add(x, y - fs * 0.7);
+        add(x + tw, y + fs * 0.45);
+      } else {
+        add(x - tw / 2, y - fs * 0.7);
+        add(x + tw / 2, y + fs * 0.45);
+      }
     }
   }
   for (const tx of doc.texts || []) {
@@ -707,10 +716,10 @@ export function documentToSvg(doc, opts = {}) {
           const r = Math.hypot(s0.x - c.x, s0.y - c.y) || Math.hypot(s1.x - c.x, s1.y - c.y);
           const ang0 = Math.atan2(s0.y - c.y, s0.x - c.x);
           const ang1 = Math.atan2(s1.y - c.y, s1.x - c.x);
-          let delta = ang1 - ang0;
-          while (delta <= -Math.PI) delta += Math.PI * 2;
-          while (delta > Math.PI) delta -= Math.PI * 2;
+          const delta = minorArcDelta(ang0, ang1);
           const large = Math.abs(delta) > Math.PI ? 1 : 0;
+          // dTheta < 0 → counterclockwise about the given center (sweep 0).
+          // sweep 1 would pick the center mirrored across the chord.
           const sweep = delta < 0 ? 0 : 1;
           const p0 = toS(s0.x, s0.y);
           const p1 = toS(s1.x, s1.y);
@@ -1271,7 +1280,8 @@ export function documentToSvg(doc, opts = {}) {
       const fs = ink.fontForSize(lab.size);
       const halo = paperTextHalo(fs, ink);
       const rich = svgTextInner(lab.text, true);
-      const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="${rich.fontStyle}" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
+      const anchor = lab.anchor === "end" ? "end" : lab.anchor === "start" ? "start" : "middle";
+      const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="${rich.fontStyle}" font-size="${fs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle"`;
       body += `<text ${common} fill="${strokeOf(lab)}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"${svgDataAttrs(lab)}>${rich.inner}</text>\n`;
     }
     for (const tx of doc.texts || []) {

@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.64 · 穩定）
+## 目前版本 / Current version（v13.5.65 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.65** — `pathFill` 反向內弧沿有號劣弧取樣（圓心留在原側、0° 中點不翻到弦外）。`addBarChart` 的 `yTicks:[]` 保持空白，不補預設刻度。座標圖 y 刻度（預設整數、明確 `yTicks`、`yTickLabel`）右對齊在 `ox−8`，白底光暈，不壓軸
 - **v13.5.64** — 同心圓環帶 `pathFill` 的每條弧（含第一條、順時針 from→to）按該邊自己的半徑取劣弧，畫布與 SVG 斜線都蓋到外弧，不再停在弦上。扇形／弓形／polyArc／pathFill 的斜線 clip 跟著弧走，後畫的實心蓋在較早的斜線上面
 - **v13.5.63** — `addFoot` 的 `labelOx`／`labelOy`（別名 `ox`／`oy`）傳給附帶標籤；兩邊都省略時，字母放在垂足外側、離高線的一側（距離 16）。`addDotPattern` 的 `verticalAlign:"middle"`（或 `center` 加 `centerRows:true`）讓各組垂直中心、箭頭與省略號落在同一條 `midY`。省略這些欄位時，既有點與列數相同的 `center` 座標不變
 - **v13.5.62** — `autoScaleText:false`（`setMeta`、`doc.meta` 或 `documentToSvg` 選項）時，文字與筆畫的縮放都是 1，對齊畫布 1:1。線寬、點的大小、箭頭與莖葉圖表頭不再乘跨度／340；明確 `size:14` 也不放大。省略或 `true` 仍只放大預設字 14、刻度字與省略尺寸的直角標記

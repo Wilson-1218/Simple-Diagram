@@ -80,7 +80,7 @@ export const OP_CATALOG = {
   },
   addBarChart: {
     args: "x, y, categories, values|heights, plotW?, plotH?, yMin?, yMax?, yTicks?, yStep?, xLabel?, yLabel?, yLabelMode?, barPattern?, showGrid?, title?, boxed?",
-    note: "Dedicated bar chart; yLabel along axis (rotate|stack); barPattern hatch|solid. title omitted or blank draws nothing; otherwise centered at (x+plotW/2, y-plotH-26). boxed false (default) keeps the L axes; true adds the top and right sides. alias addBar. Stored on doc.barCharts",
+    note: "Dedicated bar chart; yLabel along axis (rotate|stack); barPattern hatch|solid. yTicks: an array is kept as given, including [] (no ticks, no numbers). Only null/undefined builds ticks from yMin/yMax/yStep. title omitted or blank draws nothing; otherwise centered at (x+plotW/2, y-plotH-26). boxed false (default) keeps the L axes; true adds the top and right sides. alias addBar. Stored on doc.barCharts",
   },
   addCumulativeFrequency: {
     args: "x, y, boundaries, values, plotW?, plotH?, yMax?, yStep?, xLabel?, yLabel?, smooth?, showGrid?, projections?",
@@ -174,7 +174,7 @@ export const OP_CATALOG = {
   addChord: { args: "circleId, startId+endId | deg0+deg1 | angle0+angle1, style?" },
   addCoordPlot: {
     args: "ox, oy, unitPx?, xUnitPx?, yUnitPx?, xStep?, yStep?, xTicks?, yTicks?, window?, curves?, feasibleRegion? | feasibleRegions?, axisLabelX?, axisLabelY?, axisLabelXPos?",
-    note: "xTicks/yTicks replace that axis; xStep/yStep stride; xUnitPx/yUnitPx unequal scale; curve domain+style; feasibleRegion clips linear inequalities. axisLabelX/Y: only undefined/null default to x/y; \"\", whitespace, or false hides. axisLabelXPos below (default) or right (xmax tip + 18, on the axis)",
+    note: "xTicks/yTicks replace that axis; xStep/yStep stride; xUnitPx/yUnitPx unequal scale; curve domain+style; feasibleRegion clips linear inequalities. Y tick text (default integers, explicit yTicks, and addPlotPoint yTickLabel) is right-aligned at x=ox-8 with a white halo. axisLabelX/Y: only undefined/null default to x/y; \"\", whitespace, or false hides. axisLabelXPos below (default) or right (xmax tip + 18, on the axis)",
   },
   addCurve: { args: "plotId, type, params?, label?, domain?, style?", note: "type includes vline (params.x) for a vertical boundary" },
   addCurveIntersection: {

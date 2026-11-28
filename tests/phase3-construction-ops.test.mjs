@@ -8,7 +8,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION still current after phase3 construction ops", () => {
-  assert.equal(APP_VERSION, "13.5.64");
+  assert.equal(APP_VERSION, "13.5.65");
 });
 
 test("OP_NAMES includes construction ops", () => {
