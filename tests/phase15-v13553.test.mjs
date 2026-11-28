@@ -12,8 +12,8 @@ import {
   svgStatChart,
 } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.58", () => {
-  assert.equal(APP_VERSION, "13.5.58");
+test("APP_VERSION is 13.5.59", () => {
+  assert.equal(APP_VERSION, "13.5.59");
 });
 
 function chartSvg(op, scale = 2) {

@@ -60,7 +60,7 @@ export const OP_CATALOG = {
   addLabel: { args: "pointId, text, ox?, oy?, size?", note: "One label per point" },
   addText: {
     args: "x, y, text, id?, size?, align?, bold?, rotate?",
-    note: "Free-floating caption (not bound to point); align center|left|right (default center); bold default false; rotate degrees clockwise (omit or 0 stays horizontal; -90 is bottom-to-top); alias addCaption",
+    note: "Free-floating caption (not bound to point); align center|left|right (default center); bold default false; rotate degrees clockwise (omit or 0 stays horizontal and is not stored; -90 is bottom-to-top). Plain text and math text both rotate about (x, y); the turned box is included in the auto viewBox. Alias addCaption",
   },
   addCaption: {
     args: "x, y, text, id?, size?, align?, bold?, rotate?",

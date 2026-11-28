@@ -687,7 +687,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.58",
+      title_doc: "Simple Diagram · v13.5.59",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1040,7 +1040,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.58",
+      title_doc: "Simple Diagram · v13.5.59",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -3831,7 +3831,7 @@
     if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
     let align = tx.align != null ? String(tx.align).toLowerCase() : "center";
     if (align !== "left" && align !== "right") align = "center";
-    return {
+    const row = {
       id: tx.id || uid(),
       x,
       y,
@@ -3840,6 +3840,12 @@
       align,
       bold: !!tx.bold,
     };
+    // Keep in sync with addText: omit / 0 stays horizontal and is not stored.
+    if (tx.rotate != null && tx.rotate !== "") {
+      const deg = Number(tx.rotate);
+      if (Number.isFinite(deg) && deg !== 0) row.rotate = deg;
+    }
+    return row;
   }
 
   function nearestTextHit(wx, wy) {
@@ -8413,6 +8419,7 @@
     c.save();
     c.translate(x, y);
     const deg = Number(tx && tx.rotate);
+    // Same rotated frame for the plain fillText branch and the math-run branch.
     if (Number.isFinite(deg) && deg !== 0) c.rotate((deg * Math.PI) / 180);
     const weight = tx.bold ? "bold " : "";
     c.font = `${weight}${fontPx}px "STIX Two Text", "Times New Roman", serif`;
@@ -13072,26 +13079,24 @@
       c.setLineDash([]);
     }
 
-    if (!hideExportPoints) {
-      for (const p of points) {
-        if (p.hidden === true || pointSkipsMarker(p)) continue;
-        const s = toS(p.x, p.y);
-        if (p.marker === "x" || p.marker === "foot") {
-          const r = 5 * scale * 0.7;
-          c.beginPath();
-          c.moveTo(s.x - r, s.y - r);
-          c.lineTo(s.x + r, s.y + r);
-          c.moveTo(s.x + r, s.y - r);
-          c.lineTo(s.x - r, s.y + r);
-          c.strokeStyle = "#111";
-          c.lineWidth = 1.2 * scale * 0.7;
-          c.stroke();
-        } else {
-          c.beginPath();
-          c.arc(s.x, s.y, POINT_R * scale * 0.7, 0, Math.PI * 2);
-          c.fillStyle = "#111";
-          c.fill();
-        }
+    for (const p of points) {
+      if (p.hidden === true || pointSkipsMarker(p)) continue;
+      const s = toS(p.x, p.y);
+      if (p.marker === "x" || p.marker === "foot") {
+        const r = 5 * scale * 0.7;
+        c.beginPath();
+        c.moveTo(s.x - r, s.y - r);
+        c.lineTo(s.x + r, s.y + r);
+        c.moveTo(s.x + r, s.y - r);
+        c.lineTo(s.x - r, s.y + r);
+        c.strokeStyle = "#111";
+        c.lineWidth = 1.2 * scale * 0.7;
+        c.stroke();
+      } else if (!hideExportPoints) {
+        c.beginPath();
+        c.arc(s.x, s.y, POINT_R * scale * 0.7, 0, Math.PI * 2);
+        c.fillStyle = "#111";
+        c.fill();
       }
     }
 
@@ -13201,7 +13206,7 @@
     }
     if (note) {
       let t = hideExportPoints
-        ? "預覽＝實際 PNG 匯出（已隱藏頂點圓點）"
+        ? "預覽＝實際 PNG 匯出（已隱藏頂點圓點，× 仍保留）"
         : "預覽＝實際 PNG 匯出（白底、無選取框）";
       if (exportCrop) t += " · 裁切範圍與畫布藍框相同";
       note.textContent = t;
@@ -13520,16 +13525,14 @@
       body += svgLengthLabel(ll, toS, scale * 0.75);
     }
 
-    if (!hideExportPoints) {
-      for (const p of points) {
-        if (p.hidden === true || pointSkipsMarker(p)) continue;
-        const s = toS(p.x, p.y);
-        if (p.marker === "x" || p.marker === "foot") {
-          const r = 5 * scale * 0.7;
-          body += `<path d="M${(s.x - r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x + r).toFixed(2)},${(s.y + r).toFixed(2)} M${(s.x + r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x - r).toFixed(2)},${(s.y + r).toFixed(2)}" stroke="#111" stroke-width="${(1.2 * scale * 0.7).toFixed(2)}" fill="none"/>\n`;
-        } else {
-          body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${(POINT_R * scale * 0.7).toFixed(2)}" fill="#111" />\n`;
-        }
+    for (const p of points) {
+      if (p.hidden === true || pointSkipsMarker(p)) continue;
+      const s = toS(p.x, p.y);
+      if (p.marker === "x" || p.marker === "foot") {
+        const r = 5 * scale * 0.7;
+        body += `<path d="M${(s.x - r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x + r).toFixed(2)},${(s.y + r).toFixed(2)} M${(s.x + r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x - r).toFixed(2)},${(s.y + r).toFixed(2)}" stroke="#111" stroke-width="${(1.2 * scale * 0.7).toFixed(2)}" fill="none"/>\n`;
+      } else if (!hideExportPoints) {
+        body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${(POINT_R * scale * 0.7).toFixed(2)}" fill="#111" />\n`;
       }
     }
 
@@ -13578,7 +13581,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.58",
+      version: "13.5.59",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

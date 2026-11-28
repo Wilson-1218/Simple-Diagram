@@ -12,7 +12,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for coord-plot phase 6", () => {
-  assert.equal(APP_VERSION, "13.5.58");
+  assert.equal(APP_VERSION, "13.5.59");
   assert.ok(OP_NAMES.includes("addPlotPoint"));
 });
 

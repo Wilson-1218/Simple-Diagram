@@ -52,12 +52,12 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `layers` | object | 布林：`gridShow`、`gridLock`、`coordsShow`、`coordsLock`、`helpersShow`、`helpersLock`、`solutionShow`（預設 true；false 隱藏 `role:"solution"`。缺鍵視為 true。`gridShow` 與吸附開關聯動；`gridLock` 檔案相容保留） |
 | `gridSnap` | boolean | 網格吸附 |
 | `gridMode` | `"square"`\|`"triangle"` | 網格種類 |
-| `hideExportPoints` | boolean | 匯出隱藏頂點 |
+| `hideExportPoints` | boolean | 匯出隱藏預設圓點；不隱藏 `marker` 為 `"x"`／`"foot"` 的 × |
 | `view` | object | 相機 `{x,y,scale}`（螢幕座標平移＋縮放） |
 | `savedAt` | number | 儲存時間戳（毫秒） |
 | `name` | string | 檔名提示 |
 
-儲存時固定輸出上述 **38** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.58"`）。
+儲存時固定輸出上述 **38** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.59"`）。
 
 ---
 
@@ -69,7 +69,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 { "id": "A", "x": 100, "y": 200, "marker": "x", "hidden": false }
 ```
 
-- `marker` 可選：`"x"`｜`"foot"`（垂足等）
+- `marker` 可選：`"x"`｜`"foot"`（垂足等）。點不是 `hidden` 時，畫布與 `documentToSvg` 都畫 ×；`hideExportPoints` 只藏預設小圓點
 - `hidden` 可選（預設 false）：`true` 時點仍參與幾何，畫布／SVG／PNG **不**畫點標記（方向輔助點用）
 
 ### segments
@@ -95,7 +95,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 ```
 
 - 自由文字（不綁點）；`align`：`center`｜`left`｜`right`；`bold` 預設 false
-- 可選 `rotate`（度，順時針為正）。省略或 `0` 不寫入，文字保持水平。`rotate:-90` 由下往上，與棒形圖 y 軸標題同一方向
+- 可選 `rotate`（度，順時針為正）。省略或 `0` 不寫入，文字保持水平。`rotate:-90` 由下往上，與棒形圖 y 軸標題同一方向。純文字與數學文字都繞 `(x, y)` 旋轉，旋轉後的外框納入自動 viewBox。載入時 normalize 保留非 0 的 `rotate`
 
 ### rightAngles
 

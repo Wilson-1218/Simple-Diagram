@@ -1155,18 +1155,20 @@ export function documentToSvg(doc, opts = {}) {
     }
   }
 
-  if (!hidePoints) {
-    for (const p of pts.values()) {
-      if (p.hidden === true || p.showDot === false || p.marker === "none" || !shown(p)) continue;
-      const s = toS(p.x, p.y);
-      if (p.marker === "x" || p.marker === "foot") {
-        const r = 5 * scale * 0.7;
-        const swx = (1.2 * scale * 0.7).toFixed(2);
-        body += `<path d="M${(s.x - r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x + r).toFixed(2)},${(s.y + r).toFixed(2)} M${(s.x + r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x - r).toFixed(2)},${(s.y + r).toFixed(2)}" fill="none" stroke="${strokeOf(p)}" stroke-width="${swx}"${svgDataAttrs(p)} />\n`;
-      } else {
-        const pr = ink.mm(0.55).toFixed(2);
-        body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${pr}" fill="${strokeOf(p)}"${svgDataAttrs(p)} />\n`;
-      }
+  for (const p of pts.values()) {
+    if (p.hidden === true || !shown(p)) continue;
+    // hideExportPoints / hidePoints drops the default dot only.
+    // A visible point with marker "x" or "foot" still draws the cross.
+    const cross = p.marker === "x" || p.marker === "foot";
+    if (!cross && (hidePoints || p.showDot === false || p.marker === "none")) continue;
+    const s = toS(p.x, p.y);
+    if (cross) {
+      const r = 5 * scale * 0.7;
+      const swx = (1.2 * scale * 0.7).toFixed(2);
+      body += `<path d="M${(s.x - r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x + r).toFixed(2)},${(s.y + r).toFixed(2)} M${(s.x + r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x - r).toFixed(2)},${(s.y + r).toFixed(2)}" fill="none" stroke="${strokeOf(p)}" stroke-width="${swx}"${svgDataAttrs(p)} />\n`;
+    } else {
+      const pr = ink.mm(0.55).toFixed(2);
+      body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${pr}" fill="${strokeOf(p)}"${svgDataAttrs(p)} />\n`;
     }
   }
 
@@ -1192,6 +1194,7 @@ export function documentToSvg(doc, opts = {}) {
       const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
       const weight = tx.bold ? ' font-weight="bold"' : "";
       const rich = svgTextInner(tx.text || "", false);
+      // One transform covers both the plain string and math tspans inside this element.
       const deg = Number(tx.rotate);
       const rotAttr =
         Number.isFinite(deg) && deg !== 0

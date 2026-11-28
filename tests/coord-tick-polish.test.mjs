@@ -9,8 +9,8 @@ import {
 } from "../src/diagram/index.mjs";
 import { approxTextWidth } from "../src/diagram/length-mark.mjs";
 
-test("APP_VERSION is 13.5.58", () => {
-  assert.equal(APP_VERSION, "13.5.58");
+test("APP_VERSION is 13.5.59", () => {
+  assert.equal(APP_VERSION, "13.5.59");
 });
 
 function textNodes(svg) {
