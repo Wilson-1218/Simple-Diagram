@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { applyOps, documentToSvg, APP_VERSION } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for keep-full-circles", () => {
-  assert.equal(APP_VERSION, "13.5.59");
+  assert.equal(APP_VERSION, "13.5.60");
 });
 
 test("SVG keeps full circle when same-centre/same-radius arc exists", () => {
