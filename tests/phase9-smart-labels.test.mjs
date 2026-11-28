@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { APP_VERSION, applyOps, validateDiagram } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.53", () => {
-  assert.equal(APP_VERSION, "13.5.53");
+test("APP_VERSION is 13.5.54", () => {
+  assert.equal(APP_VERSION, "13.5.54");
 });
 
 function labelAt(doc, id) {
@@ -139,7 +139,7 @@ test("explicit numeric ox/oy is unchanged after later segments and reload", () =
   assert.equal(labelAt(locked, "A")._autoOffset, false);
 });
 
-test("hidden points do not get an inline label", () => {
+test("hidden points skip label:true; a non-empty string still labels", () => {
   const doc = applyOps(null, [
     { op: "addPoint", id: "H", x: 0, y: 0, hidden: true, label: true },
     { op: "addPoint", id: "A", x: 0, y: 0 },
@@ -168,7 +168,9 @@ test("hidden points do not get an inline label", () => {
       label: true,
     },
   ]);
-  assert.equal(doc.labels.length, 0);
+  assert.equal(doc.labels.length, 1);
+  assert.equal(doc.labels[0].pointId, "M");
+  assert.equal(doc.labels[0].text, "M");
   for (const id of ["H", "M", "R", "X", "G"]) {
     const p = doc.points.find((q) => q.id === id);
     assert.ok(p, id);

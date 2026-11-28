@@ -82,13 +82,30 @@ export function boxWhiskerTickLabel(t) {
  */
 export function resolveCapHalf(raw, boxHeight) {
   const h = Math.max(4, Number(boxHeight) || 36);
+  // showCaps:false wins even when capHeight is positive.
+  if (raw && raw.showCaps === false) return 0;
   if (raw && raw.capHeight != null && raw.capHeight !== "" && Number.isFinite(Number(raw.capHeight))) {
-    return Math.max(0.5, Number(raw.capHeight) / 2);
+    const full = Number(raw.capHeight);
+    // 0 is explicit: do not fall back to 0.55 × boxH, and do not keep the 0.5 floor.
+    if (!(full > 0)) return 0;
+    return Math.max(0.5, full / 2);
   }
   if (raw && raw.cap != null && raw.cap !== "" && Number.isFinite(Number(raw.cap))) {
     return Math.max(2, Number(raw.cap));
   }
   return Math.max(0.5, (0.55 * h) / 2);
+}
+
+function readAxisArrows(raw) {
+  const v = raw && raw.axisArrows != null ? String(raw.axisArrows).trim().toLowerCase() : "both";
+  if (v === "right" || v === "none" || v === "both") return v;
+  return "both";
+}
+
+function readGuideStyle(raw) {
+  const v = raw && raw.guideStyle != null ? String(raw.guideStyle).trim().toLowerCase() : "dashed";
+  if (v === "dotted" || v === "solid" || v === "none" || v === "dashed") return v;
+  return "dashed";
 }
 
 function numberLineEnds(bw) {
@@ -186,6 +203,11 @@ export function normalizeBoxWhisker(raw, opts = {}) {
   if (raw.capHeight != null && Number.isFinite(Number(raw.capHeight))) {
     out.capHeight = Number(raw.capHeight);
   }
+  if (raw.showCaps === false) out.showCaps = false;
+  const axisArrows = readAxisArrows(raw);
+  if (raw.axisArrows != null && raw.axisArrows !== "") out.axisArrows = axisArrows;
+  const guideStyle = readGuideStyle(raw);
+  if (raw.guideStyle != null && raw.guideStyle !== "") out.guideStyle = guideStyle;
   if (opts.requireId !== false) {
     if (typeof raw.id !== "string" || !raw.id) {
       throw new Error("boxWhisker: id required");
@@ -274,12 +296,34 @@ function attachBoxAxisLabel(bw, axis) {
   };
 }
 
+function axisArrowList(mode, start, end) {
+  if (mode === "none") return [];
+  const arrows = [];
+  if (mode !== "right") arrows.push(...arrowWings(start.x, start.y, start.dx, start.dy));
+  arrows.push(...arrowWings(end.x, end.y, end.dx, end.dy));
+  return arrows;
+}
+
+function pushDownGuide(guides, style, seg) {
+  if (style === "none") return;
+  guides.push({
+    ...seg,
+    guideStyle: style,
+    dash: style === "dashed" || style === "dotted",
+  });
+}
+
 function decorateHorizontalAxis(bw, axis, box) {
   if (!axis) return { arrows: [], guides: [] };
   const yAxis = axis.y1;
   const lo = Math.min(axis.x1, axis.x2);
   const hi = Math.max(axis.x1, axis.x2);
-  const arrows = [...arrowWings(lo, yAxis, -1, 0), ...arrowWings(hi, yAxis, 1, 0)];
+  const mode = readAxisArrows(bw);
+  const arrows = axisArrowList(
+    mode,
+    { x: lo, y: yAxis, dx: -1, dy: 0 },
+    { x: hi, y: yAxis, dx: 1, dy: 0 }
+  );
   const boxTop = Math.min(box.y, box.y + box.h);
   const boxBottom = Math.max(box.y, box.y + box.h);
   const marks = [
@@ -290,9 +334,11 @@ function decorateHorizontalAxis(bw, axis, box) {
     { x: bw.max, y0: bw.y + bw.cap },
   ];
   const guides = [];
+  const style = readGuideStyle(bw);
   for (const m of marks) {
     const y1 = Math.max(m.y0, boxTop);
-    if (yAxis > y1 + 0.5) guides.push({ x1: m.x, y1, x2: m.x, y2: yAxis, dash: true });
+    // Only downward (increasing y) to the number line.
+    if (yAxis > y1 + 0.5) pushDownGuide(guides, style, { x1: m.x, y1, x2: m.x, y2: yAxis });
   }
   return { arrows, guides };
 }
@@ -302,7 +348,12 @@ function decorateVerticalAxis(bw, axis, box) {
   const xAxis = axis.x1;
   const lo = Math.min(axis.y1, axis.y2);
   const hi = Math.max(axis.y1, axis.y2);
-  const arrows = [...arrowWings(xAxis, lo, 0, -1), ...arrowWings(xAxis, hi, 0, 1)];
+  const mode = readAxisArrows(bw);
+  const arrows = axisArrowList(
+    mode,
+    { x: xAxis, y: lo, dx: 0, dy: -1 },
+    { x: xAxis, y: hi, dx: 0, dy: 1 }
+  );
   const boxLeft = Math.min(box.x, box.x + box.w);
   const boxRight = Math.max(box.x, box.x + box.w);
   const towardRight = xAxis >= (boxLeft + boxRight) / 2;
@@ -314,11 +365,12 @@ function decorateVerticalAxis(bw, axis, box) {
     { y: bw.max, x0: towardRight ? bw.x + bw.cap : bw.x - bw.cap },
   ];
   const guides = [];
+  const style = readGuideStyle(bw);
   for (const m of marks) {
     if (towardRight && xAxis > m.x0 + 0.5 && m.x0 >= boxLeft - 1e-6) {
-      guides.push({ x1: m.x0, y1: m.y, x2: xAxis, y2: m.y, dash: true });
+      pushDownGuide(guides, style, { x1: m.x0, y1: m.y, x2: xAxis, y2: m.y });
     } else if (!towardRight && m.x0 > xAxis + 0.5 && m.x0 <= boxRight + 1e-6) {
-      guides.push({ x1: m.x0, y1: m.y, x2: xAxis, y2: m.y, dash: true });
+      pushDownGuide(guides, style, { x1: m.x0, y1: m.y, x2: xAxis, y2: m.y });
     }
   }
   return { arrows, guides };
@@ -344,10 +396,13 @@ export function boxWhiskerParts(bw) {
       { x1: x, y1: bw.min, x2: x, y2: bw.q1 },
       { x1: x, y1: bw.q3, x2: x, y2: bw.max },
     ];
-    const caps = [
-      { x1: x - cap, y1: bw.min, x2: x + cap, y2: bw.min },
-      { x1: x - cap, y1: bw.max, x2: x + cap, y2: bw.max },
-    ];
+    const caps =
+      cap > 0
+        ? [
+            { x1: x - cap, y1: bw.min, x2: x + cap, y2: bw.min },
+            { x1: x - cap, y1: bw.max, x2: x + cap, y2: bw.max },
+          ]
+        : [];
     const outliers = bw.outliers.map((v) => ({ x, y: v }));
     let axis = null;
     const tickMarks = [];
@@ -409,10 +464,13 @@ export function boxWhiskerParts(bw) {
     { x1: bw.min, y1: y, x2: bw.q1, y2: y },
     { x1: bw.q3, y1: y, x2: bw.max, y2: y },
   ];
-  const caps = [
-    { x1: bw.min, y1: y - cap, x2: bw.min, y2: y + cap },
-    { x1: bw.max, y1: y - cap, x2: bw.max, y2: y + cap },
-  ];
+  const caps =
+    cap > 0
+      ? [
+          { x1: bw.min, y1: y - cap, x2: bw.min, y2: y + cap },
+          { x1: bw.max, y1: y - cap, x2: bw.max, y2: y + cap },
+        ]
+      : [];
   const outliers = bw.outliers.map((v) => ({ x: v, y }));
   let axis = null;
   const tickMarks = [];
