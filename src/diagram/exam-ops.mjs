@@ -22,6 +22,7 @@
 
 import { appearanceFields } from "./appearance.mjs";
 import { bearingArcSize, pieArcSize } from "./angle-arc.mjs";
+import { shapeAliasMap } from "./templates.mjs";
 
 const KIND = {
   incentre: "incentre",
@@ -611,28 +612,52 @@ export function applyPieChart(doc, op, nextId, api) {
 
     const sliceSetRatio = row.slice.labelRadiusRatio != null && row.slice.labelRadiusRatio !== "";
     const pinned = sliceSetRatio || callerSetRatio;
-    const hasCategory = typeof row.slice.label === "string" && row.slice.label !== "";
+    const lines = pieCategoryLines(row.slice);
+    const multiline = lines.length > 1;
+    const hasCategory = lines.length > 0;
+    const keepIn =
+      op.keepLabelsInside === true || op.keepLabelsInside === "true" || op.keepLabelsInside === 1;
     const angleRaw = sliceAngleField(row.slice);
     const hasAngleText = angleRaw != null;
-    const splitLabel = hasCategory && (hasAngleText || row.slice.rightAngle === true) && !pinned;
+    // subLabel / newline stays on labelRadiusRatio. keepLabelsInside blocks the 1.16r push.
+    const splitLabel =
+      hasCategory && (hasAngleText || row.slice.rightAngle === true) && !pinned && !multiline;
     const mid = row.a0 + row.sweep / 2;
     const narrow = Math.abs(row.deg) < 45;
     let labelRatio = ratio;
     let align = "center";
     if (sliceSetRatio) labelRatio = Number(row.slice.labelRadiusRatio);
     else if (callerSetRatio) labelRatio = ratio;
-    else if (splitLabel && narrow) {
+    else if (splitLabel && narrow && !keepIn) {
       labelRatio = 1.16;
       align = Math.cos(mid) >= 0 ? "left" : "right";
     } else if (splitLabel) labelRatio = 0.68;
     const useRatio = Number.isFinite(labelRatio) ? labelRatio : splitLabel ? 0.68 : ratio;
-    if (hasCategory) {
+    if (multiline) {
+      const gap = 18;
+      const span = (lines.length - 1) * gap;
+      const bx = cx + useRatio * r * Math.cos(mid);
+      const by = cy + useRatio * r * Math.sin(mid);
+      for (let li = 0; li < lines.length; li++) {
+        handlers.addText(
+          doc,
+          {
+            x: bx,
+            y: by - span / 2 + li * gap,
+            text: lines[li],
+            align,
+            ...look,
+          },
+          nextId
+        );
+      }
+    } else if (hasCategory) {
       handlers.addText(
         doc,
         {
           x: cx + useRatio * r * Math.cos(mid),
           y: cy + useRatio * r * Math.sin(mid),
-          text: row.slice.label,
+          text: lines[0],
           align,
           ...look,
         },
@@ -642,19 +667,28 @@ export function applyPieChart(doc, op, nextId, api) {
 
     if (row.startId && row.endId && row.startId !== row.endId && hasAngleText) {
       const text = angleRaw === true ? `${trimDeg(row.deg)}°` : String(angleRaw);
-      const arcSize = pieArcSize(r, op.arcSize);
+      const sliceHasArc = row.slice.arcSize != null && row.slice.arcSize !== "";
+      const arcSize = pieArcSize(r, sliceHasArc ? row.slice.arcSize : op.arcSize);
+      const stagger =
+        op.staggerArcs === true || op.staggerArcs === "true" || op.staggerArcs === 1;
+      const drawn = stagger && row.index % 2 === 1 ? arcSize + 5 : arcSize;
       const arc = {
         vertex: centerId,
         arm1: row.startId,
         arm2: row.endId,
         text,
-        size: arcSize,
+        size: drawn,
         reflex: Math.abs(row.deg) > 180 + 1e-6,
         ...look,
       };
-      if (hasCategory && hasAngleText && !pinned) {
-        const textR = Math.max(0.36 * r, arcSize + 12);
-        arc.textRadiusOffset = textR - (arcSize + 11);
+      if (stagger && Math.abs(row.deg) < 50) {
+        const lo = 0.38 * r;
+        const hi = 0.42 * r;
+        const textR = Math.min(hi, Math.max(lo, drawn + 14));
+        arc.textRadiusOffset = textR - (drawn + 11);
+      } else if (hasCategory && hasAngleText && !pinned) {
+        const textR = Math.max(0.36 * r, drawn + 12);
+        arc.textRadiusOffset = textR - (drawn + 11);
       }
       handlers.addAngleArc(doc, arc, nextId);
     }
@@ -667,7 +701,50 @@ export function applyPieChart(doc, op, nextId, api) {
       );
     }
   }
+  if (prefix) {
+    const boundaryIds = [];
+    const seenBoundary = new Set();
+    for (const a of boundaryAngles) {
+      const id = rimAt(a);
+      if (seenBoundary.has(id)) continue;
+      seenBoundary.add(id);
+      boundaryIds.push(id);
+    }
+    for (let i = 0; i < boundaryIds.length; i++) {
+      registerFreeAlias(doc, `${prefix}${i}`, boundaryIds[i]);
+    }
+    registerFreeAlias(doc, `${prefix}O`, centerId);
+  }
   return doc;
+}
+
+/** Alias only when no point and no earlier alias already owns that id. */
+function registerFreeAlias(doc, aliasId, pointId) {
+  if (!aliasId || !pointId || aliasId === pointId) return;
+  if (!Array.isArray(doc.points)) return;
+  if (doc.points.some((p) => p.id === aliasId)) return;
+  const aliases = shapeAliasMap(doc);
+  if (Object.prototype.hasOwnProperty.call(aliases, aliasId)) return;
+  aliases[aliasId] = pointId;
+}
+
+/**
+ * Category lines. subLabel, or a label that contains a newline, is two (or more)
+ * lines on the bisector. A single string label stays one line, unchanged.
+ */
+function pieCategoryLines(slice) {
+  if (!slice || typeof slice !== "object") return [];
+  const label = typeof slice.label === "string" ? slice.label : "";
+  const hasSub =
+    slice.subLabel != null && slice.subLabel !== false && String(slice.subLabel).trim() !== "";
+  if (hasSub) {
+    const parts = label === "" ? [] : label.split("\n");
+    parts.push(String(slice.subLabel));
+    return parts;
+  }
+  if (label.includes("\n")) return label.split("\n");
+  if (label !== "") return [label];
+  return [];
 }
 
 /** angleText is the stored name. angleLabel is the alias when angleText is omitted. */

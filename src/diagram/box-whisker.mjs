@@ -108,6 +108,14 @@ function readGuideStyle(raw) {
   return "dashed";
 }
 
+/** none (omit) draws nothing. dotted | dashed | solid draw a background line at each tick. */
+function readTickGridStyle(raw) {
+  if (!raw || raw.tickGridStyle == null || raw.tickGridStyle === "") return "none";
+  const v = String(raw.tickGridStyle).trim().toLowerCase();
+  if (v === "dotted" || v === "dashed" || v === "solid") return v;
+  return "none";
+}
+
 function numberLineEnds(bw) {
   const ticks = (bw.ticks || []).map(boxWhiskerTickPos).filter((n) => Number.isFinite(n));
   const data = [bw.min, bw.max, ...(bw.outliers || []), ...ticks].filter((n) => Number.isFinite(n));
@@ -208,6 +216,13 @@ export function normalizeBoxWhisker(raw, opts = {}) {
   if (raw.axisArrows != null && raw.axisArrows !== "") out.axisArrows = axisArrows;
   const guideStyle = readGuideStyle(raw);
   if (raw.guideStyle != null && raw.guideStyle !== "") out.guideStyle = guideStyle;
+  if (raw.tickGridStyle != null && raw.tickGridStyle !== "") out.tickGridStyle = readTickGridStyle(raw);
+  if (raw.tickGridTop != null && raw.tickGridTop !== "" && Number.isFinite(Number(raw.tickGridTop))) {
+    out.tickGridTop = Number(raw.tickGridTop);
+  }
+  if (raw.tickGridExtend != null && raw.tickGridExtend !== "" && Number.isFinite(Number(raw.tickGridExtend))) {
+    out.tickGridExtend = Number(raw.tickGridExtend);
+  }
   if (opts.requireId !== false) {
     if (typeof raw.id !== "string" || !raw.id) {
       throw new Error("boxWhisker: id required");
@@ -302,6 +317,60 @@ function axisArrowList(mode, start, end) {
   if (mode !== "right") arrows.push(...arrowWings(start.x, start.y, start.dx, start.dy));
   arrows.push(...arrowWings(end.x, end.y, end.dx, end.dy));
   return arrows;
+}
+
+/**
+ * Background tick grid. Horizontal: vertical line at each tick, from
+ * tickGridTop, or y - tickGridExtend, or y - boxHeight*0.95, down to axisY.
+ * Vertical: the same span sideways, from the far side to axisX.
+ * Guides stay downward-only and are not these lines.
+ */
+function tickGridLines(bw, axis, horizontal) {
+  const style = readTickGridStyle(bw);
+  if (style === "none") return [];
+  const h = bw.boxHeight;
+  const half = h / 2;
+  const lines = [];
+  if (horizontal) {
+    const axisY =
+      axis != null
+        ? axis.y1
+        : bw.axisY != null
+          ? bw.axisY
+          : bw.y + half + Math.max(10, h * 0.35);
+    let top = bw.y - h * 0.95;
+    if (bw.tickGridExtend != null && Number.isFinite(Number(bw.tickGridExtend))) {
+      top = bw.y - Number(bw.tickGridExtend);
+    }
+    if (bw.tickGridTop != null && Number.isFinite(Number(bw.tickGridTop))) {
+      top = Number(bw.tickGridTop);
+    }
+    for (const t of bw.ticks || []) {
+      const tx = boxWhiskerTickPos(t);
+      if (!Number.isFinite(tx)) continue;
+      lines.push({ x1: tx, y1: top, x2: tx, y2: axisY, tickGridStyle: style });
+    }
+    return lines;
+  }
+  const axisX =
+    axis != null
+      ? axis.x1
+      : bw.axisX != null
+        ? bw.axisX
+        : bw.x + half + Math.max(10, h * 0.35);
+  let side = bw.x - h * 0.95;
+  if (bw.tickGridExtend != null && Number.isFinite(Number(bw.tickGridExtend))) {
+    side = bw.x - Number(bw.tickGridExtend);
+  }
+  if (bw.tickGridTop != null && Number.isFinite(Number(bw.tickGridTop))) {
+    side = Number(bw.tickGridTop);
+  }
+  for (const t of bw.ticks || []) {
+    const ty = boxWhiskerTickPos(t);
+    if (!Number.isFinite(ty)) continue;
+    lines.push({ x1: side, y1: ty, x2: axisX, y2: ty, tickGridStyle: style });
+  }
+  return lines;
 }
 
 function pushDownGuide(guides, style, seg) {
@@ -448,6 +517,7 @@ export function boxWhiskerParts(bw) {
       axisLabel: labeled.axisLabel,
       arrows: deco.arrows,
       guides: deco.guides,
+      tickGrids: tickGridLines(bw, labeled.axis, false),
     };
   }
 
@@ -516,6 +586,7 @@ export function boxWhiskerParts(bw) {
     axisLabel: labeled.axisLabel,
     arrows: deco.arrows,
     guides: deco.guides,
+    tickGrids: tickGridLines(bw, labeled.axis, true),
   };
 }
 
@@ -573,7 +644,7 @@ export function addBoxWhiskerBounds(bw, add) {
   };
   push(p.box.x, p.box.y);
   push(p.box.x + p.box.w, p.box.y + p.box.h);
-  for (const s of [...p.whiskers, ...p.caps, p.median, ...p.tickMarks, ...(p.guides || []), ...(p.arrows || [])]) {
+  for (const s of [...p.whiskers, ...p.caps, p.median, ...p.tickMarks, ...(p.tickGrids || []), ...(p.guides || []), ...(p.arrows || [])]) {
     push(s.x1, s.y1);
     push(s.x2, s.y2);
   }

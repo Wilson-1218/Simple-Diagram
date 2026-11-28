@@ -687,7 +687,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.55",
+      title_doc: "Simple Diagram · v13.5.56",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1040,7 +1040,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.55",
+      title_doc: "Simple Diagram · v13.5.56",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -5644,7 +5644,36 @@
     maxX += oh.pos;
     minY -= oh.pos;
     maxY += oh.neg;
+    if (coordXNameOnRight(plot)) {
+      const lx = coordAxisNameText(plot.axisLabelX, "x");
+      if (lx) {
+        const scales = coordPlotScales(plot);
+        const tipX = plot.ox + plot.xmax * scales.xUnitPx + oh.pos;
+        const fs = 16;
+        const tw = Math.max(fs, lx.length * fs * 0.62);
+        maxX = Math.max(maxX, tipX + 18 + tw);
+        minY = Math.min(minY, plot.oy - fs);
+        maxY = Math.max(maxY, plot.oy + fs);
+      }
+    }
     return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
+  }
+
+  /** undefined/null → fallback. false, blank, and whitespace hide the name. */
+  function coordAxisNameText(value, fallback) {
+    if (diagramMod && typeof diagramMod.coordAxisLabelText === "function") {
+      return diagramMod.coordAxisLabelText(value, fallback);
+    }
+    if (value == null) return fallback;
+    if (value === false) return "";
+    return String(value).trim();
+  }
+
+  function coordXNameOnRight(plot) {
+    if (diagramMod && typeof diagramMod.coordXAxisNamePlacement === "function") {
+      return diagramMod.coordXAxisNamePlacement(plot) === "right";
+    }
+    return !!(plot && String(plot.axisLabelXPos || "").trim().toLowerCase() === "right");
   }
 
   function coordLogBase(params) {
@@ -6257,10 +6286,14 @@
       c.fillStyle = color;
       c.fillText("O", o.x - 4, o.y + 3);
     }
-    const lx = (plot.axisLabelX || "x").trim();
-    const ly = (plot.axisLabelY || "y").trim();
+    const lx = coordAxisNameText(plot.axisLabelX, "x");
+    const ly = coordAxisNameText(plot.axisLabelY, "y");
     if (lx) {
-      paintMathOrPlain(c, lx, xPos.x + 4, xPos.y + 2, fontPx, color, true, "left", "top", false, true);
+      if (coordXNameOnRight(plot)) {
+        paintMathOrPlain(c, lx, xPos.x + 18, xPos.y, fontPx, color, true, "left", "middle", false, true);
+      } else {
+        paintMathOrPlain(c, lx, xPos.x + 4, xPos.y + 2, fontPx, color, true, "left", "top", false, true);
+      }
     }
     if (ly) {
       paintMathOrPlain(c, ly, yPos.x + 4, yPos.y - 2, fontPx, color, true, "left", "bottom", false, true);
@@ -6359,6 +6392,16 @@
     };
     const axisLabel = readBoxAxisLabelLocal(raw);
     if (axisLabel) out.axisLabel = axisLabel;
+    if (raw.tickGridStyle != null && raw.tickGridStyle !== "") {
+      const g = String(raw.tickGridStyle).trim().toLowerCase();
+      out.tickGridStyle = g === "dotted" || g === "dashed" || g === "solid" ? g : "none";
+    }
+    if (raw.tickGridTop != null && Number.isFinite(Number(raw.tickGridTop))) {
+      out.tickGridTop = Number(raw.tickGridTop);
+    }
+    if (raw.tickGridExtend != null && Number.isFinite(Number(raw.tickGridExtend))) {
+      out.tickGridExtend = Number(raw.tickGridExtend);
+    }
     if (orientation === "v") {
       const x = Number(raw.x);
       if (!Number.isFinite(x)) return null;
@@ -6557,7 +6600,7 @@
     };
     add(p.box.x, p.box.y);
     add(p.box.x + p.box.w, p.box.y + p.box.h);
-    for (const s of [...p.whiskers, ...p.caps, p.median, ...p.tickMarks]) {
+    for (const s of [...p.whiskers, ...p.caps, p.median, ...p.tickMarks, ...(p.tickGrids || [])]) {
       add(s.x1, s.y1);
       add(s.x2, s.y2);
     }
@@ -6611,6 +6654,16 @@
     c.lineCap = "round";
     c.lineJoin = "round";
     c.setLineDash([]);
+    if (parts.tickGrids && parts.tickGrids.length) {
+      for (const s of parts.tickGrids) {
+        const style = s.tickGridStyle || "dotted";
+        if (style === "solid") c.setLineDash([]);
+        else if (style === "dotted") c.setLineDash([1.5, 3]);
+        else c.setLineDash([5, 4]);
+        strokeLine(s);
+      }
+      c.setLineDash([]);
+    }
     const tl = toScreen(parts.box.x, parts.box.y);
     const br = toScreen(parts.box.x + parts.box.w, parts.box.y + parts.box.h);
     c.beginPath();
@@ -6721,6 +6774,8 @@
         xLabel: raw.xLabel != null ? String(raw.xLabel) : "",
         yLabel: raw.yLabel != null ? String(raw.yLabel) : "",
         yLabelMode: raw.yLabelMode === "stack" || raw.yLabelMode === "vertical" ? "stack" : "rotate",
+        ...(raw.title != null && String(raw.title).trim() !== "" ? { title: String(raw.title).trim() } : {}),
+        ...(raw.boxed === true || raw.boxed === "true" || raw.boxed === 1 ? { boxed: true } : {}),
       };
     } catch {
       return null;
@@ -6776,6 +6831,17 @@
           }
         : null,
       yLabel: bc.yLabel ? { x: bc.x - Math.max(36, bc.plotW * 0.12), y: topY + bc.plotH / 2, text: bc.yLabel, mode: bc.yLabelMode } : null,
+      title:
+        bc.title != null && String(bc.title).trim() !== ""
+          ? { x: bc.x + bc.plotW / 2, y: bc.y - bc.plotH - 26, text: String(bc.title).trim() }
+          : null,
+      frameSides:
+        bc.boxed === true
+          ? [
+              { x1: bc.x, y1: topY, x2: bc.x + bc.plotW, y2: topY },
+              { x1: bc.x + bc.plotW, y1: topY, x2: bc.x + bc.plotW, y2: bc.y },
+            ]
+          : [],
     };
   }
 
@@ -6805,6 +6871,14 @@
     add(p.frame.x, p.frame.y); add(p.frame.x + p.frame.w, p.frame.y + p.frame.h);
     for (const c of p.catLabels) add(c.x, c.y + 4);
     if (p.xLabel) add(p.xLabel.x, p.xLabel.y + 4);
+    if (p.title) {
+      add(p.title.x, p.title.y - 12);
+      add(p.title.x, p.title.y + 12);
+    }
+    for (const s of p.frameSides || []) {
+      add(s.x1, s.y1);
+      add(s.x2, s.y2);
+    }
     if (p.yLabel) { add(p.yLabel.x - 8, p.yLabel.y); add(p.yLabel.x + 8, p.yLabel.y); }
     return b;
   }
@@ -6829,6 +6903,7 @@
     }
     for (const s of parts.hatch) strokeLine(s, false);
     if (bc.showAxes) { strokeLine(parts.axisX, false); strokeLine(parts.axisY, false); }
+    for (const s of parts.frameSides || []) strokeLine(s, false);
     for (const s of parts.tickMarks) strokeLine(s, false);
     c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
     c.textBaseline = "middle";
@@ -6846,6 +6921,12 @@
     if (parts.xLabel) {
       const p = toScreen(parts.xLabel.x, parts.xLabel.y);
       c.fillText(parts.xLabel.text, p.x, p.y);
+    }
+    if (parts.title) {
+      const p = toScreen(parts.title.x, parts.title.y);
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(parts.title.text, p.x, p.y);
     }
     if (parts.yLabel) {
       const p = toScreen(parts.yLabel.x, parts.yLabel.y);
@@ -7017,6 +7098,7 @@
     }
     for (const s of parts.hatch) out += line(s, false);
     if (bc.showAxes) { out += line(parts.axisX, false); out += line(parts.axisY, false); }
+    for (const s of parts.frameSides || []) out += line(s, false);
     for (const s of parts.tickMarks) out += line(s, false);
     for (const t of parts.tickLabels) {
       const p = toS(t.x, t.y);
@@ -7029,6 +7111,10 @@
     if (parts.xLabel) {
       const p = toS(parts.xLabel.x, parts.xLabel.y);
       out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="hanging">${escapeXml(parts.xLabel.text)}</text>\n`;
+    }
+    if (parts.title) {
+      const p = toS(parts.title.x, parts.title.y);
+      out += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="middle" dominant-baseline="middle">${escapeXml(parts.title.text)}</text>\n`;
     }
     if (parts.yLabel) {
       const p = toS(parts.yLabel.x, parts.yLabel.y);
@@ -7059,6 +7145,18 @@
     };
     const tl = toS(parts.box.x, parts.box.y);
     const br = toS(parts.box.x + parts.box.w, parts.box.y + parts.box.h);
+    for (const s of parts.tickGrids || []) {
+      const style = s.tickGridStyle || "dotted";
+      const a = toS(s.x1, s.y1);
+      const b = toS(s.x2, s.y2);
+      const da =
+        style === "solid"
+          ? ""
+          : style === "dashed"
+            ? ` stroke-dasharray="${(4 * scale * 0.75).toFixed(2)} ${(3 * scale * 0.75).toFixed(2)}"`
+            : ` stroke-dasharray="${(1.2 * scale * 0.75).toFixed(2)} ${(2.4 * scale * 0.75).toFixed(2)}"`;
+      out += `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" stroke-linecap="butt"${da} />\n`;
+    }
     out += `<rect x="${Math.min(tl.x, br.x).toFixed(2)}" y="${Math.min(tl.y, br.y).toFixed(2)}" width="${Math.abs(br.x - tl.x).toFixed(2)}" height="${Math.abs(br.y - tl.y).toFixed(2)}" fill="none" stroke="#111" stroke-width="${lw}" />\n`;
     out += line(parts.median);
     for (const s of parts.whiskers) out += line(s);
@@ -7700,7 +7798,11 @@
     const angSel = document.getElementById("coordXAngleUnit");
     const axisChk = document.getElementById("coordAngleAxis");
     syncCoordWindowInputFromPlot(plot);
-    if (labInp) labInp.value = (plot.axisLabelX || "x") + "," + (plot.axisLabelY || "y");
+    if (labInp) {
+      const lxShow = plot.axisLabelX == null ? "x" : String(plot.axisLabelX);
+      const lyShow = plot.axisLabelY == null ? "y" : String(plot.axisLabelY);
+      labInp.value = lxShow + "," + lyShow;
+    }
     if (tickChk) tickChk.checked = plot.showTickLabels !== false;
     const xTickInp = document.getElementById("coordXTicks");
     const yTickInp = document.getElementById("coordYTicks");
@@ -7804,8 +7906,8 @@
     }
 
     plot.angleAxisOn = wantOn;
-    plot.axisLabelX = labs[0] || "x";
-    plot.axisLabelY = labs[1] || "y";
+    plot.axisLabelX = labs[0] != null ? String(labs[0]).trim() : "x";
+    plot.axisLabelY = labs[1] != null ? String(labs[1]).trim() : "y";
     if (xSpec && xSpec.ticks) plot.xTicks = xSpec.ticks;
     else delete plot.xTicks;
     if (ySpec && ySpec.ticks) plot.yTicks = ySpec.ticks;
@@ -7923,10 +8025,14 @@
     if (plot.showOrigin !== false) {
       body += `<text x="${(o.x - 4).toFixed(2)}" y="${(o.y + 3).toFixed(2)}" ${haloAttrs} font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="end" dominant-baseline="hanging">O</text>\n`;
     }
-    const lx = (plot.axisLabelX || "x").trim();
-    const ly = (plot.axisLabelY || "y").trim();
+    const lx = coordAxisNameText(plot.axisLabelX, "x");
+    const ly = coordAxisNameText(plot.axisLabelY, "y");
     if (lx) {
-      body += svgMathTextTag(lx, xPos.x + 4, xPos.y + 2, fontPx, haloAttrs, "start", "hanging", true);
+      if (coordXNameOnRight(plot)) {
+        body += svgMathTextTag(lx, xPos.x + 18, xPos.y, fontPx, haloAttrs, "start", "middle", true);
+      } else {
+        body += svgMathTextTag(lx, xPos.x + 4, xPos.y + 2, fontPx, haloAttrs, "start", "hanging", true);
+      }
     }
     if (ly) {
       body += svgMathTextTag(ly, yPos.x + 4, yPos.y - 2, fontPx, haloAttrs, "start", "auto", true);
@@ -13363,7 +13469,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.55",
+      version: "13.5.56",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

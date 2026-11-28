@@ -138,6 +138,23 @@ export function coordAxisOverhangPx(plot) {
   return { pos, neg };
 }
 
+/**
+ * Axis name. undefined/null keeps the fallback ("x" / "y").
+ * false, "", and whitespace hide the name. They do not fall back.
+ */
+export function coordAxisLabelText(value, fallback) {
+  if (value == null) return fallback;
+  if (value === false) return "";
+  return String(value).trim();
+}
+
+/** "below" is the historical spot under the +x arrow. "right" sits on the axis. */
+export function coordXAxisNamePlacement(plot) {
+  const raw = plot && plot.axisLabelXPos;
+  if (raw == null || raw === "") return "below";
+  return String(raw).trim().toLowerCase() === "right" ? "right" : "below";
+}
+
 export function coordPlotBounds(plot) {
   const scales = coordAxisScales(plot);
   const oh = coordAxisOverhangPx(plot);
@@ -177,6 +194,18 @@ export function coordPlotBounds(plot) {
     maxX = Math.max(maxX, lab.x + tw / 2);
     minY = Math.min(minY, lab.y - fs * 0.7);
     maxY = Math.max(maxY, lab.y + fs * 0.5);
+  }
+  if (coordXAxisNamePlacement(plot) === "right") {
+    const lx = coordAxisLabelText(plot.axisLabelX, "x");
+    if (lx) {
+      const tipX = num(plot.ox, 0) + num(plot.xmax, 6) * scales.xUnitPx + oh.pos;
+      const oy = num(plot.oy, 0);
+      const fs = 16;
+      const tw = Math.max(fs, lx.length * fs * 0.62);
+      maxX = Math.max(maxX, tipX + 18 + tw);
+      minY = Math.min(minY, oy - fs);
+      maxY = Math.max(maxY, oy + fs);
+    }
   }
   return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
 }
@@ -831,11 +860,15 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
     body += `<text x="${(o.x - 4).toFixed(2)}" y="${(o.y + 3).toFixed(2)}" fill="#111" ${fam} font-size="${fontPx}" text-anchor="end" dominant-baseline="hanging">O</text>\n`;
   }
 
-  const lx = String(plot.axisLabelX != null ? plot.axisLabelX : "x").trim();
-  const ly = String(plot.axisLabelY != null ? plot.axisLabelY : "y").trim();
+  const lx = coordAxisLabelText(plot.axisLabelX, "x");
+  const ly = coordAxisLabelText(plot.axisLabelY, "y");
   if (lx) {
     const rich = svgTextInner(lx, true);
-    body += `<text x="${(xPos.x + 4).toFixed(2)}" y="${(xPos.y + 2).toFixed(2)}" fill="#111" ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="start" dominant-baseline="hanging">${rich.inner}</text>\n`;
+    if (coordXAxisNamePlacement(plot) === "right") {
+      body += `<text x="${(xPos.x + 18).toFixed(2)}" y="${xPos.y.toFixed(2)}" fill="#111" ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="start" dominant-baseline="middle">${rich.inner}</text>\n`;
+    } else {
+      body += `<text x="${(xPos.x + 4).toFixed(2)}" y="${(xPos.y + 2).toFixed(2)}" fill="#111" ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="start" dominant-baseline="hanging">${rich.inner}</text>\n`;
+    }
   }
   if (ly) {
     const rich = svgTextInner(ly, true);

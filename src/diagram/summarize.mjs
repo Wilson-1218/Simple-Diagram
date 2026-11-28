@@ -76,11 +76,11 @@ export const OP_CATALOG = {
   addEqualMark: { args: "segmentId, group?, side?" },
   addBoxWhisker: {
     args: "y|x, min, q1, median, q3, max, outliers?, ticks?, boxHeight?, cap?, capHeight?, showCaps?, axisArrows?, guideStyle?, orientation?, showAxis?, axisLabel?|xLabel?|yLabel?",
-    note: "Dedicated boxplot. cap is half-length; capHeight is full length (0 draws no caps, does not fall back to 0.55×boxHeight). showCaps:false wins. axisArrows both|right|none. guideStyle dashed|dotted|solid|none, downward only. alias addBoxPlot",
+    note: "Dedicated boxplot. cap is half-length; capHeight is full length (0 draws no caps, does not fall back to 0.55×boxHeight). showCaps:false wins. axisArrows both|right|none. guideStyle dashed|dotted|solid|none, downward only. tickGridStyle none|dotted|dashed|solid (none default, no extra lines). tickGridTop or tickGridExtend; default from y-boxHeight*0.95 down to axisY, behind the box. alias addBoxPlot",
   },
   addBarChart: {
-    args: "x, y, categories, values|heights, plotW?, plotH?, yMin?, yMax?, yTicks?, yStep?, xLabel?, yLabel?, yLabelMode?, barPattern?, showGrid?",
-    note: "Dedicated bar chart; yLabel along axis (rotate|stack); barPattern hatch|solid; alias addBar. Stored on doc.barCharts",
+    args: "x, y, categories, values|heights, plotW?, plotH?, yMin?, yMax?, yTicks?, yStep?, xLabel?, yLabel?, yLabelMode?, barPattern?, showGrid?, title?, boxed?",
+    note: "Dedicated bar chart; yLabel along axis (rotate|stack); barPattern hatch|solid. title omitted or blank draws nothing; otherwise centered at (x+plotW/2, y-plotH-26). boxed false (default) keeps the L axes; true adds the top and right sides. alias addBar. Stored on doc.barCharts",
   },
   addCumulativeFrequency: {
     args: "x, y, boundaries, values, plotW?, plotH?, yMax?, yStep?, xLabel?, yLabel?, smooth?, showGrid?, projections?",
@@ -136,7 +136,7 @@ export const OP_CATALOG = {
   },
   addPieChart: {
     args: "x,y|centerId, slices (≥2), r?, startDeg?, clockwise?, idPrefix?, labelRadiusRatio?, pattern?, opacity?",
-    note: "angle degrees or value normalized to 360. label via addText; angleText (alias angleLabel) via addAngleArc; rightAngle via addRightAngle. Both texts and no labelRadiusRatio: category at 0.68r (1.16r and side anchor if the slice is under 45°), angle text near 0.36r. Explicit labelRadiusRatio still places the category. Alias addPie",
+    note: "angle degrees or value normalized to 360. label via addText; angleText (alias angleLabel) via addAngleArc; rightAngle via addRightAngle. Both texts and no labelRadiusRatio: category at 0.68r (1.16r and side anchor if the slice is under 45°), angle text near 0.36r. Explicit labelRadiusRatio still places the category. subLabel or a newline in label is two lines on the bisector at labelRadiusRatio (gap 18) and is not pushed outside. keepLabelsInside:true keeps every category label inside. slice arcSize overrides the pie arcSize. staggerArcs:true uses arcSize on even slices and arcSize+5 on odd slices; a slice under 50° then places angleText at 0.38r–0.42r. idPrefix adds aliases {prefix}O and {prefix}0..{n-1} when those ids are free. Alias addPie",
   },
   addPie: {
     args: "same as addPieChart",
@@ -173,8 +173,8 @@ export const OP_CATALOG = {
   addDiameter: { args: "circleId, throughId|angle|deg, style?" },
   addChord: { args: "circleId, startId+endId | deg0+deg1 | angle0+angle1, style?" },
   addCoordPlot: {
-    args: "ox, oy, unitPx?, xUnitPx?, yUnitPx?, xStep?, yStep?, xTicks?, yTicks?, window?, curves?, feasibleRegion? | feasibleRegions?",
-    note: "xTicks/yTicks replace that axis; xStep/yStep stride; xUnitPx/yUnitPx unequal scale; curve domain+style; feasibleRegion clips linear inequalities",
+    args: "ox, oy, unitPx?, xUnitPx?, yUnitPx?, xStep?, yStep?, xTicks?, yTicks?, window?, curves?, feasibleRegion? | feasibleRegions?, axisLabelX?, axisLabelY?, axisLabelXPos?",
+    note: "xTicks/yTicks replace that axis; xStep/yStep stride; xUnitPx/yUnitPx unequal scale; curve domain+style; feasibleRegion clips linear inequalities. axisLabelX/Y: only undefined/null default to x/y; \"\", whitespace, or false hides. axisLabelXPos below (default) or right (xmax tip + 18, on the axis)",
   },
   addCurve: { args: "plotId, type, params?, label?, domain?, style?", note: "type includes vline (params.x) for a vertical boundary" },
   addCurveIntersection: {
