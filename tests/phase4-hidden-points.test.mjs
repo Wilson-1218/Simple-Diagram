@@ -8,7 +8,7 @@ import {
 } from "../src/diagram/index.mjs";
 
 test("APP_VERSION bumped for phase4 hidden points", () => {
-  assert.equal(APP_VERSION, "13.5.63");
+  assert.equal(APP_VERSION, "13.5.64");
 });
 
 test("hidden:true on addPoint / construction ops stays in doc.points", () => {

@@ -32,8 +32,8 @@ function withWarns(fn) {
   }
 }
 
-test("APP_VERSION is 13.5.63", () => {
-  assert.equal(APP_VERSION, "13.5.63");
+test("APP_VERSION is 13.5.64", () => {
+  assert.equal(APP_VERSION, "13.5.64");
 });
 
 test("OP_NAMES includes triangle, bearing, and pie ops", () => {

@@ -18,8 +18,8 @@ import {
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("APP_VERSION is 13.5.63", () => {
-  assert.equal(APP_VERSION, "13.5.63");
+test("APP_VERSION is 13.5.64", () => {
+  assert.equal(APP_VERSION, "13.5.64");
 });
 
 function q15(extra = {}) {

@@ -8,8 +8,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { APP_VERSION, applyOps, documentToSvg, statChartParts } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.63", () => {
-  assert.equal(APP_VERSION, "13.5.63");
+test("APP_VERSION is 13.5.64", () => {
+  assert.equal(APP_VERSION, "13.5.64");
 });
 
 function footDoc(extra = {}) {
