@@ -298,6 +298,8 @@
   /** @type {"square"|"triangle"} */
   let gridMode = DEFAULT_GRID_MODE;
   let hideExportPoints = DEFAULT_HIDE_EXPORT_POINTS;
+  /** setMeta autoScaleText:false keeps default 14pt type and stroke at the SVG weight. */
+  let autoScaleText = true;
   let pendingLengthSeg = null;
 
   // Pref keys: simple-diagram-* with one-time fallback from exam-diagram-*.
@@ -687,7 +689,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.60",
+      title_doc: "Simple Diagram · v13.5.61",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1040,7 +1042,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.60",
+      title_doc: "Simple Diagram · v13.5.61",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -3610,6 +3612,7 @@
       gridSnap,
       gridMode,
       hideExportPoints,
+      autoScaleText,
       layers,
       fillMode,
       shapeMode,
@@ -3669,6 +3672,7 @@
       hideExportPoints = !!data.hideExportPoints;
       if (chkHideExportPoints) chkHideExportPoints.checked = hideExportPoints;
     }
+    if ("autoScaleText" in data) autoScaleText = data.autoScaleText !== false;
     if (data.layers && typeof data.layers === "object") {
       layers = {
         gridShow: data.layers.gridShow != null ? !!data.layers.gridShow : true,
@@ -4535,6 +4539,7 @@
     pendingLengthSeg = null;
     pendingCoordEditId = null;
     nextLetter = "A";
+    autoScaleText = true;
     // Keep grid/snap/mode (+ export-hide-points) prefs — clear is geometry only.
     fitEmptyView();
     // Tip of history remains the pre-clear snapshot; Ctrl+Z restores it.
@@ -13158,10 +13163,7 @@
   async function exportPng(opts) {
     const preferCached = opts && opts.fromPreview && lastPreviewPngBlob;
     try {
-      if (!preferCached) await loadDiagramModule();
-      const blob = preferCached
-        ? lastPreviewPngBlob
-        : await canvasToPngBlob(buildExportCanvas(2));
+      const blob = preferCached ? lastPreviewPngBlob : await svgDocumentToPngBlob();
       await saveBlobAs(blob, "simple-diagram.png", "image/png", [".png"]);
     } catch (err) {
       console.error(err);
@@ -13172,7 +13174,11 @@
   /** documentToSvg → blob URL → Image → canvas PNG. Resolves to a PNG Blob. */
   function svgDocumentToPngBlob() {
     return loadDiagramModule().then((mod) => {
-      const svg = mod.documentToSvg(buildDocSnapshotForOps(), { scale: 2 });
+      const doc = buildDocSnapshotForOps();
+      const svg = mod.documentToSvg(doc, {
+        scale: 2,
+        autoScaleText: doc.autoScaleText !== false,
+      });
       return new Promise((resolve, reject) => {
         const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
         const img = new Image();
@@ -13229,17 +13235,9 @@
           const saved = await downloadPngBlob(blob);
           if (!saved) statusHint.textContent = t("copy_png_fail");
         })
-        .catch(async (err2) => {
+        .catch((err2) => {
           console.error(err2);
-          try {
-            await loadDiagramModule();
-            const blob = await canvasToPngBlob(buildExportCanvas(2));
-            const saved = await downloadPngBlob(blob);
-            if (!saved) statusHint.textContent = t("copy_png_fail");
-          } catch (err3) {
-            console.error(err3);
-            statusHint.textContent = t("copy_png_fail");
-          }
+          statusHint.textContent = t("copy_png_fail");
         });
     };
     try {
@@ -13279,41 +13277,41 @@
     const note = document.getElementById("exportPreviewNote");
     const sizeEl = document.getElementById("exportPreviewSize");
     if (!dlg || !img) return;
+    let blob;
     try {
-      await loadDiagramModule();
+      blob = await svgDocumentToPngBlob();
     } catch (err) {
       console.error(err);
       statusHint.textContent = "PNG 匯出失敗";
       return;
     }
-    const off = buildExportCanvas(2);
-    try {
-      lastPreviewPngBlob = await canvasToPngBlob(off);
-    } catch (_) {
-      lastPreviewPngBlob = null;
-    }
+    lastPreviewPngBlob = blob;
     if (img._previewUrl) URL.revokeObjectURL(img._previewUrl);
-    // Prefer blob URL of the exact PNG that download will use
-    if (lastPreviewPngBlob) {
-      img._previewUrl = URL.createObjectURL(lastPreviewPngBlob);
-    } else {
-      img._previewUrl = off.toDataURL("image/png");
+    img._previewUrl = URL.createObjectURL(blob);
+    try {
+      await new Promise((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("PNG preview failed"));
+        img.src = img._previewUrl;
+      });
+    } catch (err) {
+      console.error(err);
+      statusHint.textContent = "PNG 匯出失敗";
+      return;
     }
-    img.src = img._previewUrl;
-    img.alt = "匯出預覽 " + off.width + "×" + off.height;
+    const pw = img.naturalWidth || 0;
+    const ph = img.naturalHeight || 0;
+    img.alt = "匯出預覽 " + pw + "×" + ph;
     img.removeAttribute("width");
     img.removeAttribute("height");
     if (sizeEl) {
-      const layout = exportLayout(2);
       sizeEl.textContent =
-        off.width +
+        pw +
         " × " +
-        off.height +
+        ph +
         " px" +
         (exportCrop ? " · 自選裁切" : " · 自動裁切") +
-        " · 邊距 " +
-        layout.pad +
-        "px";
+        " · SVG 光柵";
     }
     if (note) {
       let t = hideExportPoints
@@ -13699,7 +13697,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.60",
+      version: "13.5.61",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
@@ -13744,6 +13742,7 @@ ${body}</svg>`;
       gridSnap,
       gridMode,
       hideExportPoints,
+      ...(autoScaleText === false ? { autoScaleText: false } : {}),
       view: view && typeof view === "object"
         ? { x: view.x, y: view.y, scale: view.scale }
         : { x: 400, y: 300, scale: 2 },
@@ -14030,6 +14029,7 @@ ${body}</svg>`;
       writeGridModePref(gridMode);
     }
     if (data.hideExportPoints != null) hideExportPoints = !!data.hideExportPoints;
+    autoScaleText = data.autoScaleText !== false;
     syncViewOptionUI();
     syncLayersUI();
     if (labelSizeSelect) labelSizeSelect.value = String(labelFontSize);
@@ -14171,6 +14171,7 @@ ${body}</svg>`;
       gridSnap,
       gridMode,
       hideExportPoints,
+      ...(autoScaleText === false ? { autoScaleText: false } : {}),
       view: { ...view },
       name: currentDocName,
     };
