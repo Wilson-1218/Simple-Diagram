@@ -67,8 +67,8 @@ function mathVerts(doc) {
   });
 }
 
-test("APP_VERSION is 13.5.56 and addFeasibleRegion is an op", () => {
-  assert.equal(APP_VERSION, "13.5.56");
+test("APP_VERSION is 13.5.57 and addFeasibleRegion is an op", () => {
+  assert.equal(APP_VERSION, "13.5.57");
   assert.ok(OP_NAMES.includes("addFeasibleRegion"));
 });
 

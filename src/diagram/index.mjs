@@ -84,6 +84,7 @@ export {
   boxWhiskerTickPos,
   boxWhiskerTickLabel,
   boxWhiskerParts,
+  boxWhiskerDash,
   addBoxWhiskerBounds,
 } from "./box-whisker.mjs";
 export {

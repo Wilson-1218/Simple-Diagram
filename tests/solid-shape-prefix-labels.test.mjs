@@ -5,7 +5,7 @@ import { applyOps, validateDiagram, APP_VERSION } from "../src/diagram/index.mjs
 const CUBE_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
 test("APP_VERSION bumped for solid shape prefix/labels", () => {
-  assert.equal(APP_VERSION, "13.5.56");
+  assert.equal(APP_VERSION, "13.5.57");
 });
 
 test("addShape cube default still emits A..H on auto ids", () => {
