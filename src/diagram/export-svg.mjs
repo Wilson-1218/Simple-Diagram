@@ -36,6 +36,7 @@ import {
   addBarChartBounds,
 } from "./bar-chart.mjs";
 import { normalizeFillPattern, hatchStrokesForPolygon, HATCH_INK_PAPER } from "./hatch.mjs";
+import { fillOutlinePoints } from "./path-fill.mjs";
 import { addCoordPlotBounds, svgCoordPlot } from "./coord-plot.mjs";
 import { svgTextInner } from "./math-text.mjs";
 import { arcDraw } from "./angle-arc.mjs";
@@ -141,7 +142,12 @@ function boundsOf(doc, pad = 24) {
   }
   for (const sec of doc.sectors || []) addSectorArcExtrema(sec, pts, add);
   for (const f of doc.fills || []) {
-    if (f && (f.kind === "sector" || f.kind === "segment")) addSectorArcExtrema(f, pts, add);
+    if (!f) continue;
+    const outline = fillOutlinePoints(f, (id) => pts.get(id), {
+      circle: (id) => (doc.circles || []).find((c) => c.id === id),
+    });
+    if (outline) for (const p of outline) add(p.x, p.y);
+    if (f.kind === "sector" || f.kind === "segment") addSectorArcExtrema(f, pts, add);
   }
   for (const cir of doc.circles || []) {
     const c = pts.get(cir.centerId);
@@ -609,9 +615,22 @@ export function documentToSvg(doc, opts = {}) {
   const markLw = ink.markStroke.toFixed(2);
 
   let body = "";
+  let defs = "";
   let hatchClipSeq = 0;
 
-  /** Emit solid fill or clipped hatch for a closed path `d` (SVG userUnits). */
+  const polylinePath = (screenPts) => {
+    if (!screenPts || screenPts.length < 2) return "";
+    let d = `M${screenPts[0].x.toFixed(2)},${screenPts[0].y.toFixed(2)}`;
+    for (let i = 1; i < screenPts.length; i++) {
+      d += ` L${screenPts[i].x.toFixed(2)},${screenPts[i].y.toFixed(2)}`;
+    }
+    return `${d} Z`;
+  };
+
+  /**
+   * Solid fills are painted in document order, after any earlier hatch group.
+   * Clip paths live in defs so they cannot paint over a later solid sector.
+   */
   const emitFillPath = (f, d, screenPts) => {
     if (!d || !shown(f)) return;
     const paint = resolveFillPaint(f, { dark: false });
@@ -621,7 +640,7 @@ export function documentToSvg(doc, opts = {}) {
       const spacing = Math.max(2, Number(f.hatchSpacing) || 8) * scale;
       const strokes = hatchStrokesForPolygon(screenPts, { spacing });
       const strokeCol = paint.color || HATCH_INK_PAPER;
-      body += `<clipPath id="${clipId}"><path d="${d}" /></clipPath>\n`;
+      defs += `<clipPath id="${clipId}"><path d="${d}" /></clipPath>\n`;
       body += `<g clip-path="url(#${clipId})"${svgDataAttrs(f)}>\n`;
       for (const s of strokes) {
         body += `<line x1="${s.x1.toFixed(2)}" y1="${s.y1.toFixed(2)}" x2="${s.x2.toFixed(2)}" y2="${s.y2.toFixed(2)}" stroke="${strokeCol}" stroke-width="${sw}" stroke-linecap="butt" />\n`;
@@ -633,6 +652,8 @@ export function documentToSvg(doc, opts = {}) {
     }
   };
 
+  const circleOf = (id) => (doc.circles || []).find((c) => c.id === id);
+
   for (const f of doc.fills || []) {
     const kind =
       f.kind === "sector" ||
@@ -641,6 +662,15 @@ export function documentToSvg(doc, opts = {}) {
       f.kind === "pathFill"
         ? f.kind
         : "polygon";
+    const hatchWanted = normalizeFillPattern(f.pattern) === "hatch";
+    if (hatchWanted && kind !== "polygon") {
+      const outline = fillOutlinePoints(f, (id) => pts.get(id), { circle: circleOf });
+      if (outline && outline.length >= 3) {
+        const screenPts = outline.map((p) => toS(p.x, p.y));
+        emitFillPath(f, polylinePath(screenPts), screenPts);
+        continue;
+      }
+    }
     if (kind === "pathFill" && Array.isArray(f.edges) && f.edges.length >= 2) {
       let d = "";
       let ok = true;
@@ -1268,6 +1298,6 @@ export function documentToSvg(doc, opts = {}) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(w)}" height="${Math.ceil(h)}" viewBox="0 0 ${w.toFixed(2)} ${h.toFixed(2)}">
 <rect width="100%" height="100%" fill="#ffffff"/>
-${body}</svg>
+${defs ? `<defs>\n${defs}</defs>\n` : ""}${body}</svg>
 `;
 }

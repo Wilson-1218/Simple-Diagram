@@ -689,7 +689,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.63",
+      title_doc: "Simple Diagram · v13.5.64",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1042,7 +1042,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.63",
+      title_doc: "Simple Diagram · v13.5.64",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -2387,6 +2387,47 @@
     return null;
   }
 
+  /**
+   * Minor-arc samples at hypot(from − center), signed minor sweep.
+   * Prefer the module (same function documentToSvg clips with) once it has loaded.
+   * The first edge and a clockwise from→to each use their own radius and sweep.
+   */
+  function sampleMinorArcLocal(center, from, to) {
+    if (!center || !from || !to) return null;
+    const r = Math.hypot(from.x - center.x, from.y - center.y);
+    if (!(r > 1e-9)) return null;
+    const a0 = Math.atan2(from.y - center.y, from.x - center.x);
+    const a1 = Math.atan2(to.y - center.y, to.x - center.x);
+    let delta = a1 - a0;
+    while (delta <= -Math.PI) delta += Math.PI * 2;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    const step = Math.PI / 18;
+    let n = Math.max(2, Math.ceil(Math.abs(delta) / step));
+    if (n % 2) n += 1;
+    const pts = [];
+    for (let i = 0; i <= n; i++) {
+      const a = a0 + (delta * i) / n;
+      pts.push({ x: center.x + r * Math.cos(a), y: center.y + r * Math.sin(a) });
+    }
+    return pts;
+  }
+
+  function minorArcWorldSamples(center, from, to) {
+    if (diagramMod && typeof diagramMod.sampleMinorArc === "function") {
+      return diagramMod.sampleMinorArc(center, from, to);
+    }
+    return sampleMinorArcLocal(center, from, to);
+  }
+
+  function fillOutlineWorld(fill) {
+    if (diagramMod && typeof diagramMod.fillOutlinePoints === "function") {
+      return diagramMod.fillOutlinePoints(fill, (id) => pointById(id), {
+        circle: (id) => circles.find((c) => c.id === id),
+      });
+    }
+    return null;
+  }
+
   function buildFillPath(ctxOrC, fill, toS) {
     const kind = fillKindOf(fill);
     const begin = typeof ctxOrC.beginPath === "function";
@@ -2436,19 +2477,19 @@
           const s0 = pointById(e.from);
           const s1 = pointById(e.to);
           if (!c || !s0 || !s1) return false;
-          const a0 = Math.atan2(s0.y - c.y, s0.x - c.x);
-          const a1 = Math.atan2(s1.y - c.y, s1.x - c.x);
-          let delta = a1 - a0;
-          while (delta <= -Math.PI) delta += Math.PI * 2;
-          while (delta > Math.PI) delta -= Math.PI * 2;
-          const sc = toS(c.x, c.y);
-          const ss = toS(s0.x, s0.y);
-          const rScreen = Math.hypot(ss.x - sc.x, ss.y - sc.y);
+          const samples = minorArcWorldSamples(c, s0, s1);
+          if (!samples || samples.length < 2) return false;
+          let i0 = 0;
           if (!started) {
-            ctxOrC.moveTo(ss.x, ss.y);
+            const s = toS(samples[0].x, samples[0].y);
+            ctxOrC.moveTo(s.x, s.y);
             started = true;
+            i0 = 1;
           }
-          ctxOrC.arc(sc.x, sc.y, rScreen, a0, a1, delta < 0);
+          for (let i = i0; i < samples.length; i++) {
+            const s = toS(samples[i].x, samples[i].y);
+            ctxOrC.lineTo(s.x, s.y);
+          }
         } else {
           return false;
         }
@@ -2507,15 +2548,15 @@
       const spacing = Math.max(4, (Number(fill.hatchSpacing) || 8) * Math.min(Math.max(view.scale, 0.7), 1.6));
       // Approximate screen bbox from clip via world polygon if available
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      const wpts = fillWorldPoints(fill);
-      if (wpts) {
+      const outline = fillOutlineWorld(fill);
+      const wpts = outline || fillWorldPoints(fill);
+      if (wpts && wpts.length) {
         for (const p of wpts) {
           const s = toS(p.x, p.y);
           minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
           maxX = Math.max(maxX, s.x); maxY = Math.max(maxY, s.y);
         }
       } else {
-        // fallback: generous pad around origin
         minX = 0; minY = 0; maxX = canvas.width; maxY = canvas.height;
       }
       const strokes = hatchStrokesInRectScreen(minX, minY, maxX - minX, maxY - minY, spacing);
@@ -12600,6 +12641,11 @@
       expandBounds(b, g.c.x + g.r, g.c.y + g.r);
     }
     for (const f of fills) {
+      const outline = fillOutlineWorld(f);
+      if (outline) {
+        for (const p of outline) expandBounds(b, p.x, p.y);
+        continue;
+      }
       const pts = fillWorldPoints(f);
       if (!pts) continue;
       for (const p of pts) expandBounds(b, p.x, p.y);
@@ -13367,17 +13413,28 @@
         const clipId = "uihatch" + hatchClipSeq++;
         const spacing = Math.max(3, (Number(f.hatchSpacing) || 8) * scale * 0.75);
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        const wpts = fillWorldPoints(f);
-        if (wpts) {
+        const outline = fillOutlineWorld(f);
+        const wpts = outline || fillWorldPoints(f);
+        let clipD = d;
+        if (wpts && wpts.length) {
+          const screenPts = [];
           for (const p of wpts) {
             const s = toS(p.x, p.y);
+            screenPts.push(s);
             minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
             maxX = Math.max(maxX, s.x); maxY = Math.max(maxY, s.y);
+          }
+          if (outline && outline.length >= 3 && fillKindOf(f) !== "polygon") {
+            let pd = "M" + screenPts[0].x.toFixed(2) + " " + screenPts[0].y.toFixed(2);
+            for (let i = 1; i < screenPts.length; i++) {
+              pd += " L" + screenPts[i].x.toFixed(2) + " " + screenPts[i].y.toFixed(2);
+            }
+            clipD = pd + " Z";
           }
         }
         const strokes = hatchStrokesInRectScreen(minX, minY, maxX - minX, maxY - minY, spacing);
         const lw = (LINE_WIDTH * scale * 0.75).toFixed(2);
-        body += `<clipPath id="${clipId}"><path d="${d}" /></clipPath>\n`;
+        body += `<clipPath id="${clipId}"><path d="${clipD}" /></clipPath>\n`;
         body += `<g clip-path="url(#${clipId})">\n`;
         for (const s of strokes) {
           const paint = fillPaint(f, false);
@@ -13697,7 +13754,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.63",
+      version: "13.5.64",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

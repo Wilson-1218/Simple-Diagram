@@ -78,6 +78,10 @@ export {
   clonePathEdge,
   flipPathEdge,
   pathEdgeEndpoints,
+  minorArcDelta,
+  sampleMinorArc,
+  fillOutlinePoints,
+  pointInPolygon,
 } from "./path-fill.mjs";
 export {
   normalizeBoxWhisker,
