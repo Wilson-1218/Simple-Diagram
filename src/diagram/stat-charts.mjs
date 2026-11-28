@@ -369,7 +369,10 @@ function normalizeDots(chart, raw) {
   chart.showArrows = raw.showArrows != null ? !!raw.showArrows : true;
   chart.labels = Array.isArray(raw.labels) ? raw.labels.map((s) => (s == null ? "" : String(s))) : [];
   const align = raw.verticalAlign != null ? String(raw.verticalAlign).trim().toLowerCase() : "";
-  if (align === "bottom" || align === "top" || align === "center") chart.verticalAlign = align;
+  if (align === "bottom" || align === "top" || align === "center" || align === "middle") {
+    chart.verticalAlign = align;
+  }
+  if (raw.centerRows === true) chart.centerRows = true;
   const arrow = raw.arrowStyle != null ? String(raw.arrowStyle).trim().toLowerCase() : "";
   if (arrow === "block" || arrow === "line") chart.arrowStyle = arrow;
   const arrowAlign = raw.arrowAlign != null ? String(raw.arrowAlign).trim().toLowerCase() : "";
@@ -855,6 +858,10 @@ function placeDotStages(chart) {
   // Omitted and "center" keep the v13.5.54 placement (each stage's top row
   // sits on chart.y). "top" shares that top line. "bottom" drops every
   // stage so its last row shares one baseY. Arrow y is chosen later.
+  // "middle", and "center" with centerRows, then drop each group's first
+  // row by (maxRows - groupRows) / 2. The tallest group does not move, so
+  // the pre-shift midY is the shared center of every group, the arrows,
+  // and the trailing ellipsis. Equal-row groups shift 0.
   const mode = chart.verticalAlign === "bottom" || chart.verticalAlign === "top" ? chart.verticalAlign : null;
   if (mode) {
     const live = stages.filter((stage) => stage.dots.length);
@@ -865,6 +872,23 @@ function placeDotStages(chart) {
           : Math.min(...live.map((stage) => stage.minY));
       for (const stage of live) {
         const dy = mode === "bottom" ? target - stage.maxY : target - stage.minY;
+        if (Math.abs(dy) < 1e-9) continue;
+        for (const d of stage.dots) d.y += dy;
+        stage.minY += dy;
+        stage.maxY += dy;
+        stage.originY += dy;
+      }
+    }
+  }
+  const centerRows =
+    chart.verticalAlign === "middle" || (chart.verticalAlign === "center" && chart.centerRows === true);
+  if (centerRows) {
+    const live = stages.filter((stage) => stage.dots.length);
+    if (live.length) {
+      const rowsOf = (stage) => stage.box.maxR - stage.box.minR + 1;
+      const maxRows = Math.max(...live.map(rowsOf));
+      for (const stage of live) {
+        const dy = ((maxRows - rowsOf(stage)) / 2) * gap;
         if (Math.abs(dy) < 1e-9) continue;
         for (const d of stage.dots) d.y += dy;
         stage.minY += dy;
