@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.57 · 穩定）
+## 目前版本 / Current version（v13.5.58 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.58** — PNG 離屏畫布超過 4096 或 12,000,000 像素時按比例縮小後仍可複製；三角形中心可選 `marker`／`showDot`；`addText` 可選 `rotate`（順時針為正，`-90` 由下往上）。省略新欄位時圖與 v13.5.57 相同
 - **v13.5.57** — 盒鬚 `axisArrows:"none"` 兩端都不畫箭，`guideStyle:"none"` 不畫五數導引；`tickGridStyle:"dotted"` 在畫布與 SVG 都是緊密點線 `[2, 2]`。省略欄位時圖與 v13.5.56 相同
 - **v13.5.56** — 圓餅可加副標、別名與交錯圓心弧；盒鬚可加刻度背景線；棒形圖可加標題與外框；座標軸名可留空，x 軸名可改到箭尖右側。省略新欄位時圖與 v13.5.55 相同
 - **v13.5.55** — 點陣箭兩側留白預設 20（至少 18）、箭寬 27；最後一組與省略號之間預設再畫一隻箭。`verticalAlign:"bottom"` 時箭與省略號改在底列上方 `baseY − 0.25 × dotGap`

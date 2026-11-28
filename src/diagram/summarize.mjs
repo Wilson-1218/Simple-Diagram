@@ -59,11 +59,11 @@ export const OP_CATALOG = {
   addSegment: { args: "id?, a, b, style?", note: "style: solid|dashed|dotted|dashdot" },
   addLabel: { args: "pointId, text, ox?, oy?, size?", note: "One label per point" },
   addText: {
-    args: "x, y, text, id?, size?, align?, bold?",
-    note: "Free-floating caption (not bound to point); align center|left|right (default center); bold default false; alias addCaption",
+    args: "x, y, text, id?, size?, align?, bold?, rotate?",
+    note: "Free-floating caption (not bound to point); align center|left|right (default center); bold default false; rotate degrees clockwise (omit or 0 stays horizontal; -90 is bottom-to-top); alias addCaption",
   },
   addCaption: {
-    args: "x, y, text, id?, size?, align?, bold?",
+    args: "x, y, text, id?, size?, align?, bold?, rotate?",
     note: "Alias of addText",
   },
   addRightAngle: {
@@ -115,8 +115,8 @@ export const OP_CATALOG = {
     note: "orthogonal projection onto line; marker foot; altitude segment by default",
   },
   addTriangleCenter: {
-    args: "a, b, c, kind, id?, hidden?, label?, ox?, oy?, drawCircle?, circleId?, circleStyle?, markTouchPoints?, touchIds?",
-    note: "kind incentre|incenter|circumcentre|circumcenter|centroid|orthocentre|orthocenter. Letter aliases from addShape resolve. Degenerate triangle warns and skips. drawCircle default false",
+    args: "a, b, c, kind, id?, hidden?, label?, ox?, oy?, drawCircle?, circleId?, circleStyle?, markTouchPoints?, touchIds?, marker?, showDot?",
+    note: "kind incentre|incenter|circumcentre|circumcenter|centroid|orthocentre|orthocenter. Letter aliases from addShape resolve. Degenerate triangle warns and skips. drawCircle default false. marker x|foot|none and showDot are written on the center point only; omit keeps the dot. Coordinates do not move",
   },
   addIncircle: {
     args: "same as addTriangleCenter",

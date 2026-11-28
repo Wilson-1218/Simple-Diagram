@@ -157,13 +157,14 @@ export function applyTriangleCenter(doc, op, nextId, api, defaults) {
   }
 
   const look = appearanceFields(op);
+  const marker = api.resolvePointMarker ? api.resolvePointMarker(op, undefined) : undefined;
   const center = pushPoint(
     doc,
     nextId,
     pos.x,
     pos.y,
     op.id != null && op.id !== "" ? op.id : undefined,
-    undefined,
+    marker,
     op.hidden === true,
     op
   );

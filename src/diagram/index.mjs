@@ -72,6 +72,7 @@ export {
   DEFAULT_MIN_STROKE_MM,
   DEFAULT_LABEL_PT,
 } from "./export-svg.mjs";
+export { MAX_PNG_DIM, MAX_PNG_AREA, pngTargetPixels, cappedPngScale } from "./png-limit.mjs";
 export {
   chainPathFillEdges,
   clonePathEdge,
