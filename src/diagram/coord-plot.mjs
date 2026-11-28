@@ -809,7 +809,10 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
   const famUpright =
     'font-family="STIX Two Text, Times New Roman, serif" font-style="normal"';
   const fsNum = Number(fontPx);
-  const halo = Math.max(3.5, fsNum * 0.28).toFixed(2);
+  const halo = (inkish.oneToOne
+    ? Math.min(2.4, Math.max(0.9, fsNum * 0.16))
+    : Math.max(3.5, fsNum * 0.28)
+  ).toFixed(2);
   const haloAttrs = `fill="#111" stroke="#ffffff" stroke-width="${halo}" stroke-linejoin="round" paint-order="stroke fill"`;
 
   const fontAttrFor = (rich) => (rich.math ? famUpright : fam);
@@ -914,7 +917,10 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
     const sp = toS(lab.x, lab.y);
     const rich = svgTextInner(lab.text, true);
     const fs = Number(fontPx);
-    const labHalo = Math.max(3.5, fs * 0.28).toFixed(2);
+    const labHalo = (inkish.oneToOne
+      ? Math.min(2.4, Math.max(0.9, fs * 0.16))
+      : Math.max(3.5, fs * 0.28)
+    ).toFixed(2);
     const labInk = escapeXml(coordCurveInk(curve, "paper"));
     body += `<text x="${sp.x.toFixed(2)}" y="${sp.y.toFixed(2)}" fill="${labInk}" stroke="#ffffff" stroke-width="${labHalo}" stroke-linejoin="round" paint-order="stroke fill" ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="middle" dominant-baseline="middle"${curveDataAttrs(curve)}>${rich.inner}</text>\n`;
   }

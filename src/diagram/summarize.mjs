@@ -197,7 +197,7 @@ export const OP_CATALOG = {
   distributePoints: { args: "pointIds (≥3), axis x|y" },
   equalizeSegments: { args: "segmentIds (≥2), length?" },
   setView: { args: "x?, y?, scale?" },
-  setMeta: { args: "gridSnap?, gridMode?, layers?, name?, autoScaleText?, …", note: "autoScaleText:false skips the span/340 multiplier on default font 14 and default right-angle size 10" },
+  setMeta: { args: "gridSnap?, gridMode?, layers?, name?, autoScaleText?, …", note: "autoScaleText:false keeps text and strokes at canvas 1:1 (scale 1, no span/340). Omitted or true still scales default font 14, tick font, and omitted right-angle size 10" },
   setLayers: { args: "gridShow?, coordsShow?, helpersShow?, *Lock?" },
   movePoint: { args: "id, x, y" },
   remove: { args: "type, id", note: "type point|segment|fill|circle|…" },

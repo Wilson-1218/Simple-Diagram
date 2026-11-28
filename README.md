@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.61 · 穩定）
+## 目前版本 / Current version（v13.5.62 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.62** — `autoScaleText:false`（`setMeta`、`doc.meta` 或 `documentToSvg` 選項）時，文字與筆畫的縮放都是 1，對齊畫布 1:1。線寬、點的大小、箭頭與莖葉圖表頭不再乘跨度／340；明確 `size:14` 也不放大。省略或 `true` 仍只放大預設字 14、刻度字與省略尺寸的直角標記
 - **v13.5.61** — 複製白底 PNG 與下載 PNG 都把 `documentToSvg` 畫成白底圖，不再用畫布重繪莖葉圖與點陣。`autoScaleText:false` 時字級與線寬維持 v13.5.59 的 SVG 粗細。剪貼簿仍在點擊當下寫入 Promise PNG，拒絕時改下載
 - **v13.5.60** — 含 `addStemLeaf` 或 `addDotPattern` 的圖可以匯出 PNG。複製白底 PNG 在點擊當下呼叫 `clipboard.write`，PNG 以 Promise 放進 `ClipboardItem`；剪貼簿拒絕時改下載
 - **v13.5.59** — `hideExportPoints` 仍藏預設圓點，但 `marker:"x"`／`"foot"` 的 × 在畫布與 `documentToSvg` 都保留。`addText` 的 `rotate` 載入時不再被拿掉；純文字與數學文字都繞錨點旋轉，旋轉後的外框進入自動 viewBox。省略或 `0` 仍是水平字
