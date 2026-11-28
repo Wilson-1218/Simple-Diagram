@@ -1390,6 +1390,26 @@ function finiteOffset(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+/** labelOx wins over the ox alias. 0 is explicit. */
+function namedOffset(op, primary, alias) {
+  const named = finiteOffset(op[primary]);
+  if (named != null) return named;
+  return finiteOffset(op[alias]);
+}
+
+/**
+ * From the foot, continue past it along point → foot.
+ * That ray is perpendicular to the base and leaves the altitude
+ * (and the right-angle mark) on the other side. Distance is Euclidean.
+ */
+function footLabelOutward(from, foot, dist) {
+  const dx = foot.x - from.x;
+  const dy = foot.y - from.y;
+  const len = Math.hypot(dx, dy);
+  if (!(len > 1e-9)) return { ox: 0, oy: dist };
+  return { ox: (dx / len) * dist, oy: (dy / len) * dist };
+}
+
 function normAngle(a) {
   const t = Math.PI * 2;
   let x = a % t;
@@ -1865,6 +1885,9 @@ const HANDLERS = {
    * the last stage and the ellipsis, never past the ellipsis. false keeps v13.5.54.
    * verticalAlign "bottom" seats arrows at baseY - 0.25 * dotGap unless arrowAlign
    * is "middle". arrowYOffset is added to that y. Omitted verticalAlign stays on midY.
+   * verticalAlign "middle" (or "center" with centerRows:true) drops each group's
+   * top row by (maxRows - groupRows) / 2 so centers, arrows, and the ellipsis share midY.
+   * "top", "bottom", and equal-row "center" keep v13.5.62 coordinates.
    */
   addDotPattern(doc, op, nextId) {
     return pushStatChart(doc, op, nextId, "dots");
@@ -1949,6 +1972,9 @@ const HANDLERS = {
    * Foot of perpendicular: project pointId onto the line through a segment
    * (segmentId) or through endpoints a/b. Creates foot point (marker "foot")
    * and optional altitude segment (drawSegment default true).
+   * label / labelText creates one addLabel. labelOx / labelOy (aliases ox / oy)
+   * are passed through; one numeric axis freezes the other the way addLabel does.
+   * With neither offset, the label sits distance 16 past the foot, away from the altitude.
    */
   addFoot(doc, op, nextId) {
     const fromId = requirePoint(doc, op.pointId, "addFoot");
@@ -1982,11 +2008,19 @@ const HANDLERS = {
     foot.construction = { kind: "foot", from: fromId, a: a.id, b: b.id };
     if (op.label || op.labelText) {
       const text = op.labelText != null ? String(op.labelText) : String(op.label === true ? "H" : op.label);
-      HANDLERS.addLabel(
-        doc,
-        { pointId: foot.id, text, ox: -10, oy: -12, ...appearanceFields(op) },
-        nextId
-      );
+      const labelOp = { pointId: foot.id, text, ...appearanceFields(op) };
+      const ox = namedOffset(op, "labelOx", "ox");
+      const oy = namedOffset(op, "labelOy", "oy");
+      if (ox != null || oy != null) {
+        // One number freezes the missing axis inside addLabel (ox → 0, oy → -14).
+        if (ox != null) labelOp.ox = ox;
+        if (oy != null) labelOp.oy = oy;
+      } else {
+        const off = footLabelOutward(from, foot, 16);
+        labelOp.ox = off.ox;
+        labelOp.oy = off.oy;
+      }
+      HANDLERS.addLabel(doc, labelOp, nextId);
     }
     const drawSeg = op.drawSegment !== false && op.segment !== false;
     if (drawSeg) {

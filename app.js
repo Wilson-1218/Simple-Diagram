@@ -689,7 +689,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.62",
+      title_doc: "Simple Diagram · v13.5.63",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1042,7 +1042,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.62",
+      title_doc: "Simple Diagram · v13.5.63",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -13697,7 +13697,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.62",
+      version: "13.5.63",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],
