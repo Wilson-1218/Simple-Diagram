@@ -57,7 +57,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 | `savedAt` | number | 儲存時間戳（毫秒） |
 | `name` | string | 檔名提示 |
 
-儲存時固定輸出上述 **38** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.57"`）。
+儲存時固定輸出上述 **38** 個頂層鍵（空集合寫 `[]`）；`formatVersion: 1`、`app: "simple-diagram"`、`version` 為應用字串（如 `"13.5.58"`）。
 
 ---
 
@@ -95,6 +95,7 @@ AI 路徑只透過 **JSON document + ops**，不模擬 DOM／點擊。
 ```
 
 - 自由文字（不綁點）；`align`：`center`｜`left`｜`right`；`bold` 預設 false
+- 可選 `rotate`（度，順時針為正）。省略或 `0` 不寫入，文字保持水平。`rotate:-90` 由下往上，與棒形圖 y 軸標題同一方向
 
 ### rightAngles
 

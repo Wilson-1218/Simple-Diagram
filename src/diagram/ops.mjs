@@ -1375,6 +1375,7 @@ function examApi() {
     pushSegment,
     handlers: HANDLERS,
     inlinePointLabel: maybeInlineLabel,
+    resolvePointMarker,
   };
 }
 
@@ -1710,7 +1711,8 @@ const HANDLERS = {
 
   /**
    * Free-floating caption (not bound to a point).
-   * Required: x, y, text. Optional: id, size, align (center|left|right), bold.
+   * Required: x, y, text. Optional: id, size, align (center|left|right), bold,
+   * rotate (degrees, clockwise positive). Omit or 0 keeps horizontal text.
    */
   addText(doc, op, nextId) {
     const id = resolveId(op, nextId, "txt");
@@ -1727,6 +1729,10 @@ const HANDLERS = {
     const bold = !!op.bold;
     if (!Array.isArray(doc.texts)) doc.texts = [];
     const row = { id, x, y, text, size, align, bold };
+    if (op.rotate != null && op.rotate !== "") {
+      const deg = Number(op.rotate);
+      if (Number.isFinite(deg) && deg !== 0) row.rotate = deg;
+    }
     stampAppearance(row, op);
     doc.texts.push(row);
     return doc;

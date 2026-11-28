@@ -687,7 +687,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.57",
+      title_doc: "Simple Diagram · v13.5.58",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1040,7 +1040,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.57",
+      title_doc: "Simple Diagram · v13.5.58",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -8412,6 +8412,8 @@
   function paintFloatingText(c, tx, x, y, fontPx, fill, withHalo) {
     c.save();
     c.translate(x, y);
+    const deg = Number(tx && tx.rotate);
+    if (Number.isFinite(deg) && deg !== 0) c.rotate((deg * Math.PI) / 180);
     const weight = tx.bold ? "bold " : "";
     c.font = `${weight}${fontPx}px "STIX Two Text", "Times New Roman", serif`;
     c.textBaseline = "middle";
@@ -12536,10 +12538,7 @@
       expandBounds(b, p.x + lab.ox - 8, p.y + lab.oy - 8);
       expandBounds(b, p.x + lab.ox + 8, p.y + lab.oy + 8);
     }
-    for (const tx of texts) {
-      expandBounds(b, tx.x - 8, tx.y - 8);
-      expandBounds(b, tx.x + 8, tx.y + 8);
-    }
+    for (const tx of texts) expandCaptionBounds(b, tx);
     for (const cir of circles) {
       const c = pointById(cir.centerId);
       const thr = pointById(cir.throughId);
@@ -12589,6 +12588,89 @@
       return { minX: -100, minY: -100, maxX: 100, maxY: 100 };
     }
     return b;
+  }
+
+  /**
+   * Keep in sync with src/diagram/length-mark.mjs approxTextWidth.
+   * Used only so a rotated caption's ink stays inside the PNG/SVG crop.
+   */
+  function approxCaptionWidth(text, fontPx) {
+    const t = String(text || "");
+    let w = 0;
+    for (const ch of t) {
+      w += /[ijlI1|.,:;'!]/.test(ch) ? 0.35 : /[mwMW]/.test(ch) ? 0.85 : 0.55;
+    }
+    return Math.max(fontPx * 0.6, w * fontPx);
+  }
+
+  /** Omit / 0 keeps the historical ±8 box. Nonzero rotate expands the turned glyph box. */
+  function expandCaptionBounds(b, tx) {
+    const x = Number(tx.x);
+    const y = Number(tx.y);
+    const deg = Number(tx.rotate);
+    if (!(Number.isFinite(deg) && deg !== 0)) {
+      expandBounds(b, x - 8, y - 8);
+      expandBounds(b, x + 8, y + 8);
+      return;
+    }
+    const fs = clampLabelSize(tx.size || DEFAULT_LABEL_SIZE);
+    const tw = approxCaptionWidth(tx.text || "", fs);
+    let align = String(tx.align || "center").toLowerCase();
+    if (align !== "left" && align !== "right") align = "center";
+    let x0;
+    let x1;
+    if (align === "left") {
+      x0 = 0;
+      x1 = tw;
+    } else if (align === "right") {
+      x0 = -tw;
+      x1 = 0;
+    } else {
+      x0 = -tw / 2;
+      x1 = tw / 2;
+    }
+    const y0 = -fs * 0.7;
+    const y1 = fs * 0.45;
+    const rad = (deg * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    for (const dx of [x0, x1]) {
+      for (const dy of [y0, y1]) {
+        expandBounds(b, x + dx * cos - dy * sin, y + dx * sin + dy * cos);
+      }
+    }
+  }
+
+  /**
+   * PNG offscreen cap. Keep in sync with src/diagram/png-limit.mjs.
+   * SVG export calls exportLayout directly and does not use this.
+   */
+  const MAX_PNG_DIM = 4096;
+  const MAX_PNG_AREA = 12_000_000;
+
+  function pngTargetPixels(scale, worldW, worldH, pad) {
+    const w = Math.ceil(Math.max(40, worldW * scale + pad * 2));
+    const h = Math.ceil(Math.max(40, worldH * scale + pad * 2));
+    return { w, h };
+  }
+
+  function cappedPngScale(requestedScale, worldW, worldH, pad) {
+    const s0 = Number(requestedScale);
+    const scale0 = Number.isFinite(s0) && s0 > 0 ? s0 : 1;
+    const fits = (s) => {
+      const { w, h } = pngTargetPixels(s, worldW, worldH, pad);
+      return w <= MAX_PNG_DIM && h <= MAX_PNG_DIM && w * h <= MAX_PNG_AREA;
+    };
+    if (fits(scale0)) return scale0;
+    let s = scale0;
+    for (let i = 0; i < 8; i++) {
+      const { w, h } = pngTargetPixels(s, worldW, worldH, pad);
+      if (w <= MAX_PNG_DIM && h <= MAX_PNG_DIM && w * h <= MAX_PNG_AREA) return s;
+      const k = Math.min(MAX_PNG_DIM / w, MAX_PNG_DIM / h, Math.sqrt(MAX_PNG_AREA / (w * h)));
+      if (!(k > 0) || !(k < 1)) break;
+      s *= k;
+    }
+    return s;
   }
 
   /** Shared export metrics so preview / PNG / SVG use identical crop + padding. */
@@ -12660,6 +12742,9 @@
 
   function buildExportCanvas(scale) {
     if (scale == null) scale = 2;
+    const raw = exportBounds();
+    const padPx = exportCrop ? 12 : EXPORT_PAD;
+    scale = cappedPngScale(scale, raw.maxX - raw.minX, raw.maxY - raw.minY, padPx);
     const { w, h, toS, scale: sc } = exportLayout(scale);
     scale = sc;
     const off = document.createElement("canvas");
@@ -13138,6 +13223,10 @@
       .replace(/"/g, "&quot;");
   }
 
+  function formatRotateDeg(deg) {
+    return String(Math.round(Number(deg) * 1000) / 1000);
+  }
+
   async function exportSvg() {
     const { w, h, toS, scale, pad } = exportLayout(1.5);
     void pad;
@@ -13462,7 +13551,12 @@
         if (align !== "left" && align !== "right") align = "center";
         const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
         const weight = tx.bold ? ' font-weight="bold"' : "";
-        const haloAttrsTx = `fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"${weight}`;
+        const deg = Number(tx.rotate);
+        const rot =
+          Number.isFinite(deg) && deg !== 0
+            ? `transform="rotate(${formatRotateDeg(deg)}, ${s.x.toFixed(2)}, ${s.y.toFixed(2)})" `
+            : "";
+        const haloAttrsTx = `${rot}fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"${weight}`;
         body += svgMathTextTag(tx.text || "", s.x, s.y, fs.toFixed(1), haloAttrsTx, anchor, "middle", false);
       }
     }
@@ -13484,7 +13578,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.57",
+      version: "13.5.58",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

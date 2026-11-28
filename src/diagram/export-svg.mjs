@@ -137,12 +137,7 @@ function boundsOf(doc, pad = 24) {
     const x = Number(tx.x);
     const y = Number(tx.y);
     add(x, y);
-    if (pad > 0) {
-      const fs = Number(tx.size) > 0 ? Number(tx.size) : 16;
-      const tw = approxTextWidth(tx.text || "", fs);
-      add(x - tw / 2, y - fs * 0.7);
-      add(x + tw / 2, y + fs * 0.45);
-    }
+    if (pad > 0) addTextInkBounds(tx, x, y, add);
   }
   for (const sec of doc.sectors || []) addSectorArcExtrema(sec, pts, add);
   for (const f of doc.fills || []) {
@@ -198,6 +193,51 @@ function boundsOf(doc, pad = 24) {
     maxX: maxX + pad,
     maxY: maxY + pad,
   };
+}
+
+/**
+ * Glyph box used by the auto viewBox. Omit / 0 keeps the historical
+ * center-aligned horizontal box. Nonzero rotate (clockwise degrees, y down)
+ * turns that box — or the align-aware box — about (x, y).
+ */
+function addTextInkBounds(tx, x, y, add) {
+  const fs = Number(tx.size) > 0 ? Number(tx.size) : 16;
+  const tw = approxTextWidth(tx.text || "", fs);
+  const deg = Number(tx.rotate);
+  if (!(Number.isFinite(deg) && deg !== 0)) {
+    add(x - tw / 2, y - fs * 0.7);
+    add(x + tw / 2, y + fs * 0.45);
+    return;
+  }
+  let align = String(tx.align || "center").toLowerCase();
+  if (align !== "left" && align !== "right") align = "center";
+  let x0;
+  let x1;
+  if (align === "left") {
+    x0 = 0;
+    x1 = tw;
+  } else if (align === "right") {
+    x0 = -tw;
+    x1 = 0;
+  } else {
+    x0 = -tw / 2;
+    x1 = tw / 2;
+  }
+  const y0 = -fs * 0.7;
+  const y1 = fs * 0.45;
+  const rad = (deg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  for (const dx of [x0, x1]) {
+    for (const dy of [y0, y1]) {
+      add(x + dx * cos - dy * sin, y + dx * sin + dy * cos);
+    }
+  }
+}
+
+function formatRotateDeg(deg) {
+  const n = Math.round(Number(deg) * 1000) / 1000;
+  return String(n);
 }
 
 function hexToRgba(hex, opacity) {
@@ -1119,8 +1159,14 @@ export function documentToSvg(doc, opts = {}) {
     for (const p of pts.values()) {
       if (p.hidden === true || p.showDot === false || p.marker === "none" || !shown(p)) continue;
       const s = toS(p.x, p.y);
-      const pr = ink.mm(0.55).toFixed(2);
-      body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${pr}" fill="${strokeOf(p)}"${svgDataAttrs(p)} />\n`;
+      if (p.marker === "x" || p.marker === "foot") {
+        const r = 5 * scale * 0.7;
+        const swx = (1.2 * scale * 0.7).toFixed(2);
+        body += `<path d="M${(s.x - r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x + r).toFixed(2)},${(s.y + r).toFixed(2)} M${(s.x + r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x - r).toFixed(2)},${(s.y + r).toFixed(2)}" fill="none" stroke="${strokeOf(p)}" stroke-width="${swx}"${svgDataAttrs(p)} />\n`;
+      } else {
+        const pr = ink.mm(0.55).toFixed(2);
+        body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${pr}" fill="${strokeOf(p)}"${svgDataAttrs(p)} />\n`;
+      }
     }
   }
 
@@ -1146,8 +1192,13 @@ export function documentToSvg(doc, opts = {}) {
       const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
       const weight = tx.bold ? ' font-weight="bold"' : "";
       const rich = svgTextInner(tx.text || "", false);
+      const deg = Number(tx.rotate);
+      const rotAttr =
+        Number.isFinite(deg) && deg !== 0
+          ? ` transform="rotate(${formatRotateDeg(deg)}, ${s.x.toFixed(2)}, ${s.y.toFixed(2)})"`
+          : "";
       const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="${rich.fontStyle}"${weight} font-size="${fs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle"`;
-      body += `<text ${common} fill="${strokeOf(tx)}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"${svgDataAttrs(tx)}>${rich.inner}</text>\n`;
+      body += `<text ${common}${rotAttr} fill="${strokeOf(tx)}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"${svgDataAttrs(tx)}>${rich.inner}</text>\n`;
     }
   }
 
