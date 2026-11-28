@@ -12,7 +12,7 @@ import {
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 test("APP_VERSION bumped for phase 2.1 micro-polish", () => {
-  assert.equal(APP_VERSION, "13.5.58");
+  assert.equal(APP_VERSION, "13.5.59");
 });
 
 test("tool-rail button.tool overrides side padding (EN Sector/Shape)", () => {

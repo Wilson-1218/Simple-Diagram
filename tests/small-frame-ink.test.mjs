@@ -156,6 +156,6 @@ test("tiny angle arc keeps digits outside the arc", () => {
 });
 
 test("APP_VERSION bumped for small-frame ink", () => {
-  assert.equal(APP_VERSION, "13.5.58");
+  assert.equal(APP_VERSION, "13.5.59");
   assert.equal(DEFAULT_FRAME_HEIGHT_MM, 40);
 });

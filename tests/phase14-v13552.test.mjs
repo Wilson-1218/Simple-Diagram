@@ -9,8 +9,8 @@ import {
   coordSampleOneCurve,
 } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.58", () => {
-  assert.equal(APP_VERSION, "13.5.58");
+test("APP_VERSION is 13.5.59", () => {
+  assert.equal(APP_VERSION, "13.5.59");
 });
 
 function boxClearance(plot, lab) {

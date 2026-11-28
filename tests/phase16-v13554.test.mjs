@@ -12,8 +12,8 @@ import {
   svgStatChart,
 } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.58 and stem-leaf ops are registered", () => {
-  assert.equal(APP_VERSION, "13.5.58");
+test("APP_VERSION is 13.5.59 and stem-leaf ops are registered", () => {
+  assert.equal(APP_VERSION, "13.5.59");
   assert.equal(OP_NAMES.length, 64);
   assert.ok(OP_NAMES.includes("addStemLeaf"));
   assert.ok(OP_NAMES.includes("addStemAndLeaf"));
