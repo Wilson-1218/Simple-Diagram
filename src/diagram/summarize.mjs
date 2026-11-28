@@ -91,8 +91,8 @@ export const OP_CATALOG = {
     note: "Touching bars (zero gap). boundaries length is values+1, or centers when length matches values. Stored as barCharts kind histogram",
   },
   addDotPattern: {
-    args: "x, y, patterns, dotGap?, patternGap?, dotRadius?, showArrows?, labels?, verticalAlign?, arrowStyle?, dotFill?, dotStroke?",
-    note: "patterns: [[col,row]|[col,row,role]] or {rows,align} or {kind:triangular|square|hexagonal,count,solution?}. rows[0] is the top row. verticalAlign bottom|center|top (omit or center keeps v13.5.53). arrowStyle line|block. Stored as barCharts kind dots",
+    args: "x, y, patterns, dotGap?, patternGap?, dotRadius?, showArrows?, labels?, verticalAlign?, arrowAlign?, arrowGap?, arrowWidth?, arrowYOffset?, trailingArrow?, arrowStyle?, dotFill?, dotStroke?",
+    note: "patterns: [[col,row]|[col,row,role]] or {rows,align} or {kind:triangular|square|hexagonal,count,solution?}. rows[0] is the top row. verticalAlign bottom|center|top (omit or center keeps v13.5.54 top-row align and midY arrows). bottom arrowY = baseY - 0.25*dotGap unless arrowAlign middle. arrowGap default 20 (ink pad each side, at least 18). arrowWidth default 27. trailingArrow default true (arrow before the ellipsis only). arrowStyle line|block. Stored as barCharts kind dots",
   },
   addStemLeaf: {
     args: "x, y, rows[{stem,leaves}], stemHeader?, leafHeader?, rowGap?, leafGap?, fontSize?",

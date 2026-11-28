@@ -1821,7 +1821,14 @@ const HANDLERS = {
     return pushStatChart(doc, op, nextId, "histogram");
   },
 
-  /** Dot patterns: coordinate lists, row counts, or triangular/square/hexagonal counts. */
+  /**
+   * Dot patterns: coordinate lists, row counts, or triangular/square/hexagonal counts.
+   * Optional arrowGap (default 20, floor 18) is the ink-to-arrow pad on each side.
+   * Optional arrowWidth (default 27). trailingArrow defaults true: one arrow between
+   * the last stage and the ellipsis, never past the ellipsis. false keeps v13.5.54.
+   * verticalAlign "bottom" seats arrows at baseY - 0.25 * dotGap unless arrowAlign
+   * is "middle". arrowYOffset is added to that y. Omitted verticalAlign stays on midY.
+   */
   addDotPattern(doc, op, nextId) {
     return pushStatChart(doc, op, nextId, "dots");
   },

@@ -76,13 +76,14 @@ Toggle **中｜EN** and **day／night** canvas under the left-rail brand (export
 
 ---
 
-## 目前版本 / Current version（v13.5.54 · 穩定）
+## 目前版本 / Current version（v13.5.55 · 穩定）
 
 靜態編輯器；左欄 **繪畫／構建／記號**（EN Draw／Construct／Marks）＋頂部選單／情境浮層。預設：網格開、三角格、縮放 **2×**。桌面瀏覽器（建議 Chrome／Edge）；**不支援手機**。
 
 **Stable snapshot** — left rail Draw／Construct／Marks; layers／length／pointer UX as below. Prefer desktop Chrome／Edge.
 
 ### 更新說明（精簡）
+- **v13.5.55** — 點陣箭兩側留白預設 20（至少 18）、箭寬 27；最後一組與省略號之間預設再畫一隻箭。`verticalAlign:"bottom"` 時箭與省略號改在底列上方 `baseY − 0.25 × dotGap`
 - **v13.5.54** — 圓周點用 `addPoint` 的 `circleId`+`deg`（0° 朝東、正角順時針）。`showDot:false` 不畫點但仍可標籤；`hidden` 配非空字串標籤只藏點。盒鬚 `capHeight:0`、`axisArrows`、`guideStyle`。點陣 `verticalAlign`、塊箭、灰點。`addStemLeaf`。`autoScaleText:false` 不再放大預設字與直角標記
 - **v13.5.53** — 圖表文字與點半徑跟隨匯出比例；累積頻數格線更細、投影不再疊兩個刻度。點陣箭頭同一中線。橢圓 `style` 可畫整圈。圓餅類別與角文內外分開。盒鬚導引只向下、端帽與 viewBox 含整條數線。世界大圖的預設字與直角標記放大
 - **v13.5.52** — 省略的曲線標籤 `t` 不再當成 0.55；標籤避開軸與交點。半球／球接受 `role:"solution"`。複合 op 的 SVG 帶 `data-role`／`data-step`／`data-id`，`solutionMaxStep` 會藏起較後的步驟

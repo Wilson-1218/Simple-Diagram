@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { applyOps, documentToSvg, validateDiagram, APP_VERSION } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.54", () => {
-  assert.equal(APP_VERSION, "13.5.54");
+test("APP_VERSION is 13.5.55", () => {
+  assert.equal(APP_VERSION, "13.5.55");
 });
 
 function segBetween(doc, a, b) {
