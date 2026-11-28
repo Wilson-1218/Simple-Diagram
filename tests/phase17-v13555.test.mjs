@@ -8,8 +8,8 @@ const CLEARANCE = 18;
 const RADIUS = 4.5;
 const ELLIPSIS_R = 1.6;
 
-test("APP_VERSION is 13.5.64", () => {
-  assert.equal(APP_VERSION, "13.5.64");
+test("APP_VERSION is 13.5.65", () => {
+  assert.equal(APP_VERSION, "13.5.65");
 });
 
 function chartOf(op) {

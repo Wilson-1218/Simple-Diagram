@@ -689,7 +689,7 @@
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.64",
+      title_doc: "Simple Diagram · v13.5.65",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -1042,7 +1042,7 @@
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.64",
+      title_doc: "Simple Diagram · v13.5.65",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -2398,15 +2398,15 @@
     if (!(r > 1e-9)) return null;
     const a0 = Math.atan2(from.y - center.y, from.x - center.x);
     const a1 = Math.atan2(to.y - center.y, to.x - center.x);
+    const twoPi = Math.PI * 2;
     let delta = a1 - a0;
-    while (delta <= -Math.PI) delta += Math.PI * 2;
-    while (delta > Math.PI) delta -= Math.PI * 2;
-    const step = Math.PI / 18;
-    let n = Math.max(2, Math.ceil(Math.abs(delta) / step));
-    if (n % 2) n += 1;
+    delta -= twoPi * Math.floor((delta + Math.PI) / twoPi);
+    if (delta <= -Math.PI) delta += twoPi;
+    if (delta > Math.PI) delta -= twoPi;
+    const steps = Math.max(16, Math.ceil((Math.abs(delta) * r) / 4));
     const pts = [];
-    for (let i = 0; i <= n; i++) {
-      const a = a0 + (delta * i) / n;
+    for (let i = 0; i <= steps; i++) {
+      const a = a0 + (delta * i) / steps;
       pts.push({ x: center.x + r * Math.cos(a), y: center.y + r * Math.sin(a) });
     }
     return pts;
@@ -2735,9 +2735,11 @@
           const r = Math.hypot(s0.x - c.x, s0.y - c.y) || Math.hypot(s1.x - c.x, s1.y - c.y);
           const ang0 = Math.atan2(s0.y - c.y, s0.x - c.x);
           const ang1 = Math.atan2(s1.y - c.y, s1.x - c.x);
+          const twoPi = Math.PI * 2;
           let delta = ang1 - ang0;
-          while (delta <= -Math.PI) delta += Math.PI * 2;
-          while (delta > Math.PI) delta -= Math.PI * 2;
+          delta -= twoPi * Math.floor((delta + Math.PI) / twoPi);
+          if (delta <= -Math.PI) delta += twoPi;
+          if (delta > Math.PI) delta -= twoPi;
           const large = Math.abs(delta) > Math.PI ? 1 : 0;
           const sweep = delta < 0 ? 0 : 1;
           const p0 = toS(s0.x, s0.y);
@@ -6302,18 +6304,22 @@
     }
     if (yExplicit) {
       for (const t of yExplicit) {
-        const p = toScreen(plot.ox, plot.oy - t.pos * scales.yUnitPx);
+        const worldY = plot.oy - t.pos * scales.yUnitPx;
+        const p = toScreen(plot.ox, worldY);
+        const labelAt = toScreen(plot.ox - 8, worldY);
         c.beginPath();
         c.moveTo(p.x - tickLen, p.y);
         c.lineTo(p.x + tickLen, p.y);
         c.stroke();
         const tx = coordTickText(t);
         if (!tx || coordOriginZeroLabelSuppressed(plot, t.pos, tx)) continue;
-        paintMathOrPlain(c, tx, p.x - tickLen - 2, p.y, fontPx, color, true, "right", "middle", false, true);
+        paintMathOrPlain(c, tx, labelAt.x, labelAt.y, fontPx, color, true, "right", "middle", false, true);
       }
     } else if (showDefaultTicks) {
       for (const v of coordIntegerTicks(plot.ymin, plot.ymax, plot.yStep)) {
-        const p = toScreen(plot.ox, plot.oy - v * scales.yUnitPx);
+        const worldY = plot.oy - v * scales.yUnitPx;
+        const p = toScreen(plot.ox, worldY);
+        const labelAt = toScreen(plot.ox - 8, worldY);
         c.beginPath();
         c.moveTo(p.x - tickLen, p.y);
         c.lineTo(p.x + tickLen, p.y);
@@ -6323,10 +6329,9 @@
           c.textAlign = "right";
           c.textBaseline = "middle";
           const tx = String(v);
-          const lx = p.x - tickLen - 2;
-          paintTextHalo(c, tx, lx, p.y, fontPx);
+          paintTextHalo(c, tx, labelAt.x, labelAt.y, fontPx);
           c.fillStyle = color;
-          c.fillText(tx, lx, p.y);
+          c.fillText(tx, labelAt.x, labelAt.y);
         }
       }
     }
@@ -6826,16 +6831,19 @@
       let yMax = Number(raw.yMax);
       if (!Number.isFinite(yMax)) yMax = Math.max(1, ...values, 0);
       if (!(yMax > yMin)) return null;
-      let yTicks = Array.isArray(raw.yTicks)
-        ? raw.yTicks.map(Number).filter((n) => Number.isFinite(n))
-        : [];
-      if (!yTicks.length) {
+      let yTicks;
+      if (Array.isArray(raw.yTicks)) {
+        yTicks = raw.yTicks.map(Number).filter((n) => Number.isFinite(n));
+      } else if (raw.yTicks == null) {
+        yTicks = [];
         const step = Number(raw.yStep);
         if (Number.isFinite(step) && step > 0) {
           for (let t = yMin; t <= yMax + 1e-9; t += step) yTicks.push(Number(t.toFixed(8)));
         } else {
           yTicks = [yMin, yMax];
         }
+      } else {
+        yTicks = [];
       }
       const pat = String(raw.barPattern != null ? raw.barPattern : raw.pattern || "hatch").toLowerCase();
       return {
@@ -8099,18 +8107,22 @@
     }
     if (yExplicit) {
       for (const t of yExplicit) {
-        const p = toS(plot.ox, plot.oy - t.pos * scales.yUnitPx);
+        const worldY = plot.oy - t.pos * scales.yUnitPx;
+        const p = toS(plot.ox, worldY);
+        const labelX = toS(plot.ox - 8, worldY).x;
         body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
         const tx = coordTickText(t);
         if (!tx || coordOriginZeroLabelSuppressed(plot, t.pos, tx)) continue;
-        body += svgMathTextTag(tx, p.x - tickLen - 2, p.y, fontPx, haloAttrs, "end", "middle", true);
+        body += svgMathTextTag(tx, labelX, p.y, fontPx, haloAttrs, "end", "middle", true);
       }
     } else if (showDefaultTicks) {
       for (const v of coordIntegerTicks(plot.ymin, plot.ymax, plot.yStep)) {
-        const p = toS(plot.ox, plot.oy - v * scales.yUnitPx);
+        const worldY = plot.oy - v * scales.yUnitPx;
+        const p = toS(plot.ox, worldY);
+        const labelX = toS(plot.ox - 8, worldY).x;
         body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
         if (!coordNearZero(v)) {
-          body += `<text x="${(p.x - tickLen - 2).toFixed(2)}" y="${p.y.toFixed(2)}" ${haloAttrs} font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(String(v))}</text>\n`;
+          body += `<text x="${labelX.toFixed(2)}" y="${p.y.toFixed(2)}" ${haloAttrs} font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(String(v))}</text>\n`;
         }
       }
     }
@@ -8463,14 +8475,15 @@
     paintMathRuns(c, runs, x, y, fontPx, fill, withHalo, align || "center", baseline || "middle", !!bold);
   }
 
-  function paintLabelText(c, text, x, y, fontPx, fill, withHalo, angleRad) {
+  function paintLabelText(c, text, x, y, fontPx, fill, withHalo, angleRad, align) {
+    const textAlign = align === "right" || align === "end" ? "right" : align === "left" || align === "start" ? "left" : "center";
     c.save();
     c.translate(x, y);
     if (angleRad) c.rotate(angleRad);
     if (!mathTextHasScript(text)) {
       c.font = `italic ${fontPx}px "STIX Two Text", "Times New Roman", serif`;
       c.textBaseline = "middle";
-      c.textAlign = "center";
+      c.textAlign = textAlign;
       if (withHalo) {
         c.lineJoin = "round";
         c.strokeStyle = edHalo();
@@ -8480,7 +8493,7 @@
       c.fillStyle = fill;
       c.fillText(text, 0, 0);
     } else {
-      paintMathRuns(c, parseMathRuns(text), 0, 0, fontPx, fill, withHalo, "center", "middle", false);
+      paintMathRuns(c, parseMathRuns(text), 0, 0, fontPx, fill, withHalo, textAlign, "middle", false);
     }
     c.restore();
   }
@@ -8564,7 +8577,8 @@
     const p = pointById(lab.pointId);
     if (!p) return;
     const s = worldToScreen(p.x + lab.ox, p.y + lab.oy);
-    paintLabelText(ctx, lab.text, s.x, s.y, labelScreenSize(lab), inkFor(lab, highlight), true);
+    const align = lab.anchor === "end" ? "right" : lab.anchor === "start" ? "left" : "center";
+    paintLabelText(ctx, lab.text, s.x, s.y, labelScreenSize(lab), inkFor(lab, highlight), true, 0, align);
   }
 
   function rightAngleIs3d(ra) {
@@ -13189,7 +13203,8 @@
         if (!p) continue;
         const s = toS(p.x + lab.ox, p.y + lab.oy);
         const fontPx = clampLabelSize(lab.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
-        paintLabelText(c, lab.text, s.x, s.y, fontPx, "#111", true);
+        const align = lab.anchor === "end" ? "right" : lab.anchor === "start" ? "left" : "center";
+        paintLabelText(c, lab.text, s.x, s.y, fontPx, "#111", true, 0, align);
       }
       for (const tx of texts) {
         const s = toS(tx.x, tx.y);
@@ -13717,7 +13732,8 @@
         const fs = clampLabelSize(lab.size || DEFAULT_LABEL_SIZE) * scale * 0.75;
         const halo = Math.max(3.5, fs * 0.28);
         const haloAttrsLab = `fill="#111" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"`;
-        body += svgMathTextTag(lab.text, s.x, s.y, fs.toFixed(1), haloAttrsLab, "middle", "middle", true);
+        const anchor = lab.anchor === "end" ? "end" : lab.anchor === "start" ? "start" : "middle";
+        body += svgMathTextTag(lab.text, s.x, s.y, fs.toFixed(1), haloAttrsLab, anchor, "middle", true);
       }
       for (const tx of texts) {
         const s = toS(tx.x, tx.y);
@@ -13754,7 +13770,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.64",
+      version: "13.5.65",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

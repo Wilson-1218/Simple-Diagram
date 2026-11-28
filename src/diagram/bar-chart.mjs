@@ -58,8 +58,12 @@ export function normalizeBarChart(raw, opts = {}) {
   }
   if (!(yMax > yMin)) throw new Error("barChart: yMax must be > yMin");
 
-  let yTicks = numList(raw.yTicks);
-  if (!yTicks.length) {
+  let yTicks;
+  if (Array.isArray(raw.yTicks)) {
+    // [] stays empty: no tick marks and no numbers. Do not treat it as omitted.
+    yTicks = numList(raw.yTicks);
+  } else if (raw.yTicks == null) {
+    yTicks = [];
     const step = num(raw.yStep, NaN);
     if (Number.isFinite(step) && step > 0) {
       for (let t = yMin; t <= yMax + 1e-9; t += step) yTicks.push(Number(t.toFixed(8)));
@@ -80,6 +84,8 @@ export function normalizeBarChart(raw, opts = {}) {
         yTicks.push(yMax);
       }
     }
+  } else {
+    yTicks = [];
   }
 
   const barGap = Math.min(0.7, Math.max(0, num(raw.barGap, 0.28)));

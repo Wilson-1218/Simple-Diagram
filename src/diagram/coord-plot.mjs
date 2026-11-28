@@ -841,20 +841,24 @@ export function svgCoordPlot(plot, toS, inkish = {}) {
   }
   if (yExplicit) {
     for (const t of yExplicit) {
-      const p = toS(ox, oy - t.pos * scales.yUnitPx);
+      const worldY = oy - t.pos * scales.yUnitPx;
+      const p = toS(ox, worldY);
+      const labelX = toS(ox - 8, worldY).x;
       body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
       const label = coordTickText(t);
       if (label && !coordOriginZeroLabelSuppressed(plot, t.pos, label)) {
         const rich = svgTextInner(label, true);
-        body += `<text x="${(p.x - tickLen - 2).toFixed(2)}" y="${p.y.toFixed(2)}" ${haloAttrs} ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${rich.inner}</text>\n`;
+        body += `<text x="${labelX.toFixed(2)}" y="${p.y.toFixed(2)}" ${haloAttrs} ${fontAttrFor(rich)} font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${rich.inner}</text>\n`;
       }
     }
   } else if (showDefault) {
     for (const v of coordIntegerTicks(ymin, ymax, plot.yStep)) {
-      const p = toS(ox, oy - v * scales.yUnitPx);
+      const worldY = oy - v * scales.yUnitPx;
+      const p = toS(ox, worldY);
+      const labelX = toS(ox - 8, worldY).x;
       body += `<line x1="${(p.x - tickLen).toFixed(2)}" y1="${p.y.toFixed(2)}" x2="${(p.x + tickLen).toFixed(2)}" y2="${p.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" />\n`;
       if (!coordNearZero(v)) {
-        body += `<text x="${(p.x - tickLen - 2).toFixed(2)}" y="${p.y.toFixed(2)}" ${haloAttrs} ${fam} font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(String(v))}</text>\n`;
+        body += `<text x="${labelX.toFixed(2)}" y="${p.y.toFixed(2)}" ${haloAttrs} ${fam} font-size="${fontPx}" text-anchor="end" dominant-baseline="middle">${escapeXml(String(v))}</text>\n`;
       }
     }
   }

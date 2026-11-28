@@ -88,16 +88,28 @@ export function chainPathFillEdges(rawEdges) {
 
 /** Signed minor sweep in (-π, π]. Positive increases atan2 (clockwise on y-down). */
 export function minorArcDelta(a0, a1) {
+  const twoPi = Math.PI * 2;
   let delta = a1 - a0;
-  while (delta <= -Math.PI) delta += Math.PI * 2;
-  while (delta > Math.PI) delta -= Math.PI * 2;
+  delta -= twoPi * Math.floor((delta + Math.PI) / twoPi);
+  if (delta <= -Math.PI) delta += twoPi;
+  if (delta > Math.PI) delta -= twoPi;
   return delta;
+}
+
+/** True when offset t lies strictly inside the signed sweep from 0 to dTheta. */
+function offsetOnMinorSweep(t, dTheta) {
+  if (!(Math.abs(dTheta) > 1e-9)) return false;
+  if (dTheta > 0) return t > 1e-5 && t < dTheta - 1e-5;
+  return t < -1e-5 && t > dTheta + 1e-5;
 }
 
 /**
  * Minor-arc samples at this edge's own radius hypot(from − center).
- * Sweep is the signed minor delta, including clockwise from→to.
- * The chord between the endpoints is not a substitute for the arc.
+ * dTheta is the signed minor arc in (-π, π]. Samples run
+ * a0 + (i/steps)*dTheta with steps = max(16, ceil(|dTheta|*r/4)).
+ * A negative sweep (A at +36° → B at −36°) stays on that circle through
+ * angle 0. Do not sort offsets so a negative sweep runs backwards, and do
+ * not mirror samples across the chord.
  * @returns {{x:number,y:number}[]|null}
  */
 export function sampleMinorArc(center, from, to) {
@@ -106,28 +118,21 @@ export function sampleMinorArc(center, from, to) {
   if (!(r > 1e-9)) return null;
   const a0 = Math.atan2(from.y - center.y, from.x - center.x);
   const a1 = Math.atan2(to.y - center.y, to.x - center.x);
-  const delta = minorArcDelta(a0, a1);
-  const step = Math.PI / 18;
-  let n = Math.max(2, Math.ceil(Math.abs(delta) / step));
-  if (n % 2) n += 1;
+  const dTheta = minorArcDelta(a0, a1);
+  const steps = Math.max(16, Math.ceil((Math.abs(dTheta) * r) / 4));
   const ts = [];
-  for (let i = 0; i <= n; i++) ts.push((delta * i) / n);
-  const lo = Math.min(0, delta);
-  const hi = Math.max(0, delta);
+  for (let i = 0; i <= steps; i++) ts.push((i / steps) * dTheta);
+  const twoPi = Math.PI * 2;
   for (let k = -2; k <= 4; k++) {
     for (const base of [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]) {
-      let t = base + k * Math.PI * 2 - a0;
-      if (delta >= 0) {
-        while (t < -1e-8) t += Math.PI * 2;
-        while (t > Math.PI * 2 - 1e-8) t -= Math.PI * 2;
-      } else {
-        while (t > 1e-8) t -= Math.PI * 2;
-        while (t < -Math.PI * 2 + 1e-8) t += Math.PI * 2;
-      }
-      if (t > lo + 1e-5 && t < hi - 1e-5) ts.push(t);
+      let t = base + k * twoPi - a0;
+      t -= twoPi * Math.floor((t + Math.PI) / twoPi);
+      if (t <= -Math.PI) t += twoPi;
+      if (offsetOnMinorSweep(t, dTheta)) ts.push(t);
     }
   }
-  ts.sort((a, b) => a - b);
+  if (dTheta < 0) ts.sort((a, b) => b - a);
+  else ts.sort((a, b) => a - b);
   const pts = [];
   for (const t of ts) {
     const a = a0 + t;

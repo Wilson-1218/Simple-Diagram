@@ -720,10 +720,12 @@ function addAxisProjection(doc, nextId, plot, point, axis, math, style, tickLabe
     id: nextId("lab"),
     pointId: foot.id,
     text: String(tickLabel),
-    ox: axis === "y" ? -18 : 0,
+    ox: axis === "y" ? -8 : 0,
     oy: axis === "x" ? 16 : 0,
     size: doc.labelFontSize || 16,
   };
+  // Right edge on the y axis sits at ox-8, clear of the tick and the intercept.
+  if (axis === "y") lab.anchor = "end";
   if (appearance) stampAppearance(lab, appearance);
   doc.labels.push(lab);
 }

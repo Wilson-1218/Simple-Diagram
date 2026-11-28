@@ -7,8 +7,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { APP_VERSION, applyOps, documentToSvg, readableInkScale } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.64", () => {
-  assert.equal(APP_VERSION, "13.5.64");
+test("APP_VERSION is 13.5.65", () => {
+  assert.equal(APP_VERSION, "13.5.65");
 });
 
 /** 2015 P1 five-up stand-in: Q8, Q12 stem-leaf, Q13, Q19. Span is past 420. */
