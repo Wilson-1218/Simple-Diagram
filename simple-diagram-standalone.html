@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simple-diagram-build" content="20261126-release-v13.5.53" />
-  <title>Simple Diagram · v13.5.53</title>
+  <meta name="simple-diagram-build" content="20261128-release-v13.5.54" />
+  <title>Simple Diagram · v13.5.54</title>
   <style>
 :root {
   --bg: #e8e6e1;
@@ -2114,7 +2114,7 @@ body.dark-canvas .coord-curve-row {
           <img class="brand-logo" src="assets/logo.png" width="40" height="40" alt="" />
           <div class="brand-text">
             <span class="brand-name">Simple Diagram</span>
-            <span class="brand-sub">v13.5.53</span>
+            <span class="brand-sub">v13.5.54</span>
           </div>
           <div class="rail-brand-controls">
             <div class="rail-lang" data-group="lang" role="group" aria-label="Language">
@@ -3616,7 +3616,7 @@ square:4</textarea>
       aria_grid_mode: "網格樣式",
       aria_add_curve: "新增曲線類型",
       hint_idle: "右鍵選取⇄上一工具 · 中鍵／空白鍵平移 · 滾輪縮放 · Esc 取消 · ? 快捷鍵",
-      title_doc: "Simple Diagram · v13.5.53",
+      title_doc: "Simple Diagram · v13.5.54",
       shortcuts_title: "快捷鍵（可自訂）",
       shortcuts_note: "點「改」後按一個鍵；衝突會以紅色標示。Ctrl／空白／Delete／Esc 等系統鍵固定。",
       shortcuts_pointer_note: "滑鼠：右鍵＝切換選取／上一工具（非選取→選取並取消步驟；已在選取→回到上一工具）；中鍵按住拖曳＝平移（與空白鍵／手掌相同）。畫布上不開瀏覽器右鍵選單。選取時亦可按 +（或 =／數字鍵盤 +）回上一工具。",
@@ -3969,7 +3969,7 @@ square:4</textarea>
       aria_grid_mode: "Grid style",
       aria_add_curve: "Add curve type",
       hint_idle: "RMB Select⇄prev tool · middle/Space pan · wheel zoom · Esc cancel · ? shortcuts",
-      title_doc: "Simple Diagram · v13.5.53",
+      title_doc: "Simple Diagram · v13.5.54",
       shortcuts_title: "Keyboard shortcuts (editable)",
       shortcuts_note: "Click “Edit”, then press a key. Conflicts show in red. Ctrl / Space / Delete / Esc stay fixed.",
       shortcuts_pointer_note: "Pointer: right-click toggles Select ↔ previous tool (from a tool → Select and cancel draft; already on Select → restore last non-select tool). Middle-drag pans (same as Space / Hand). No browser context menu on the canvas. While Select is active, + (or = / Numpad +) also restores the previous tool.",
@@ -9257,13 +9257,16 @@ square:4</textarea>
     const [min, q1, median, q3, max] = nums;
     if (!(min <= q1 && q1 <= median && median <= q3 && q3 <= max)) return null;
     const boxHeight = Math.max(4, Number(raw.boxHeight) || 36);
-    const cap = (function capHalf(rawCap, capHeight, boxH) {
+    const cap = (function capHalf(rawCap, capHeight, boxH, showCaps) {
+      if (showCaps === false) return 0;
       if (capHeight != null && capHeight !== "" && Number.isFinite(Number(capHeight))) {
-        return Math.max(0.5, Number(capHeight) / 2);
+        const full = Number(capHeight);
+        if (!(full > 0)) return 0;
+        return Math.max(0.5, full / 2);
       }
       if (rawCap != null && rawCap !== "" && Number.isFinite(Number(rawCap))) return Math.max(2, Number(rawCap));
       return Math.max(0.5, (0.55 * boxH) / 2);
-    })(raw.cap, raw.capHeight, boxHeight);
+    })(raw.cap, raw.capHeight, boxHeight, raw.showCaps);
     const outliers = Array.isArray(raw.outliers)
       ? raw.outliers.map(Number).filter((n) => Number.isFinite(n))
       : [];
@@ -9551,8 +9554,14 @@ square:4</textarea>
     for (const s of parts.whiskers) strokeLine(s);
     for (const s of parts.caps) strokeLine(s);
     if (parts.guides) {
-      c.setLineDash([5, 4]);
-      for (const s of parts.guides) strokeLine(s);
+      for (const s of parts.guides) {
+        const style = s.guideStyle || "dashed";
+        if (style === "none") continue;
+        if (style === "solid") c.setLineDash([]);
+        else if (style === "dotted") c.setLineDash([1.5, 3]);
+        else c.setLineDash([5, 4]);
+        strokeLine(s);
+      }
       c.setLineDash([]);
     }
     if (parts.axis) strokeLine(parts.axis);
@@ -9598,7 +9607,7 @@ square:4</textarea>
 
   function normalizeBarChartRecord(raw) {
     if (!raw || typeof raw !== "object") return null;
-    if (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots") return raw;
+    if (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots" || raw.kind === "stemLeaf") return raw;
     try {
       const categories = Array.isArray(raw.categories)
         ? raw.categories.map((x) => String(x ?? ""))
@@ -9701,6 +9710,24 @@ square:4</textarea>
 
   function barChartBounds(bc) {
     if (!bc) return null;
+    if (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots" || bc.kind === "stemLeaf") {
+      if (!diagramMod || typeof diagramMod.addStatChartBounds !== "function") return null;
+      const b = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+      const add = (x, y) => {
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+        b.minX = Math.min(b.minX, x);
+        b.minY = Math.min(b.minY, y);
+        b.maxX = Math.max(b.maxX, x);
+        b.maxY = Math.max(b.maxY, y);
+      };
+      try {
+        diagramMod.addStatChartBounds(bc, add);
+      } catch (_) {
+        return null;
+      }
+      if (!Number.isFinite(b.minX)) return null;
+      return b;
+    }
     const p = barChartGeomParts(bc);
     const b = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
     const add = (x, y) => { b.minX = Math.min(b.minX, x); b.minY = Math.min(b.minY, y); b.maxX = Math.max(b.maxX, x); b.maxY = Math.max(b.maxY, y); };
@@ -9798,6 +9825,23 @@ square:4</textarea>
     };
     for (const s of parts.lines) if (solutionShown(s)) drawLine(s);
     c.setLineDash([]);
+    for (const poly of parts.polygons || []) {
+      if (!solutionShown(poly) || !poly.points || poly.points.length < 3) continue;
+      c.beginPath();
+      poly.points.forEach((p, i) => {
+        const s = worldToScreen(p.x, p.y);
+        if (i === 0) c.moveTo(s.x, s.y);
+        else c.lineTo(s.x, s.y);
+      });
+      c.closePath();
+      c.setLineDash([]);
+      if (poly.fill && poly.fill !== "none") {
+        c.fillStyle = screenInk(poly.fill);
+        c.fill();
+      }
+      c.strokeStyle = screenInk(poly.color || "#111");
+      c.stroke();
+    }
     for (const poly of parts.polylines) {
       if (!solutionShown(poly) || !poly.points || poly.points.length < 2) continue;
       c.beginPath();
@@ -9829,13 +9873,22 @@ square:4</textarea>
       const s = worldToScreen(d.x, d.y);
       const rad = Math.max(1.2, d.r * view.scale);
       c.beginPath();
-      c.fillStyle = screenInk(d.color);
+      c.fillStyle = screenInk(d.fill || d.color);
       c.arc(s.x, s.y, rad, 0, Math.PI * 2);
       c.fill();
+      if (d.stroke) {
+        c.strokeStyle = screenInk(d.stroke);
+        c.lineWidth = Math.max(1, LINE_WIDTH);
+        c.stroke();
+      }
     }
-    c.font = `${Math.max(11, 13 * Math.min(view.scale, 1.6))}px "STIX Two Text", "Times New Roman", serif`;
     for (const t of parts.texts) {
       if (!solutionShown(t)) continue;
+      const fs =
+        t.size != null && Number(t.size) > 0
+          ? Math.max(8, Number(t.size) * Math.min(view.scale, 1.6))
+          : Math.max(11, 13 * Math.min(view.scale, 1.6));
+      c.font = `${fs}px "STIX Two Text", "Times New Roman", serif`;
       const s = worldToScreen(t.x, t.y);
       c.save();
       c.fillStyle = screenInk(t.color || (darkCanvas ? "#e6e8eb" : "#111"));
@@ -9854,7 +9907,7 @@ square:4</textarea>
   }
 
   function drawBarChart(bc, highlight) {
-    if (bc && (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots")) {
+    if (bc && (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots" || bc.kind === "stemLeaf")) {
       if (solutionShown(bc)) paintStatChart(ctx, bc);
       return;
     }
@@ -9865,7 +9918,7 @@ square:4</textarea>
   }
 
   function svgBarChart(bc, toS, scale) {
-    if (bc && (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots")) {
+    if (bc && (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots" || bc.kind === "stemLeaf")) {
       if (diagramMod && typeof diagramMod.svgStatChart === "function") {
         const ink = {
           dash: () => [4, 3],
@@ -9940,8 +9993,15 @@ square:4</textarea>
     for (const s of parts.whiskers) out += line(s);
     for (const s of parts.caps) out += line(s);
     for (const s of parts.guides || []) {
+      const style = s.guideStyle || "dashed";
+      if (style === "none") continue;
       const a = toS(s.x1, s.y1), b = toS(s.x2, s.y2);
-      const da = ` stroke-dasharray="${(4 * scale * 0.75).toFixed(2)} ${(3 * scale * 0.75).toFixed(2)}"`;
+      const da =
+        style === "solid"
+          ? ""
+          : style === "dotted"
+            ? ` stroke-dasharray="${(1.2 * scale * 0.75).toFixed(2)} ${(2.4 * scale * 0.75).toFixed(2)}"`
+            : ` stroke-dasharray="${(4 * scale * 0.75).toFixed(2)} ${(3 * scale * 0.75).toFixed(2)}"`;
       out += `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${lw}" stroke-linecap="butt"${da} />\n`;
     }
     if (parts.axis) out += line(parts.axis);
@@ -10924,8 +10984,12 @@ square:4</textarea>
     ctx.setLineDash([]);
   }
 
+  function pointSkipsMarker(p) {
+    return !!(p && (p.showDot === false || p.marker === "none"));
+  }
+
   function drawPoint(p, highlight) {
-    if (p.hidden === true || !solutionShown(p)) return;
+    if (p.hidden === true || pointSkipsMarker(p) || !solutionShown(p)) return;
     const s = worldToScreen(p.x, p.y);
     const ink = inkFor(p, highlight);
     if (p.marker === "x" || p.marker === "foot") {
@@ -15733,7 +15797,7 @@ square:4</textarea>
 
     if (!hideExportPoints) {
       for (const p of points) {
-        if (p.hidden === true) continue;
+        if (p.hidden === true || pointSkipsMarker(p)) continue;
         const s = toS(p.x, p.y);
         if (p.marker === "x" || p.marker === "foot") {
           const r = 5 * scale * 0.7;
@@ -16177,7 +16241,7 @@ square:4</textarea>
 
     if (!hideExportPoints) {
       for (const p of points) {
-        if (p.hidden === true) continue;
+        if (p.hidden === true || pointSkipsMarker(p)) continue;
         const s = toS(p.x, p.y);
         if (p.marker === "x" || p.marker === "foot") {
           const r = 5 * scale * 0.7;
@@ -16228,7 +16292,7 @@ ${body}</svg>`;
     // Stable 38-key top-level save shape (empty collections as []).
     return {
       formatVersion: FORMAT_VERSION,
-      version: "13.5.53",
+      version: "13.5.54",
       app: "simple-diagram",
       points: points || [],
       segments: segments || [],

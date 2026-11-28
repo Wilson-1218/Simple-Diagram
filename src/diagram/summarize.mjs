@@ -53,8 +53,8 @@ export function summarizeDiagram(doc) {
 /** Brief catalog of ops for MCP list_ops / agents. */
 export const OP_CATALOG = {
   addPoint: {
-    args: "id?, x, y, marker?, hidden?",
-    note: "World coords; y down on canvas; hidden:true keeps point for geometry but skips canvas/SVG/PNG marker",
+    args: "id?, x, y | circleId|onCircle + deg|angle, marker?, showDot?, hidden?, label?",
+    note: "World coords; y down. circleId/onCircle places the point at center + r·(cos θ, sin θ); 0° east, positive clockwise. Missing circle warns and skips. showDot:false or marker:none draws no dot but is not hidden. hidden:true with a non-empty label string still creates the label",
   },
   addSegment: { args: "id?, a, b, style?", note: "style: solid|dashed|dotted|dashdot" },
   addLabel: { args: "pointId, text, ox?, oy?, size?", note: "One label per point" },
@@ -75,8 +75,8 @@ export const OP_CATALOG = {
   addParallelMark: { args: "segmentId, group?, side?" },
   addEqualMark: { args: "segmentId, group?, side?" },
   addBoxWhisker: {
-    args: "y|x, min, q1, median, q3, max, outliers?, ticks?, boxHeight?, orientation?, showAxis?, axisLabel?|xLabel?|yLabel?",
-    note: "Dedicated boxplot; ticks[] caller-supplied (no equal-spacing invent); axisLabel (aliases xLabel, yLabel) sits outside the number line and is included in the export bbox; alias addBoxPlot",
+    args: "y|x, min, q1, median, q3, max, outliers?, ticks?, boxHeight?, cap?, capHeight?, showCaps?, axisArrows?, guideStyle?, orientation?, showAxis?, axisLabel?|xLabel?|yLabel?",
+    note: "Dedicated boxplot. cap is half-length; capHeight is full length (0 draws no caps, does not fall back to 0.55×boxHeight). showCaps:false wins. axisArrows both|right|none. guideStyle dashed|dotted|solid|none, downward only. alias addBoxPlot",
   },
   addBarChart: {
     args: "x, y, categories, values|heights, plotW?, plotH?, yMin?, yMax?, yTicks?, yStep?, xLabel?, yLabel?, yLabelMode?, barPattern?, showGrid?",
@@ -91,8 +91,16 @@ export const OP_CATALOG = {
     note: "Touching bars (zero gap). boundaries length is values+1, or centers when length matches values. Stored as barCharts kind histogram",
   },
   addDotPattern: {
-    args: "x, y, patterns, dotGap?, patternGap?, dotRadius?, showArrows?, labels?",
-    note: "patterns: [[col,row]|[col,row,role]] or {rows,align} or {kind:triangular|square|hexagonal,count,solution?}. Stored as barCharts kind dots",
+    args: "x, y, patterns, dotGap?, patternGap?, dotRadius?, showArrows?, labels?, verticalAlign?, arrowStyle?, dotFill?, dotStroke?",
+    note: "patterns: [[col,row]|[col,row,role]] or {rows,align} or {kind:triangular|square|hexagonal,count,solution?}. rows[0] is the top row. verticalAlign bottom|center|top (omit or center keeps v13.5.53). arrowStyle line|block. Stored as barCharts kind dots",
+  },
+  addStemLeaf: {
+    args: "x, y, rows[{stem,leaves}], stemHeader?, leafHeader?, rowGap?, leafGap?, fontSize?",
+    note: "Stem-and-leaf table. Stored as barCharts kind stemLeaf. Alias addStemAndLeaf. Headers, underlines, vertical divider; stems right-aligned; leaves on a leafGap grid",
+  },
+  addStemAndLeaf: {
+    args: "same as addStemLeaf",
+    note: "Alias of addStemLeaf",
   },
   addFill: {
     args: "kind?, pattern?, pointIds? | centerId+startId+endId | polyArc | pathFill edges | inequalities+plotId? | betweenCurves, color?, opacity?, hatchSpacing?",
@@ -189,7 +197,7 @@ export const OP_CATALOG = {
   distributePoints: { args: "pointIds (≥3), axis x|y" },
   equalizeSegments: { args: "segmentIds (≥2), length?" },
   setView: { args: "x?, y?, scale?" },
-  setMeta: { args: "gridSnap?, gridMode?, layers?, name?, …" },
+  setMeta: { args: "gridSnap?, gridMode?, layers?, name?, autoScaleText?, …", note: "autoScaleText:false skips the span/340 multiplier on default font 14 and default right-angle size 10" },
   setLayers: { args: "gridShow?, coordsShow?, helpersShow?, *Lock?" },
   movePoint: { args: "id, x, y" },
   remove: { args: "type, id", note: "type point|segment|fill|circle|…" },

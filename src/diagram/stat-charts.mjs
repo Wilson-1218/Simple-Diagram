@@ -1,11 +1,12 @@
 /**
- * Cumulative-frequency (ogive), histogram, and dot-pattern charts.
- * Stored on doc.barCharts with kind "ogive" | "histogram" | "dots"
+ * Cumulative-frequency (ogive), histogram, dot-pattern, and stem-and-leaf charts.
+ * Stored on doc.barCharts with kind "ogive" | "histogram" | "dots" | "stemLeaf"
  * so the 38-key document shape stays put. kind omitted → existing bar chart.
  */
 
 import { hatchStrokesInRect } from "./hatch.mjs";
 import { SOLUTION_INK, elementShown } from "./appearance.mjs";
+import { approxTextWidth } from "./length-mark.mjs";
 
 function num(v, fallback) {
   const n = Number(v);
@@ -90,8 +91,13 @@ function stampStep(row, source) {
 export function normalizeStatChart(raw) {
   if (!raw || typeof raw !== "object") throw new Error("chart: must be an object");
   const kindRaw = String(raw.kind || "");
-  const kind = kindRaw === "cumulative" || kindRaw === "ogive" ? "ogive" : kindRaw;
-  if (kind !== "ogive" && kind !== "histogram" && kind !== "dots") {
+  const kind =
+    kindRaw === "cumulative" || kindRaw === "ogive"
+      ? "ogive"
+      : kindRaw === "stemandleaf"
+        ? "stemLeaf"
+        : kindRaw;
+  if (kind !== "ogive" && kind !== "histogram" && kind !== "dots" && kind !== "stemLeaf") {
     throw new Error(`chart: unknown kind ${raw.kind}`);
   }
   const x = num(raw.x, NaN);
@@ -110,6 +116,7 @@ export function normalizeStatChart(raw) {
   stampStep(chart, raw);
   if (raw.color != null && String(raw.color).trim() !== "") chart.color = String(raw.color).trim();
   if (kind === "dots") return normalizeDots(chart, raw);
+  if (kind === "stemLeaf") return normalizeStemLeaf(chart, raw);
   return kind === "ogive" ? normalizeOgive(chart, raw) : normalizeHistogram(chart, raw);
 }
 
@@ -361,6 +368,43 @@ function normalizeDots(chart, raw) {
   chart.dotRadius = num(raw.dotRadius, 4.5);
   chart.showArrows = raw.showArrows != null ? !!raw.showArrows : true;
   chart.labels = Array.isArray(raw.labels) ? raw.labels.map((s) => (s == null ? "" : String(s))) : [];
+  const align = raw.verticalAlign != null ? String(raw.verticalAlign).trim().toLowerCase() : "";
+  if (align === "bottom" || align === "top" || align === "center") chart.verticalAlign = align;
+  const arrow = raw.arrowStyle != null ? String(raw.arrowStyle).trim().toLowerCase() : "";
+  if (arrow === "block" || arrow === "line") chart.arrowStyle = arrow;
+  if (raw.dotFill != null && String(raw.dotFill).trim() !== "") chart.dotFill = String(raw.dotFill).trim();
+  if (raw.dotStroke != null && String(raw.dotStroke).trim() !== "") chart.dotStroke = String(raw.dotStroke).trim();
+  return chart;
+}
+
+function readStemLeaves(raw) {
+  if (raw == null || raw === false) return [];
+  if (Array.isArray(raw)) return raw.map((v) => String(v));
+  if (typeof raw === "string") {
+    const s = raw.trim();
+    if (!s) return [];
+    if (/\s/.test(s)) return s.split(/\s+/);
+    return [...s];
+  }
+  return [String(raw)];
+}
+
+function normalizeStemLeaf(chart, raw) {
+  if (!Array.isArray(raw.rows)) throw new Error("addStemLeaf: rows required");
+  chart.stemHeader =
+    raw.stemHeader != null && String(raw.stemHeader) !== "" ? String(raw.stemHeader) : "Stem (tens)";
+  chart.leafHeader =
+    raw.leafHeader != null && String(raw.leafHeader) !== "" ? String(raw.leafHeader) : "Leaf (units)";
+  chart.rowGap =
+    raw.rowGap != null && Number.isFinite(Number(raw.rowGap)) ? Math.max(0, Number(raw.rowGap)) : 32;
+  chart.leafGap =
+    raw.leafGap != null && Number.isFinite(Number(raw.leafGap)) ? Math.max(0, Number(raw.leafGap)) : 26;
+  chart.fontSize =
+    raw.fontSize != null && Number(raw.fontSize) > 0 ? Number(raw.fontSize) : 14;
+  chart.rows = raw.rows.map((row) => ({
+    stem: row && row.stem != null ? String(row.stem) : "",
+    leaves: readStemLeaves(row && row.leaves),
+  }));
   return chart;
 }
 
@@ -373,6 +417,7 @@ function emptyParts(chart) {
     color: chart.color,
     lines: [],
     polylines: [],
+    polygons: [],
     rects: [],
     dots: [],
     texts: [],
@@ -757,6 +802,27 @@ function placeDotStages(chart) {
       midY = (stage.minY + stage.maxY) / 2;
     }
   }
+  // Omitted and "center" keep the v13.5.53 placement (each stage's top row
+  // sits on chart.y). "top" shares that top line. "bottom" drops every
+  // stage so its last row shares one baseY. Arrows stay on midY above.
+  const mode = chart.verticalAlign === "bottom" || chart.verticalAlign === "top" ? chart.verticalAlign : null;
+  if (mode) {
+    const live = stages.filter((stage) => stage.dots.length);
+    if (live.length) {
+      const target =
+        mode === "bottom"
+          ? Math.max(...live.map((stage) => stage.maxY))
+          : Math.min(...live.map((stage) => stage.minY));
+      for (const stage of live) {
+        const dy = mode === "bottom" ? target - stage.maxY : target - stage.minY;
+        if (Math.abs(dy) < 1e-9) continue;
+        for (const d of stage.dots) d.y += dy;
+        stage.minY += dy;
+        stage.maxY += dy;
+        stage.originY += dy;
+      }
+    }
+  }
   return { stages, midY };
 }
 
@@ -765,6 +831,29 @@ function pushArrow(parts, x1, tip, y) {
   parts.lines.push({ x1, y1: y, x2: end, y2: y, color: "#111111" });
   parts.lines.push({ x1: end, y1: y, x2: end - 7, y2: y - 4, color: "#111111" });
   parts.lines.push({ x1: end, y1: y, x2: end - 7, y2: y + 4, color: "#111111" });
+}
+
+/** Seven-vertex hollow block arrow. No fill. */
+function pushBlockArrow(parts, x1, tip, y) {
+  const end = Math.max(x1 + 16, tip);
+  const head = 12;
+  const neck = end - head;
+  const tail = Math.min(x1, neck - 4);
+  const shaft = 3.2;
+  const flare = 7;
+  parts.polygons.push({
+    fill: "none",
+    color: "#111111",
+    points: [
+      { x: tail, y: y - shaft },
+      { x: neck, y: y - shaft },
+      { x: neck, y: y - flare },
+      { x: end, y },
+      { x: neck, y: y + flare },
+      { x: neck, y: y + shaft },
+      { x: tail, y: y + shaft },
+    ],
+  });
 }
 
 function dotParts(chart) {
@@ -781,11 +870,14 @@ function dotParts(chart) {
         color: solution ? chart.color : undefined,
         solutionStep: chart.solutionStep,
       };
+      const ink = chart.dotFill || inkOf(look, "#111111");
       parts.dots.push({
         x: d.x,
         y: d.y,
         r: chart.dotRadius,
-        color: inkOf(look, "#111111"),
+        color: ink,
+        fill: ink,
+        stroke: chart.dotStroke || undefined,
         role: look.role,
         solutionStep: chart.solutionStep,
       });
@@ -807,7 +899,8 @@ function dotParts(chart) {
     if (chart.showArrows && nextHasDots && index !== lastContent) {
       const x1 = right + 10;
       const x2 = right + chart.patternGap - next.box.w - 16;
-      pushArrow(parts, x1, x2, midY);
+      if (chart.arrowStyle === "block") pushBlockArrow(parts, x1, x2, midY);
+      else pushArrow(parts, x1, x2, midY);
     }
     if (chart.showArrows && index === lastContent) {
       for (let k = 0; k < 3; k++) {
@@ -824,11 +917,77 @@ function dotParts(chart) {
   return parts;
 }
 
+function stemLeafParts(chart) {
+  const parts = emptyParts(chart);
+  const fs = chart.fontSize;
+  const gap = Math.max(8, fs * 0.55);
+  const stemHeaderW = approxTextWidth(chart.stemHeader, fs);
+  const leafHeaderW = approxTextWidth(chart.leafHeader, fs);
+  let stemCol = Math.max(stemHeaderW, 8);
+  for (const row of chart.rows) {
+    stemCol = Math.max(stemCol, approxTextWidth(row.stem, fs));
+  }
+  const x = chart.x;
+  const y = chart.y;
+  const dividerX = x + stemCol + gap;
+  const leafLeft = dividerX + gap;
+  const underlineY = y + fs + 3;
+  const firstRowY = underlineY + Math.max(chart.rowGap * 0.55, fs * 0.85);
+  const ink = "#111111";
+  const text = (tx, ty, value, anchor, baseline) => {
+    parts.texts.push({
+      x: tx,
+      y: ty,
+      text: value,
+      anchor,
+      baseline,
+      size: fs,
+      italic: false,
+      color: ink,
+    });
+  };
+  text(dividerX - gap, y, chart.stemHeader, "end", "hanging");
+  parts.lines.push({
+    x1: dividerX - gap - stemHeaderW,
+    y1: underlineY,
+    x2: dividerX - gap,
+    y2: underlineY,
+    color: ink,
+  });
+  text(leafLeft, y, chart.leafHeader, "start", "hanging");
+  parts.lines.push({
+    x1: leafLeft,
+    y1: underlineY,
+    x2: leafLeft + leafHeaderW,
+    y2: underlineY,
+    color: ink,
+  });
+  const lastIndex = Math.max(0, chart.rows.length - 1);
+  const lastRowY = chart.rows.length ? firstRowY + lastIndex * chart.rowGap : underlineY;
+  const dividerBottom = (chart.rows.length ? lastRowY : underlineY) + Math.max(10, chart.rowGap * 0.45);
+  parts.lines.push({
+    x1: dividerX,
+    y1: y,
+    x2: dividerX,
+    y2: dividerBottom,
+    color: ink,
+  });
+  chart.rows.forEach((row, i) => {
+    const ry = firstRowY + i * chart.rowGap;
+    text(dividerX - gap, ry, row.stem, "end", "middle");
+    row.leaves.forEach((leaf, k) => {
+      text(leafLeft + chart.leafGap / 2 + k * chart.leafGap, ry, leaf, "middle", "middle");
+    });
+  });
+  return parts;
+}
+
 function chartReady(raw) {
   if (!raw || typeof raw !== "object") return false;
   if (raw.kind === "ogive") return Array.isArray(raw.boundaries) && raw.u0 != null;
   if (raw.kind === "histogram") return Array.isArray(raw.edges) && Array.isArray(raw.values);
   if (raw.kind === "dots") return Array.isArray(raw.patterns) && raw.dotGap != null;
+  if (raw.kind === "stemLeaf") return Array.isArray(raw.rows) && raw.fontSize != null && raw.rowGap != null;
   return false;
 }
 
@@ -836,6 +995,7 @@ export function statChartParts(raw) {
   const chart = chartReady(raw) ? raw : normalizeStatChart(raw);
   if (chart.kind === "histogram") return histogramParts(chart);
   if (chart.kind === "dots") return dotParts(chart);
+  if (chart.kind === "stemLeaf") return stemLeafParts(chart);
   return ogiveParts(chart);
 }
 
@@ -854,6 +1014,9 @@ export function addStatChartBounds(raw, add) {
   for (const poly of parts.polylines) {
     for (const p of poly.points) consider(p.x, p.y);
   }
+  for (const poly of parts.polygons || []) {
+    for (const p of poly.points || []) consider(p.x, p.y);
+  }
   for (const r of parts.rects) {
     consider(r.x, r.y);
     consider(r.x + r.w, r.y + r.h);
@@ -863,12 +1026,33 @@ export function addStatChartBounds(raw, add) {
     consider(d.x + d.r, d.y + d.r);
   }
   for (const t of parts.texts) {
-    const w = Math.max(12, String(t.text || "").length * 7);
-    consider(t.x - w / 2, t.y - 8);
-    consider(t.x + w / 2, t.y + 16);
-    if (t.rotate) {
-      consider(t.x - 16, t.y - w / 2);
-      consider(t.x + 16, t.y + w / 2);
+    if (Number(t.size) > 0) {
+      const fs = Number(t.size);
+      const w = approxTextWidth(String(t.text || ""), fs);
+      let x0;
+      let x1;
+      if (t.anchor === "end") {
+        x0 = t.x - w;
+        x1 = t.x;
+      } else if (t.anchor === "start") {
+        x0 = t.x;
+        x1 = t.x + w;
+      } else {
+        x0 = t.x - w / 2;
+        x1 = t.x + w / 2;
+      }
+      const y0 = t.baseline === "middle" ? t.y - fs * 0.65 : t.y;
+      const y1 = t.baseline === "middle" ? t.y + fs * 0.65 : t.y + fs * 1.15;
+      consider(x0, y0);
+      consider(x1, y1);
+    } else {
+      const w = Math.max(12, String(t.text || "").length * 7);
+      consider(t.x - w / 2, t.y - 8);
+      consider(t.x + w / 2, t.y + 16);
+      if (t.rotate) {
+        consider(t.x - 16, t.y - w / 2);
+        consider(t.x + 16, t.y + w / 2);
+      }
     }
   }
 }
@@ -906,12 +1090,22 @@ export function svgStatChart(raw, toS, ink = {}) {
   const s = Number.isFinite(exportScale) && exportScale > 0 ? exportScale : 1;
   const lw = (ink.stroke != null ? ink.stroke : 1.2).toFixed(2);
   const fontPx = ((ink.fontPx != null ? Number(ink.fontPx) : 12) * s).toFixed(1);
-  const fam = 'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
   let body = "";
   const groupLook = { id: parts.id, role: parts.role, solutionStep: parts.solutionStep };
   const open = svgDataAttrs(groupLook);
   if (open) body += `<g${open}>\n`;
   for (const line of parts.lines) if (keep(line)) body += lineSvg(line, toS, lw);
+  for (const poly of parts.polygons || []) {
+    if (!keep(poly) || !poly.points || poly.points.length < 3) continue;
+    const pts = poly.points
+      .map((p) => {
+        const s = toS(p.x, p.y);
+        return `${s.x.toFixed(2)},${s.y.toFixed(2)}`;
+      })
+      .join(" ");
+    const fill = poly.fill && poly.fill !== "none" ? escapeXml(poly.fill) : "none";
+    body += `<polygon points="${pts}" fill="${fill}" stroke="${escapeXml(poly.color || "#111")}" stroke-width="${lw}" stroke-linejoin="round"${svgDataAttrs(poly)} />\n`;
+  }
   for (const poly of parts.polylines) {
     if (!keep(poly) || !poly.points.length) continue;
     let d = "";
@@ -936,18 +1130,27 @@ export function svgStatChart(raw, toS, ink = {}) {
     if (!keep(d)) continue;
     const p = toS(d.x, d.y);
     const rad = Number(d.r) * s;
-    body += `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${rad.toFixed(2)}" fill="${escapeXml(d.color || "#111")}"${svgDataAttrs(d)} />\n`;
+    const stroke =
+      d.stroke != null && String(d.stroke) !== ""
+        ? ` stroke="${escapeXml(d.stroke)}" stroke-width="${Math.max(0.8, Number(lw) * 0.7).toFixed(2)}"`
+        : "";
+    body += `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${rad.toFixed(2)}" fill="${escapeXml(d.fill || d.color || "#111")}"${stroke}${svgDataAttrs(d)} />\n`;
   }
   for (const t of parts.texts) {
     if (!keep(t)) continue;
-    const s = toS(t.x, t.y);
+    const spt = toS(t.x, t.y);
     const anchor = t.anchor === "end" ? "end" : t.anchor === "start" ? "start" : "middle";
     const baseline = t.baseline === "middle" ? "middle" : t.baseline === "auto" ? "auto" : "hanging";
     const rot =
       t.rotate != null
-        ? ` transform="rotate(${Number(t.rotate).toFixed(1)} ${s.x.toFixed(2)} ${s.y.toFixed(2)})"`
+        ? ` transform="rotate(${Number(t.rotate).toFixed(1)} ${spt.x.toFixed(2)} ${spt.y.toFixed(2)})"`
         : "";
-    body += `<text x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" fill="${escapeXml(t.color || "#111")}" ${fam} font-size="${fontPx}" text-anchor="${anchor}" dominant-baseline="${baseline}"${rot}${svgDataAttrs(t)}>${escapeXml(t.text)}</text>\n`;
+    const textFs =
+      t.size != null && Number(t.size) > 0
+        ? (Number(t.size) * s).toFixed(1)
+        : fontPx;
+    const fontStyle = t.italic === false ? "normal" : "italic";
+    body += `<text x="${spt.x.toFixed(2)}" y="${spt.y.toFixed(2)}" fill="${escapeXml(t.color || "#111")}" font-family="STIX Two Text, Times New Roman, serif" font-style="${fontStyle}" font-size="${textFs}" text-anchor="${anchor}" dominant-baseline="${baseline}"${rot}${svgDataAttrs(t)}>${escapeXml(t.text)}</text>\n`;
   }
   if (open) body += `</g>\n`;
   return body;

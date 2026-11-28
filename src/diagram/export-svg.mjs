@@ -164,7 +164,7 @@ function boundsOf(doc, pad = 24) {
   }
   for (const raw of doc.barCharts || []) {
     try {
-      if (raw && (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots")) {
+      if (raw && (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots" || raw.kind === "stemLeaf")) {
         addStatChartBounds(raw, add);
       } else addBarChartBounds(normalizeBarChart(raw), add);
     } catch {
@@ -491,7 +491,9 @@ export function documentToSvg(doc, opts = {}) {
   const b = boundsOf(doc, pad / scale);
   const worldW = b.maxX - b.minX;
   const worldH = b.maxY - b.minY;
-  const readScale = readableInkScale(worldW, worldH);
+  const autoScale =
+    opts.autoScaleText != null ? opts.autoScaleText !== false : doc.autoScaleText !== false;
+  const readScale = autoScale ? readableInkScale(worldW, worldH) : 1;
   const defaultFont = 14 * readScale;
   const w = Math.max(40, worldW * scale);
   const h = Math.max(40, worldH * scale);
@@ -810,11 +812,16 @@ export function documentToSvg(doc, opts = {}) {
     body += line(parts.median);
     for (const s of parts.whiskers) body += line(s);
     for (const s of parts.caps) body += line(s);
-    const guideDash = ink.dash("dashed").map((d) => d.toFixed(2)).join(" ");
     for (const s of parts.guides || []) {
+      const style = s.guideStyle || "dashed";
+      if (style === "none") continue;
       const a = toS(s.x1, s.y1);
       const b = toS(s.x2, s.y2);
-      body += `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${sw}" stroke-linecap="butt" stroke-dasharray="${guideDash}" />\n`;
+      const dash =
+        style === "solid"
+          ? ""
+          : ` stroke-dasharray="${ink.dash(style === "dotted" ? "dotted" : "dashed").map((d) => d.toFixed(2)).join(" ")}"`;
+      body += `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${sw}" stroke-linecap="butt"${dash} />\n`;
     }
     if (parts.axis) body += line(parts.axis);
     for (const s of parts.arrows || []) body += line(s);
@@ -852,7 +859,7 @@ export function documentToSvg(doc, opts = {}) {
 
   for (const raw of doc.barCharts || []) {
     if (!shown(raw)) continue;
-    if (raw && (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots")) {
+    if (raw && (raw.kind === "ogive" || raw.kind === "histogram" || raw.kind === "dots" || raw.kind === "stemLeaf")) {
       try {
         body += svgStatChart(raw, toS, { stroke: ink.stroke, layers, scale });
       } catch {
@@ -1097,7 +1104,7 @@ export function documentToSvg(doc, opts = {}) {
 
   if (!hidePoints) {
     for (const p of pts.values()) {
-      if (p.hidden === true || !shown(p)) continue;
+      if (p.hidden === true || p.showDot === false || p.marker === "none" || !shown(p)) continue;
       const s = toS(p.x, p.y);
       const pr = ink.mm(0.55).toFixed(2);
       body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${pr}" fill="${strokeOf(p)}"${svgDataAttrs(p)} />\n`;

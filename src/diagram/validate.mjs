@@ -463,7 +463,7 @@ export function validateDiagram(doc) {
       const bc = d.barCharts[i];
       const path = `barCharts[${i}]`;
       try {
-        if (bc && (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots")) {
+        if (bc && (bc.kind === "ogive" || bc.kind === "histogram" || bc.kind === "dots" || bc.kind === "stemLeaf")) {
           normalizeStatChart(bc);
         } else normalizeBarChart(bc, { requireId: true });
       } catch (e) {

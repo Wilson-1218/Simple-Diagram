@@ -13,10 +13,10 @@ import {
   validateDiagram,
 } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.53 and the new ops are registered", () => {
-  assert.equal(APP_VERSION, "13.5.53");
+test("APP_VERSION is 13.5.54 and the new ops are registered", () => {
+  assert.equal(APP_VERSION, "13.5.54");
   assert.equal(CURVE_AREA_STEPS, 80);
-  assert.equal(OP_NAMES.length, 62);
+  assert.equal(OP_NAMES.length, 64);
   for (const name of ["addCumulativeFrequency", "addOgive", "addHistogram", "addDotPattern"]) {
     assert.ok(OP_NAMES.includes(name), name);
   }

@@ -183,6 +183,17 @@ function circleGeom(doc, circleId, ctx) {
   return { cir, c, r };
 }
 
+/**
+ * `showDot: false` or `marker: "none"` stores marker "none" (no dot, not hidden).
+ * `marker: false` or `""` clears a special marker. Omitted marker uses `fallback`.
+ */
+function resolvePointMarker(op, fallback) {
+  if (op && (op.showDot === false || op.marker === "none")) return "none";
+  if (op && (op.marker === false || op.marker === "")) return undefined;
+  if (!op || op.marker == null) return fallback;
+  return op.marker;
+}
+
 function pushPoint(doc, nextId, x, y, idHint, marker, hidden, appearance) {
   const id = idHint
     ? resolveId({ id: idHint }, nextId, "p")
@@ -194,6 +205,40 @@ function pushPoint(doc, nextId, x, y, idHint, marker, hidden, appearance) {
   if (appearance) stampAppearance(p, appearance);
   doc.points.push(p);
   return p;
+}
+
+/**
+ * Point on an existing circle. Canvas y is down: 0° is east, positive
+ * degrees are page-clockwise (sin in world y). Missing circle warns and skips.
+ * @returns {{x:number,y:number}|null}
+ */
+function pointOnNamedCircle(doc, circleId, op, ctx) {
+  const cir = (doc.circles || []).find((c) => c.id === circleId);
+  if (!cir) {
+    console.warn(`${ctx}: circle not found; skipped`, { circleId: String(circleId) });
+    return null;
+  }
+  const c = pointById(doc, cir.centerId);
+  const thr = pointById(doc, cir.throughId);
+  if (!c || !thr) {
+    console.warn(`${ctx}: circle points missing; skipped`, { circleId: String(circleId) });
+    return null;
+  }
+  const r = Math.hypot(thr.x - c.x, thr.y - c.y);
+  if (!(r > 1e-9)) {
+    console.warn(`${ctx}: circle radius too small; skipped`, { circleId: String(circleId) });
+    return null;
+  }
+  let theta = 0;
+  if (op.angle != null && op.angle !== "") {
+    theta = Number(op.angle);
+    if (!Number.isFinite(theta)) throw new Error(`${ctx}: angle must be finite`);
+  } else if (op.deg != null && op.deg !== "") {
+    const deg = Number(op.deg);
+    if (!Number.isFinite(deg)) throw new Error(`${ctx}: deg must be finite`);
+    theta = (deg * Math.PI) / 180;
+  }
+  return pointOnCircle(c, r, theta);
 }
 
 function pushSegment(doc, nextId, a, b, style, idHint, appearance) {
@@ -615,7 +660,8 @@ function placePlotPoint(doc, op, nextId, ctx) {
   const id = resolveId(op, nextId, "p");
   if (doc.points.some((p) => p.id === id)) throw new Error(`${ctx}: duplicate id ${id}`);
   const p = { id, x: w.x, y: w.y };
-  if (op.marker) p.marker = op.marker;
+  const marker = resolvePointMarker(op, undefined);
+  if (marker) p.marker = marker;
   if (op.hidden === true) p.hidden = true;
   stampAppearance(p, op);
   doc.points.push(p);
@@ -1502,12 +1548,16 @@ function refreshAutoLabels(doc, onlyPointIds) {
  * `id2` intersections label only the point passed in.
  */
 function maybeInlineLabel(doc, op, nextId, point, opts = {}) {
-  if (!point || point.hidden === true) return;
+  if (!point) return;
   let text = null;
   if (op.label === true) text = point.id;
   else if (typeof op.label === "string" && op.label !== "") text = op.label;
   else if (opts.stringify && op.label != null && String(op.label) !== "") text = String(op.label);
   else return;
+  // Hidden dots stay unlabeled unless the caller passed a non-empty string.
+  // label:true, false, and omitted keep the old "no label" behavior.
+  // mathPoints and feasible-region corners never reach here.
+  if (point.hidden === true && !(typeof op.label === "string" && op.label !== "")) return;
   const lab = { pointId: point.id, text };
   const prefixOx = finiteOffset(op.labelOx);
   const prefixOy = finiteOffset(op.labelOy);
@@ -1538,13 +1588,29 @@ const HANDLERS = {
     }
     const id = resolveId(op, nextId, "p");
     if (doc.points.some((p) => p.id === id)) throw new Error(`addPoint: duplicate id ${id}`);
-    const x = Number(op.x);
-    const y = Number(op.y);
-    if (!Number.isFinite(x) || !Number.isFinite(y)) {
-      throw new Error("addPoint: x,y must be finite numbers");
+    const circleRef =
+      op.circleId != null && op.circleId !== ""
+        ? op.circleId
+        : op.onCircle != null && op.onCircle !== ""
+          ? op.onCircle
+          : null;
+    let x;
+    let y;
+    if (circleRef != null) {
+      const placed = pointOnNamedCircle(doc, circleRef, op, "addPoint");
+      if (!placed) return doc;
+      x = placed.x;
+      y = placed.y;
+    } else {
+      x = Number(op.x);
+      y = Number(op.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        throw new Error("addPoint: x,y must be finite numbers");
+      }
     }
     const p = { id, x, y };
-    if (op.marker) p.marker = op.marker;
+    const marker = resolvePointMarker(op, undefined);
+    if (marker) p.marker = marker;
     if (op.hidden === true) p.hidden = true;
     stampAppearance(p, op);
     doc.points.push(p);
@@ -1760,6 +1826,14 @@ const HANDLERS = {
     return pushStatChart(doc, op, nextId, "dots");
   },
 
+  /**
+   * Stem-and-leaf table. Stored on barCharts as kind "stemLeaf".
+   * Alias addStemAndLeaf.
+   */
+  addStemLeaf(doc, op, nextId) {
+    return pushStatChart(doc, op, nextId, "stemLeaf");
+  },
+
   addEqualMark(doc, op, nextId) {
     const id = resolveId(op, nextId, "em");
     requireSegment(doc, op.segmentId, "addEqualMark");
@@ -1859,7 +1933,7 @@ const HANDLERS = {
       throw new Error("addFoot: point already lies on the line");
     }
     const footHint = op.footId != null ? op.footId : op.id;
-    const marker = op.marker === false || op.marker === "" ? undefined : op.marker || "foot";
+    const marker = resolvePointMarker(op, "foot");
     const foot = pushPoint(doc, nextId, fx, fy, footHint || undefined, marker, undefined, op);
     foot.construction = { kind: "foot", from: fromId, a: a.id, b: b.id };
     if (op.label || op.labelText) {
@@ -1892,8 +1966,7 @@ const HANDLERS = {
     const { aId, bId, a, b } = resolveEndpoints(doc, op, "addMidpoint");
     const mx = (a.x + b.x) / 2;
     const my = (a.y + b.y) / 2;
-    const marker =
-      op.marker === false || op.marker === "" ? undefined : op.marker || undefined;
+    const marker = resolvePointMarker(op, undefined);
     const mid = pushPoint(
       doc,
       nextId,
@@ -1946,8 +2019,7 @@ const HANDLERS = {
     }
     const x = a.x + t * (b.x - a.x);
     const y = a.y + t * (b.y - a.y);
-    const marker =
-      op.marker === false || op.marker === "" ? undefined : op.marker || undefined;
+    const marker = resolvePointMarker(op, undefined);
     const p = pushPoint(
       doc,
       nextId,
@@ -1987,8 +2059,7 @@ const HANDLERS = {
       });
       return doc;
     }
-    const marker =
-      op.marker === false || op.marker === "" ? undefined : op.marker || undefined;
+    const marker = resolvePointMarker(op, undefined);
     const hidden = op.hidden === true;
     const sorted = sortHitsStable(hits);
     const wantBoth = op.id2 != null && op.id2 !== "" && sorted.length >= 2;
@@ -2857,6 +2928,7 @@ const HANDLERS = {
       "nextLetter",
       "labelFontSize",
       "rightAngleSize",
+      "autoScaleText",
       "gridSnap",
       "gridMode",
       "hideExportPoints",
@@ -3011,6 +3083,7 @@ HANDLERS.addPie = HANDLERS.addPieChart;
 HANDLERS.addPlotIntersection = (doc, op, nextId) =>
   applyCurveIntersection(doc, op, nextId, "addPlotIntersection");
 HANDLERS.addOgive = HANDLERS.addCumulativeFrequency;
+HANDLERS.addStemAndLeaf = HANDLERS.addStemLeaf;
 
 function pushStatChart(doc, op, nextId, kind) {
   const id = resolveId(op, nextId, "bc");
