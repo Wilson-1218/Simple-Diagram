@@ -1,7 +1,7 @@
 /** Empty Simple Diagram document (formatVersion 1). */
 
 export const CURRENT_FORMAT_VERSION = 1;
-export const APP_VERSION = "13.5.60";
+export const APP_VERSION = "13.5.61";
 
 export const DEFAULT_LAYERS = {
   gridShow: true,
