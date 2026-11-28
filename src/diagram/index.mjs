@@ -114,6 +114,8 @@ export {
 export {
   coordPlotBounds,
   addCoordPlotBounds,
+  coordAxisLabelText,
+  coordXAxisNamePlacement,
   coordAxisOverhangPx,
   coordAxisScales,
   coordIntegerTicks,

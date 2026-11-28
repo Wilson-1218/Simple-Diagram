@@ -103,7 +103,31 @@ function resolvePointId(doc, id) {
       return target;
     }
   }
-  return inferVertexAlias(doc, id);
+  return inferVertexAlias(doc, id) || inferPieAlias(doc, id);
+}
+
+/**
+ * Pie aliases survive a dropped alias map when the pie used its own ids:
+ * `{prefix}O` → hidden `{prefix}C`, `{prefix}{i}` → hidden `{prefix}r{i}`.
+ * A real point and a letter label still win. Empty prefix does not match.
+ */
+function inferPieAlias(doc, id) {
+  if (typeof id !== "string" || !Array.isArray(doc.points)) return null;
+  const hidden = (pid) => {
+    const p = doc.points.find((q) => q && q.id === pid);
+    return p && p.hidden === true ? p.id : null;
+  };
+  const center = /^(.*)O$/.exec(id);
+  if (center && center[1]) {
+    const hit = hidden(`${center[1]}C`);
+    if (hit) return hit;
+  }
+  const rim = /^(.*?)(\d+)$/.exec(id);
+  if (rim && rim[1]) {
+    const hit = hidden(`${rim[1]}r${rim[2]}`);
+    if (hit) return hit;
+  }
+  return null;
 }
 
 function inferVertexAlias(doc, key) {
@@ -1572,6 +1596,13 @@ function maybeInlineLabel(doc, op, nextId, point, opts = {}) {
   HANDLERS.addLabel(doc, lab, nextId);
 }
 
+/** undefined/null → fallback. false, blank, and whitespace → "" (hidden). */
+function storedCoordAxisLabel(value, fallback) {
+  if (value == null) return fallback;
+  if (value === false) return "";
+  return String(value).trim();
+}
+
 function resolveId(op, nextId, prefix) {
   if (op.id != null && op.id !== "") {
     if (typeof op.id !== "string") throw new Error("id must be a string");
@@ -2782,8 +2813,8 @@ const HANDLERS = {
       xmax: op.xmax != null ? Number(op.xmax) : 6,
       ymin: op.ymin != null ? Number(op.ymin) : -2,
       ymax: op.ymax != null ? Number(op.ymax) : 6,
-      axisLabelX: op.axisLabelX != null ? String(op.axisLabelX) : "x",
-      axisLabelY: op.axisLabelY != null ? String(op.axisLabelY) : "y",
+      axisLabelX: storedCoordAxisLabel(op.axisLabelX, "x"),
+      axisLabelY: storedCoordAxisLabel(op.axisLabelY, "y"),
       showOrigin: op.showOrigin !== false,
       showTicks: op.showTicks !== false,
       showTickLabels: op.showTickLabels !== false,
@@ -2803,6 +2834,9 @@ const HANDLERS = {
     if (yStep != null) plot.yStep = yStep;
     if (xUnitPx != null) plot.xUnitPx = xUnitPx;
     if (yUnitPx != null) plot.yUnitPx = yUnitPx;
+    if (op.axisLabelXPos != null && String(op.axisLabelXPos).trim().toLowerCase() === "right") {
+      plot.axisLabelXPos = "right";
+    }
     if (Array.isArray(op.curves)) {
       for (const c of op.curves) {
         const ctype = c.type === "log10" ? "log" : c.type || "line";

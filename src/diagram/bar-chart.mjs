@@ -7,6 +7,7 @@
  */
 
 import { hatchStrokesInRect, normalizeFillPattern } from "./hatch.mjs";
+import { approxTextWidth } from "./length-mark.mjs";
 
 function num(v, fallback) {
   const n = Number(v);
@@ -90,6 +91,8 @@ export function normalizeBarChart(raw, opts = {}) {
   const showAxes = raw.showAxes != null ? !!raw.showAxes : true;
   const xLabel = raw.xLabel != null ? String(raw.xLabel) : "";
   const yLabel = raw.yLabel != null ? String(raw.yLabel) : "";
+  const title = raw.title != null ? String(raw.title).trim() : "";
+  const boxed = raw.boxed === true || raw.boxed === "true" || raw.boxed === 1;
   // rotate: −90° along axis (exam English titles); stack: one glyph per line
   const yLabelMode =
     raw.yLabelMode === "stack" || raw.yLabelMode === "vertical" ? "stack" : "rotate";
@@ -114,6 +117,8 @@ export function normalizeBarChart(raw, opts = {}) {
     yLabel,
     yLabelMode,
   };
+  if (title) out.title = title;
+  if (boxed) out.boxed = true;
   if (opts.requireId !== false) {
     if (typeof raw.id !== "string" || !raw.id) {
       throw new Error("barChart: id required");
@@ -146,6 +151,8 @@ export function barValueToWorldY(bc, value) {
  *   catLabels: {x:number,y:number,text:string}[],
  *   xLabel: {x:number,y:number,text:string}|null,
  *   yLabel: {x:number,y:number,text:string,mode:string}|null,
+ *   title: {x:number,y:number,text:string}|null,
+ *   frameSides: {x1:number,y1:number,x2:number,y2:number}[],
  *   hatch: {x1:number,y1:number,x2:number,y2:number}[],
  * }}
  */
@@ -232,6 +239,19 @@ export function barChartParts(bc) {
       mode: bc.yLabelMode,
     };
   }
+  const title =
+    bc.title != null && String(bc.title).trim() !== ""
+      ? {
+          x: bc.x + bc.plotW / 2,
+          y: bc.y - bc.plotH - 26,
+          text: String(bc.title).trim(),
+        }
+      : null;
+  const frameSides = [];
+  if (bc.boxed === true) {
+    frameSides.push({ x1: bc.x, y1: topY, x2: bc.x + bc.plotW, y2: topY });
+    frameSides.push({ x1: bc.x + bc.plotW, y1: topY, x2: bc.x + bc.plotW, y2: bc.y });
+  }
 
   return {
     frame: { x: bc.x, y: topY, w: bc.plotW, h: bc.plotH },
@@ -244,6 +264,8 @@ export function barChartParts(bc) {
     catLabels,
     xLabel,
     yLabel,
+    title,
+    frameSides,
     hatch,
   };
 }
@@ -259,6 +281,16 @@ export function addBarChartBounds(bc, add) {
   add(p.axisY.x2, p.axisY.y2);
   for (const c of p.catLabels) add(c.x, c.y + 4);
   if (p.xLabel) add(p.xLabel.x, p.xLabel.y + 4);
+  if (p.title) {
+    const fs = 16;
+    const tw = approxTextWidth(p.title.text, fs);
+    add(p.title.x - tw / 2, p.title.y - fs * 0.75);
+    add(p.title.x + tw / 2, p.title.y + fs * 0.75);
+  }
+  for (const s of p.frameSides || []) {
+    add(s.x1, s.y1);
+    add(s.x2, s.y2);
+  }
   if (p.yLabel) {
     add(p.yLabel.x - 8, p.yLabel.y);
     add(p.yLabel.x + 8, p.yLabel.y);

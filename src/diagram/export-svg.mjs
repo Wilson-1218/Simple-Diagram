@@ -808,6 +808,16 @@ export function documentToSvg(doc, opts = {}) {
     const ry = Math.min(tl.y, br.y);
     const rw = Math.abs(br.x - tl.x);
     const rh = Math.abs(br.y - tl.y);
+    for (const s of parts.tickGrids || []) {
+      const style = s.tickGridStyle || "dotted";
+      const a = toS(s.x1, s.y1);
+      const b = toS(s.x2, s.y2);
+      const dash =
+        style === "solid"
+          ? ""
+          : ` stroke-dasharray="${ink.dash(style === "dashed" ? "dashed" : "dotted").map((d) => d.toFixed(2)).join(" ")}"`;
+      body += `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#111" stroke-width="${sw}" stroke-linecap="butt"${dash} />\n`;
+    }
     body += `<rect x="${rx.toFixed(2)}" y="${ry.toFixed(2)}" width="${rw.toFixed(2)}" height="${rh.toFixed(2)}" fill="none" stroke="#111" stroke-width="${sw}" />\n`;
     body += line(parts.median);
     for (const s of parts.whiskers) body += line(s);
@@ -899,6 +909,7 @@ export function documentToSvg(doc, opts = {}) {
       body += line(parts.axisX, false);
       body += line(parts.axisY, false);
     }
+    for (const s of parts.frameSides || []) body += line(s, false);
     for (const s of parts.tickMarks) body += line(s, false);
     const fs = ink.fontForSize(defaultFont);
     const fam =
@@ -914,6 +925,10 @@ export function documentToSvg(doc, opts = {}) {
     if (parts.xLabel) {
       const p = toS(parts.xLabel.x, parts.xLabel.y);
       body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="hanging">${escapeXml(parts.xLabel.text)}</text>\n`;
+    }
+    if (parts.title) {
+      const p = toS(parts.title.x, parts.title.y);
+      body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" ${fam} font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${escapeXml(parts.title.text)}</text>\n`;
     }
     if (parts.yLabel) {
       const p = toS(parts.yLabel.x, parts.yLabel.y);
