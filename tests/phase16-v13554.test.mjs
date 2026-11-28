@@ -12,8 +12,8 @@ import {
   svgStatChart,
 } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.54 and stem-leaf ops are registered", () => {
-  assert.equal(APP_VERSION, "13.5.54");
+test("APP_VERSION is 13.5.55 and stem-leaf ops are registered", () => {
+  assert.equal(APP_VERSION, "13.5.55");
   assert.equal(OP_NAMES.length, 64);
   assert.ok(OP_NAMES.includes("addStemLeaf"));
   assert.ok(OP_NAMES.includes("addStemAndLeaf"));
@@ -239,14 +239,21 @@ test("dot pattern alignment, block arrows, and dot ink", () => {
   const tallBottom = Math.max(...bottomDots.map((d) => d.y));
   const shortBottom = bottomDots[0].y;
   assert.ok(Math.abs(shortBottom - tallBottom) < 1e-9);
-  const mid = current.lines.find((l) => l.y1 === l.y2);
-  const midBottom = bottom.lines.find((l) => l.y1 === l.y2);
-  assert.ok(Math.abs(mid.y1 - midBottom.y1) < 1e-9);
+  const shafts = (parts) => parts.lines.filter((l) => l.y1 === l.y2 && Math.abs(l.x2 - l.x1) > 10);
+  const midY = shafts(current)[0].y1;
+  const baseY = tallBottom;
+  const arrowY = baseY - 0.25 * 16;
+  assert.ok(shafts(bottom).every((l) => Math.abs(l.y1 - arrowY) < 1e-6));
+  assert.ok(Math.abs(midY - arrowY) > 1);
+  const middle = statChartParts(
+    applyOps(null, [{ ...base, verticalAlign: "bottom", arrowAlign: "middle" }]).barCharts[0]
+  );
+  assert.ok(shafts(middle).every((l) => Math.abs(l.y1 - midY) < 1e-6));
 
   const block = statChartParts(
     applyOps(null, [{ ...base, arrowStyle: "block", patterns: [[[0, 0]], [[0, 0]], []] }]).barCharts[0]
   );
-  assert.equal(block.polygons.length, 1);
+  assert.equal(block.polygons.length, 2);
   assert.equal(block.polygons[0].points.length, 7);
   assert.equal(block.polygons[0].fill, "none");
   assert.equal(block.lines.filter((l) => l.y1 === l.y2 && Math.abs(l.x2 - l.x1) > 8).length, 0);

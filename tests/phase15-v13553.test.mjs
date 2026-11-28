@@ -12,8 +12,8 @@ import {
   svgStatChart,
 } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.54", () => {
-  assert.equal(APP_VERSION, "13.5.54");
+test("APP_VERSION is 13.5.55", () => {
+  assert.equal(APP_VERSION, "13.5.55");
 });
 
 function chartSvg(op, scale = 2) {
@@ -106,7 +106,7 @@ test("ogive projection on a tick does not stack a second number", () => {
   assert.equal(off.parts.texts.find((t) => t.text === "7").color, "#dc2626");
 });
 
-test("dot arrows and ellipsis share one mid-line and stop after the last stage", () => {
+test("dot arrows and ellipsis share one mid-line; trailing arrow stops before the ellipsis", () => {
   const { parts } = chartSvg({
     op: "addDotPattern",
     x: 0,
@@ -118,13 +118,27 @@ test("dot arrows and ellipsis share one mid-line and stop after the last stage",
   assert.equal(content.length, 1 + 3 + 2);
   assert.equal(ellipsis.length, 3);
   const horizontals = parts.lines.filter((l) => l.y1 === l.y2 && Math.abs(l.x2 - l.x1) > 10);
-  assert.equal(horizontals.length, 2);
+  assert.equal(horizontals.length, 3);
   const midY = horizontals[0].y1;
   assert.ok(horizontals.every((l) => l.y1 === midY));
   assert.ok(ellipsis.every((d) => d.y === midY));
   const ys = content.map((d) => d.y);
   const tallMid = (Math.min(...ys) + Math.max(...ys)) / 2;
   assert.ok(Math.abs(midY - tallMid) < 1e-6);
+  const tip = Math.max(...horizontals.map((l) => Math.max(l.x1, l.x2)));
+  const ellipsisLeft = Math.min(...ellipsis.map((d) => d.x));
+  assert.ok(tip < ellipsisLeft);
+
+  const stopped = chartSvg({
+    op: "addDotPattern",
+    x: 0,
+    y: 80,
+    trailingArrow: false,
+    patterns: [[[0, 0]], [[0, 0], [0, 1], [0, 2]], [[0, 0], [1, 0]], []],
+  });
+  const stoppedShafts = stopped.parts.lines.filter((l) => l.y1 === l.y2 && Math.abs(l.x2 - l.x1) > 10);
+  assert.equal(stoppedShafts.length, 2);
+  assert.equal(stopped.parts.dots.filter((d) => d.ellipsis).length, 3);
 });
 
 test("ellipse style strokes the whole ring; solid backDashed stays split", () => {

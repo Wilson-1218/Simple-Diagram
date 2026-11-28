@@ -372,6 +372,15 @@ function normalizeDots(chart, raw) {
   if (align === "bottom" || align === "top" || align === "center") chart.verticalAlign = align;
   const arrow = raw.arrowStyle != null ? String(raw.arrowStyle).trim().toLowerCase() : "";
   if (arrow === "block" || arrow === "line") chart.arrowStyle = arrow;
+  const arrowAlign = raw.arrowAlign != null ? String(raw.arrowAlign).trim().toLowerCase() : "";
+  if (arrowAlign === "bottom" || arrowAlign === "middle") chart.arrowAlign = arrowAlign;
+  if (raw.arrowGap != null && Number.isFinite(Number(raw.arrowGap))) chart.arrowGap = Number(raw.arrowGap);
+  if (raw.arrowWidth != null && Number.isFinite(Number(raw.arrowWidth))) chart.arrowWidth = Number(raw.arrowWidth);
+  if (raw.arrowYOffset != null && Number.isFinite(Number(raw.arrowYOffset))) {
+    chart.arrowYOffset = Number(raw.arrowYOffset);
+  }
+  if (raw.trailingArrow === false) chart.trailingArrow = false;
+  else if (raw.trailingArrow === true) chart.trailingArrow = true;
   if (raw.dotFill != null && String(raw.dotFill).trim() !== "") chart.dotFill = String(raw.dotFill).trim();
   if (raw.dotStroke != null && String(raw.dotStroke).trim() !== "") chart.dotStroke = String(raw.dotStroke).trim();
   return chart;
@@ -757,9 +766,44 @@ function clusterOf(dots, gap) {
   };
 }
 
+/** Ink-to-arrow pad. Default 20; never tighter than 18, even for block arrows. */
+const DOT_ARROW_GAP = 20;
+const DOT_ARROW_WIDTH = 27;
+const DOT_ARROW_CLEARANCE = 18;
+const DOT_ELLIPSIS_R = 1.6;
+const DOT_ELLIPSIS_STEP = 8;
+
+function finiteOr(v, fallback) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function dotArrowMetrics(chart) {
+  return {
+    gap: Math.max(DOT_ARROW_CLEARANCE, finiteOr(chart.arrowGap, DOT_ARROW_GAP)),
+    width: Math.max(1, finiteOr(chart.arrowWidth, DOT_ARROW_WIDTH)),
+    trailing: chart.trailingArrow !== false,
+    yOffset: finiteOr(chart.arrowYOffset, 0),
+  };
+}
+
+/** "bottom" is baseY - 0.25 * pitchY. Omitted + verticalAlign bottom uses that. */
+function dotArrowAlign(chart) {
+  const raw = chart.arrowAlign != null ? String(chart.arrowAlign).trim().toLowerCase() : "";
+  if (raw === "bottom" || raw === "middle") return raw;
+  if (chart.verticalAlign === "bottom") return "bottom";
+  return "middle";
+}
+
+function arrowCenterSpan(chart, metrics) {
+  return chart.dotRadius + metrics.gap + metrics.width + metrics.gap + chart.dotRadius;
+}
+
 function placeDotStages(chart) {
   const gap = chart.dotGap;
+  const metrics = dotArrowMetrics(chart);
   const clusters = chart.patterns.map((pattern) => patternDots(pattern));
+  const lastContent = clusters.reduce((acc, dots, index) => (dots.length ? index : acc), -1);
   let cursor = chart.x;
   const stages = [];
   for (let index = 0; index < clusters.length; index++) {
@@ -790,7 +834,13 @@ function placeDotStages(chart) {
       minY: placed.length ? minY : chart.y,
       maxY: placed.length ? maxY : chart.y,
     });
-    cursor = right + chart.patternGap;
+    const next = clusters[index + 1];
+    const nextHasDots = !!(next && next.length);
+    const linkArrow = !!chart.showArrows && nextHasDots && index !== lastContent;
+    const advance = linkArrow
+      ? Math.max(chart.patternGap, arrowCenterSpan(chart, metrics))
+      : chart.patternGap;
+    cursor = right + advance;
   }
   let midY = chart.y;
   let bestH = -1;
@@ -802,9 +852,9 @@ function placeDotStages(chart) {
       midY = (stage.minY + stage.maxY) / 2;
     }
   }
-  // Omitted and "center" keep the v13.5.53 placement (each stage's top row
+  // Omitted and "center" keep the v13.5.54 placement (each stage's top row
   // sits on chart.y). "top" shares that top line. "bottom" drops every
-  // stage so its last row shares one baseY. Arrows stay on midY above.
+  // stage so its last row shares one baseY. Arrow y is chosen later.
   const mode = chart.verticalAlign === "bottom" || chart.verticalAlign === "top" ? chart.verticalAlign : null;
   if (mode) {
     const live = stages.filter((stage) => stage.dots.length);
@@ -826,40 +876,96 @@ function placeDotStages(chart) {
   return { stages, midY };
 }
 
-function pushArrow(parts, x1, tip, y) {
-  const end = Math.max(x1 + 12, tip);
-  parts.lines.push({ x1, y1: y, x2: end, y2: y, color: "#111111" });
-  parts.lines.push({ x1: end, y1: y, x2: end - 7, y2: y - 4, color: "#111111" });
-  parts.lines.push({ x1: end, y1: y, x2: end - 7, y2: y + 4, color: "#111111" });
+/**
+ * Arrow y. verticalAlign bottom (and arrowAlign omitted or "bottom") uses
+ * baseY - 0.25 * pitchY, with pitchY = dotGap, so the arrow sits just above
+ * the shared bottom row. "middle" keeps the pre-shift global midY.
+ */
+function dotArrowY(chart, stages, midY, metrics) {
+  const offset = metrics.yOffset;
+  if (dotArrowAlign(chart) !== "bottom") return midY + offset;
+  const live = stages.filter((stage) => stage.dots.length);
+  const baseY = live.length ? Math.max(...live.map((stage) => stage.maxY)) : chart.y;
+  const pitchY = chart.dotGap;
+  return baseY - 0.25 * pitchY + offset;
 }
 
-/** Seven-vertex hollow block arrow. No fill. */
+/** Fixed-width arrow centered in the ink-to-ink gap. Pads stay >= metrics.gap. */
+function arrowBetween(leftCenter, rightCenter, radius, metrics) {
+  const leftInk = leftCenter + radius;
+  const rightInk = rightCenter - radius;
+  const available = rightInk - leftInk;
+  let width = metrics.width;
+  let pad = metrics.gap;
+  if (available >= width + 2 * pad) {
+    pad = (available - width) / 2;
+  } else if (available >= 2 * pad) {
+    width = available - 2 * pad;
+  } else {
+    pad = Math.max(0, available / 2);
+    width = Math.max(0, available - 2 * pad);
+  }
+  const x1 = leftInk + pad;
+  return { x1, tip: x1 + width };
+}
+
+function pushArrow(parts, x1, tip, y) {
+  const end = tip > x1 ? tip : x1 + 12;
+  const span = end - x1;
+  const head = Math.min(7, span * 0.45);
+  const wing = Math.min(4, head * 0.6);
+  parts.lines.push({ x1, y1: y, x2: end, y2: y, color: "#111111" });
+  parts.lines.push({ x1: end, y1: y, x2: end - head, y2: y - wing, color: "#111111" });
+  parts.lines.push({ x1: end, y1: y, x2: end - head, y2: y + wing, color: "#111111" });
+}
+
+/** Seven-vertex hollow block arrow. No fill. The tip is the rightmost vertex. */
 function pushBlockArrow(parts, x1, tip, y) {
-  const end = Math.max(x1 + 16, tip);
-  const head = 12;
+  const end = tip > x1 ? tip : x1 + 16;
+  const span = end - x1;
+  const head = Math.min(12, span * 0.5);
   const neck = end - head;
-  const tail = Math.min(x1, neck - 4);
-  const shaft = 3.2;
-  const flare = 7;
+  const shaft = Math.min(3.2, span * 0.2);
+  const flare = Math.min(7, Math.max(shaft + 0.4, span * 0.3));
   parts.polygons.push({
     fill: "none",
     color: "#111111",
     points: [
-      { x: tail, y: y - shaft },
+      { x: x1, y: y - shaft },
       { x: neck, y: y - shaft },
       { x: neck, y: y - flare },
       { x: end, y },
       { x: neck, y: y + flare },
       { x: neck, y: y + shaft },
-      { x: tail, y: y + shaft },
+      { x: x1, y: y + shaft },
     ],
   });
+}
+
+function drawDotArrow(parts, chart, x1, tip, y) {
+  if (!(tip > x1)) return;
+  if (chart.arrowStyle === "block") pushBlockArrow(parts, x1, tip, y);
+  else pushArrow(parts, x1, tip, y);
+}
+
+function pushEllipsis(parts, x, y) {
+  for (let k = 0; k < 3; k++) {
+    parts.dots.push({
+      x: x + k * DOT_ELLIPSIS_STEP,
+      y,
+      r: DOT_ELLIPSIS_R,
+      color: "#111111",
+      ellipsis: true,
+    });
+  }
 }
 
 function dotParts(chart) {
   const parts = emptyParts(chart);
   const gap = chart.dotGap;
+  const metrics = dotArrowMetrics(chart);
   const { stages, midY } = placeDotStages(chart);
+  const arrowY = dotArrowY(chart, stages, midY, metrics);
   const lastContent = stages.reduce((acc, stage) => (stage.dots.length ? stage.index : acc), -1);
   stages.forEach((stage) => {
     const { dots, box, originX, originY, right, index } = stage;
@@ -897,20 +1003,20 @@ function dotParts(chart) {
     const next = stages[index + 1];
     const nextHasDots = !!(next && next.dots.length);
     if (chart.showArrows && nextHasDots && index !== lastContent) {
-      const x1 = right + 10;
-      const x2 = right + chart.patternGap - next.box.w - 16;
-      if (chart.arrowStyle === "block") pushBlockArrow(parts, x1, x2, midY);
-      else pushArrow(parts, x1, x2, midY);
+      const leftCenter = dots.length ? Math.max(...dots.map((d) => d.x)) : right;
+      const rightCenter = Math.min(...next.dots.map((d) => d.x));
+      const span = arrowBetween(leftCenter, rightCenter, chart.dotRadius, metrics);
+      drawDotArrow(parts, chart, span.x1, span.tip, arrowY);
     }
     if (chart.showArrows && index === lastContent) {
-      for (let k = 0; k < 3; k++) {
-        parts.dots.push({
-          x: right + 18 + k * 8,
-          y: midY,
-          r: 1.6,
-          color: "#111111",
-          ellipsis: true,
-        });
+      const leftCenter = dots.length ? Math.max(...dots.map((d) => d.x)) : right;
+      if (metrics.trailing && dots.length) {
+        const x1 = leftCenter + chart.dotRadius + metrics.gap;
+        const tip = x1 + metrics.width;
+        drawDotArrow(parts, chart, x1, tip, arrowY);
+        pushEllipsis(parts, tip + metrics.gap + DOT_ELLIPSIS_R, arrowY);
+      } else {
+        pushEllipsis(parts, leftCenter + 18, arrowY);
       }
     }
   });
