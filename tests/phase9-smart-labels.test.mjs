@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { APP_VERSION, applyOps, validateDiagram } from "../src/diagram/index.mjs";
 
-test("APP_VERSION is 13.5.56", () => {
-  assert.equal(APP_VERSION, "13.5.56");
+test("APP_VERSION is 13.5.57", () => {
+  assert.equal(APP_VERSION, "13.5.57");
 });
 
 function labelAt(doc, id) {

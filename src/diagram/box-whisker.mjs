@@ -116,6 +116,18 @@ function readTickGridStyle(raw) {
   return "none";
 }
 
+/**
+ * Dash array shared by canvas setLineDash and SVG stroke-dasharray.
+ * dotted is a tight dot, not a long dash. solid and none are continuous (empty).
+ * @param {string} style
+ * @returns {number[]}
+ */
+export function boxWhiskerDash(style) {
+  if (style === "dotted") return [2, 2];
+  if (style === "dashed") return [5, 4];
+  return [];
+}
+
 function numberLineEnds(bw) {
   const ticks = (bw.ticks || []).map(boxWhiskerTickPos).filter((n) => Number.isFinite(n));
   const data = [bw.min, bw.max, ...(bw.outliers || []), ...ticks].filter((n) => Number.isFinite(n));
