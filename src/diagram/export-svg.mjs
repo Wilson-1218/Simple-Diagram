@@ -268,6 +268,60 @@ export function readableInkScale(worldW, worldH) {
   return Math.max(1, span / 340);
 }
 
+/** Editor stroke and dot at view.scale 1 (app.js LINE_WIDTH / POINT_R). */
+const CANVAS_LINE_PX = 1.35;
+const CANVAS_POINT_R = 3.2;
+
+/**
+ * 1:1 with the canvas. UserUnits are world pixels times the export scale.
+ * No span/340 factor and no physical-frame enlargement.
+ * @param {number} exportScale
+ */
+function canvasMatchInk(exportScale) {
+  const s = Number(exportScale) > 0 ? Number(exportScale) : 1;
+  const pxPerMm = (CANVAS_LINE_PX / DEFAULT_MIN_STROKE_MM) * s;
+  return {
+    oneToOne: true,
+    stroke: CANVAS_LINE_PX * s,
+    markStroke: CANVAS_LINE_PX * 0.95 * s,
+    pointRadius: CANVAS_POINT_R * s,
+    uuPerMm: pxPerMm,
+    fontForSize(size) {
+      const n = Number(size);
+      const base = Number.isFinite(n) && n > 0 ? n : 16;
+      return base * s;
+    },
+    mm(n) {
+      return Number(n) * pxPerMm;
+    },
+    dash(style) {
+      const mm = STYLE_DASH_MM[style] || [];
+      return mm.map((d) => d * pxPerMm);
+    },
+  };
+}
+
+/**
+ * autoScaleText false on the option, on doc.meta, or on the document
+ * freezes text and stroke at scale 1. An explicit option true still
+ * yields to meta false. Otherwise the option wins over doc.autoScaleText.
+ * @param {object} doc
+ * @param {object} [opts]
+ */
+function autoScaleTextEnabled(doc, opts) {
+  if (opts && opts.autoScaleText === false) return false;
+  if (doc && doc.meta && doc.meta.autoScaleText === false) return false;
+  if (opts && opts.autoScaleText != null) return true;
+  if (doc && doc.meta && doc.meta.autoScaleText != null) return doc.meta.autoScaleText !== false;
+  return !doc || doc.autoScaleText !== false;
+}
+
+function paperTextHalo(fontPx, ink) {
+  const fs = Number(fontPx) || 0;
+  if (ink && ink.oneToOne) return Math.min(2.4, Math.max(0.9, fs * 0.16));
+  return Math.max(3.5, ink.mm(0.35), fs * 0.28);
+}
+
 export function inkUserUnitsPerMm(viewW, viewH, frameWmm, frameHmm) {
   const fw = Math.max(1e-6, Number(frameWmm) || DEFAULT_FRAME_WIDTH_MM);
   const fh = Math.max(1e-6, Number(frameHmm) || DEFAULT_FRAME_HEIGHT_MM);
@@ -504,7 +558,7 @@ function svgLengthLabel(ll, doc, pts, toS, ink, inkHex = "#111") {
   const common =
     `transform="${tf}" text-anchor="middle" dominant-baseline="middle" ` +
     `font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fontPx.toFixed(1)}"`;
-  const halo = Math.max(3.5, ink.mm(0.35), fontPx * 0.28);
+  const halo = paperTextHalo(fontPx, ink);
   // White-paper halo (stroke under fill via paint-order)
   out += `<text ${common} fill="${inkHex}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(ll.text || "")}</text>\n`;
   const attrs = svgDataAttrs(ll);
@@ -521,6 +575,7 @@ function svgLengthLabel(ll, doc, pts, toS, ink, inkHex = "#111") {
  *   frameHeightMm?: number,
  *   minStrokeMm?: number,
  *   labelPt?: number,
+ *   autoScaleText?: boolean,
  * }} [opts]
  * @returns {string} SVG markup
  */
@@ -532,17 +587,19 @@ export function documentToSvg(doc, opts = {}) {
   const b = boundsOf(doc, pad / scale);
   const worldW = b.maxX - b.minX;
   const worldH = b.maxY - b.minY;
-  const autoScale =
-    opts.autoScaleText != null ? opts.autoScaleText !== false : doc.autoScaleText !== false;
-  const readScale = autoScale ? readableInkScale(worldW, worldH) : 1;
-  const defaultFont = 14 * readScale;
+  const autoScale = autoScaleTextEnabled(doc, opts);
+  // False: text and strokes share scale 1. Do not compute max(1, span/340).
+  let textScale = 1;
+  const strokeScale = 1;
+  if (autoScale) textScale = readableInkScale(worldW, worldH);
+  const defaultFont = 14 * textScale;
   const w = Math.max(40, worldW * scale);
   const h = Math.max(40, worldH * scale);
   const toS = (x, y) => ({
     x: (x - b.minX) * scale,
     y: (y - b.minY) * scale,
   });
-  const ink = resolveInkBudget(w, h, opts);
+  const ink = autoScale ? resolveInkBudget(w, h, opts) : canvasMatchInk(scale * strokeScale);
   const pts = pointMap(doc);
   const layers = doc.layers || {};
   const helpersShow = layers.helpersShow !== false;
@@ -876,7 +933,7 @@ export function documentToSvg(doc, opts = {}) {
     for (const s of parts.tickMarks) body += line(s);
     /* Match BarChart tick size (14) + white paper halo */
     const tickFs = ink.fontForSize(defaultFont);
-    const tickHalo = Math.max(3.5, ink.mm(0.35), tickFs * 0.28);
+    const tickHalo = paperTextHalo(tickFs, ink);
     const tickFam =
       'font-family="STIX Two Text, Times New Roman, serif" font-style="italic"';
     for (const t of parts.tickLabels || []) {
@@ -898,7 +955,7 @@ export function documentToSvg(doc, opts = {}) {
         t.baseline === "hanging" ? "hanging" : t.baseline === "middle" ? "middle" : "auto";
       body += `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" fill="#111" stroke="#ffffff" stroke-width="${tickHalo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill" ${tickFam} font-size="${tickFs.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="${baseline}">${escapeXml(t.text)}</text>\n`;
     }
-    const or = ink.mm(0.55);
+    const or = ink.oneToOne ? ink.pointRadius : ink.mm(0.55);
     for (const o of parts.outliers) {
       const s = toS(o.x, o.y);
       body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${or.toFixed(2)}" fill="none" stroke="#111" stroke-width="${sw}" />\n`;
@@ -992,6 +1049,7 @@ export function documentToSvg(doc, opts = {}) {
       stroke: ink.stroke,
       fontPx: ink.fontForSize(defaultFont),
       markStroke: ink.markStroke,
+      oneToOne: !!ink.oneToOne,
     });
   }
 
@@ -1010,7 +1068,7 @@ export function documentToSvg(doc, opts = {}) {
       if (mode3d) {
         // World-unit parallelogram along the two arms (not the paper-mm square).
         const size =
-          ra.size != null && Number.isFinite(Number(ra.size)) ? Number(ra.size) : 10 * readScale;
+          ra.size != null && Number.isFinite(Number(ra.size)) ? Number(ra.size) : 10 * textScale;
         let u1x = a1.x - v.x;
         let u1y = a1.y - v.y;
         let u2x = a2.x - v.x;
@@ -1044,8 +1102,10 @@ export function documentToSvg(doc, opts = {}) {
         dy2 /= n2;
         // size 10 → ~2.6mm on paper; scales with attribute.
         const sizeAttr =
-          ra.size != null && Number.isFinite(Number(ra.size)) ? Number(ra.size) : 10 * readScale;
-        const sizeUu = ink.mm(Math.max(2.2, (sizeAttr / 10) * 2.6));
+          ra.size != null && Number.isFinite(Number(ra.size)) ? Number(ra.size) : 10 * textScale;
+        const sizeUu = autoScale
+          ? ink.mm(Math.max(2.2, (sizeAttr / 10) * 2.6))
+          : sizeAttr * scale * strokeScale;
         p1 = { x: sv.x + dx1 * sizeUu, y: sv.y + dy1 * sizeUu };
         p2 = {
           x: sv.x + dx1 * sizeUu + dx2 * sizeUu,
@@ -1098,7 +1158,7 @@ export function documentToSvg(doc, opts = {}) {
             : 0;
         const tx = sv.x + Math.cos(mid) * tr + ox;
         const ty = sv.y + Math.sin(mid) * tr + oy;
-        const halo = Math.max(3.5, ink.mm(0.35), fs * 0.28);
+        const halo = paperTextHalo(fs, ink);
         const common =
           `x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="italic" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
         body += `<text ${common} fill="${arcInk}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${escapeXml(aa.text)}</text>\n`;
@@ -1167,7 +1227,7 @@ export function documentToSvg(doc, opts = {}) {
       const swx = (1.2 * scale * 0.7).toFixed(2);
       body += `<path d="M${(s.x - r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x + r).toFixed(2)},${(s.y + r).toFixed(2)} M${(s.x + r).toFixed(2)},${(s.y - r).toFixed(2)} L${(s.x - r).toFixed(2)},${(s.y + r).toFixed(2)}" fill="none" stroke="${strokeOf(p)}" stroke-width="${swx}"${svgDataAttrs(p)} />\n`;
     } else {
-      const pr = ink.mm(0.55).toFixed(2);
+      const pr = (ink.oneToOne ? ink.pointRadius : ink.mm(0.55)).toFixed(2);
       body += `<circle cx="${s.x.toFixed(2)}" cy="${s.y.toFixed(2)}" r="${pr}" fill="${strokeOf(p)}"${svgDataAttrs(p)} />\n`;
     }
   }
@@ -1179,7 +1239,7 @@ export function documentToSvg(doc, opts = {}) {
       if (!p) continue;
       const s = toS(p.x + (lab.ox || 0), p.y + (lab.oy || 0));
       const fs = ink.fontForSize(lab.size);
-      const halo = Math.max(3.5, ink.mm(0.35), fs * 0.28);
+      const halo = paperTextHalo(fs, ink);
       const rich = svgTextInner(lab.text, true);
       const common = `x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" font-family="STIX Two Text, Times New Roman, serif" font-style="${rich.fontStyle}" font-size="${fs.toFixed(1)}" text-anchor="middle" dominant-baseline="middle"`;
       body += `<text ${common} fill="${strokeOf(lab)}" stroke="#ffffff" stroke-width="${halo.toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill"${svgDataAttrs(lab)}>${rich.inner}</text>\n`;
@@ -1188,7 +1248,7 @@ export function documentToSvg(doc, opts = {}) {
       if (!tx || typeof tx !== "object" || !shown(tx)) continue;
       const s = toS(Number(tx.x), Number(tx.y));
       const fs = ink.fontForSize(tx.size);
-      const halo = Math.max(3.5, ink.mm(0.35), fs * 0.28);
+      const halo = paperTextHalo(fs, ink);
       let align = String(tx.align || "center").toLowerCase();
       if (align !== "left" && align !== "right") align = "center";
       const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
